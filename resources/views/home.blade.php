@@ -45,7 +45,7 @@
 
             <!-- Left Side (Intro) -->
             <div class="flex flex-col justify-start items-center">
-                <img src="{{Vite::asset('images/latest-updates-transparent.png')}}" />
+                <img src="{{Vite::asset('resources/images/latest-updates-transparent.png')}}" />
                 <div class="py-2">
                     <div class="font-serif text-3xl md:text-4xl lg:text-5xl leading-none text-stone-900 text-center">Latest</div>
                     <div class="font-serif text-5xl md:text-6xl lg:text-7xl text-stone-900 uppercase leading-tight">Updates</div>
