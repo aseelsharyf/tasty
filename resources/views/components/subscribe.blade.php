@@ -1,5 +1,5 @@
    <!-- Section Start -->
-    <section class="w-full bg-gray-100 py-12 md:py-24 px-4 text-center">
+    <section class="w-full bg-gray-100 py-6 md:py-24 px-4 text-center">
         <div class=" mx-auto">
 
             <!-- Main Heading -->
@@ -23,7 +23,7 @@
                     <!-- Subscribe Button -->
                     <button
                         type="submit"
-                        class="bg-tasty-yellow hover:bg-tasty-yellow/90 text-tasty-black font-semibold text-sm md:text-base uppercase tracking-wider px-8 py-3 rounded-full transition-all duration-300 flex items-center gap-2 group whitespace-nowrap"
+                        class="bg-tasty-yellow hover:bg-tasty-yellow/90 text-tasty-black font-semibold text-xs md:text-base uppercase tracking-wider px-4 md:px-8 py-2 md:py-3 rounded-full transition-all duration-300 flex items-center gap-1 md:gap-2 group whitespace-nowrap flex-shrink-0"
                     >
                         Subscribe
                         <i class="fa-solid fa-arrow-right text-xs transform group-hover:translate-x-1 transition-transform"></i>

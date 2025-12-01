@@ -39,7 +39,7 @@
 
 
 
-<div class="w-full px-10 pt-16 pb-32 bg-tasty-off-white bg-red-100">
+<div class="w-full px-10 pt-16 pb-6 bg-tasty-off-white bg-red-100">
     <div class="max-w-7xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-2 md:items-center gap-10">
 
