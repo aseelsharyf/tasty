@@ -2,7 +2,7 @@
     <nav
         :class="navVisible ? 'translate-y-0' : '-translate-y-full'"
         class="fixed top-0 left-0 right-0 z-50 flex justify-center pt-6 md:pt-[40px] px-4 md:px-10 pointer-events-none transition-all duration-300">
-        <div class="pointer-events-auto w-full max-w-[1360px] h-[72px] bg-white/30 backdrop-blur-md rounded-xl border border-white/20 shadow-lg relative transition-all duration-300 flex items-center justify-between">
+        <div class="pointer-events-auto w-full max-w-[1360px] h-[72px] bg-white/70 backdrop-blur-md rounded-xl border border-white/20 shadow-lg relative transition-all duration-300 flex items-center justify-between">
 
             <!-- LEFT: Logo + Divider -->
             <div class="flex items-center h-full flex-shrink-0">

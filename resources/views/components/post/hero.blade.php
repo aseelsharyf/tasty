@@ -33,17 +33,17 @@
         : 'justify-center';
 @endphp
 
-<section class="flex flex-col md:flex-row w-full">
+<section class="flex flex-col md:flex-row w-full min-h-screen md:min-h-0">
 
     {{-- Image Side --}}
-    <div class="w-full aspect-[4/3] md:aspect-auto md:w-1/2 md:min-h-[600px] lg:min-h-[700px] xl:min-h-[800px] relative overflow-hidden">
+    <div class="w-full h-[50vh] md:h-auto md:w-1/2 md:min-h-[600px] lg:min-h-[700px] xl:min-h-[800px] relative overflow-hidden">
         <img src="{{ $image }}"
              alt="{{ $imageAlt }}"
              class="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105">
     </div>
 
     {{-- Content Side --}}
-    <div class="w-full md:w-1/2 {{ $classColor }} flex flex-col px-8 py-10 md:p-24 {{ $alignmentClasses }}"
+    <div class="w-full min-h-[50vh] md:min-h-0 md:w-1/2 {{ $classColor }} flex flex-col px-8 py-10 md:p-24 {{ $alignmentClasses }}"
          @if($styleAttr) style="{{ $styleAttr }}" @endif>
 
         {{-- Metadata --}}
