@@ -155,31 +155,18 @@
 </div>
 
 {{-- Featured Profile Section --}}
-<div class="w-full pt-16">
-
-    {{-- Profile Image with Gradient Overlay --}}
-    <div class="w-full mx-auto flex justify-center">
-        <div class="relative flex flex-col justify-center items-center w-full h-[294px] md:h-[600px] lg:h-[800px] xl:h-[1000px] rounded-t-[2000px] md:rounded-t-[5000px] overflow-hidden bg-cover bg-center" style="background: linear-gradient(180deg, rgba(255, 214, 0, 0) 60%, rgba(255, 214, 0, 0.5) 80%, #FFD600 100%), url('https://images.unsplash.com/photo-1726749135857-9fad0dc1d23c?q=80&w=1364&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); background-size: cover; background-position: center;">
-            {{-- Content --}}
-            <div class="relative z-10">
-                {{-- Your content here --}}
-            </div>
-        </div>
-    </div>
-
-    {{-- Profile Name Section --}}
-    <div class="w-full bg-tasty-yellow py-8 -mt-1">
-        <div class="max-w-7xl mx-auto px-4">
-            <h1 class="font-serif text-center text-6xl md:text-7xl lg:text-8xl tracking-tighter uppercase leading-none text-stone-900">
-                Aminath Hameed
-            </h1>
-            <h2 class="font-serif text-center text-3xl md:text-4xl lg:text-5xl leading-tight text-stone-900 mb-8 md:mb-12">
-                Chef & Owner of Maldivian Patisserie.
-            </h2>
-        </div>
-    </div>
-
-</div>
+<x-featured-person
+    image="https://images.unsplash.com/photo-1726749135857-9fad0dc1d23c?q=80&w=1364&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    imageAlt="Aminath Hameed - Chef"
+    name="Aminath Hameed"
+    title="Chef and Owner of Maldivian Patisserie."
+    tag1="tasty feature"
+    tag2="people"
+    description="Two weeks in Lanka, documenting dishes and cooks who give the island its food identity."
+    buttonText="Read More"
+    buttonUrl="#"
+    bgColor="bg-tasty-yellow"
+/>
 
 
 <x-subscribe/>

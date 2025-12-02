@@ -19,7 +19,7 @@
     <div class="flex flex-col p-6 md:p-8 space-y-8">
 
         {{-- Image Section --}}
-        <div class="w-full h-[259px] lg:h-[607px] relative rounded overflow-hidden bg-[#333]">
+        <div class="w-full h-[350px] lg:h-[700px] relative rounded overflow-hidden bg-[#333]">
             <a href="{{ $articleUrl }}" class="block absolute inset-0">
                 <img src="{{ $image }}"
                      alt="{{ $imageAlt }}"

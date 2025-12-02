@@ -268,6 +268,12 @@ function searchNav() {
         },
 
         handleScroll() {
+            // Only apply scroll behavior on mobile (below md breakpoint: 768px)
+            if (window.innerWidth >= 768) {
+                this.navVisible = true;
+                return;
+            }
+
             this.scrollY = window.scrollY;
 
             // Don't hide nav if we're at the top of the page

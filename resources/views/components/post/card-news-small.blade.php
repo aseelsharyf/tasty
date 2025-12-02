@@ -19,7 +19,7 @@
     <div class="flex flex-col md:flex-row p-4 md:p-6 gap-4 md:gap-6">
 
         {{-- Image Section (Left) --}}
-        <div class="w-full md:w-[200px] h-[200px] relative rounded overflow-hidden bg-[#333] flex-shrink-0">
+        <div class="w-full md:w-[250px] h-[250px] relative rounded overflow-hidden bg-[#333] flex-shrink-0">
             <a href="{{ $articleUrl }}" class="block absolute inset-0">
                 <img src="{{ $image }}"
                      alt="{{ $imageAlt }}"
@@ -28,7 +28,7 @@
         </div>
 
         {{-- Content Section (Right) --}}
-        <div class="w-full md:flex-1 md:h-[200px] flex flex-col justify-between py-2">
+        <div class="w-full md:flex-1 md:h-[250px] flex flex-col justify-between py-2">
 
             {{-- Metadata Tags (Top) --}}
             <div class="flex justify-start">
