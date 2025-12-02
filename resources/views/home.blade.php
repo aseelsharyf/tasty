@@ -154,6 +154,42 @@
 
 </div>
 
+{{-- Featured Profile Section --}}
+<div class="w-full pt-16 pb-6">
+
+    {{-- Profile Image with Gradient Overlay --}}
+    <div class="w-full mx-auto">
+        <div class="relative flex flex-col justify-center items-center w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1] rounded-t-[2000px] overflow-hidden">
+
+            {{-- Background Image --}}
+            <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1726749135857-9fad0dc1d23c?q=80&w=1364&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');">
+            </div>
+
+            {{-- Gradient Overlay --}}
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent from-60% via-tasty-yellow/50 via-80% to-tasty-yellow">
+            </div>
+
+            {{-- Content --}}
+            <div class="relative z-10">
+                {{-- Your content here --}}
+            </div>
+        </div>
+    </div>
+
+    {{-- Profile Name Section --}}
+    <div class="w-full bg-tasty-yellow py-8">
+        <div class="max-w-7xl mx-auto px-4">
+            <h1 class="font-serif text-center text-6xl md:text-7xl lg:text-8xl tracking-tighter uppercase leading-none text-stone-900">
+                Aminath Hameed
+            </h1>
+            <h2 class="font-serif text-center text-3xl md:text-4xl lg:text-5xl leading-tight text-stone-900 mb-8 md:mb-12">
+                Chef & Owner of Maldivian Patisserie.
+            </h2>
+        </div>
+    </div>
+
+</div>
+
 
 <x-subscribe/>
 
