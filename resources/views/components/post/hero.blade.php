@@ -33,10 +33,10 @@
         : 'justify-center';
 @endphp
 
-<section class="flex flex-col md:flex-row w-full  md:min-h-[85vh]">
+<section class="flex flex-col md:flex-row w-full">
 
     {{-- Image Side --}}
-    <div class="w-full h-[45vh] md:h-auto md:w-1/2 relative overflow-hidden">
+    <div class="w-full aspect-[4/3] md:aspect-auto md:w-1/2 md:min-h-[600px] lg:min-h-[700px] xl:min-h-[800px] relative overflow-hidden">
         <img src="{{ $image }}"
              alt="{{ $imageAlt }}"
              class="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105">

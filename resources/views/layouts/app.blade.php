@@ -22,13 +22,15 @@
         @endif
     </head>
     <body class="antialiased bg-gray-100">
-        <x-nav-bar></x-nav-bar>
+        <div class="w-full 2xl:max-w-[1920px] mx-auto bg-white">
+            <x-nav-bar></x-nav-bar>
 
-        <main>
-            @yield('content')
-        </main>
+            <main>
+                @yield('content')
+            </main>
 
-        <x-footer></x-footer>
+            <x-footer></x-footer>
+        </div>
 
         @stack('scripts')
     </body>
