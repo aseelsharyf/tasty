@@ -1,6 +1,8 @@
 <div x-data="searchNav()">
-    <nav class="fixed top-0 left-0 right-0 z-50 flex justify-center pt-6 md:pt-[40px] px-4 md:px-10 pointer-events-none transition-all duration-300">
-        <div class="pointer-events-auto w-full max-w-[1360px] h-[72px] bg-glass backdrop-blur-md rounded-xl border border-white/20 shadow-lg relative transition-all duration-300 flex items-center justify-between">
+    <nav
+        :class="navVisible ? 'translate-y-0' : '-translate-y-full'"
+        class="fixed top-0 left-0 right-0 z-50 flex justify-center pt-6 md:pt-[40px] px-4 md:px-10 pointer-events-none transition-all duration-300">
+        <div class="pointer-events-auto w-full max-w-[1360px] h-[72px] bg-white/30 backdrop-blur-md rounded-xl border border-white/20 shadow-lg relative transition-all duration-300 flex items-center justify-between">
 
             <!-- LEFT: Logo + Divider -->
             <div class="flex items-center h-full flex-shrink-0">
@@ -19,7 +21,7 @@
                             $href  = $link['href'] ?? '#';
                             $extra = $link['class'] ?? '';
                         @endphp
-                        <a href="{{ $href }}" class="font-mono text-sm xl:text-lg hover:text-yellow-600 transition uppercase tracking-wide {{ $extra }}">
+                        <a href="{{ $href }}" class="font-mono text-base hover:text-yellow-600 transition uppercase tracking-wide {{ $extra }}">
                             {{ strtoupper($label) }}
                         </a>
                     @endforeach
@@ -32,7 +34,7 @@
                             $href  = $link['href'] ?? '#';
                             $extra = $link['class'] ?? '';
                         @endphp
-                        <a href="{{ $href }}" class="font-mono text-sm xl:text-lg hover:text-yellow-600 transition uppercase tracking-wide {{ $extra }}">
+                        <a href="{{ $href }}" class="font-mono text-base hover:text-yellow-600 transition uppercase tracking-wide {{ $extra }}">
                             {{ strtoupper($label) }}
                         </a>
                     @endforeach
@@ -44,17 +46,17 @@
                 <div class="hidden lg:block h-[40px] w-[1px] bg-stone-300/50"></div>
 
                 <div @click="openSearch()" class="hidden lg:flex h-full px-6 md:px-8 items-center justify-center cursor-pointer hover:opacity-70 transition gap-3">
-                    <span class="font-mono text-lg text-blue-black uppercase tracking-wide">Search</span>
-                    <i class="fas fa-search text-blue-black text-lg"></i>
+                    <span class="font-mono text-base text-blue-black uppercase tracking-wide">Search</span>
+                    <i class="fas fa-search text-blue-black text-base"></i>
                 </div>
 
                 <div class="lg:hidden flex items-center h-full px-4 gap-4">
                     <button @click="openSearch()" class="text-blue-black focus:outline-none">
-                        <i class="fas fa-search text-xl"></i>
+                        <i class="fas fa-search text-base"></i>
                     </button>
                     <button @click="menuOpen = !menuOpen" class="flex items-center gap-3 text-blue-black focus:outline-none">
-                        <span class="font-mono text-sm font-bold tracking-widest uppercase">Menu</span>
-                        <i class="fas text-2xl" :class="menuOpen ? 'fa-xmark' : 'fa-bars'"></i>
+                        <span class="font-mono text-base tracking-widest uppercase">Menu</span>
+                        <i class="fas text-base" :class="menuOpen ? 'fa-xmark' : 'fa-bars'"></i>
                     </button>
                 </div>
             </div>
@@ -247,6 +249,10 @@ function searchNav() {
         loading: false,
         selectedIndex: -1,
         debounceTimer: null,
+        navVisible: true,
+        scrollY: 0,
+        lastScrollY: 0,
+        scrollThreshold: 10,
         popularSearches: [
             { term: 'Pasta Recipes', icon: 'fa-bowl-food' },
             { term: 'Quick Desserts', icon: 'fa-cake-candles' },
@@ -255,6 +261,39 @@ function searchNav() {
             { term: 'Grilling', icon: 'fa-fire' },
             { term: 'Breakfast Ideas', icon: 'fa-mug-hot' }
         ],
+
+        init() {
+            console.log('Nav scroll behavior initialized');
+            window.addEventListener('scroll', () => this.handleScroll());
+        },
+
+        handleScroll() {
+            this.scrollY = window.scrollY;
+
+            // Don't hide nav if we're at the top of the page
+            if (this.scrollY < 100) {
+                this.navVisible = true;
+                this.lastScrollY = this.scrollY;
+                return;
+            }
+
+            // Check if scroll difference exceeds threshold
+            const scrollDiff = this.scrollY - this.lastScrollY;
+
+            if (Math.abs(scrollDiff) > this.scrollThreshold) {
+                if (scrollDiff > 0) {
+                    // Scrolling down - hide nav
+                    console.log('Hiding nav');
+                    this.navVisible = false;
+                } else {
+                    // Scrolling up - show nav
+                    console.log('Showing nav');
+                    this.navVisible = true;
+                }
+
+                this.lastScrollY = this.scrollY;
+            }
+        },
 
         openSearch() {
             this.searchOpen = true;
