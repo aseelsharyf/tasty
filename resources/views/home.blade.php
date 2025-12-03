@@ -128,11 +128,12 @@
         </div>
 
         <div class="flex justify-center mt-10">
-            <a href="#"
-               class="group bg-tasty-yellow px-8 py-3 rounded-full inline-flex items-center gap-3 shadow-sm hover:shadow-md hover:bg-stone-50 transition-all duration-300">
-                <span class="text-xl font-light leading-none group-hover:rotate-90 transition-transform duration-300">+</span>
-                <span class="text-xs md:text-sm font-bold uppercase tracking-widest text-stone-900">More Updates</span>
-            </a>
+            <x-ui.button
+                url="#"
+                text="More Updates"
+                icon="plus"
+                :iconRotate="true"
+            />
         </div>
 
 
@@ -281,6 +282,21 @@
     </div>
 </div>
 
+
+{{-- Video Feature Section --}}
+<div class="w-full px-10 pt-16 pb-32 bg-gradient-to-b from-tasty-yellow to-white flex flex-col justify-start items-center gap-10">
+    <x-post.card-video
+        video="{{ Vite::asset('resources/videos/nami-reveli.mp4') }}"
+        videoPoster="{{ Vite::asset('resources/images/image-13.png') }}"
+        title="Nami at Reveli"
+        subtitle="Sushi and steak by the sea"
+        description="Nami's Japanese-inspired plates land big flavors in a sleek dining room. Come for the sushi; stay because you forgot you were in Malé for a second."
+        author="Mohamed Ashraf"
+        authorUrl="/author/mohamed-ashraf"
+        date="January 8, 2025"
+        articleUrl="/article/nami-at-reveli"
+    />
+</div>
 
 <x-subscribe/>
 

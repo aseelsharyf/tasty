@@ -93,36 +93,53 @@
             <div class="flex flex-col space-y-8 md:space-y-10">
                 <!-- Header Section -->
                 <div class="flex flex-col space-y-4">
-                    <h1 class="font-serif text-4xl md:text-6xl lg:text-8xl text-center leading-tight text-stone-900">
-                        {{ $name }}
-                    </h1>
-                    <h2 class="font-serif text-2xl md:text-4xl lg:text-5xl text-center leading-tight text-stone-900">
-                        {{ $title }}
-                    </h2>
+                    <div class="flex justify-center">
+                        <h1 class="font-serif text-4xl md:text-6xl lg:text-8xl text-center leading-tight text-stone-900">
+                            {{ $name }}
+                        </h1>
+                    </div>
+                    <div class="flex justify-center">
+                        <h2 class="font-serif text-2xl md:text-4xl lg:text-5xl text-center leading-tight text-stone-900">
+                            {{ $title }}
+                        </h2>
+                    </div>
                 </div>
 
                 <!-- Tags Section -->
                 <div class="flex justify-center">
-                    <div class="flex items-center gap-3 md:gap-5">
-                        <span class="font-mono text-xs md:text-sm uppercase tracking-wider text-tasty-blue-black">{{ $tag1 }}</span>
-                        <span class="text-xs md:text-sm text-tasty-blue-black">•</span>
-                        <span class="font-mono text-xs md:text-sm uppercase tracking-wider text-tasty-blue-black">{{ $tag2 }}</span>
-                    </div>
+                    <x-post.metadata-badge
+                        :category="$tag1"
+                        categoryUrl="#"
+                        :tag="$tag2"
+                        tagUrl="#"
+                        bgColor="bg-transparent"
+                        textSize="text-xs md:text-sm"
+                        padding="px-0 py-0"
+                        gap="gap-3 md:gap-5"
+                    />
                 </div>
 
                 <!-- Description Section -->
                 <div class="flex justify-center">
-                    <p class="font-serif text-lg md:text-2xl text-center max-w-2xl text-stone-900 leading-relaxed">
-                        {{ $description }}
-                    </p>
+                    <div class="max-w-2xl">
+                        <x-post.description
+                            :description="$description"
+                            size="lg"
+                            align="center"
+                        />
+                    </div>
                 </div>
 
                 <!-- Button Section -->
                 <div class="flex justify-center">
-                    <a href="{{ $buttonUrl }}" class="group bg-white px-6 md:px-8 py-3 rounded-full inline-flex items-center gap-3 shadow-sm hover:shadow-md hover:bg-stone-50 transition-all duration-300">
-                        <span class="text-xl font-light leading-none group-hover:rotate-90 transition-transform duration-300">+</span>
-                        <span class="text-sm md:text-base font-bold uppercase tracking-widest text-stone-900">{{ $buttonText }}</span>
-                    </a>
+                    <x-ui.button
+                        :url="$buttonUrl"
+                        :text="$buttonText"
+                        icon="plus"
+                        :iconRotate="true"
+                        bgColor="bg-white"
+                        paddingSize="md"
+                    />
                 </div>
             </div>
         </div>
