@@ -41,29 +41,22 @@
             </div>
 
             {{-- Title (Middle) --}}
-            <a href="{{ $articleUrl }}" class="w-full flex-1 py-5">
-                <h2 class="w-full font-serif text-2xl md:text-3xl color-tasty-blue-black text-left font-normal m-0 hover:opacity-70 transition-opacity duration-200 line-clamp-3">
-                    {{ $title }}
-                </h2>
-            </a>
+            <div class="w-full flex-1 py-5">
+                <x-post.title
+                    :title="$title"
+                    :url="$articleUrl"
+                    size="small"
+                    lineClamp="line-clamp-3"
+                />
+            </div>
 
             {{-- Author and Date Metadata (Bottom) --}}
-            <div class="w-full flex flex-row items-center gap-2 text-xs text-stone-800">
-
-                <span class="truncate">
-                    <a href="{{ $authorUrl }}" class="hover:text-stone-600 transition-colors duration-200 uppercase underline whitespace-nowrap">
-                        BY {{ $author }}
-                    </a>
-                </span>
-
-                {{-- Dot separator --}}
-                <span class="color-tasty-blue-black flex-shrink-0">•</span>
-
-                {{-- Date --}}
-                <span class="color-tasty-blue-black truncate whitespace-nowrap">
-                    {{ strtoupper($date) }}
-                </span>
-            </div>
+            <x-post.author-date
+                :author="$author"
+                :authorUrl="$authorUrl"
+                :date="$date"
+                size="xs"
+            />
         </div>
 
     </div>

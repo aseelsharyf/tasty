@@ -49,44 +49,38 @@
 
         {{-- Content Section --}}
         <div class="w-full flex flex-col justify-start items-start gap-6">
-            <a href="{{ $articleUrl }}" class="w-full">
-                <h2 class="w-full font-serif text-4xl md:text-5xl text-stone-900 text-left font-normal m-0 hover:opacity-70 transition-opacity duration-200 leading-tight">
-                    {{ $title }}
-                </h2>
-            </a>
+            <x-post.title
+                :title="$title"
+                :url="$articleUrl"
+            />
 
-            <p class="w-full text-lg md:text-xl text-stone-900 leading-7">
-                {{ $description }}
-            </p>
+            <x-post.description
+                :description="$description"
+            />
 
-            <div class="inline-flex justify-start items-start gap-5 text-sm text-stone-900">
-                <a href="{{ $authorUrl }}" class="uppercase underline hover:opacity-70 transition-opacity duration-200">
-                    BY {{ $author }}
-                </a>
-                <span>•</span>
-                <span class="uppercase">{{ $date }}</span>
-            </div>
+            <x-post.author-date
+                :author="$author"
+                :authorUrl="$authorUrl"
+                :date="$date"
+            />
         </div>
     @else
         {{-- Content Section at Top --}}
         <div class="w-full flex flex-col justify-start items-start gap-6">
-            <a href="{{ $articleUrl }}" class="w-full">
-                <h2 class="w-full font-serif text-4xl md:text-5xl text-stone-900 text-left font-normal m-0 hover:opacity-70 transition-opacity duration-200 leading-tight">
-                    {{ $title }}
-                </h2>
-            </a>
+            <x-post.title
+                :title="$title"
+                :url="$articleUrl"
+            />
 
-            <p class="w-full text-lg md:text-xl text-stone-900 leading-7">
-                {{ $description }}
-            </p>
+            <x-post.description
+                :description="$description"
+            />
 
-            <div class="inline-flex justify-start items-start gap-5 text-sm text-stone-900">
-                <a href="{{ $authorUrl }}" class="uppercase underline hover:opacity-70 transition-opacity duration-200">
-                    BY {{ $author }}
-                </a>
-                <span>•</span>
-                <span class="uppercase">{{ $date }}</span>
-            </div>
+            <x-post.author-date
+                :author="$author"
+                :authorUrl="$authorUrl"
+                :date="$date"
+            />
         </div>
 
         {{-- Image Section at Bottom --}}

@@ -49,34 +49,31 @@
         <div class="w-full flex flex-col items-start md:items-center px-0 md:px-10 space-y-6">
 
             {{-- Title --}}
-            <a href="{{ $articleUrl }}" class="w-full">
-                <h1 class="w-full font-serif text-4xl md:text-5xl color-tasty-blue-black text-left md:text-center font-normal m-0 hover:opacity-70 transition-opacity duration-200">
-                    {{ $title }}
-                </h1>
-            </a>
+            <x-post.title
+                :title="$title"
+                :url="$articleUrl"
+                tag="h1"
+                align="left md:center"
+            />
 
             {{-- Description --}}
             @if($description)
-                <p class="hidden md:block text-lg md:text-xl text-[#202020] text-center mt-5">
-                    {{ $description }}
-                </p>
+                <x-post.description
+                    :description="$description"
+                    align="center"
+                    :hideOnMobile="true"
+                />
             @endif
 
             {{-- Author and Date Metadata --}}
-            <div class="w-full flex flex-col md:flex-row items-start md:items-center justify-start md:justify-center md:space-x-5 text-sm text-stone-800">
-
-                <a href="{{ $authorUrl }}" class="hover:text-stone-600 transition-colors duration-200 uppercase underline mb-2 md:mb-0">
-                    BY {{ $author }}
-                </a>
-
-                {{-- Dot separator (hidden on mobile) --}}
-                <span class="color-tasty-blue-black hidden md:block">•</span>
-
-                {{-- Date --}}
-                <span class="color-tasty-blue-black">
-                    {{ strtoupper($date) }}
-                </span>
-            </div>
+            <x-post.author-date
+                :author="$author"
+                :authorUrl="$authorUrl"
+                :date="$date"
+                layout="vertical md:horizontal"
+                align="center"
+                :hideSeparatorOnMobile="true"
+            />
         </div>
 
     </div>
