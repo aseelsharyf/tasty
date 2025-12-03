@@ -16,7 +16,7 @@
 ])
 
 <div class="w-full bg-white rounded-xl mx-auto">
-    <div class="flex flex-col md:flex-row p-4 md:p-6 gap-4 md:gap-6">
+    <div class="flex flex-col md:flex-row p-10 gap-4 md:gap-6">
 
         {{-- Image Section (Left) --}}
         <div class="w-full md:w-[250px] h-[250px] relative rounded overflow-hidden bg-[#333] flex-shrink-0">
@@ -33,7 +33,7 @@
             {{-- Metadata Tags (Top) --}}
             <div class="flex justify-start">
                 <div class="bg-tasty-off-white px-4 py-2 rounded-full flex items-center justify-center gap-2.5 transition-all duration-300 whitespace-nowrap">
-                    <a href="{{ $categoryUrl }}" class="text-xs text-black hover:opacity-70 transition-opacity duration-200">
+                    <a href="{{ $categoryUrl }}" class="text-xs text-black uppercase hover:opacity-70 transition-opacity duration-200">
                         {{ $category }}
                     </a>
 
@@ -42,7 +42,7 @@
                         <span class="text-xs text-black">•</span>
 
                         {{-- Tag --}}
-                        <a href="{{ $tagUrl }}" class="text-xs text-black hover:opacity-70 transition-opacity duration-200">
+                        <a href="{{ $tagUrl }}" class="text-xs text-black uppercase hover:opacity-70 transition-opacity duration-200">
                             {{ $tag }}
                         </a>
                     @endif

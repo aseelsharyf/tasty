@@ -5,7 +5,7 @@
 
 {{-- Full Customization --}}
 <x-post.hero
-    image="https://images.unsplash.com/photo-1615322712569-8eb81aa62f80?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image="{{Vite::asset('resources/images/image-01.png')}}"
     imageAlt="Delicious fried chicken in paper cups"
     category="On Culture"
     categoryUrl="#"
@@ -21,42 +21,25 @@
     bgColor="bg-tasty-yellow"
 />
 
-{{-- Center Aligned Version --}}
-{{-- <x-post.hero
-    image="https://images.unsplash.com/photo-1618416682145-2fe1aaa6bd40?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-    category="Food & Drink"
-    categoryUrl="#"
-    author="Jane Doe"
-    authorUrl="/author/jane-doe"
-    date="December 1, 2025"
-    title="LATE NIGHT EATS"
-    subtitle="Exploring the city's"
-    subtitleItalic="hidden culinary gems"
-    buttonUrl="/article/late-night-eats"
-    alignment="bottom-left"
-    bgColor="bg-red-500"
-/> --}}
-
-
 
 <div class="w-full px-10 pt-16 pb-6 bg-tasty-off-white bg-red-100">
     <div class="max-w-7xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-2 md:items-center gap-10">
 
             <!-- Left Side (Intro) -->
-            <div class="flex flex-col justify-start items-center">
+            <div class="flex flex-col justify-start items-center p-10 space-y-8">
                 <img src="{{Vite::asset('resources/images/latest-updates-transparent.png')}}" />
-                <div class="py-2">
+                <div>
                     <div class="font-serif text-3xl md:text-4xl lg:text-5xl leading-none text-stone-900 text-center">Latest</div>
                     <div class="font-serif text-5xl md:text-6xl lg:text-7xl text-stone-900 uppercase leading-tight">Updates</div>
                 </div>
-                <div class="py-2 text-center justify-start text-slate-950 text-2xl font-normal font-serif leading-6">The flavors, characters, and tiny island obsessions that makes the Maldivian food culture.</div>
+                <div class="text-center justify-start text-slate-950 text-2xl font-normal font-serif leading-6">The flavors, characters, and tiny island obsessions that makes the Maldivian food culture.</div>
             </div>
 
             <!-- Right Side (Card) -->
             <div class="w-full">
                 <x-post.card-news
-                    image="https://images.unsplash.com/photo-1565299585323-38d6b0865b47?q=80&w=3180&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                    image="{{Vite::asset('resources/images/image-02.png')}}"
                     imageAlt="Mexican food dishes on a table"
                     category="Food & Drink"
                     categoryUrl="/category/food-drink"
@@ -77,67 +60,70 @@
 
             {{-- Card 1 --}}
             <x-post.card-news-small
-                image="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=3270&auto=format&fit=crop"
-                imageAlt="Delicious pasta dish"
-                category="Recipes"
-                categoryUrl="/category/recipes"
-                tag="Italian"
-                tagUrl="/tag/italian"
-                author="Sarah Johnson"
-                authorUrl="/author/sarah-johnson"
-                date="November 28, 2025"
-                title="Homemade Pasta Perfection"
-                description="Master the art of making fresh pasta from scratch with our step-by-step guide."
-                articleUrl="/article/homemade-pasta"
+                image="{{ Vite::asset('resources/images/image-03.png') }}"
+                imageAlt="Jazz Cafe event"
+                category="Latest"
+                categoryUrl="#"
+                tag="Event"
+                tagUrl="#"
+                author="Author Name"
+                authorUrl="#"
+                date="December 20, 2024"
+                title="Gig alert in Jazz Cafe! Haveeree Hingun Jazz Chronicles: Vol. 4 - Rumba in C on Sat, Dec 14th."
+                description="Live jazz chronicles with a fusion twist happening at Jazz Cafe."
+                articleUrl="#"
             />
+
 
             {{-- Card 2 --}}
             <x-post.card-news-small
-                image="https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=3174&auto=format&fit=crop"
-                imageAlt="Coffee and pastries"
-                category="Café Culture"
-                categoryUrl="/category/cafe-culture"
-                tag="Morning Eats"
-                tagUrl="/tag/morning-eats"
-                author="David Chen"
-                authorUrl="/author/david-chen"
-                date="November 25, 2025"
-                title="Best Breakfast Spots Downtown"
-                description="Discover the hidden gems serving the perfect morning brew and pastries."
-                articleUrl="/article/breakfast-spots"
+                image="{{ Vite::asset('resources/images/image-04.png') }}"
+                imageAlt="Sun Siyam Olhuveli resort"
+                category="Latest"
+                categoryUrl="#"
+                tag="Seasonal"
+                tagUrl="#"
+                author="Author Name"
+                authorUrl="#"
+                date="December 20, 2024"
+                title="Celebrate Diwali and Culinary Excellence at Sun Siyam Olhuveli"
+                description="Festive celebrations with culinary experiences at Olhuveli."
+                articleUrl="#"
             />
 
             {{-- Card 3 --}}
             <x-post.card-news-small
-                image="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?q=80&w=3087&auto=format&fit=crop"
-                imageAlt="Fresh salad bowl"
-                category="Healthy Eats"
-                categoryUrl="/category/healthy-eats"
-                tag="Nutrition"
-                tagUrl="/tag/nutrition"
-                author="Emma Williams"
-                authorUrl="/author/emma-williams"
-                date="November 22, 2025"
-                title="Summer Salad Revolution"
-                description="Fresh, vibrant, and nutritious salad recipes that'll change your lunch game."
-                articleUrl="/article/summer-salads"
+                image="{{ Vite::asset('resources/images/image-04.png') }}"
+                imageAlt="Young chef with medals"
+                category="Latest"
+                categoryUrl="#"
+                tag="People"
+                tagUrl="#"
+                author="Author Name"
+                authorUrl="#"
+                date="December 20, 2024"
+                title="FHAM 2025 Culinary Challenge began with the Young Chef competition."
+                description="A showcase of rising culinary talent kicking off FHAM 2025."
+                articleUrl="#"
             />
 
             {{-- Card 4 --}}
             <x-post.card-news-small
-                image="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?q=80&w=3270&auto=format&fit=crop"
-                imageAlt="Sushi platter"
-                category="World Cuisine"
-                categoryUrl="/category/world-cuisine"
-                tag="Japanese"
-                tagUrl="/tag/japanese"
-                author="Kenji Tanaka"
-                authorUrl="/author/kenji-tanaka"
-                date="November 20, 2025"
-                title="Sushi Master Class"
-                description="Learn the ancient techniques of sushi making from a master chef."
-                articleUrl="/article/sushi-masterclass"
+                image="{{ Vite::asset('resources/images/image-05.png') }}"
+                imageAlt="Food Carnival 2025 poster"
+                category="Latest"
+                categoryUrl="#"
+                tag="Event"
+                tagUrl="#"
+                author="Author Name"
+                authorUrl="#"
+                date="December 20, 2024"
+                title="Food Carnival 2025 coming on Jan 21st, Hulhumale. A weekend of pop-ups and street flavors!"
+                description="A vibrant food carnival with pop-ups and diverse street foods."
+                articleUrl="#"
             />
+
+
 
         </div>
 
@@ -156,7 +142,7 @@
 
 {{-- Featured Profile Section --}}
 <x-featured-person
-    image="https://images.unsplash.com/photo-1726749135857-9fad0dc1d23c?q=80&w=1364&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image="{{ Vite::asset('resources/images/image-06.png') }}"
     imageAlt="Aminath Hameed - Chef"
     name="Aminath Hameed"
     title="Chef and Owner of Maldivian Patisserie."

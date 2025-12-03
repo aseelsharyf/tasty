@@ -36,7 +36,7 @@
 <section class="flex flex-col md:flex-row w-full min-h-screen md:min-h-0">
 
     {{-- Image Side --}}
-    <div class="w-full h-[50vh] md:h-auto md:w-1/2 md:min-h-[600px] lg:min-h-[700px] xl:min-h-[800px] relative overflow-hidden">
+    <div class="w-full h-[50vh] md:h-auto md:w-1/2 min-h-screen relative overflow-hidden">
         <img src="{{ $image }}"
              alt="{{ $imageAlt }}"
              class="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105">

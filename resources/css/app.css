@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -6,59 +6,85 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans:
+        "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
 
     /* Font Sizes */
-  --font-size-xs: 0.75rem;
-  --font-size-xs--line-height: 0.75rem;
-  
-  --font-size-sm: 0.875rem;
-  --font-size-sm--line-height: 0.75rem;
-  
-  --font-size-base: 1.125rem;
-  --font-size-base--line-height: 1.5rem;
-  
-  --font-size-lg: 1.25rem;
-  --font-size-lg--line-height: 1.625rem;
-  
-  --font-size-xl: 1.25rem;
-  --font-size-xl--line-height: 1.75rem;
-  
-  --font-size-2xl: 1.5rem;
-  --font-size-2xl--line-height: 1.5rem;
-  
-  --font-size-3xl: 2rem;
-  --font-size-3xl--line-height: 2rem;
-  
-  --font-size-4xl: 2.5rem;
-  --font-size-4xl--line-height: 2.75rem;
-  
-  --font-size-5xl: 3rem;
-  --font-size-5xl--line-height: 3rem;
-  
-  --font-size-6xl: 3.75rem;
-  --font-size-6xl--line-height: 3.125rem;
-  
-  --font-size-7xl: 4rem;
-  --font-size-7xl--line-height: 4.125rem;
-  
-  --font-size-8xl: 6.25rem;
-  --font-size-8xl--line-height: 5.375rem;
-  
-  --font-size-nav: 1.125rem;
-  --font-size-nav--line-height: 1.625rem;
-  
-  --font-size-h3-caps: 3rem;
-  --font-size-h3-caps--line-height: 3rem;
-  --font-size-h3-caps--text-transform: uppercase;
-  --font-size-h3-caps--letter-spacing: 0.05em;
-  
-  /* Colors */
-  --color-tasty-pure-white: #FFFFFF;
-  --color-tasty-off-white: #F5F5F5;
-  --color-tasty-light-gray: #E0E0E0;
-  --color-tasty-yellow: #FFD600;
-  --color-tasty-black: #000000;
-  --color-tasty-blue-black: #0A0E27;
+    --font-size-xs: 0.75rem;
+    --font-size-xs--line-height: 0.75rem;
+
+    --font-size-sm: 0.875rem;
+    --font-size-sm--line-height: 0.75rem;
+
+    --font-size-base: 1.125rem;
+    --font-size-base--line-height: 1.5rem;
+
+    --font-size-lg: 1.25rem;
+    --font-size-lg--line-height: 1.625rem;
+
+    --font-size-xl: 1.25rem;
+    --font-size-xl--line-height: 1.75rem;
+
+    --font-size-2xl: 1.5rem;
+    --font-size-2xl--line-height: 1.5rem;
+
+    --font-size-3xl: 2rem;
+    --font-size-3xl--line-height: 2rem;
+
+    --font-size-4xl: 2.5rem;
+    --font-size-4xl--line-height: 2.75rem;
+
+    --font-size-5xl: 3rem;
+    --font-size-5xl--line-height: 3rem;
+
+    --font-size-6xl: 3.75rem;
+    --font-size-6xl--line-height: 3.125rem;
+
+    --font-size-7xl: 4rem;
+    --font-size-7xl--line-height: 4.125rem;
+
+    --font-size-8xl: 6.25rem;
+    --font-size-8xl--line-height: 5.375rem;
+
+    --font-size-nav: 1.125rem;
+    --font-size-nav--line-height: 1.625rem;
+
+    --font-size-h3-caps: 3rem;
+    --font-size-h3-caps--line-height: 3rem;
+    --font-size-h3-caps--text-transform: uppercase;
+    --font-size-h3-caps--letter-spacing: 0.05em;
+
+    /* Colors */
+    --color-tasty-pure-white: #ffffff;
+    --color-tasty-off-white: #f5f5f5;
+    --color-tasty-light-gray: #e0e0e0;
+    --color-tasty-yellow: #ffd600;
+    --color-tasty-black: #000000;
+    --color-tasty-blue-black: #0a0e27;
+
+    /* Font Families */
+    /*--font-mono: "Favorit Mono", ui-monospace, monospace;
+    --font-sans: "Favorit", system-ui, sans-serif;
+    --font-display: "New Spirit", Georgia, serif;*/
+
+    /* Mobile Text Styles */
+    --text-h1-mob: 60px / 50px;
+    --text-h2-mob: 40px / 44px;
+    --text-h3-mob: 32px / 32px;
+    --text-h4-mob: 24px / 24px;
+    --text-body-sm-mob: 12px / 12px;
+    --text-body-md-mob: 18px / 24px;
+    --text-body-lg-mob: 20px / 26px;
+
+    /* Desktop Text Styles */
+    --text-h1: 100px / 86px;
+    --text-h2: 64px / 66px;
+    --text-h3: 48px / 48px;
+    --text-h4: 32px / 38px;
+    --text-body-sm: 14px / 12px;
+    --text-body-md: 20px / 28px;
+    --text-body-lg: 24px / 26px;
+    --text-nav: 18px / 26px;
 }

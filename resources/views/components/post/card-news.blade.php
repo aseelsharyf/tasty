@@ -16,7 +16,7 @@
 ])
 
 <div class="w-full bg-white rounded-xl mx-auto">
-    <div class="flex flex-col p-6 md:p-8 space-y-8">
+    <div class="flex flex-col p-10 space-y-8">
 
         {{-- Image Section --}}
         <div class="w-full h-[350px] lg:h-[700px] relative rounded overflow-hidden bg-[#333]">
