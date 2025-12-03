@@ -19,7 +19,7 @@
     <div class="flex flex-col md:flex-row p-10 gap-4 md:gap-6">
 
         {{-- Image Section (Left) --}}
-        <div class="w-full md:w-[250px] h-[250px] relative rounded overflow-hidden bg-[#333] flex-shrink-0">
+        <div class="w-full md:w-[200px] h-[206px] relative rounded overflow-hidden bg-[#333] flex-shrink-0">
             <a href="{{ $articleUrl }}" class="block absolute inset-0">
                 <img src="{{ $image }}"
                      alt="{{ $imageAlt }}"
@@ -28,25 +28,16 @@
         </div>
 
         {{-- Content Section (Right) --}}
-        <div class="w-full md:flex-1 md:h-[250px] flex flex-col justify-between py-2">
+        <div class="w-full md:flex-1 md:h-[206px] flex flex-col justify-between py-2">
 
             {{-- Metadata Tags (Top) --}}
             <div class="flex justify-start">
-                <div class="bg-tasty-off-white px-4 py-2 rounded-full flex items-center justify-center gap-2.5 transition-all duration-300 whitespace-nowrap">
-                    <a href="{{ $categoryUrl }}" class="text-xs text-black uppercase hover:opacity-70 transition-opacity duration-200">
-                        {{ $category }}
-                    </a>
-
-                    @if($tag)
-                        {{-- Dot separator --}}
-                        <span class="text-xs text-black">•</span>
-
-                        {{-- Tag --}}
-                        <a href="{{ $tagUrl }}" class="text-xs text-black uppercase hover:opacity-70 transition-opacity duration-200">
-                            {{ $tag }}
-                        </a>
-                    @endif
-                </div>
+                <x-post.metadata-badge
+                    :category="$category"
+                    :categoryUrl="$categoryUrl"
+                    :tag="$tag"
+                    :tagUrl="$tagUrl"
+                />
             </div>
 
             {{-- Title (Middle) --}}

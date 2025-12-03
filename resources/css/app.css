@@ -88,3 +88,13 @@
     --text-body-lg: 24px / 26px;
     --text-nav: 18px / 26px;
 }
+
+/* Custom Utilities */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}

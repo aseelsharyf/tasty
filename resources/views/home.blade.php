@@ -154,6 +154,133 @@
     bgColor="bg-tasty-yellow"
 />
 
+{{-- The Spread Section --}}
+<div class="w-full px-10 pt-16 pb-32 bg-tasty-yellow">
+
+    {{--
+       Layout Wrapper:
+       Mobile: flex-col (Stack Intro on top, Cards below)
+       Desktop: flex-row + overflow-x-auto (Intro sits next to cards, whole row scrolls)
+    --}}
+    <div class="flex flex-col gap-10 md:flex-row md:overflow-x-auto md:scrollbar-hide md:scroll-smooth">
+
+        {{--
+            1. Intro Section
+            Mobile: w-full (Stacked)
+            Desktop: Fixed width 384px (First item in scroll)
+        --}}
+        <div class="w-full md:w-[384px] md:shrink-0">
+            <x-post.section-intro
+                image="{{ Vite::asset('resources/images/image-07.png') }}"
+                imageAlt="The Spread"
+                title="The"
+                titleLarge="spread"
+                description="The flavors, characters, and tiny island obsessions that makes the Maldivian food culture."
+            />
+        </div>
+
+        {{--
+            2. Scrollable Cards Container
+            Mobile: overflow-x-auto (This container scrolls independently)
+            Desktop: overflow-visible (Let the parent handle the scrolling)
+        --}}
+        <div class="flex gap-20 overflow-x-auto scrollbar-hide scroll-smooth md:overflow-visible">
+
+            {{-- Card Wrapper: Enforce widths here to ensure scrolling triggers --}}
+            <div class="w-[310px] md:w-[480px] shrink-0">
+                <x-post.card-spread
+                    image="{{ Vite::asset('resources/images/image-08.png') }}"
+                    imageAlt="BBQ grilling scene"
+                    category="The Spread"
+                    categoryUrl="#"
+                    tag="On Ingredients"
+                    tagUrl="#"
+                    author="Mohamed Ashraf"
+                    authorUrl="#"
+                    date="January 8, 2025"
+                    title="Salt, Smoke & Stories"
+                    description="Malé's unofficial BBQ scene: backyard grills, midnight marinades, and home pitmasters turning small spaces into smoky flavor labs."
+                    articleUrl="#"
+                    imagePosition="top"
+                />
+            </div>
+
+            <div class="w-[310px] md:w-[480px] shrink-0">
+                <x-post.card-spread
+                    image="{{ Vite::asset('resources/images/image-09.png') }}"
+                    imageAlt="Fisherman carrying basket of fish"
+                    category="The Spread"
+                    categoryUrl="#"
+                    tag="Ingredients"
+                    tagUrl="#"
+                    author="Aminath Ahmed"
+                    authorUrl="#"
+                    date="February 14, 2025"
+                    title="Job Fish: The Underrated Catch Running the Whole Country"
+                    description="Lean, shiny, firm as hell—job fish does everything except brag about itself. Here's why this humble catch is the quiet backbone of Maldivian 'freshness.'"
+                    articleUrl="#"
+                    imagePosition="bottom"
+                />
+            </div>
+
+            <div class="w-[310px] md:w-[480px] shrink-0">
+                <x-post.card-spread
+                    image="{{ Vite::asset('resources/images/image-10.png') }}"
+                    imageAlt="Traditional toddy tapping scene"
+                    category="The Spread"
+                    categoryUrl="#"
+                    tag="Ingredients"
+                    tagUrl="#"
+                    author="Hanan Saeed"
+                    authorUrl="#"
+                    date="September 22, 2025"
+                    title="Toddy Tenders: The Families Keeping Island Abundance Flowing"
+                    description="Behind every good toddy is a family working before sunrise. A slow, sticky look at the people who climb, tap, wait, and keep one of our oldest island traditions alive."
+                    articleUrl="#"
+                    imagePosition="top"
+                />
+            </div>
+
+            <div class="w-[310px] md:w-[480px] shrink-0">
+                <x-post.card-spread
+                    image="{{ Vite::asset('resources/images/image-11.png') }}"
+                    imageAlt="Adduan home cook"
+                    category="The Spread"
+                    categoryUrl="#"
+                    tag="On Ingredients"
+                    tagUrl="#"
+                    author="Aminath Ahmed"
+                    authorUrl="#"
+                    date="February 14, 2025"
+                    title="Addu on a Plate: Three Women Cooking a Region Back to Life"
+                    description="Three Adduan home cooks, one shared mission: keep the island's grandma-level cooking alive. Expect smoky tuna, coconut memories, and recipes passed down like family secrets."
+                    articleUrl="#"
+                    imagePosition="bottom"
+                />
+            </div>
+
+            <div class="w-[310px] md:w-[480px] shrink-0">
+                <x-post.card-spread
+                    image="{{ Vite::asset('resources/images/image-12.png') }}"
+                    imageAlt="Rihaakuru being cooked"
+                    category="The Spread"
+                    categoryUrl="#"
+                    tag="On Ingredients"
+                    tagUrl="#"
+                    author="Aminath Ahmed"
+                    authorUrl="#"
+                    date="September 1, 2025"
+                    title="On Rihaakuru,"
+                    description="A thick, salty, slow-cooked potion that tastes like home. How one sauce became the backbone of Maldivian comfort food."
+                    articleUrl="#"
+                    imagePosition="top"
+                />
+            </div>
+
+        </div>
+    </div>
+</div>
+
 
 <x-subscribe/>
 

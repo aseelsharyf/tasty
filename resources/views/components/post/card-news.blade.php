@@ -28,21 +28,20 @@
 
             {{-- Metadata Tags --}}
             <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-10">
-                <div class="bg-white px-5 md:px-8 py-2 md:py-3 rounded-full flex items-center justify-center gap-2.5 md:gap-5 shadow-sm hover:shadow-md hover:bg-stone-50 transition-all duration-300 whitespace-nowrap">
-                    <a href="{{ $categoryUrl }}" class="text-sm text-black hover:opacity-70 transition-opacity duration-200">
-                        {{ $category }}
-                    </a>
-
-                    @if($tag)
-                        {{-- Dot separator: Hidden on mobile, visible on desktop --}}
-                        <span class="text-sm text-black hidden md:inline">•</span>
-
-                        {{-- Tag: Hidden on mobile, visible on desktop --}}
-                        <a href="{{ $tagUrl }}" class="text-sm text-black hidden md:inline hover:opacity-70 transition-opacity duration-200">
-                            {{ $tag }}
-                        </a>
-                    @endif
-                </div>
+                <x-post.metadata-badge
+                    :category="$category"
+                    :categoryUrl="$categoryUrl"
+                    :tag="$tag"
+                    :tagUrl="$tagUrl"
+                    bgColor="bg-white"
+                    textSize="text-sm"
+                    padding="px-5 md:px-8 py-2 md:py-3"
+                    gap="gap-2.5 md:gap-5"
+                    shadow="shadow-sm hover:shadow-md"
+                    hoverBg="hover:bg-stone-50"
+                    :hideTagOnMobile="true"
+                    :uppercase="false"
+                />
             </div>
         </div>
 
