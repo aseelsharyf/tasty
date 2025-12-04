@@ -42,7 +42,7 @@
     {{-- Content Section --}}
     <div class="w-full flex flex-col justify-start items-center gap-5">
         {{-- Title and Subtitle --}}
-        <div class="w-full flex flex-col justify-start items-start">
+        <div class="w-full flex flex-col justify-start items-center">
             <x-ui.heading
                 level="h3"
                 :text="$name"

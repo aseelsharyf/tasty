@@ -97,40 +97,21 @@
 
     {{-- Profile Image with Gradient Overlay --}}
     <div class="w-full mx-auto flex justify-center">
-        <style>
-            .featured-person-image {
-                height: {{ $imageHeightMobile }}px;
-                border-top-left-radius: {{ $radiusMobile }}px;
-                border-top-right-radius: {{ $radiusMobile }}px;
-            }
-            @media (min-width: 768px) {
-                .featured-person-image {
-                    height: {{ $imageHeightTablet }}px;
-                    border-top-left-radius: {{ $radiusTablet }}px;
-                    border-top-right-radius: {{ $radiusTablet }}px;
-                }
-            }
-            @media (min-width: 1024px) {
-                .featured-person-image {
-                    height: {{ $imageHeightDesktop }}px;
-                    border-top-left-radius: {{ $radiusDesktop }}px;
-                    border-top-right-radius: {{ $radiusDesktop }}px;
-                }
-            }
-            @media (min-width: 1280px) {
-                .featured-person-image {
-                    height: {{ $imageHeightLarge }}px;
-                    border-top-left-radius: {{ $radiusLarge }}px;
-                    border-top-right-radius: {{ $radiusLarge }}px;
-                }
-            }
-        </style>
-        <div class="featured-person-image relative flex flex-col justify-center items-center w-full overflow-hidden bg-cover bg-center"
-             style="background: linear-gradient(180deg, rgba({{ $gradientRgb }}, 0) 60%, rgba({{ $gradientRgb }}, 0.5) 80%, rgba({{ $gradientRgb }}, 1) 100%), url('{{ $image }}'); background-size: cover; background-position: center;">
-            {{-- Content (can be extended if needed) --}}
-            <div class="relative z-10">
-                {{-- Your content here --}}
-            </div>
+        <div class="relative w-full h-[294px] md:h-[800px] lg:h-[1126px] xl:h-[1300px] rounded-t-[5000px] overflow-hidden">
+            {{-- Background Image --}}
+            @if($image)
+                <img
+                    src="{{ $image }}"
+                    alt="{{ $imageAlt }}"
+                    class="absolute inset-0 w-full h-full object-cover object-center rounded-t-[5000px]"
+                />
+            @else
+                {{-- Placeholder --}}
+                <div class="absolute inset-0 w-full h-full bg-gray-200 rounded-t-[5000px]"></div>
+            @endif
+
+            {{-- Gradient Overlay --}}
+            <div class="absolute inset-0 rounded-t-[5000px]" style="background: linear-gradient(180deg, rgba({{ $gradientRgb }}, 0) 60%, rgba({{ $gradientRgb }}, 0.5) 80%, rgb({{ $gradientRgb }}) 100%);"></div>
         </div>
     </div>
 

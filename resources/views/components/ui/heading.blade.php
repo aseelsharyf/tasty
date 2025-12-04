@@ -3,45 +3,44 @@
 @props([
     'level' => 'h2', // Options: 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'
     'text' => '',
-    'size' => null, // Optional: Override size (e.g., 'text-5xl', 'text-3xl')
-    'color' => 'text-stone-900',
+    'variant' => null, // Options: null, 'hero' (for h1-hero style)
+    'size' => null, // Optional: Override with custom size class
+    'color' => 'text-tasty-blue-black',
     'align' => 'left', // Options: 'left', 'center', 'right'
-    'weight' => 'font-normal',
-    'font' => 'font-serif',
-    'leading' => null, // Optional: Override leading
     'uppercase' => false,
     'url' => null, // Optional: Make heading a link
     'lineClamp' => null, // Optional: 'line-clamp-3', 'line-clamp-2', etc.
 ])
 
 @php
-    // Default size based on level (matching design tokens)
-    // Mobile: 60px/50px, Desktop: 100px/86px for h1
-    // Mobile: 40px/44px, Desktop: 64px/66px for h2
-    // Mobile: 32px/32px, Desktop: 48px/48px for h3
-    // Mobile: 24px/24px, Desktop: 32px/38px for h4
-    $defaultSizes = [
-        'h1' => 'text-[60px] md:text-[100px]',     // h1-mob / h1
-        'h2' => 'text-[40px] md:text-[64px]',      // h2-mob / h2
-        'h3' => 'text-[32px] md:text-[48px]',      // h3-mob / h3
-        'h4' => 'text-[24px] md:text-[32px]',      // h4-mob / h4
-        'h5' => 'text-lg md:text-xl',
-        'h6' => 'text-base md:text-lg',
+    /**
+     * Typography classes from app.css (based on Figma)
+     * These use responsive CSS with media queries built-in:
+     *
+     * text-h1: 60px/50px → 100px/86px (tracking -2.4px → -4px)
+     * text-h1-hero: 60px/50px → 200px/160px (tracking -2.4px → -8px, uppercase)
+     * text-h2: 40px/44px → 64px/66px (tracking -1.6px → -2.56px)
+     * text-h3: 32px/32px → 48px/48px (tracking -1.28px → -1.92px)
+     * text-h4: 24px/24px → 32px/38px (tracking -0.96px → -1.28px)
+     */
+    $typographyClasses = [
+        'h1' => 'text-h1',
+        'h1-hero' => 'text-h1-hero',
+        'h2' => 'text-h2',
+        'h3' => 'text-h3',
+        'h4' => 'text-h4',
+        'h5' => 'text-h4', // fallback to h4 styling
+        'h6' => 'text-h4', // fallback to h4 styling
     ];
 
-    // Default leading based on level (matching design tokens)
-    $defaultLeading = [
-        'h1' => 'leading-[50px] md:leading-[86px]',  // h1-mob / h1
-        'h2' => 'leading-[44px] md:leading-[66px]',  // h2-mob / h2
-        'h3' => 'leading-[32px] md:leading-[48px]',  // h3-mob / h3
-        'h4' => 'leading-[24px] md:leading-[38px]',  // h4-mob / h4
-        'h5' => 'leading-normal',
-        'h6' => 'leading-normal',
-    ];
+    // Determine which typography class to use
+    $typographyKey = $level;
+    if ($level === 'h1' && $variant === 'hero') {
+        $typographyKey = 'h1-hero';
+    }
 
-    // Use custom size or default
-    $sizeClass = $size ?? $defaultSizes[$level] ?? 'text-3xl';
-    $leadingClass = $leading ?? $defaultLeading[$level] ?? 'leading-tight';
+    // Use custom size or typography class
+    $typeClass = $size ?? $typographyClasses[$typographyKey] ?? 'text-h3';
 
     // Alignment
     $alignClass = match($align) {
@@ -51,21 +50,21 @@
         default => 'text-left',
     };
 
-    // Uppercase
+    // Uppercase (h1-hero has it built in, but allow manual override)
     $uppercaseClass = $uppercase ? 'uppercase' : '';
 
     // Combine classes
-    $classes = trim("w-full {$font} {$sizeClass} {$color} {$alignClass} {$weight} {$leadingClass} {$uppercaseClass} {$lineClamp}");
+    $classes = trim("{$typeClass} {$color} {$alignClass} {$uppercaseClass} {$lineClamp}");
 @endphp
 
 @if($url)
     <a href="{{ $url }}" class="block">
-        <{{ $level }} class="{{ $classes }}">
-            {{ $text }}
+        <{{ $level }} {{ $attributes->merge(['class' => $classes]) }}>
+            {{ $text }}{{ $slot }}
         </{{ $level }}>
     </a>
 @else
-    <{{ $level }} class="{{ $classes }}">
-        {{ $text }}
+    <{{ $level }} {{ $attributes->merge(['class' => $classes]) }}>
+        {{ $text }}{{ $slot }}
     </{{ $level }}>
 @endif

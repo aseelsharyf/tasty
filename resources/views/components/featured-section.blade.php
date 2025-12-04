@@ -97,67 +97,39 @@
 @endphp
 
 {{-- Featured Section --}}
+{{-- Based on Figma Frame 117 (node 158:1028) --}}
+{{-- Mobile: Container 750px, Content pt-96px pb-64px px-40px gap-24px --}}
+{{-- Desktop: Container 1058px, Content h-735px pt-110px px-362px gap-40px --}}
 <div class="w-full overflow-x-hidden">
 
     {{-- Container with Image Background and Curved Content Overlay --}}
-    <div class="w-full mx-auto flex justify-center relative">
-        <style>
-            .featured-section-container {
-                height: {{ $imageHeightMobile }}px;
-            }
-            .featured-section-content {
-                border-top-left-radius: {{ $radiusMobile }}px;
-                border-top-right-radius: {{ $radiusMobile }}px;
-            }
-            @media (min-width: 768px) {
-                .featured-section-container {
-                    height: {{ $imageHeightTablet }}px;
-                }
-                .featured-section-content {
-                    border-top-left-radius: {{ $radiusTablet }}px;
-                    border-top-right-radius: {{ $radiusTablet }}px;
-                }
-            }
-            @media (min-width: 1024px) {
-                .featured-section-container {
-                    height: {{ $imageHeightDesktop }}px;
-                }
-                .featured-section-content {
-                    border-top-left-radius: {{ $radiusDesktop }}px;
-                    border-top-right-radius: {{ $radiusDesktop }}px;
-                }
-            }
-            @media (min-width: 1280px) {
-                .featured-section-container {
-                    height: {{ $imageHeightLarge }}px;
-                }
-                .featured-section-content {
-                    border-top-left-radius: {{ $radiusLarge }}px;
-                    border-top-right-radius: {{ $radiusLarge }}px;
-                }
-            }
-        </style>
+    <div class="w-full mx-auto flex justify-center relative h-[750px] md:h-[1058px]">
 
         {{-- Background Image --}}
-        <div class="featured-section-container absolute inset-0 w-full bg-cover bg-center"
-             style="background-image: url('{{ $image }}'); background-size: cover; background-position: center;">
+        <div class="absolute inset-0 w-full">
+            @if($image)
+                <img
+                    src="{{ $image }}"
+                    alt="{{ $imageAlt }}"
+                    class="w-full h-full object-cover object-center"
+                />
+            @else
+                <div class="w-full h-full bg-gray-300"></div>
+            @endif
         </div>
 
         {{-- Curved Content Overlay --}}
-        <div class="featured-section-container relative w-full flex flex-col justify-end items-center">
-            <div class="h-[600px] md:h-[900px] featured-section-content w-full {{ $contentClassColor }} px-10 md:px-96 pt-24 md:pt-28 pb-16 flex flex-col justify-center items-center gap-6 md:gap-10" @if($contentStyleAttr) style="{{ $contentStyleAttr }}" @endif>
+        <div class="relative w-full h-full flex flex-col justify-end items-center">
+            <div class="w-full {{ $contentClassColor }} rounded-t-[2000px] md:rounded-t-[5000px] pt-[96px] pb-[64px] px-[40px] md:h-[735px] md:pt-[110px] md:pb-0 md:px-[100px] lg:px-[200px] xl:px-[362px] flex flex-col justify-center items-center gap-6 md:gap-10" @if($contentStyleAttr) style="{{ $contentStyleAttr }}" @endif>
                 <!-- Header Section -->
                 @if($heading || $subheading)
-                    <div class="self-stretch flex flex-col justify-center items-center gap-4">
+                    <div class="self-stretch flex flex-col justify-center items-center gap-3 md:gap-4">
                         @if($heading)
                             <x-ui.heading
                                 level="h1"
+                                variant="hero"
                                 :text="$heading"
-                                size="text-6xl md:text-[200px]"
-                                leading="leading-[50px] md:leading-[160px]"
                                 align="center"
-                                color="text-tasty-blue-black"
-                                :uppercase="true"
                             />
                         @endif
 
@@ -166,7 +138,6 @@
                                 level="h2"
                                 :text="$subheading"
                                 align="center"
-                                color="text-tasty-blue-black"
                             />
                         @endif
                     </div>
@@ -174,27 +145,27 @@
 
                 <!-- Tags Section -->
                 @if($tag1 || $tag2)
-                    <div class="flex justify-center">
-                        <x-post.metadata-badge
-                            :category="$tag1"
-                            :categoryUrl="$tag1Url"
-                            :tag="$tag2"
-                            :tagUrl="$tag2Url"
-                            bgColor="bg-transparent"
-                            textSize="text-xs md:text-sm"
-                            padding="px-0 py-0"
-                            gap="gap-3 md:gap-5"
-                        />
+                    <div class="flex items-center justify-center gap-4 md:gap-5 uppercase">
+                        <x-ui.text variant="sm">
+                            @if($tag1)
+                                <a href="{{ $tag1Url }}" class="hover:opacity-70 transition-opacity">{{ $tag1 }}</a>
+                            @endif
+                            @if($tag1 && $tag2)
+                                <span class="mx-2 md:mx-3">•</span>
+                            @endif
+                            @if($tag2)
+                                <a href="{{ $tag2Url }}" class="hover:opacity-70 transition-opacity">{{ $tag2 }}</a>
+                            @endif
+                        </x-ui.text>
                     </div>
                 @endif
 
                 <!-- Description Section -->
                 @if($description)
-                    <x-post.description
-                        :description="$description"
-                        size="lg"
+                    <x-ui.text
+                        variant="lg"
+                        :text="$description"
                         align="center"
-                        color="text-tasty-blue-black"
                     />
                 @endif
 

@@ -10,7 +10,7 @@
 ])
 
 <div class="w-full {{ $maxWidth }} flex flex-col justify-start items-center gap-8">
-    <img class="w-full h-[358px] md:h-[429.5px] object-cover rounded-xl"
+    <img class="w-full h-[156px] md:h-[429.5px] object-contain"
          src="{{ $image }}"
          alt="{{ $imageAlt }}" />
 

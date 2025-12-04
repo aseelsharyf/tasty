@@ -258,7 +258,7 @@
        Mobile: flex-col (Stack Intro on top, Cards below)
        Desktop: flex-row + overflow-x-auto (Intro sits next to cards, whole row scrolls)
     --}}
-    <div class="flex flex-col gap-10 md:flex-row md:gap-10 md:overflow-x-auto md:scrollbar-hide md:scroll-smooth">
+    <div class="flex flex-col gap-10 md:flex-row md:gap-10 md:overflow-x-auto scrollbar-hide md:scroll-smooth">
 
         {{--
             1. Intro Section

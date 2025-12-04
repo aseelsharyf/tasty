@@ -3,36 +3,35 @@
 @props([
     'title',
     'url' => '#',
-    'size' => null, // Options: 'large' (4xl/5xl), 'small' (2xl/3xl), null (use heading defaults)
+    'size' => null, // Options: 'large' (h3), 'small' (h4), null (use h2 default)
     'tag' => 'h2',
-    'align' => 'left', // Options: 'left', 'center', 'left md:center'
-    'color' => 'text-stone-900',
+    'align' => 'left', // Options: 'left', 'center', 'right'
+    'color' => 'text-tasty-blue-black',
     'lineClamp' => null, // Optional: 'line-clamp-3', 'line-clamp-2', etc.
 ])
 
 @php
-    // Size mapping - if null, let ui.heading use its defaults
-    $sizeMapping = null;
-    $leadingMapping = null;
-
-    if ($size !== null) {
-        $sizeMapping = match($size) {
-            'large' => 'text-4xl md:text-5xl',
-            'small' => 'text-2xl md:text-3xl',
-            default => 'text-4xl md:text-5xl',
-        };
-        $leadingMapping = $size === 'large' ? 'leading-tight' : 'leading-normal';
-    }
+    /**
+     * Map size prop to heading level for typography
+     * This ensures we use the typography system from app.css
+     * which includes the correct display font (New Spirit/Playfair Display)
+     *
+     * large = h3 (32px/32px → 48px/48px)
+     * small = h4 (24px/24px → 32px/38px)
+     * null = use tag level (default h2: 40px/44px → 64px/66px)
+     */
+    $headingLevel = match($size) {
+        'large' => 'h3',
+        'small' => 'h4',
+        default => $tag,
+    };
 @endphp
 
-<a href="{{ $url }}" class="w-full hover:opacity-70 transition-opacity duration-200 block">
-    <x-ui.heading
-        :level="$tag"
-        :text="$title"
-        :size="$sizeMapping"
-        :color="$color"
-        :align="$align"
-        :leading="$leadingMapping"
-        :lineClamp="$lineClamp"
-    />
-</a>
+<x-ui.heading
+    :level="$headingLevel"
+    :text="$title"
+    :color="$color"
+    :align="$align"
+    :lineClamp="$lineClamp"
+    :url="$url"
+/>
