@@ -549,7 +549,7 @@
     contentBgColor="bg-tasty-yellow"
 />
 
-<div class="w-full px-5 lg:px-10 py-16 bg-tasty-yellow overflow-hidden">
+<div class="w-full px-5 lg:px-10 pt-16 pb-32 bg-tasty-yellow overflow-hidden">
     <x-layout.card-grid mode="scroll" gap="gap-10">
         <div class="w-[310px] lg:w-[480px] shrink-0">
             <x-cards.spread

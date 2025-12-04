@@ -1,4 +1,4 @@
-<section class="w-full bg-tasty-light-gray pb-24 px-4 text-center">
+<section class="w-full bg-tasty-light-gray pt-16 pb-32 px-4 text-center">
     <div class="mx-auto max-w-4xl">
         <x-ui.heading
             level="h2"
