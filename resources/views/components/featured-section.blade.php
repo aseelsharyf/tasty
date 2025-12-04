@@ -97,7 +97,6 @@
 @endphp
 
 {{-- Featured Section --}}
-{{-- Based on Figma Frame 117 (node 158:1028) --}}
 {{-- Using min-height with auto expansion for content --}}
 <div class="w-full overflow-hidden">
 

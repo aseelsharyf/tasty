@@ -8,6 +8,7 @@
     'layout' => 'horizontal', // Options: 'horizontal', 'vertical md:horizontal'
     'align' => 'left', // Options: 'left', 'center'
     'hideSeparatorOnMobile' => false,
+    'hideDateOnMobile' => false, // Hide date and separator on mobile
     'color' => 'text-stone-900',
 ])
 
@@ -40,10 +41,10 @@
     </a>
 
     {{-- Dot separator --}}
-    <span class="color-tasty-blue-black {{ $separatorClasses }}">•</span>
+    <span class="color-tasty-blue-black {{ $separatorClasses }} {{ $hideDateOnMobile ? 'hidden md:block' : '' }}">•</span>
 
     {{-- Date --}}
-    <span class="color-tasty-blue-black {{ $layout === 'horizontal' ? '' : 'truncate' }} {{ $layout === 'horizontal' ? '' : 'whitespace-nowrap' }}">
+    <span class="color-tasty-blue-black {{ $layout === 'horizontal' ? '' : 'truncate' }} {{ $layout === 'horizontal' ? '' : 'whitespace-nowrap' }} {{ $hideDateOnMobile ? 'hidden md:block' : '' }}">
         {{ strtoupper($date) }}
     </span>
 </div>

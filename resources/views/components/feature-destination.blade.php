@@ -1,7 +1,5 @@
 {{-- resources/views/components/feature-destination.blade.php
      Featured destination section with curved overlay (Ceylon style)
-     Based on Figma Frame 117 (node 158:1028)
-     Using aspect ratio for consistent scaling across breakpoints
 --}}
 @props([
     'image',

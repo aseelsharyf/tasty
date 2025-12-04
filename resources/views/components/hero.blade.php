@@ -23,7 +23,7 @@
 
 <section class="flex flex-col md:flex-row w-full min-h-screen md:min-h-0 md:h-[854px]">
     {{-- Image Side --}}
-    <div class="w-full h-[50vh] md:h-full md:w-1/2 relative overflow-hidden">
+    <div class="w-full h-[60vh] md:h-full md:w-1/2 relative overflow-hidden">
         <img
             src="{{ $image }}"
             alt="{{ $imageAlt }}"
@@ -32,7 +32,7 @@
     </div>
 
     {{-- Content Side --}}
-    <div class="w-full min-h-[50vh] md:min-h-0 md:h-full md:w-1/2 {{ $bgColor }} flex flex-col px-8 py-10 md:p-24 {{ $alignClasses }}">
+    <div class="w-full min-h-[40vh] md:min-h-0 md:h-full md:w-1/2 {{ $bgColor }} flex flex-col px-8 py-10 md:p-24 {{ $alignClasses }}">
         {{-- Tags/Metadata --}}
         @if(count($tags) > 0 || $date)
             <div class="flex flex-wrap gap-2 md:gap-3 text-xs font-bold tracking-widest uppercase text-tasty-blue-black mb-4 md:mb-12">

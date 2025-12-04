@@ -716,6 +716,79 @@
 </div>
 
 
+{{-- Recipe Section - Everyday Cooking --}}
+<div class="w-full px-5 lg:px-10 pt-16 pb-32 bg-white" style="background: linear-gradient(to bottom, var(--color-tasty-yellow) 0%, white 15%);">
+
+    {{-- Top Row: Intro + Large Card --}}
+    {{-- Mobile: Stack, Desktop: 2-column grid with 64px gap --}}
+    <div class="flex flex-col lg:grid lg:grid-cols-2 gap-10 lg:gap-16 mb-10">
+        {{-- Section Intro - vertically centered --}}
+        <div class="flex items-center justify-center">
+            <x-post.section-intro
+                image="{{ Vite::asset('resources/images/image-07.png') }}"
+                imageAlt="Everyday Cooking"
+                title="Everyday"
+                titleLarge="Cooking"
+                description="The flavors, characters, and tiny island obsessions that makes the Maldivian food culture."
+                maxWidth="max-w-[310px] lg:max-w-[400px]"
+            />
+        </div>
+
+        {{-- Large Recipe Card - full width --}}
+        <div class="w-full">
+            <x-post.card-recipe
+                image="{{ Vite::asset('resources/images/image-26.png') }}"
+                imageAlt="Illustrated cooking scene"
+                :tags="['recipe','best of']"
+                author="Author Name"
+                authorUrl="#"
+                date="November 12, 2025"
+                title="12 Must-Try Recipes to Make This December"
+                description="The recipe for choosing the perfect resort is in the menu! Ever look up hotels and resorts and see terms like 'all inclusive' and 'European plan' and not quite know what they mean?"
+                url="#"
+            />
+        </div>
+    </div>
+
+    {{-- Bottom Row: 3 Small Cards --}}
+    {{-- Mobile: Horizontal scroll, Desktop: 3-column grid with 40px gap --}}
+    <div class="flex lg:grid lg:grid-cols-3 items-start gap-5 lg:gap-10 overflow-x-auto lg:overflow-visible scrollbar-hide scroll-smooth">
+        <x-post.card-recipe-small
+            image="{{ Vite::asset('resources/images/image-27.png') }}"
+            imageAlt="Squash pasta closeup"
+            :tags="['recipe','vegan']"
+            author="Author Name"
+            authorUrl="#"
+            date="November 12, 2025"
+            title="How to Cook Squash Pasta"
+            url="#"
+        />
+
+        <x-post.card-recipe-small
+            image="{{ Vite::asset('resources/images/image-28.png') }}"
+            imageAlt="Chocolate chip cookie"
+            :tags="['recipe','sweet tooth']"
+            author="Author Name"
+            authorUrl="#"
+            date="November 12, 2025"
+            title="Chocolate Chip Cookies to Die for"
+            url="#"
+        />
+
+        <x-post.card-recipe-small
+            image="{{ Vite::asset('resources/images/image-29.png') }}"
+            imageAlt="Omelet with mushrooms"
+            :tags="['recipe','Maldivian']"
+            author="Author Name"
+            authorUrl="#"
+            date="November 12, 2025"
+            title="How to Make a Fantastic Omelet"
+            url="#"
+        />
+    </div>
+</div>
+
+
 <x-subscribe/>
 
 @endsection
