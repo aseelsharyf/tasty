@@ -251,7 +251,7 @@
 />
 
 {{-- The Spread Section --}}
-<div class="w-full px-5 md:px-10 pt-16 pb-32 bg-tasty-yellow">
+<div class="w-full px-5 md:px-10 pt-16 pb-32 bg-tasty-yellow overflow-x-hidden">
 
     {{--
        Layout Wrapper:
@@ -409,7 +409,7 @@
 </div>
 
 {{-- Restaurant/Cafe Section - On the Menu --}}
-<div class="w-full pt-16 pb-32 bg-tasty-off-white">
+<div class="w-full pt-16 pb-32 bg-tasty-off-white overflow-x-hidden">
 
     {{-- Mobile: Horizontal Scroll --}}
     <div class="md:hidden flex flex-col gap-10">
@@ -584,6 +584,8 @@
     </div>
 
 </div>
+
+
 
 <x-subscribe/>
 

@@ -35,7 +35,7 @@
         </div>
 
         {{-- Gradient Overlay --}}
-        <div class="absolute inset-0 bg-gradient-to-b from-tasty-yellow/0 from-60% via-yellow-300/50 via-80% to-yellow-300 pointer-events-none z-10"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-tasty-yellow/0 from-60% via-tasty-yellow/50 via-80% to-tasty-yellow pointer-events-none z-10"></div>
 
         {{-- Title and Subtitle (Overlay) --}}
         <div class="relative z-20 w-full h-full p-6 md:p-10 flex flex-col justify-end md:justify-center items-start">
@@ -54,7 +54,7 @@
     </div>
 
     {{-- Content Section --}}
-    <div class="w-full px-6 md:px-10 pt-6 pb-8 md:pb-12 bg-yellow-300 flex flex-col md:flex-row justify-center md:justify-start items-center md:items-end gap-6 md:gap-20">
+    <div class="w-full px-6 md:px-10 pt-6 pb-8 md:pb-12 bg-tasty-yellow flex flex-col md:flex-row justify-center md:justify-start items-center md:items-end gap-6 md:gap-20">
 
         {{-- Description and Metadata --}}
         <div class="w-full md:flex-1 flex flex-col justify-end items-center md:items-start gap-6">

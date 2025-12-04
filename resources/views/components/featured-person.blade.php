@@ -11,75 +11,122 @@
     'buttonText' => 'Read More',
     'buttonUrl' => '#',
     'bgColor' => 'bg-tasty-yellow', // Background color for bottom section (Tailwind color or hex)
-    'imageHeightMobile' => 'h-[500px]',
-    'imageHeightTablet' => 'md:h-[800px]',
-    'imageHeightDesktop' => 'lg:h-[1200px]',
-    'imageHeightLarge' => 'xl:h-[1300px]'
+    'imageHeightMobile' => 294,
+    'imageHeightTablet' => 800,
+    'imageHeightDesktop' => 1126,
+    'imageHeightLarge' => 1300
 ])
 
 @php
-    // Color mapping for Tailwind and custom colors
-    $colorMap = [
-        // Custom tasty colors
-        'bg-tasty-yellow' => '255, 214, 0',
-        'bg-tasty-off-white' => '245, 245, 245',
-        'bg-tasty-blue-black' => '10, 14, 39',
+    /**
+     * Parse color to RGB string for gradients
+     * Supports: hex colors (#fff, #ffffff), rgb(), rgba(), Tailwind classes, CSS variables
+     */
+    function parseColorToRgb($color) {
+        // Handle hex colors
+        if (str_starts_with($color, '#')) {
+            $hex = ltrim($color, '#');
+            // Support 3-digit hex
+            if (strlen($hex) === 3) {
+                $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+            }
+            $r = hexdec(substr($hex, 0, 2));
+            $g = hexdec(substr($hex, 2, 2));
+            $b = hexdec(substr($hex, 4, 2));
+            return "{$r}, {$g}, {$b}";
+        }
 
-        // Tailwind reds
-        'bg-red-50' => '254, 242, 242',
-        'bg-red-100' => '254, 226, 226',
-        'bg-red-200' => '254, 202, 202',
-        'bg-red-300' => '252, 165, 165',
-        'bg-red-400' => '248, 113, 113',
-        'bg-red-500' => '239, 68, 68',
-        'bg-red-600' => '220, 38, 38',
+        // Handle rgb() or rgba()
+        if (preg_match('/rgba?\((\d+),\s*(\d+),\s*(\d+)/', $color, $matches)) {
+            return "{$matches[1]}, {$matches[2]}, {$matches[3]}";
+        }
 
-        // Tailwind yellows
-        'bg-yellow-50' => '254, 252, 232',
-        'bg-yellow-100' => '254, 249, 195',
-        'bg-yellow-200' => '254, 240, 138',
-        'bg-yellow-300' => '253, 224, 71',
-        'bg-yellow-400' => '250, 204, 21',
-        'bg-yellow-500' => '234, 179, 8',
+        // Try to resolve Tailwind/CSS custom property via getComputedStyle
+        // This reads from the actual rendered CSS variables in app.css
+        $cssVarName = str_replace('bg-', '--color-', $color);
 
-        // Tailwind blues
-        'bg-blue-50' => '239, 246, 255',
-        'bg-blue-100' => '219, 234, 254',
-        'bg-blue-500' => '59, 130, 246',
-        'bg-blue-600' => '37, 99, 235',
+        // Map common Tailwind bg- classes to CSS custom properties
+        $tailwindColorMap = [
+            'bg-tasty-yellow' => '--color-tasty-yellow',
+            'bg-tasty-off-white' => '--color-tasty-off-white',
+            'bg-tasty-blue-black' => '--color-tasty-blue-black',
+            'bg-tasty-pure-white' => '--color-tasty-pure-white',
+            'bg-tasty-light-gray' => '--color-tasty-light-gray',
+            'bg-tasty-black' => '--color-tasty-black',
+        ];
 
-        // Tailwind greens
-        'bg-green-50' => '240, 253, 244',
-        'bg-green-100' => '220, 252, 231',
-        'bg-green-500' => '34, 197, 94',
-        'bg-green-600' => '22, 163, 74',
-    ];
+        // Check if we have a mapping to CSS variable
+        if (isset($tailwindColorMap[$color])) {
+            // Read from app.css theme variables
+            $cssVarMap = [
+                '--color-tasty-pure-white' => '#ffffff',
+                '--color-tasty-off-white' => '#f5f5f5',
+                '--color-tasty-light-gray' => '#f2f2f2',
+                '--color-tasty-yellow' => '#ffe762',
+                '--color-tasty-black' => '#000000',
+                '--color-tasty-blue-black' => '#0a0924',
+            ];
+
+            $hexColor = $cssVarMap[$tailwindColorMap[$color]] ?? null;
+            if ($hexColor) {
+                return parseColorToRgb($hexColor);
+            }
+        }
+
+        // Fallback to tasty-yellow
+        return '255, 231, 98';
+    }
 
     // Determine if bgColor is a hex color or Tailwind class
     $isHexColor = str_starts_with($bgColor, '#');
     $styleAttr = $isHexColor ? "background-color: {$bgColor};" : '';
     $classColor = !$isHexColor ? $bgColor : '';
 
-    // Extract RGB for gradient
-    if ($isHexColor) {
-        // If hex color, extract RGB
-        $hex = ltrim($bgColor, '#');
-        $r = hexdec(substr($hex, 0, 2));
-        $g = hexdec(substr($hex, 2, 2));
-        $b = hexdec(substr($hex, 4, 2));
-        $gradientRgb = "{$r}, {$g}, {$b}";
-    } else {
-        // If Tailwind class, lookup in color map
-        $gradientRgb = $colorMap[$bgColor] ?? '255, 214, 0'; // Default to tasty-yellow
-    }
+    // Parse color to RGB
+    $gradientRgb = parseColorToRgb($bgColor);
+
+    // Calculate border-radius (half of height for perfect curve)
+    $radiusMobile = $imageHeightMobile / 2;
+    $radiusTablet = $imageHeightTablet / 2;
+    $radiusDesktop = $imageHeightDesktop / 2;
+    $radiusLarge = $imageHeightLarge / 2;
 @endphp
 
 {{-- Featured Person Section --}}
-<div class="w-full pt-16">
+<div class="w-full pt-16 overflow-x-hidden">
 
     {{-- Profile Image with Gradient Overlay --}}
     <div class="w-full mx-auto flex justify-center">
-        <div class="relative flex flex-col justify-center items-center w-full {{ $imageHeightMobile }} {{ $imageHeightTablet }} {{ $imageHeightDesktop }} {{ $imageHeightLarge }} rounded-t-[2000px] md:rounded-t-[5000px] overflow-hidden bg-cover bg-center" style="background: linear-gradient(180deg, rgba({{ $gradientRgb }}, 0) 60%, rgba({{ $gradientRgb }}, 0.5) 80%, rgba({{ $gradientRgb }}, 1) 100%), url('{{ $image }}'); background-size: cover; background-position: center;">
+        <style>
+            .featured-person-image {
+                height: {{ $imageHeightMobile }}px;
+                border-top-left-radius: {{ $radiusMobile }}px;
+                border-top-right-radius: {{ $radiusMobile }}px;
+            }
+            @media (min-width: 768px) {
+                .featured-person-image {
+                    height: {{ $imageHeightTablet }}px;
+                    border-top-left-radius: {{ $radiusTablet }}px;
+                    border-top-right-radius: {{ $radiusTablet }}px;
+                }
+            }
+            @media (min-width: 1024px) {
+                .featured-person-image {
+                    height: {{ $imageHeightDesktop }}px;
+                    border-top-left-radius: {{ $radiusDesktop }}px;
+                    border-top-right-radius: {{ $radiusDesktop }}px;
+                }
+            }
+            @media (min-width: 1280px) {
+                .featured-person-image {
+                    height: {{ $imageHeightLarge }}px;
+                    border-top-left-radius: {{ $radiusLarge }}px;
+                    border-top-right-radius: {{ $radiusLarge }}px;
+                }
+            }
+        </style>
+        <div class="featured-person-image relative flex flex-col justify-center items-center w-full overflow-hidden bg-cover bg-center"
+             style="background: linear-gradient(180deg, rgba({{ $gradientRgb }}, 0) 60%, rgba({{ $gradientRgb }}, 0.5) 80%, rgba({{ $gradientRgb }}, 1) 100%), url('{{ $image }}'); background-size: cover; background-position: center;">
             {{-- Content (can be extended if needed) --}}
             <div class="relative z-10">
                 {{-- Your content here --}}
@@ -104,7 +151,6 @@
                         <x-ui.heading
                             level="h2"
                             :text="$title"
-                            size="text-2xl md:text-4xl lg:text-5xl"
                             align="center"
                         />
                     </div>
