@@ -61,11 +61,11 @@
 
 <a
     href="{{ $url }}"
-    class="group {{ $bgColor }} {{ $paddingClasses }} rounded-full inline-flex items-center {{ $iconPosition === 'left' ? $gapClass : $gapClass . ' flex-row-reverse' }} shadow-sm hover:shadow-md {{ $hoverBg }} transition-all duration-300"
+    {{ $attributes->merge(['class' => "group {$bgColor} {$paddingClasses} rounded-full inline-flex items-center justify-center " . ($iconPosition === 'left' ? $gapClass : $gapClass . ' flex-row-reverse') . " shadow-sm hover:shadow-md {$hoverBg} transition-all duration-300"]) }}
 >
     @if($icon)
-        <i class="fa-solid fa-{{ $icon }} {{ $iconSizeClass }} {{ $textColor }} {{ $iconAnimation }} leading-none"></i>
+        <i class="fa-solid fa-{{ $icon }} {{ $iconSizeClass }} {{ $textColor }} {{ $iconAnimation }}"></i>
     @endif
 
-    <span class="{{ $textStyleClasses }} {{ $textSizeClass }} {{ $textColor }} leading-6">{{ $text }}</span>
+    <span class="{{ $textStyleClasses }} {{ $textSizeClass }} {{ $textColor }}">{{ $text }}</span>
 </a>

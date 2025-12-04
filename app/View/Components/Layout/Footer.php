@@ -50,11 +50,11 @@ class Footer extends Component
         ];
 
         $this->office = $office ?? [
-            ['label' => 'About', 'url' => '#'],
-            ['label' => 'Contact', 'url' => '#'],
-            ['label' => 'Editorial Policy', 'url' => '#'],
-            ['label' => 'Work With Us', 'url' => '#'],
-            ['label' => 'Submit a Story', 'url' => '#'],
+            ['label' => 'About', 'url' => '/about'],
+            ['label' => 'Contact', 'url' => '/contact'],
+            ['label' => 'Editorial Policy', 'url' => '/editorial-policy'],
+            ['label' => 'Work With Us', 'url' => '/work-with-us'],
+            ['label' => 'Submit a Story', 'url' => '/submit-story'],
             ['label' => 'Archive', 'url' => '#'],
         ];
 
