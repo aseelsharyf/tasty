@@ -2,8 +2,6 @@
 
 @section('content')
 
-
-{{-- Full Customization --}}
 <x-post.hero
     image="{{Vite::asset('resources/images/image-01.png')}}"
     imageAlt="Delicious fried chicken in paper cups"
@@ -23,7 +21,6 @@
 
 
 <div class="w-full px-5 lg:px-10 pt-16 pb-32 bg-tasty-off-white">
-    {{-- Mobile/Tablet: Vertical Stack --}}
     <div class="lg:hidden flex flex-col gap-10">
         <x-post.section-intro
             image="{{ Vite::asset('resources/images/latest-updates-transparent.png') }}"
@@ -118,10 +115,8 @@
         </div>
     </div>
 
-    {{-- Desktop (lg+): 3 Rows x 2 Columns Grid Layout --}}
     <div class="hidden lg:block">
         <div class="grid grid-cols-[1fr_1fr] gap-5">
-            {{-- Row 1, Col 1 --}}
             <div class="flex items-center">
                 <x-post.section-intro
                     image="{{ Vite::asset('resources/images/latest-updates-transparent.png') }}"
@@ -133,7 +128,6 @@
                 />
             </div>
 
-            {{-- Row 1, Col 2 --}}
             <div>
                 <x-post.card-news
                     image="{{Vite::asset('resources/images/image-02.png')}}"
@@ -151,7 +145,6 @@
                 />
             </div>
 
-            {{-- Row 2, Col 1 --}}
             <div>
                 <x-post.card-news-small
                     image="{{ Vite::asset('resources/images/image-03.png') }}"
@@ -169,7 +162,6 @@
                 />
             </div>
 
-            {{-- Row 2, Col 2 --}}
             <div>
                 <x-post.card-news-small
                     image="{{ Vite::asset('resources/images/image-04.png') }}"
@@ -187,7 +179,6 @@
                 />
             </div>
 
-            {{-- Row 3, Col 1 --}}
             <div>
                 <x-post.card-news-small
                     image="{{ Vite::asset('resources/images/image-04.png') }}"
@@ -205,7 +196,6 @@
                 />
             </div>
 
-            {{-- Row 3, Col 2 --}}
             <div>
                 <x-post.card-news-small
                     image="{{ Vite::asset('resources/images/image-05.png') }}"
@@ -236,7 +226,6 @@
 
 </div>
 
-{{-- Featured Profile Section --}}
 <x-featured-person
     image="{{ Vite::asset('resources/images/image-06.png') }}"
     imageAlt="Aminath Hameed - Chef"
@@ -250,21 +239,8 @@
     bgColor="bg-tasty-yellow"
 />
 
-{{-- The Spread Section --}}
 <div class="w-full px-5 lg:px-10 pt-16 pb-32 bg-tasty-yellow overflow-x-hidden">
-
-    {{--
-       Layout Wrapper:
-       Mobile/Tablet: flex-col (Stack Intro on top, Cards below)
-       Desktop (lg+): flex-row + overflow-x-auto (Intro sits next to cards, whole row scrolls)
-    --}}
     <div class="flex flex-col gap-10 lg:flex-row lg:gap-10 lg:overflow-x-auto scrollbar-hide lg:scroll-smooth">
-
-        {{--
-            1. Intro Section
-            Mobile/Tablet: w-full (Stacked)
-            Desktop: Fixed width 384px (First item in scroll)
-        --}}
         <div class="w-full lg:w-[384px] lg:shrink-0 lg:flex lg:items-center">
             <x-post.section-intro
                 image="{{ Vite::asset('resources/images/image-07.png') }}"
@@ -275,17 +251,9 @@
             />
         </div>
 
-        {{-- Separator (Desktop only) --}}
         <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
-        {{--
-            2. Scrollable Cards Container
-            Mobile/Tablet: overflow-x-auto (This container scrolls independently)
-            Desktop: overflow-visible (Let the parent handle the scrolling)
-        --}}
         <div class="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth lg:overflow-visible">
-
-            {{-- Card Wrapper: Enforce widths here to ensure scrolling triggers --}}
             <div class="w-[310px] lg:w-[480px] shrink-0">
                 <x-post.card-spread
                     image="{{ Vite::asset('resources/images/image-08.png') }}"
@@ -304,7 +272,6 @@
                 />
             </div>
 
-            {{-- Separator --}}
             <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
             <div class="w-[310px] lg:w-[480px] shrink-0">
@@ -325,7 +292,6 @@
                 />
             </div>
 
-            {{-- Separator --}}
             <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
             <div class="w-[310px] lg:w-[480px] shrink-0">
@@ -346,7 +312,6 @@
                 />
             </div>
 
-            {{-- Separator --}}
             <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
             <div class="w-[310px] lg:w-[480px] shrink-0">
@@ -367,7 +332,6 @@
                 />
             </div>
 
-            {{-- Separator --}}
             <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
             <div class="w-[310px] lg:w-[480px] shrink-0">
@@ -393,7 +357,6 @@
 </div>
 
 
-{{-- Video Feature Section --}}
 <div class="w-full px-5 md:px-10 pt-16 pb-32 bg-gradient-to-b from-tasty-yellow to-white flex flex-col justify-start items-center gap-10">
     <x-post.card-video
         video="{{ Vite::asset('resources/images/image-13.png') }}"
@@ -408,12 +371,8 @@
     />
 </div>
 
-{{-- Restaurant/Cafe Section - On the Menu --}}
 <div class="w-full pt-16 pb-32 bg-tasty-off-white overflow-x-hidden">
-
-    {{-- Mobile: Horizontal Scroll --}}
     <div class="md:hidden flex flex-col gap-10">
-        {{-- Section Intro --}}
         <div class="w-full px-5 flex justify-center">
             <x-post.section-intro
                 image="{{ Vite::asset('resources/images/image-19.png') }}"
@@ -425,7 +384,6 @@
             />
         </div>
 
-        {{-- Scrollable Cards --}}
         <div class="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth pl-5 pr-20">
             <div class="w-[310px] shrink-0">
                 <x-restaurant.card
@@ -489,10 +447,8 @@
         </div>
     </div>
 
-    {{-- Desktop: Grid Layout --}}
     <div class="hidden md:block md:px-10">
         <div class="grid grid-cols-[auto_0px_auto_0px_auto] gap-5">
-            {{-- Section Intro --}}
             <div class="flex justify-center">
                 <x-post.section-intro
                     image="{{ Vite::asset('resources/images/image-19.png') }}"
@@ -504,10 +460,8 @@
                 />
             </div>
 
-            {{-- Separator --}}
             <div class="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white"></div>
 
-            {{-- Card 1 --}}
             <div class="flex justify-center">
                 <x-restaurant.card
                     image="{{ Vite::asset('resources/images/image-15.png') }}"
@@ -520,10 +474,8 @@
                 />
             </div>
 
-            {{-- Separator --}}
             <div class="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white"></div>
 
-            {{-- Card 2 --}}
             <div class="flex justify-center">
                 <x-restaurant.card
                     image="{{ Vite::asset('resources/images/image-16.png') }}"
@@ -536,7 +488,6 @@
                 />
             </div>
 
-            {{-- Card 3 --}}
             <div class="flex justify-center">
                 <x-restaurant.card
                     image="{{ Vite::asset('resources/images/image-17.png') }}"
@@ -549,10 +500,8 @@
                 />
             </div>
 
-            {{-- Separator --}}
             <div class="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white"></div>
 
-            {{-- Card 4 --}}
             <div class="flex justify-center">
                 <x-restaurant.card
                     image="{{ Vite::asset('resources/images/image-18.png') }}"
@@ -565,10 +514,8 @@
                 />
             </div>
 
-            {{-- Separator --}}
             <div class="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white"></div>
 
-            {{-- Card 5 --}}
             <div class="flex justify-center">
                 <x-restaurant.card
                     image="{{ Vite::asset('resources/images/image-15.png') }}"
@@ -586,7 +533,6 @@
 </div>
 
 
-{{-- Featured Section - Ceylon --}}
 <x-featured-section
     image="{{ Vite::asset('resources/images/image-20.png') }}"
     imageAlt="Ceylon"
@@ -603,10 +549,8 @@
     contentBgColor="bg-tasty-yellow"
 />
 
-{{-- Ceylon Stories Section - Horizontal scroll --}}
 <div class="w-full px-5 lg:px-10 py-16 bg-tasty-yellow overflow-hidden">
     <div class="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth">
-        {{-- Card 1 --}}
         <div class="w-[310px] lg:w-[480px] shrink-0">
             <x-post.card-spread
                 image="{{ Vite::asset('resources/images/image-21.png') }}"
@@ -625,10 +569,8 @@
             />
         </div>
 
-        {{-- Separator --}}
         <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
-        {{-- Card 2 --}}
         <div class="w-[310px] lg:w-[480px] shrink-0">
             <x-post.card-spread
                 image="{{ Vite::asset('resources/images/image-22.png') }}"
@@ -647,10 +589,8 @@
             />
         </div>
 
-        {{-- Separator --}}
         <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
-        {{-- Card 3 --}}
         <div class="w-[310px] lg:w-[480px] shrink-0">
             <x-post.card-spread
                 image="{{ Vite::asset('resources/images/image-23.png') }}"
@@ -669,10 +609,8 @@
             />
         </div>
 
-        {{-- Separator --}}
         <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
-        {{-- Card 4 --}}
         <div class="w-[310px] lg:w-[480px] shrink-0">
             <x-post.card-spread
                 image="{{ Vite::asset('resources/images/image-24.png') }}"
@@ -691,10 +629,8 @@
             />
         </div>
 
-        {{-- Separator --}}
         <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
-        {{-- Card 5 --}}
         <div class="w-[310px] lg:w-[480px] shrink-0">
             <x-post.card-spread
                 image="{{ Vite::asset('resources/images/image-25.png') }}"
@@ -716,13 +652,8 @@
 </div>
 
 
-{{-- Recipe Section - Everyday Cooking --}}
-<div class="w-full px-5 lg:px-10 pt-16 pb-32 bg-white" style="background: linear-gradient(to bottom, var(--color-tasty-yellow) 0%, white 15%);">
-
-    {{-- Top Row: Intro + Large Card --}}
-    {{-- Mobile: Stack, Desktop: 2-column grid with 64px gap --}}
+<div class="w-full px-5 lg:px-10 pt-16 pb-32 bg-tasty-light-gray" style="background: linear-gradient(to bottom, var(--color-tasty-yellow) 0%, var(--color-tasty-light-gray) 15%);">
     <div class="flex flex-col lg:grid lg:grid-cols-2 gap-10 lg:gap-16 mb-10">
-        {{-- Section Intro - vertically centered --}}
         <div class="flex items-center justify-center">
             <x-post.section-intro
                 image="{{ Vite::asset('resources/images/image-07.png') }}"
@@ -734,7 +665,6 @@
             />
         </div>
 
-        {{-- Large Recipe Card - full width --}}
         <div class="w-full">
             <x-post.card-recipe
                 image="{{ Vite::asset('resources/images/image-26.png') }}"
@@ -750,8 +680,6 @@
         </div>
     </div>
 
-    {{-- Bottom Row: 3 Small Cards --}}
-    {{-- Mobile: Horizontal scroll, Desktop: 3-column grid with 40px gap --}}
     <div class="flex lg:grid lg:grid-cols-3 items-start gap-5 lg:gap-10 overflow-x-auto lg:overflow-visible scrollbar-hide scroll-smooth">
         <x-post.card-recipe-small
             image="{{ Vite::asset('resources/images/image-27.png') }}"
