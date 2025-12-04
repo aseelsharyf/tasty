@@ -586,6 +586,23 @@
 </div>
 
 
+{{-- Featured Section - Ceylon --}}
+<x-featured-section
+    image="{{ Vite::asset('resources/images/image-20.png') }}"
+    imageAlt="Ceylon"
+    heading="CEYLON"
+    subheading="Where the air smells like spice, surf, and something softly familiar."
+    tag1="tasty feature"
+    tag1Url="#"
+    tag2="food destinations"
+    tag2Url="#"
+    description="Two weeks in Lanka, documenting dishes and cooks who give the island its food identity."
+    buttonText=""
+    buttonUrl="#"
+    imageBgColor="bg-tasty-yellow"
+    contentBgColor="bg-tasty-yellow"
+/>
+
 
 <x-subscribe/>
 
