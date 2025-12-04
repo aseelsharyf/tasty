@@ -11,30 +11,24 @@
 ])
 
 @php
-    // Size classes
-    $sizeClasses = match($size) {
+    // Size mapping
+    $sizeMapping = match($size) {
         'large' => 'text-4xl md:text-5xl',
         'small' => 'text-2xl md:text-3xl',
         default => 'text-4xl md:text-5xl',
     };
 
-    // Alignment classes
-    $alignClasses = match($align) {
-        'center' => 'text-center',
-        'left' => 'text-left',
-        'left md:center' => 'text-left md:text-center',
-        default => 'text-left',
-    };
-
-    // Leading classes based on size
-    $leadingClasses = $size === 'large' ? 'leading-tight' : '';
-
-    // Combine all classes
-    $classes = trim("w-full font-serif {$sizeClasses} {$color} {$alignClasses} font-normal m-0 hover:opacity-70 transition-opacity duration-200 {$leadingClasses} {$lineClamp}");
+    // Leading based on size
+    $leadingMapping = $size === 'large' ? 'leading-tight' : 'leading-normal';
 @endphp
 
-<a href="{{ $url }}" class="w-full">
-    <{{ $tag }} class="{{ $classes }}">
-        {{ $title }}
-    </{{ $tag }}>
+<a href="{{ $url }}" class="w-full hover:opacity-70 transition-opacity duration-200 block">
+    <x-ui.heading
+        :level="$tag"
+        :text="$title"
+        :size="$sizeMapping"
+        :color="$color"
+        :align="$align"
+        :leading="$leadingMapping . ($lineClamp ? ' ' . $lineClamp : '')"
+    />
 </a>

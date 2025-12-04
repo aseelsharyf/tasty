@@ -3,36 +3,27 @@
 @props([
     'description',
     'size' => 'lg', // Options: 'base', 'lg', 'xl'
-    'align' => 'left', // Options: 'left', 'center'
+    'align' => 'left', // Options: 'left', 'center', 'center md:left'
     'color' => 'text-stone-900',
-    'leading' => 'leading-7',
     'hideOnMobile' => false,
+    'lineClamp' => null,
 ])
 
 @php
-    // Size classes
-    $sizeClasses = match($size) {
-        'base' => 'text-base',
-        'lg' => 'text-lg md:text-xl',
-        'xl' => 'text-xl',
-        default => 'text-lg md:text-xl',
+    // Map size to ui/text variant
+    $variantMapping = match($size) {
+        'base' => 'sm',
+        'lg' => 'md',
+        'xl' => 'lg',
+        default => 'md',
     };
-
-    // Alignment classes
-    $alignClasses = match($align) {
-        'center' => 'text-center',
-        'left' => 'text-left',
-        'center md:left' => 'text-center md:text-left',
-        default => 'text-left',
-    };
-
-    // Visibility classes
-    $visibilityClasses = $hideOnMobile ? 'hidden md:block' : '';
-
-    // Combine all classes
-    $classes = trim("w-full {$sizeClasses} {$color} {$alignClasses} {$leading} {$visibilityClasses}");
 @endphp
 
-<p class="{{ $classes }}">
-    {{ $description }}
-</p>
+<x-ui.text
+    :text="$description"
+    :variant="$variantMapping"
+    :color="$color"
+    :align="$align"
+    :hideOnMobile="$hideOnMobile"
+    :lineClamp="$lineClamp"
+/>

@@ -19,11 +19,11 @@
     <div class="flex flex-col md:flex-row p-10 gap-4 md:gap-6">
 
         {{-- Image Section (Left) --}}
-        <div class="w-full md:w-[200px] h-[206px] relative rounded overflow-hidden bg-[#333] flex-shrink-0">
-            <a href="{{ $articleUrl }}" class="block absolute inset-0">
+        <div class="w-full md:w-[200px] h-[206px] rounded overflow-hidden relative flex-shrink-0">
+            <a href="{{ $articleUrl }}" class="block absolute inset-0 hover:opacity-80 transition-opacity duration-200">
                 <img src="{{ $image }}"
                      alt="{{ $imageAlt }}"
-                     class="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105">
+                     class="absolute inset-0 w-full h-full object-cover object-center">
             </a>
         </div>
 

@@ -94,14 +94,19 @@
                 <!-- Header Section -->
                 <div class="flex flex-col space-y-4">
                     <div class="flex justify-center">
-                        <h1 class="font-serif text-4xl md:text-6xl lg:text-8xl text-center leading-tight text-stone-900">
-                            {{ $name }}
-                        </h1>
+                        <x-ui.heading
+                            level="h1"
+                            :text="$name"
+                            align="center"
+                        />
                     </div>
                     <div class="flex justify-center">
-                        <h2 class="font-serif text-2xl md:text-4xl lg:text-5xl text-center leading-tight text-stone-900">
-                            {{ $title }}
-                        </h2>
+                        <x-ui.heading
+                            level="h2"
+                            :text="$title"
+                            size="text-2xl md:text-4xl lg:text-5xl"
+                            align="center"
+                        />
                     </div>
                 </div>
 

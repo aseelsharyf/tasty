@@ -22,18 +22,19 @@
 />
 
 
-<div class="w-full px-10 pt-16 pb-6 bg-tasty-off-white bg-red-100">
+<div class="w-full px-5 md:px-10 pt-16 pb-6 bg-tasty-off-white bg-red-100">
     <div class="max-w-7xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-2 md:items-center gap-10">
 
             <!-- Left Side (Intro) -->
-            <div class="flex flex-col justify-start items-center p-10 space-y-8">
-                <img src="{{Vite::asset('resources/images/latest-updates-transparent.png')}}" />
-                <div>
-                    <div class="font-serif text-3xl md:text-4xl lg:text-5xl leading-none text-stone-900 text-center">Latest</div>
-                    <div class="font-serif text-5xl md:text-6xl lg:text-7xl text-stone-900 uppercase leading-tight">Updates</div>
-                </div>
-                <div class="text-center justify-start text-slate-950 text-2xl font-normal font-serif leading-6">The flavors, characters, and tiny island obsessions that makes the Maldivian food culture.</div>
+            <div class="p-10">
+                <x-post.section-intro
+                    image="{{ Vite::asset('resources/images/latest-updates-transparent.png') }}"
+                    imageAlt="Latest Updates"
+                    title="Latest"
+                    titleLarge="Updates"
+                    description="The flavors, characters, and tiny island obsessions that makes the Maldivian food culture."
+                />
             </div>
 
             <!-- Right Side (Card) -->
@@ -156,21 +157,21 @@
 />
 
 {{-- The Spread Section --}}
-<div class="w-full px-10 pt-16 pb-32 bg-tasty-yellow">
+<div class="w-full px-5 md:px-10 pt-16 pb-32 bg-tasty-yellow">
 
     {{--
        Layout Wrapper:
        Mobile: flex-col (Stack Intro on top, Cards below)
        Desktop: flex-row + overflow-x-auto (Intro sits next to cards, whole row scrolls)
     --}}
-    <div class="flex flex-col gap-10 md:flex-row md:overflow-x-auto md:scrollbar-hide md:scroll-smooth">
+    <div class="flex flex-col gap-10 md:flex-row md:gap-10 md:overflow-x-auto md:scrollbar-hide md:scroll-smooth">
 
         {{--
             1. Intro Section
             Mobile: w-full (Stacked)
             Desktop: Fixed width 384px (First item in scroll)
         --}}
-        <div class="w-full md:w-[384px] md:shrink-0">
+        <div class="w-full md:w-[384px] md:shrink-0 md:flex md:items-center">
             <x-post.section-intro
                 image="{{ Vite::asset('resources/images/image-07.png') }}"
                 imageAlt="The Spread"
@@ -180,12 +181,15 @@
             />
         </div>
 
+        {{-- Separator (Desktop only) --}}
+        <div class="hidden md:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
+
         {{--
             2. Scrollable Cards Container
             Mobile: overflow-x-auto (This container scrolls independently)
             Desktop: overflow-visible (Let the parent handle the scrolling)
         --}}
-        <div class="flex gap-20 overflow-x-auto scrollbar-hide scroll-smooth md:overflow-visible">
+        <div class="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth md:overflow-visible">
 
             {{-- Card Wrapper: Enforce widths here to ensure scrolling triggers --}}
             <div class="w-[310px] md:w-[480px] shrink-0">
@@ -206,6 +210,9 @@
                 />
             </div>
 
+            {{-- Separator --}}
+            <div class="hidden md:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
+
             <div class="w-[310px] md:w-[480px] shrink-0">
                 <x-post.card-spread
                     image="{{ Vite::asset('resources/images/image-09.png') }}"
@@ -223,6 +230,9 @@
                     imagePosition="bottom"
                 />
             </div>
+
+            {{-- Separator --}}
+            <div class="hidden md:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
             <div class="w-[310px] md:w-[480px] shrink-0">
                 <x-post.card-spread
@@ -242,6 +252,9 @@
                 />
             </div>
 
+            {{-- Separator --}}
+            <div class="hidden md:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
+
             <div class="w-[310px] md:w-[480px] shrink-0">
                 <x-post.card-spread
                     image="{{ Vite::asset('resources/images/image-11.png') }}"
@@ -259,6 +272,9 @@
                     imagePosition="bottom"
                 />
             </div>
+
+            {{-- Separator --}}
+            <div class="hidden md:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
             <div class="w-[310px] md:w-[480px] shrink-0">
                 <x-post.card-spread
@@ -284,7 +300,7 @@
 
 
 {{-- Video Feature Section --}}
-<div class="w-full px-10 pt-16 pb-32 bg-gradient-to-b from-tasty-yellow to-white flex flex-col justify-start items-center gap-10">
+<div class="w-full px-5 md:px-10 pt-16 pb-32 bg-gradient-to-b from-tasty-yellow to-white flex flex-col justify-start items-center gap-10">
     <x-post.card-video
         video="{{ Vite::asset('resources/videos/nami-reveli.mp4') }}"
         videoPoster="{{ Vite::asset('resources/images/image-13.png') }}"
@@ -296,6 +312,183 @@
         date="January 8, 2025"
         articleUrl="/article/nami-at-reveli"
     />
+</div>
+
+{{-- Restaurant/Cafe Section - On the Menu --}}
+<div class="w-full pt-16 pb-32 bg-tasty-off-white">
+
+    {{-- Mobile: Horizontal Scroll --}}
+    <div class="md:hidden flex flex-col gap-10">
+        {{-- Section Intro --}}
+        <div class="w-full px-5 flex justify-center">
+            <x-post.section-intro
+                image="{{ Vite::asset('resources/images/image-19.png') }}"
+                imageAlt="On the Menu"
+                title="On the"
+                titleLarge="Menu"
+                description="Restaurant reviews, chef crushes, and the dishes we can't stop talking about."
+                maxWidth="max-w-[310px] md:max-w-[400px]"
+            />
+        </div>
+
+        {{-- Scrollable Cards --}}
+        <div class="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth pl-5 pr-20">
+            <div class="w-[310px] shrink-0">
+                <x-restaurant.card
+                    image="{{ Vite::asset('resources/images/image-15.png') }}"
+                    imageAlt="Bianco cafe interior"
+                    name="BIANCO"
+                    subtitle="Minimalist coffee, quality bites."
+                    description="A serene all-white interior in Malé, noted for filter & specialty coffees plus French-toast and pasta dishes."
+                    :rating="5"
+                    articleUrl="/restaurant/bianco"
+                />
+            </div>
+
+            <div class="w-[310px] shrink-0">
+                <x-restaurant.card
+                    image="{{ Vite::asset('resources/images/image-16.png') }}"
+                    imageAlt="Island Patisserie display"
+                    name="Island Patisserie"
+                    subtitle="Classic pastries and clean flavours."
+                    description="Popular for its pastries, tarts, and cakes, this patisserie offers a menu built on quality butter, technique, & clean flavours."
+                    :rating="5"
+                    articleUrl="/restaurant/island-patisserie"
+                />
+            </div>
+
+            <div class="w-[310px] shrink-0">
+                <x-restaurant.card
+                    image="{{ Vite::asset('resources/images/image-17.png') }}"
+                    imageAlt="Tawa cafe"
+                    name="Tawa"
+                    subtitle="Elevated local bites in Hulhumale'."
+                    description="In Hulhumalé, Tawa blends café relaxation with inventive small plates—ideal for a pause or a casual dinner."
+                    :rating="3"
+                    articleUrl="/restaurant/tawa"
+                />
+            </div>
+
+            <div class="w-[310px] shrink-0">
+                <x-restaurant.card
+                    image="{{ Vite::asset('resources/images/image-18.png') }}"
+                    imageAlt="Holm Deli sandwiches"
+                    name="Holm Deli"
+                    subtitle="Italian sandwiches, beautiful decor."
+                    description="A new deli known for focaccia sandwiches layered with fresh mozzarella, roasted vegetables, and house-made spreads."
+                    :rating="5"
+                    articleUrl="/restaurant/holm-deli"
+                />
+            </div>
+
+            <div class="w-[310px] shrink-0">
+                <x-restaurant.card
+                    image="{{ Vite::asset('resources/images/image-15.png') }}"
+                    imageAlt="Soho cafe"
+                    name="Soho"
+                    subtitle="Modern comfort food,"
+                    description="A lively Malé spot known for stacked burgers, hearty bowls, and strong coffee. Built for casual meet-ups."
+                    :rating="3"
+                    articleUrl="/restaurant/soho"
+                />
+            </div>
+        </div>
+    </div>
+
+    {{-- Desktop: Grid Layout --}}
+    <div class="hidden md:block md:px-10">
+        <div class="grid grid-cols-[auto_0px_auto_0px_auto] gap-5">
+            {{-- Section Intro --}}
+            <div class="flex justify-center">
+                <x-post.section-intro
+                    image="{{ Vite::asset('resources/images/image-19.png') }}"
+                    imageAlt="On the Menu"
+                    title="On the"
+                    titleLarge="Menu"
+                    description="Restaurant reviews, chef crushes, and the dishes we can't stop talking about."
+                    maxWidth="max-w-[310px] md:max-w-[400px]"
+                />
+            </div>
+
+            {{-- Separator --}}
+            <div class="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white"></div>
+
+            {{-- Card 1 --}}
+            <div class="flex justify-center">
+                <x-restaurant.card
+                    image="{{ Vite::asset('resources/images/image-15.png') }}"
+                    imageAlt="Bianco cafe interior"
+                    name="BIANCO"
+                    subtitle="Minimalist coffee, quality bites."
+                    description="A serene all-white interior in Malé, noted for filter & specialty coffees plus French-toast and pasta dishes."
+                    :rating="5"
+                    articleUrl="/restaurant/bianco"
+                />
+            </div>
+
+            {{-- Separator --}}
+            <div class="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white"></div>
+
+            {{-- Card 2 --}}
+            <div class="flex justify-center">
+                <x-restaurant.card
+                    image="{{ Vite::asset('resources/images/image-16.png') }}"
+                    imageAlt="Island Patisserie display"
+                    name="Island Patisserie"
+                    subtitle="Classic pastries and clean flavours."
+                    description="Popular for its pastries, tarts, and cakes, this patisserie offers a menu built on quality butter, technique, & clean flavours."
+                    :rating="5"
+                    articleUrl="/restaurant/island-patisserie"
+                />
+            </div>
+
+            {{-- Card 3 --}}
+            <div class="flex justify-center">
+                <x-restaurant.card
+                    image="{{ Vite::asset('resources/images/image-17.png') }}"
+                    imageAlt="Tawa cafe"
+                    name="Tawa"
+                    subtitle="Elevated local bites in Hulhumale'."
+                    description="In Hulhumalé, Tawa blends café relaxation with inventive small plates—ideal for a pause or a casual dinner."
+                    :rating="3"
+                    articleUrl="/restaurant/tawa"
+                />
+            </div>
+
+            {{-- Separator --}}
+            <div class="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white"></div>
+
+            {{-- Card 4 --}}
+            <div class="flex justify-center">
+                <x-restaurant.card
+                    image="{{ Vite::asset('resources/images/image-18.png') }}"
+                    imageAlt="Holm Deli sandwiches"
+                    name="Holm Deli"
+                    subtitle="Italian sandwiches, beautiful decor."
+                    description="A new deli known for focaccia sandwiches layered with fresh mozzarella, roasted vegetables, and house-made spreads."
+                    :rating="5"
+                    articleUrl="/restaurant/holm-deli"
+                />
+            </div>
+
+            {{-- Separator --}}
+            <div class="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white"></div>
+
+            {{-- Card 5 --}}
+            <div class="flex justify-center">
+                <x-restaurant.card
+                    image="{{ Vite::asset('resources/images/image-15.png') }}"
+                    imageAlt="Soho cafe"
+                    name="Soho"
+                    subtitle="Modern comfort food,"
+                    description="A lively Malé spot known for stacked burgers, hearty bowls, and strong coffee. Built for casual meet-ups."
+                    :rating="3"
+                    articleUrl="/restaurant/soho"
+                />
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <x-subscribe/>

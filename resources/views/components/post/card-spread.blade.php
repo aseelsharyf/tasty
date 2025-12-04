@@ -24,26 +24,30 @@
     $badgeBgColor = $imagePosition === 'top' ? 'bg-white' : 'bg-white';
 @endphp
 
-<div class="flex flex-col justify-start items-center gap-8">
+<div class="w-full max-w-[310px] md:max-w-[480px] flex flex-col justify-start items-center gap-8">
 
     @if($imagePosition === 'top')
         {{-- Image Section at Top --}}
-        <div class="w-full h-[358px] md:h-[681px] relative rounded-xl overflow-hidden bg-[#333] flex flex-col justify-end items-center p-6">
-            <a href="{{ $articleUrl }}" class="block absolute inset-0">
-                <img src="{{ $image }}"
-                     alt="{{ $imageAlt }}"
-                     class="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105">
+        <div class="w-full h-[393px] md:h-[620px] rounded-xl overflow-hidden relative">
+            <a href="{{ $articleUrl }}" class="group absolute inset-0 block">
+                <div class="absolute inset-0 group-hover:opacity-80 transition-opacity duration-200">
+                    <img src="{{ $image }}"
+                         alt="{{ $imageAlt }}"
+                         class="absolute inset-0 w-full h-full object-cover object-center">
+                </div>
             </a>
 
             {{-- Metadata Badge --}}
-            <div class="relative z-10 inline-flex justify-start items-start gap-5">
-                <x-post.metadata-badge
-                    :category="$category"
-                    :categoryUrl="$categoryUrl"
-                    :tag="$tag"
-                    :tagUrl="$tagUrl"
-                    :bgColor="$badgeBgColor"
-                />
+            <div class="relative z-10 w-full h-full p-6 flex flex-col justify-end items-center pointer-events-none">
+                <div class="inline-flex justify-start items-start gap-5 pointer-events-auto">
+                    <x-post.metadata-badge
+                        :category="$category"
+                        :categoryUrl="$categoryUrl"
+                        :tag="$tag"
+                        :tagUrl="$tagUrl"
+                        :bgColor="$badgeBgColor"
+                    />
+                </div>
             </div>
         </div>
 
@@ -52,10 +56,12 @@
             <x-post.title
                 :title="$title"
                 :url="$articleUrl"
+                lineClamp="line-clamp-4"
             />
 
             <x-post.description
                 :description="$description"
+                lineClamp="line-clamp-4"
             />
 
             <x-post.author-date
@@ -70,10 +76,12 @@
             <x-post.title
                 :title="$title"
                 :url="$articleUrl"
+                lineClamp="line-clamp-4"
             />
 
             <x-post.description
                 :description="$description"
+                lineClamp="line-clamp-4"
             />
 
             <x-post.author-date
@@ -84,22 +92,26 @@
         </div>
 
         {{-- Image Section at Bottom --}}
-        <div class="w-full h-[358px] md:h-[681px] relative rounded-xl overflow-hidden bg-[#333] flex flex-col justify-end items-center p-6">
-            <a href="{{ $articleUrl }}" class="block absolute inset-0">
-                <img src="{{ $image }}"
-                     alt="{{ $imageAlt }}"
-                     class="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105">
+        <div class="w-full h-[393px] md:h-[620px] rounded-xl overflow-hidden relative">
+            <a href="{{ $articleUrl }}" class="group absolute inset-0 block">
+                <div class="absolute inset-0 group-hover:opacity-80 transition-opacity duration-200">
+                    <img src="{{ $image }}"
+                         alt="{{ $imageAlt }}"
+                         class="absolute inset-0 w-full h-full object-cover object-center">
+                </div>
             </a>
 
             {{-- Metadata Badge --}}
-            <div class="relative z-10 inline-flex justify-center items-start gap-5">
-                <x-post.metadata-badge
-                    :category="$category"
-                    :categoryUrl="$categoryUrl"
-                    :tag="$tag"
-                    :tagUrl="$tagUrl"
-                    :bgColor="$badgeBgColor"
-                />
+            <div class="relative z-10 w-full h-full p-6 flex flex-col justify-end items-center pointer-events-none">
+                <div class="inline-flex justify-center items-start gap-5 pointer-events-auto">
+                    <x-post.metadata-badge
+                        :category="$category"
+                        :categoryUrl="$categoryUrl"
+                        :tag="$tag"
+                        :tagUrl="$tagUrl"
+                        :bgColor="$badgeBgColor"
+                    />
+                </div>
             </div>
         </div>
     @endif
