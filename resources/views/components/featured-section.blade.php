@@ -98,12 +98,12 @@
 
 {{-- Featured Section --}}
 {{-- Based on Figma Frame 117 (node 158:1028) --}}
-{{-- Mobile: Container 750px, Content pt-96px pb-64px px-40px gap-24px --}}
-{{-- Desktop: Container 1058px, Content h-735px pt-110px px-362px gap-40px --}}
+{{-- Using aspect ratio for consistent scaling across breakpoints --}}
 <div class="w-full overflow-x-hidden">
 
     {{-- Container with Image Background and Curved Content Overlay --}}
-    <div class="w-full mx-auto flex justify-center relative h-[750px] md:h-[1058px]">
+    {{-- Aspect ratio: ~16:9 mobile, ~4:3 desktop for good image visibility --}}
+    <div class="w-full mx-auto flex justify-center relative aspect-[9/16] lg:aspect-[4/3] max-h-[700px] lg:max-h-[900px]">
 
         {{-- Background Image --}}
         <div class="absolute inset-0 w-full">
@@ -120,7 +120,7 @@
 
         {{-- Curved Content Overlay --}}
         <div class="relative w-full h-full flex flex-col justify-end items-center">
-            <div class="w-full {{ $contentClassColor }} rounded-t-[2000px] md:rounded-t-[5000px] pt-[96px] pb-[64px] px-[40px] md:h-[735px] md:pt-[110px] md:pb-0 md:px-[100px] lg:px-[200px] xl:px-[362px] flex flex-col justify-center items-center gap-6 md:gap-10" @if($contentStyleAttr) style="{{ $contentStyleAttr }}" @endif>
+            <div class="w-full {{ $contentClassColor }} rounded-t-[1000px] lg:rounded-t-[3000px] pt-[60px] pb-[40px] px-[24px] lg:pt-[80px] lg:pb-[40px] lg:px-[100px] xl:px-[200px] flex flex-col justify-center items-center gap-4 lg:gap-8" @if($contentStyleAttr) style="{{ $contentStyleAttr }}" @endif>
                 <!-- Header Section -->
                 @if($heading || $subheading)
                     <div class="self-stretch flex flex-col justify-center items-center gap-3 md:gap-4">

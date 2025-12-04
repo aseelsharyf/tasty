@@ -22,9 +22,9 @@
 />
 
 
-<div class="w-full px-5 md:px-10 pt-16 pb-32 bg-tasty-off-white">
-    {{-- Mobile: Vertical Stack --}}
-    <div class="md:hidden flex flex-col gap-10">
+<div class="w-full px-5 lg:px-10 pt-16 pb-32 bg-tasty-off-white">
+    {{-- Mobile/Tablet: Vertical Stack --}}
+    <div class="lg:hidden flex flex-col gap-10">
         <x-post.section-intro
             image="{{ Vite::asset('resources/images/latest-updates-transparent.png') }}"
             imageAlt="Latest Updates"
@@ -118,8 +118,8 @@
         </div>
     </div>
 
-    {{-- Desktop: 3 Rows x 2 Columns Grid Layout --}}
-    <div class="hidden md:block">
+    {{-- Desktop (lg+): 3 Rows x 2 Columns Grid Layout --}}
+    <div class="hidden lg:block">
         <div class="grid grid-cols-[1fr_1fr] gap-5">
             {{-- Row 1, Col 1 --}}
             <div class="flex items-center">
@@ -251,21 +251,21 @@
 />
 
 {{-- The Spread Section --}}
-<div class="w-full px-5 md:px-10 pt-16 pb-32 bg-tasty-yellow overflow-x-hidden">
+<div class="w-full px-5 lg:px-10 pt-16 pb-32 bg-tasty-yellow overflow-x-hidden">
 
     {{--
        Layout Wrapper:
-       Mobile: flex-col (Stack Intro on top, Cards below)
-       Desktop: flex-row + overflow-x-auto (Intro sits next to cards, whole row scrolls)
+       Mobile/Tablet: flex-col (Stack Intro on top, Cards below)
+       Desktop (lg+): flex-row + overflow-x-auto (Intro sits next to cards, whole row scrolls)
     --}}
-    <div class="flex flex-col gap-10 md:flex-row md:gap-10 md:overflow-x-auto scrollbar-hide md:scroll-smooth">
+    <div class="flex flex-col gap-10 lg:flex-row lg:gap-10 lg:overflow-x-auto scrollbar-hide lg:scroll-smooth">
 
         {{--
             1. Intro Section
-            Mobile: w-full (Stacked)
+            Mobile/Tablet: w-full (Stacked)
             Desktop: Fixed width 384px (First item in scroll)
         --}}
-        <div class="w-full md:w-[384px] md:shrink-0 md:flex md:items-center">
+        <div class="w-full lg:w-[384px] lg:shrink-0 lg:flex lg:items-center">
             <x-post.section-intro
                 image="{{ Vite::asset('resources/images/image-07.png') }}"
                 imageAlt="The Spread"
@@ -276,17 +276,17 @@
         </div>
 
         {{-- Separator (Desktop only) --}}
-        <div class="hidden md:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
+        <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
         {{--
             2. Scrollable Cards Container
-            Mobile: overflow-x-auto (This container scrolls independently)
+            Mobile/Tablet: overflow-x-auto (This container scrolls independently)
             Desktop: overflow-visible (Let the parent handle the scrolling)
         --}}
-        <div class="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth md:overflow-visible">
+        <div class="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth lg:overflow-visible">
 
             {{-- Card Wrapper: Enforce widths here to ensure scrolling triggers --}}
-            <div class="w-[310px] md:w-[480px] shrink-0">
+            <div class="w-[310px] lg:w-[480px] shrink-0">
                 <x-post.card-spread
                     image="{{ Vite::asset('resources/images/image-08.png') }}"
                     imageAlt="BBQ grilling scene"
@@ -305,9 +305,9 @@
             </div>
 
             {{-- Separator --}}
-            <div class="hidden md:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
+            <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
-            <div class="w-[310px] md:w-[480px] shrink-0">
+            <div class="w-[310px] lg:w-[480px] shrink-0">
                 <x-post.card-spread
                     image="{{ Vite::asset('resources/images/image-09.png') }}"
                     imageAlt="Fisherman carrying basket of fish"
@@ -326,9 +326,9 @@
             </div>
 
             {{-- Separator --}}
-            <div class="hidden md:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
+            <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
-            <div class="w-[310px] md:w-[480px] shrink-0">
+            <div class="w-[310px] lg:w-[480px] shrink-0">
                 <x-post.card-spread
                     image="{{ Vite::asset('resources/images/image-10.png') }}"
                     imageAlt="Traditional toddy tapping scene"
@@ -347,9 +347,9 @@
             </div>
 
             {{-- Separator --}}
-            <div class="hidden md:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
+            <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
-            <div class="w-[310px] md:w-[480px] shrink-0">
+            <div class="w-[310px] lg:w-[480px] shrink-0">
                 <x-post.card-spread
                     image="{{ Vite::asset('resources/images/image-11.png') }}"
                     imageAlt="Adduan home cook"
@@ -368,9 +368,9 @@
             </div>
 
             {{-- Separator --}}
-            <div class="hidden md:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
+            <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
-            <div class="w-[310px] md:w-[480px] shrink-0">
+            <div class="w-[310px] lg:w-[480px] shrink-0">
                 <x-post.card-spread
                     image="{{ Vite::asset('resources/images/image-12.png') }}"
                     imageAlt="Rihaakuru being cooked"

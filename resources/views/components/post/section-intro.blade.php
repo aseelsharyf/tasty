@@ -9,8 +9,9 @@
     'maxWidth' => null, // Optional: e.g., 'max-w-[310px] md:max-w-[400px]'
 ])
 
-<div class="w-full {{ $maxWidth }} flex flex-col justify-start items-center gap-8">
-    <img class="w-full h-[156px] md:h-[429.5px] object-contain"
+<div class="w-full {{ $maxWidth }} flex flex-col justify-start items-center gap-5 md:gap-8">
+    {{-- Image uses max-height to constrain while maintaining aspect ratio --}}
+    <img class="w-full max-h-[156px] lg:max-h-[429.5px] object-contain"
          src="{{ $image }}"
          alt="{{ $imageAlt }}" />
 

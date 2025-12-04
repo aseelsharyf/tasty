@@ -96,22 +96,23 @@
 <div class="w-full pt-16 overflow-x-hidden">
 
     {{-- Profile Image with Gradient Overlay --}}
+    {{-- Using aspect ratio for consistent scaling: ~3:4 mobile, ~2:3 desktop --}}
     <div class="w-full mx-auto flex justify-center">
-        <div class="relative w-full h-[294px] md:h-[800px] lg:h-[1126px] xl:h-[1300px] rounded-t-[5000px] overflow-hidden">
+        <div class="relative w-full aspect-[4/3] lg:aspect-[3/4] max-h-[500px] lg:max-h-[900px] rounded-t-[1000px] lg:rounded-t-[3000px] overflow-hidden">
             {{-- Background Image --}}
             @if($image)
                 <img
                     src="{{ $image }}"
                     alt="{{ $imageAlt }}"
-                    class="absolute inset-0 w-full h-full object-cover object-center rounded-t-[5000px]"
+                    class="absolute inset-0 w-full h-full object-cover object-center"
                 />
             @else
                 {{-- Placeholder --}}
-                <div class="absolute inset-0 w-full h-full bg-gray-200 rounded-t-[5000px]"></div>
+                <div class="absolute inset-0 w-full h-full bg-gray-200"></div>
             @endif
 
             {{-- Gradient Overlay --}}
-            <div class="absolute inset-0 rounded-t-[5000px]" style="background: linear-gradient(180deg, rgba({{ $gradientRgb }}, 0) 60%, rgba({{ $gradientRgb }}, 0.5) 80%, rgb({{ $gradientRgb }}) 100%);"></div>
+            <div class="absolute inset-0" style="background: linear-gradient(180deg, rgba({{ $gradientRgb }}, 0) 60%, rgba({{ $gradientRgb }}, 0.5) 80%, rgb({{ $gradientRgb }}) 100%);"></div>
         </div>
     </div>
 
