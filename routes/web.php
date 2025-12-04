@@ -25,3 +25,7 @@ Route::get('/work-with-us', function () {
 Route::get('/submit-story', function () {
     return view('pages.submit-story');
 })->name('submit-story');
+
+Route::get('/advertise', function () {
+    return view('pages.advertise');
+})->name('advertise');

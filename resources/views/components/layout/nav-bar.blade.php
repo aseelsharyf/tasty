@@ -6,9 +6,9 @@
 
             <!-- LEFT: Logo + Divider -->
             <div class="flex items-center h-full flex-shrink-0">
-                <div class="h-full px-6 md:px-8 flex items-center justify-center">
+                <a href="/" class="h-full px-6 md:px-8 flex items-center justify-center hover:opacity-80 transition-opacity">
                     <x-layout.logo />
-                </div>
+                </a>
                 <div class="hidden lg:block h-[40px] w-[1px] bg-stone-300/50"></div>
             </div>
 

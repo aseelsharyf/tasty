@@ -29,8 +29,8 @@ class NavBar extends Component
         ];
 
         $this->secondaryLinks = $secondaryLinks ?? [
-            ['label' => 'About', 'href' => '#', 'class' => 'text-blue-black'],
-            ['label' => 'Advertise', 'href' => '#', 'class' => 'text-black'],
+            ['label' => 'About', 'href' => '/about', 'class' => 'text-blue-black'],
+            ['label' => 'Advertise', 'href' => '/advertise', 'class' => 'text-black'],
         ];
 
         $this->mobileActions = $mobileActions ?? [
