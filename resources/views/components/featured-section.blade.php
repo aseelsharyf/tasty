@@ -145,20 +145,29 @@
 
         {{-- Curved Content Overlay --}}
         <div class="featured-section-container relative w-full flex flex-col justify-end items-center">
-            <div class="featured-section-content w-full {{ $contentClassColor }} px-6 sm:px-10 md:px-20 lg:px-40 xl:px-96 pt-16 sm:pt-24 md:pt-28 pb-12 sm:pb-16 flex flex-col justify-center items-center gap-4 sm:gap-6 md:gap-10" @if($contentStyleAttr) style="{{ $contentStyleAttr }}" @endif>
+            <div class="h-[600px] md:h-[900px] featured-section-content w-full {{ $contentClassColor }} px-10 md:px-96 pt-24 md:pt-28 pb-16 flex flex-col justify-center items-center gap-6 md:gap-10" @if($contentStyleAttr) style="{{ $contentStyleAttr }}" @endif>
                 <!-- Header Section -->
                 @if($heading || $subheading)
                     <div class="self-stretch flex flex-col justify-center items-center gap-4">
                         @if($heading)
-                            <div class="w-full text-center text-tasty-blue-black text-[60px] md:text-[200px] font-normal font-serif uppercase leading-[50px] md:leading-[160px]">
-                                {{ $heading }}
-                            </div>
+                            <x-ui.heading
+                                level="h1"
+                                :text="$heading"
+                                size="text-6xl md:text-[200px]"
+                                leading="leading-[50px] md:leading-[160px]"
+                                align="center"
+                                color="text-tasty-blue-black"
+                                :uppercase="true"
+                            />
                         @endif
 
                         @if($subheading)
-                            <div class="w-full text-center text-tasty-blue-black text-[32px] md:text-[64px] font-normal font-serif leading-[32px] md:leading-[66px]">
-                                {{ $subheading }}
-                            </div>
+                            <x-ui.heading
+                                level="h2"
+                                :text="$subheading"
+                                align="center"
+                                color="text-tasty-blue-black"
+                            />
                         @endif
                     </div>
                 @endif
@@ -181,14 +190,12 @@
 
                 <!-- Description Section -->
                 @if($description)
-                    <div class="w-full max-w-4xl mx-auto">
-                        <x-post.description
-                            :description="$description"
-                            size="lg"
-                            align="center"
-                            color="text-tasty-blue-black"
-                        />
-                    </div>
+                    <x-post.description
+                        :description="$description"
+                        size="lg"
+                        align="center"
+                        color="text-tasty-blue-black"
+                    />
                 @endif
 
                 <!-- Button Section -->
