@@ -140,7 +140,7 @@
 
                 <!-- Tags Section -->
                 <div class="flex justify-center">
-                    <x-post.metadata-badge
+                    <x-content.metadata-badge
                         :category="$tag1"
                         categoryUrl="#"
                         :tag="$tag2"
@@ -155,7 +155,7 @@
                 <!-- Description Section -->
                 <div class="flex justify-center">
                     <div class="max-w-2xl">
-                        <x-post.description
+                        <x-content.description
                             :description="$description"
                             size="lg"
                             align="center"

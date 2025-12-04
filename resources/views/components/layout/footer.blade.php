@@ -4,7 +4,7 @@
 
         {{-- LOGO --}}
         <div class="flex justify-center mb-16 text-tasty-light-gray">
-            <x-tasty-logo class="w-[200px] md:w-[270px] h-auto" viewBox="0 0 74 36" ></x-tasty-logo>
+            <x-layout.logo class="w-[200px] md:w-[270px] h-auto" viewBox="0 0 74 36" />
         </div>
 
         {{-- MOBILE --}}

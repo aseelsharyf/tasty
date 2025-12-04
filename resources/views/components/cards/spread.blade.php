@@ -40,7 +40,7 @@
             {{-- Metadata Badge --}}
             <div class="relative z-10 w-full h-full p-6 flex flex-col justify-end items-center pointer-events-none">
                 <div class="inline-flex justify-start items-start gap-5 pointer-events-auto">
-                    <x-post.metadata-badge
+                    <x-content.metadata-badge
                         :category="$category"
                         :categoryUrl="$categoryUrl"
                         :tag="$tag"
@@ -53,19 +53,19 @@
 
         {{-- Content Section --}}
         <div class="w-full flex flex-col justify-start items-start gap-6">
-            <x-post.title
+            <x-content.title
                 :title="$title"
                 :url="$articleUrl"
                 size="large"
                 lineClamp="line-clamp-4"
             />
 
-            <x-post.description
+            <x-content.description
                 :description="$description"
                 lineClamp="line-clamp-4"
             />
 
-            <x-post.author-date
+            <x-content.author-date
                 :author="$author"
                 :authorUrl="$authorUrl"
                 :date="$date"
@@ -74,19 +74,19 @@
     @else
         {{-- Content Section at Top --}}
         <div class="w-full flex flex-col justify-start items-start gap-6">
-            <x-post.title
+            <x-content.title
                 :title="$title"
                 :url="$articleUrl"
                 size="large"
                 lineClamp="line-clamp-4"
             />
 
-            <x-post.description
+            <x-content.description
                 :description="$description"
                 lineClamp="line-clamp-4"
             />
 
-            <x-post.author-date
+            <x-content.author-date
                 :author="$author"
                 :authorUrl="$authorUrl"
                 :date="$date"
@@ -106,7 +106,7 @@
             {{-- Metadata Badge --}}
             <div class="relative z-10 w-full h-full p-6 flex flex-col justify-end items-center pointer-events-none">
                 <div class="inline-flex justify-center items-start gap-5 pointer-events-auto">
-                    <x-post.metadata-badge
+                    <x-content.metadata-badge
                         :category="$category"
                         :categoryUrl="$categoryUrl"
                         :tag="$tag"

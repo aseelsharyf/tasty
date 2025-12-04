@@ -58,7 +58,7 @@
 
         {{-- Description and Metadata --}}
         <div class="w-full md:flex-1 flex flex-col justify-end items-center md:items-start gap-6">
-            <x-post.description
+            <x-content.description
                 :description="$description"
                 size="xl"
                 align="center md:left"
@@ -66,7 +66,7 @@
             />
 
             <div class="w-full flex justify-center md:justify-start">
-                <x-post.author-date
+                <x-content.author-date
                     :author="$author"
                     :authorUrl="$authorUrl"
                     :date="$date"

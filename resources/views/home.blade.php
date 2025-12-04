@@ -2,7 +2,7 @@
 
 @section('content')
 
-<x-post.hero
+<x-sections.hero
     image="{{Vite::asset('resources/images/image-01.png')}}"
     imageAlt="Delicious fried chicken in paper cups"
     category="On Culture"
@@ -22,7 +22,7 @@
 
 <div class="w-full px-5 lg:px-10 pt-16 pb-32 bg-tasty-off-white">
     <div class="lg:hidden flex flex-col gap-10">
-        <x-post.section-intro
+        <x-sections.intro
             image="{{ Vite::asset('resources/images/latest-updates-transparent.png') }}"
             imageAlt="Latest Updates"
             title="Latest"
@@ -30,7 +30,7 @@
             description="The flavors, characters, and tiny island obsessions that makes the Maldivian food culture."
         />
 
-        <x-post.card-news
+        <x-cards.news
             image="{{Vite::asset('resources/images/image-02.png')}}"
             imageAlt="Mexican food dishes on a table"
             category="Food & Drink"
@@ -45,7 +45,7 @@
             articleUrl="/article/mexican-fiesta-at-bianco"
         />
 
-        <x-post.card-news-small
+        <x-cards.news-small
             image="{{ Vite::asset('resources/images/image-03.png') }}"
             imageAlt="Jazz Cafe event"
             category="Latest"
@@ -60,7 +60,7 @@
             articleUrl="#"
         />
 
-        <x-post.card-news-small
+        <x-cards.news-small
             image="{{ Vite::asset('resources/images/image-04.png') }}"
             imageAlt="Sun Siyam Olhuveli resort"
             category="Latest"
@@ -75,7 +75,7 @@
             articleUrl="#"
         />
 
-        <x-post.card-news-small
+        <x-cards.news-small
             image="{{ Vite::asset('resources/images/image-04.png') }}"
             imageAlt="Young chef with medals"
             category="Latest"
@@ -90,7 +90,7 @@
             articleUrl="#"
         />
 
-        <x-post.card-news-small
+        <x-cards.news-small
             image="{{ Vite::asset('resources/images/image-05.png') }}"
             imageAlt="Food Carnival 2025 poster"
             category="Latest"
@@ -118,7 +118,7 @@
     <div class="hidden lg:block">
         <div class="grid grid-cols-[1fr_1fr] gap-5">
             <div class="flex items-center">
-                <x-post.section-intro
+                <x-sections.intro
                     image="{{ Vite::asset('resources/images/latest-updates-transparent.png') }}"
                     imageAlt="Latest Updates"
                     title="Latest"
@@ -129,7 +129,7 @@
             </div>
 
             <div>
-                <x-post.card-news
+                <x-cards.news
                     image="{{Vite::asset('resources/images/image-02.png')}}"
                     imageAlt="Mexican food dishes on a table"
                     category="Food & Drink"
@@ -146,7 +146,7 @@
             </div>
 
             <div>
-                <x-post.card-news-small
+                <x-cards.news-small
                     image="{{ Vite::asset('resources/images/image-03.png') }}"
                     imageAlt="Jazz Cafe event"
                     category="Latest"
@@ -163,7 +163,7 @@
             </div>
 
             <div>
-                <x-post.card-news-small
+                <x-cards.news-small
                     image="{{ Vite::asset('resources/images/image-04.png') }}"
                     imageAlt="Sun Siyam Olhuveli resort"
                     category="Latest"
@@ -180,7 +180,7 @@
             </div>
 
             <div>
-                <x-post.card-news-small
+                <x-cards.news-small
                     image="{{ Vite::asset('resources/images/image-04.png') }}"
                     imageAlt="Young chef with medals"
                     category="Latest"
@@ -197,7 +197,7 @@
             </div>
 
             <div>
-                <x-post.card-news-small
+                <x-cards.news-small
                     image="{{ Vite::asset('resources/images/image-05.png') }}"
                     imageAlt="Food Carnival 2025 poster"
                     category="Latest"
@@ -226,7 +226,7 @@
 
 </div>
 
-<x-featured-person
+<x-sections.featured-person
     image="{{ Vite::asset('resources/images/image-06.png') }}"
     imageAlt="Aminath Hameed - Chef"
     name="Aminath Hameed"
@@ -242,7 +242,7 @@
 <div class="w-full px-5 lg:px-10 pt-16 pb-32 bg-tasty-yellow overflow-x-hidden">
     <div class="flex flex-col gap-10 lg:flex-row lg:gap-10 lg:overflow-x-auto scrollbar-hide lg:scroll-smooth">
         <div class="w-full lg:w-[384px] lg:shrink-0 lg:flex lg:items-center">
-            <x-post.section-intro
+            <x-sections.intro
                 image="{{ Vite::asset('resources/images/image-07.png') }}"
                 imageAlt="The Spread"
                 title="The"
@@ -255,7 +255,7 @@
 
         <div class="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth lg:overflow-visible">
             <div class="w-[310px] lg:w-[480px] shrink-0">
-                <x-post.card-spread
+                <x-cards.spread
                     image="{{ Vite::asset('resources/images/image-08.png') }}"
                     imageAlt="BBQ grilling scene"
                     category="The Spread"
@@ -275,7 +275,7 @@
             <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
             <div class="w-[310px] lg:w-[480px] shrink-0">
-                <x-post.card-spread
+                <x-cards.spread
                     image="{{ Vite::asset('resources/images/image-09.png') }}"
                     imageAlt="Fisherman carrying basket of fish"
                     category="The Spread"
@@ -295,7 +295,7 @@
             <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
             <div class="w-[310px] lg:w-[480px] shrink-0">
-                <x-post.card-spread
+                <x-cards.spread
                     image="{{ Vite::asset('resources/images/image-10.png') }}"
                     imageAlt="Traditional toddy tapping scene"
                     category="The Spread"
@@ -315,7 +315,7 @@
             <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
             <div class="w-[310px] lg:w-[480px] shrink-0">
-                <x-post.card-spread
+                <x-cards.spread
                     image="{{ Vite::asset('resources/images/image-11.png') }}"
                     imageAlt="Adduan home cook"
                     category="The Spread"
@@ -335,7 +335,7 @@
             <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
             <div class="w-[310px] lg:w-[480px] shrink-0">
-                <x-post.card-spread
+                <x-cards.spread
                     image="{{ Vite::asset('resources/images/image-12.png') }}"
                     imageAlt="Rihaakuru being cooked"
                     category="The Spread"
@@ -358,7 +358,7 @@
 
 
 <div class="w-full px-5 md:px-10 pt-16 pb-32 bg-gradient-to-b from-tasty-yellow to-white flex flex-col justify-start items-center gap-10">
-    <x-post.card-video
+    <x-cards.video
         video="{{ Vite::asset('resources/images/image-13.png') }}"
         videoPoster="{{ Vite::asset('resources/images/image-13.png') }}"
         title="Nami at Reveli"
@@ -374,7 +374,7 @@
 <div class="w-full pt-16 pb-32 bg-tasty-off-white overflow-x-hidden">
     <div class="md:hidden flex flex-col gap-10">
         <div class="w-full px-5 flex justify-center">
-            <x-post.section-intro
+            <x-sections.intro
                 image="{{ Vite::asset('resources/images/image-19.png') }}"
                 imageAlt="On the Menu"
                 title="On the"
@@ -386,7 +386,7 @@
 
         <div class="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth pl-5 pr-20">
             <div class="w-[310px] shrink-0">
-                <x-restaurant.card
+                <x-cards.restaurant
                     image="{{ Vite::asset('resources/images/image-15.png') }}"
                     imageAlt="Bianco cafe interior"
                     name="BIANCO"
@@ -398,7 +398,7 @@
             </div>
 
             <div class="w-[310px] shrink-0">
-                <x-restaurant.card
+                <x-cards.restaurant
                     image="{{ Vite::asset('resources/images/image-16.png') }}"
                     imageAlt="Island Patisserie display"
                     name="Island Patisserie"
@@ -410,7 +410,7 @@
             </div>
 
             <div class="w-[310px] shrink-0">
-                <x-restaurant.card
+                <x-cards.restaurant
                     image="{{ Vite::asset('resources/images/image-17.png') }}"
                     imageAlt="Tawa cafe"
                     name="Tawa"
@@ -422,7 +422,7 @@
             </div>
 
             <div class="w-[310px] shrink-0">
-                <x-restaurant.card
+                <x-cards.restaurant
                     image="{{ Vite::asset('resources/images/image-18.png') }}"
                     imageAlt="Holm Deli sandwiches"
                     name="Holm Deli"
@@ -434,7 +434,7 @@
             </div>
 
             <div class="w-[310px] shrink-0">
-                <x-restaurant.card
+                <x-cards.restaurant
                     image="{{ Vite::asset('resources/images/image-15.png') }}"
                     imageAlt="Soho cafe"
                     name="Soho"
@@ -450,7 +450,7 @@
     <div class="hidden md:block md:px-10">
         <div class="grid grid-cols-[auto_0px_auto_0px_auto] gap-5">
             <div class="flex justify-center">
-                <x-post.section-intro
+                <x-sections.intro
                     image="{{ Vite::asset('resources/images/image-19.png') }}"
                     imageAlt="On the Menu"
                     title="On the"
@@ -463,7 +463,7 @@
             <div class="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white"></div>
 
             <div class="flex justify-center">
-                <x-restaurant.card
+                <x-cards.restaurant
                     image="{{ Vite::asset('resources/images/image-15.png') }}"
                     imageAlt="Bianco cafe interior"
                     name="BIANCO"
@@ -477,7 +477,7 @@
             <div class="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white"></div>
 
             <div class="flex justify-center">
-                <x-restaurant.card
+                <x-cards.restaurant
                     image="{{ Vite::asset('resources/images/image-16.png') }}"
                     imageAlt="Island Patisserie display"
                     name="Island Patisserie"
@@ -489,7 +489,7 @@
             </div>
 
             <div class="flex justify-center">
-                <x-restaurant.card
+                <x-cards.restaurant
                     image="{{ Vite::asset('resources/images/image-17.png') }}"
                     imageAlt="Tawa cafe"
                     name="Tawa"
@@ -503,7 +503,7 @@
             <div class="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white"></div>
 
             <div class="flex justify-center">
-                <x-restaurant.card
+                <x-cards.restaurant
                     image="{{ Vite::asset('resources/images/image-18.png') }}"
                     imageAlt="Holm Deli sandwiches"
                     name="Holm Deli"
@@ -517,7 +517,7 @@
             <div class="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white"></div>
 
             <div class="flex justify-center">
-                <x-restaurant.card
+                <x-cards.restaurant
                     image="{{ Vite::asset('resources/images/image-15.png') }}"
                     imageAlt="Soho cafe"
                     name="Soho"
@@ -533,7 +533,7 @@
 </div>
 
 
-<x-featured-section
+<x-sections.featured-content
     image="{{ Vite::asset('resources/images/image-20.png') }}"
     imageAlt="Ceylon"
     heading="CEYLON"
@@ -552,7 +552,7 @@
 <div class="w-full px-5 lg:px-10 py-16 bg-tasty-yellow overflow-hidden">
     <div class="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth">
         <div class="w-[310px] lg:w-[480px] shrink-0">
-            <x-post.card-spread
+            <x-cards.spread
                 image="{{ Vite::asset('resources/images/image-21.png') }}"
                 imageAlt="Tea hill picker in green fields"
                 category="The Spread"
@@ -572,7 +572,7 @@
         <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
         <div class="w-[310px] lg:w-[480px] shrink-0">
-            <x-post.card-spread
+            <x-cards.spread
                 image="{{ Vite::asset('resources/images/image-22.png') }}"
                 imageAlt="Heritage café interior with tables"
                 category="The Spread"
@@ -592,7 +592,7 @@
         <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
         <div class="w-[310px] lg:w-[480px] shrink-0">
-            <x-post.card-spread
+            <x-cards.spread
                 image="{{ Vite::asset('resources/images/image-23.png') }}"
                 imageAlt="Street vendor frying snacks"
                 category="The Spread"
@@ -612,7 +612,7 @@
         <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
         <div class="w-[310px] lg:w-[480px] shrink-0">
-            <x-post.card-spread
+            <x-cards.spread
                 image="{{ Vite::asset('resources/images/image-24.png') }}"
                 imageAlt="Hanging bunches of bananas at market"
                 category="The Spread"
@@ -632,7 +632,7 @@
         <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
         <div class="w-[310px] lg:w-[480px] shrink-0">
-            <x-post.card-spread
+            <x-cards.spread
                 image="{{ Vite::asset('resources/images/image-25.png') }}"
                 imageAlt="Man preparing banana leaves in a rustic doorway"
                 category="The Spread"
@@ -655,7 +655,7 @@
 <div class="w-full px-5 lg:px-10 pt-16 pb-32 bg-tasty-light-gray" style="background: linear-gradient(to bottom, var(--color-tasty-yellow) 0%, var(--color-tasty-light-gray) 15%);">
     <div class="flex flex-col lg:grid lg:grid-cols-2 gap-10 lg:gap-16 mb-10">
         <div class="flex items-center justify-center">
-            <x-post.section-intro
+            <x-sections.intro
                 image="{{ Vite::asset('resources/images/image-07.png') }}"
                 imageAlt="Everyday Cooking"
                 title="Everyday"
@@ -666,7 +666,7 @@
         </div>
 
         <div class="w-full">
-            <x-post.card-recipe
+            <x-cards.recipe
                 image="{{ Vite::asset('resources/images/image-26.png') }}"
                 imageAlt="Illustrated cooking scene"
                 :tags="['recipe','best of']"
@@ -681,7 +681,7 @@
     </div>
 
     <div class="flex lg:grid lg:grid-cols-3 items-start gap-5 lg:gap-10 overflow-x-auto lg:overflow-visible scrollbar-hide scroll-smooth">
-        <x-post.card-recipe-small
+        <x-cards.recipe-small
             image="{{ Vite::asset('resources/images/image-27.png') }}"
             imageAlt="Squash pasta closeup"
             :tags="['recipe','vegan']"
@@ -692,7 +692,7 @@
             url="#"
         />
 
-        <x-post.card-recipe-small
+        <x-cards.recipe-small
             image="{{ Vite::asset('resources/images/image-28.png') }}"
             imageAlt="Chocolate chip cookie"
             :tags="['recipe','sweet tooth']"
@@ -703,7 +703,7 @@
             url="#"
         />
 
-        <x-post.card-recipe-small
+        <x-cards.recipe-small
             image="{{ Vite::asset('resources/images/image-29.png') }}"
             imageAlt="Omelet with mushrooms"
             :tags="['recipe','Maldivian']"
@@ -717,6 +717,6 @@
 </div>
 
 
-<x-subscribe/>
+<x-sections.subscribe/>
 
 @endsection

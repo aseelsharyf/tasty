@@ -32,7 +32,7 @@
 
             {{-- Metadata Tags (Top) --}}
             <div class="flex justify-start">
-                <x-post.metadata-badge
+                <x-content.metadata-badge
                     :category="$category"
                     :categoryUrl="$categoryUrl"
                     :tag="$tag"
@@ -42,7 +42,7 @@
 
             {{-- Title (Middle) --}}
             <div class="w-full flex-1 py-5">
-                <x-post.title
+                <x-content.title
                     :title="$title"
                     :url="$articleUrl"
                     tag="h4"
@@ -51,7 +51,7 @@
             </div>
 
             {{-- Author and Date Metadata (Bottom) --}}
-            <x-post.author-date
+            <x-content.author-date
                 :author="$author"
                 :authorUrl="$authorUrl"
                 :date="$date"

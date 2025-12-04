@@ -28,7 +28,7 @@
 
             {{-- Metadata Tags (Desktop Only) --}}
             <div class="hidden md:block absolute bottom-6 left-1/2 transform -translate-x-1/2 z-10">
-                <x-post.metadata-badge
+                <x-content.metadata-badge
                     :category="$category"
                     :categoryUrl="$categoryUrl"
                     :tag="$tag"
@@ -49,7 +49,7 @@
         <div class="w-full flex flex-col items-start md:items-center gap-4 md:gap-6">
             {{-- Metadata Tags (Mobile Only) --}}
             <div class="md:hidden flex justify-start">
-                <x-post.metadata-badge
+                <x-content.metadata-badge
                     :category="$category"
                     :categoryUrl="$categoryUrl"
                     :tag="$tag"
@@ -58,7 +58,7 @@
             </div>
 
             {{-- Title --}}
-            <x-post.title
+            <x-content.title
                 :title="$title"
                 :url="$articleUrl"
                 tag="h4"
@@ -69,7 +69,7 @@
             {{-- Description (Desktop Only) --}}
             @if($description)
                 <div class="hidden md:block w-full">
-                    <x-post.description
+                    <x-content.description
                         :description="$description"
                         align="center"
                         :hideOnMobile="false"
@@ -78,7 +78,7 @@
             @endif
 
             {{-- Author and Date Metadata --}}
-            <x-post.author-date
+            <x-content.author-date
                 :author="$author"
                 :authorUrl="$authorUrl"
                 :date="$date"

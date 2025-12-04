@@ -58,7 +58,7 @@
         </div>
 
         {{-- Description --}}
-        <x-post.description
+        <x-content.description
             :description="$description"
             size="xl"
             align="center"
