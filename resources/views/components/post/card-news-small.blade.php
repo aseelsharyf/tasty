@@ -15,8 +15,8 @@
     'articleUrl' => '#',
 ])
 
-<div class="w-full bg-white rounded-xl mx-auto">
-    <div class="flex flex-col md:flex-row p-10 gap-4 md:gap-6">
+<div class="w-full  md:max-w-none bg-white rounded-xl mx-auto md:mx-0">
+    <div class="flex flex-col md:flex-row p-4 gap-4 md:gap-6">
 
         {{-- Image Section (Left) --}}
         <div class="w-full md:w-[200px] h-[206px] rounded overflow-hidden relative flex-shrink-0">
@@ -45,7 +45,7 @@
                 <x-post.title
                     :title="$title"
                     :url="$articleUrl"
-                    size="small"
+                    tag="h4"
                     lineClamp="line-clamp-3"
                 />
             </div>

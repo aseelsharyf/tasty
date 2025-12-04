@@ -11,6 +11,7 @@
     'leading' => null, // Optional: Override leading
     'uppercase' => false,
     'url' => null, // Optional: Make heading a link
+    'lineClamp' => null, // Optional: 'line-clamp-3', 'line-clamp-2', etc.
 ])
 
 @php
@@ -54,7 +55,7 @@
     $uppercaseClass = $uppercase ? 'uppercase' : '';
 
     // Combine classes
-    $classes = trim("w-full {$font} {$sizeClass} {$color} {$alignClass} {$weight} {$leadingClass} {$uppercaseClass}");
+    $classes = trim("w-full {$font} {$sizeClass} {$color} {$alignClass} {$weight} {$leadingClass} {$uppercaseClass} {$lineClamp}");
 @endphp
 
 @if($url)

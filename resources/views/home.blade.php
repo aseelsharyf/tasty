@@ -22,23 +22,119 @@
 />
 
 
-<div class="w-full px-5 md:px-10 pt-16 pb-6 bg-tasty-off-white bg-red-100">
-    <div class="max-w-7xl mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-2 md:items-center gap-10">
+<div class="w-full px-5 md:px-10 pt-16 pb-32 bg-tasty-off-white">
+    {{-- Mobile: Vertical Stack --}}
+    <div class="md:hidden flex flex-col gap-10">
+        <x-post.section-intro
+            image="{{ Vite::asset('resources/images/latest-updates-transparent.png') }}"
+            imageAlt="Latest Updates"
+            title="Latest"
+            titleLarge="Updates"
+            description="The flavors, characters, and tiny island obsessions that makes the Maldivian food culture."
+        />
 
-            <!-- Left Side (Intro) -->
-            <div class="p-10">
+        <x-post.card-news
+            image="{{Vite::asset('resources/images/image-02.png')}}"
+            imageAlt="Mexican food dishes on a table"
+            category="Food & Drink"
+            categoryUrl="/category/food-drink"
+            tag="Restaurant Review"
+            tagUrl="/tag/restaurant-review"
+            author="Mohamed Ashraf"
+            authorUrl="/author/mohamed-ashraf"
+            date="November 12, 2025"
+            title="Mexican Fiesta at Bianco"
+            description="Bianco rolls out a short-run menu featuring quesadillas, nachos, rice bowls and pulled-beef tacos — available for a limited time only."
+            articleUrl="/article/mexican-fiesta-at-bianco"
+        />
+
+        <x-post.card-news-small
+            image="{{ Vite::asset('resources/images/image-03.png') }}"
+            imageAlt="Jazz Cafe event"
+            category="Latest"
+            categoryUrl="#"
+            tag="Event"
+            tagUrl="#"
+            author="Author Name"
+            authorUrl="#"
+            date="December 20, 2024"
+            title="Gig alert in Jazz Cafe! Haveeree Hingun Jazz Chronicles: Vol. 4 - Rumba in C on Sat, Dec 14th."
+            description="Live jazz chronicles with a fusion twist happening at Jazz Cafe."
+            articleUrl="#"
+        />
+
+        <x-post.card-news-small
+            image="{{ Vite::asset('resources/images/image-04.png') }}"
+            imageAlt="Sun Siyam Olhuveli resort"
+            category="Latest"
+            categoryUrl="#"
+            tag="Seasonal"
+            tagUrl="#"
+            author="Author Name"
+            authorUrl="#"
+            date="December 20, 2024"
+            title="Celebrate Diwali and Culinary Excellence at Sun Siyam Olhuveli"
+            description="Festive celebrations with culinary experiences at Olhuveli."
+            articleUrl="#"
+        />
+
+        <x-post.card-news-small
+            image="{{ Vite::asset('resources/images/image-04.png') }}"
+            imageAlt="Young chef with medals"
+            category="Latest"
+            categoryUrl="#"
+            tag="People"
+            tagUrl="#"
+            author="Author Name"
+            authorUrl="#"
+            date="December 20, 2024"
+            title="FHAM 2025 Culinary Challenge began with the Young Chef competition."
+            description="A showcase of rising culinary talent kicking off FHAM 2025."
+            articleUrl="#"
+        />
+
+        <x-post.card-news-small
+            image="{{ Vite::asset('resources/images/image-05.png') }}"
+            imageAlt="Food Carnival 2025 poster"
+            category="Latest"
+            categoryUrl="#"
+            tag="Event"
+            tagUrl="#"
+            author="Author Name"
+            authorUrl="#"
+            date="December 20, 2024"
+            title="Food Carnival 2025 coming on Jan 21st, Hulhumale. A weekend of pop-ups and street flavors!"
+            description="A vibrant food carnival with pop-ups and diverse street foods."
+            articleUrl="#"
+        />
+
+        <div class="flex justify-center mt-10">
+            <x-ui.button
+                url="#"
+                text="More Updates"
+                icon="plus"
+                :iconRotate="true"
+            />
+        </div>
+    </div>
+
+    {{-- Desktop: 3 Rows x 2 Columns Grid Layout --}}
+    <div class="hidden md:block">
+        <div class="grid grid-cols-[1fr_1fr] gap-5">
+            {{-- Row 1, Col 1 --}}
+            <div class="flex items-center">
                 <x-post.section-intro
                     image="{{ Vite::asset('resources/images/latest-updates-transparent.png') }}"
                     imageAlt="Latest Updates"
                     title="Latest"
                     titleLarge="Updates"
                     description="The flavors, characters, and tiny island obsessions that makes the Maldivian food culture."
+                    maxWidth="max-w-[310px] md:max-w-none"
                 />
             </div>
 
-            <!-- Right Side (Card) -->
-            <div class="w-full">
+            {{-- Row 1, Col 2 --}}
+            <div>
                 <x-post.card-news
                     image="{{Vite::asset('resources/images/image-02.png')}}"
                     imageAlt="Mexican food dishes on a table"
@@ -55,77 +151,77 @@
                 />
             </div>
 
-        </div>
+            {{-- Row 2, Col 1 --}}
+            <div>
+                <x-post.card-news-small
+                    image="{{ Vite::asset('resources/images/image-03.png') }}"
+                    imageAlt="Jazz Cafe event"
+                    category="Latest"
+                    categoryUrl="#"
+                    tag="Event"
+                    tagUrl="#"
+                    author="Author Name"
+                    authorUrl="#"
+                    date="December 20, 2024"
+                    title="Gig alert in Jazz Cafe! Haveeree Hingun Jazz Chronicles: Vol. 4 - Rumba in C on Sat, Dec 14th."
+                    description="Live jazz chronicles with a fusion twist happening at Jazz Cafe."
+                    articleUrl="#"
+                />
+            </div>
 
-        <div class="pt-10 grid grid-cols-1 md:grid-cols-2 gap-10">
+            {{-- Row 2, Col 2 --}}
+            <div>
+                <x-post.card-news-small
+                    image="{{ Vite::asset('resources/images/image-04.png') }}"
+                    imageAlt="Sun Siyam Olhuveli resort"
+                    category="Latest"
+                    categoryUrl="#"
+                    tag="Seasonal"
+                    tagUrl="#"
+                    author="Author Name"
+                    authorUrl="#"
+                    date="December 20, 2024"
+                    title="Celebrate Diwali and Culinary Excellence at Sun Siyam Olhuveli"
+                    description="Festive celebrations with culinary experiences at Olhuveli."
+                    articleUrl="#"
+                />
+            </div>
 
-            {{-- Card 1 --}}
-            <x-post.card-news-small
-                image="{{ Vite::asset('resources/images/image-03.png') }}"
-                imageAlt="Jazz Cafe event"
-                category="Latest"
-                categoryUrl="#"
-                tag="Event"
-                tagUrl="#"
-                author="Author Name"
-                authorUrl="#"
-                date="December 20, 2024"
-                title="Gig alert in Jazz Cafe! Haveeree Hingun Jazz Chronicles: Vol. 4 - Rumba in C on Sat, Dec 14th."
-                description="Live jazz chronicles with a fusion twist happening at Jazz Cafe."
-                articleUrl="#"
-            />
+            {{-- Row 3, Col 1 --}}
+            <div>
+                <x-post.card-news-small
+                    image="{{ Vite::asset('resources/images/image-04.png') }}"
+                    imageAlt="Young chef with medals"
+                    category="Latest"
+                    categoryUrl="#"
+                    tag="People"
+                    tagUrl="#"
+                    author="Author Name"
+                    authorUrl="#"
+                    date="December 20, 2024"
+                    title="FHAM 2025 Culinary Challenge began with the Young Chef competition."
+                    description="A showcase of rising culinary talent kicking off FHAM 2025."
+                    articleUrl="#"
+                />
+            </div>
 
-
-            {{-- Card 2 --}}
-            <x-post.card-news-small
-                image="{{ Vite::asset('resources/images/image-04.png') }}"
-                imageAlt="Sun Siyam Olhuveli resort"
-                category="Latest"
-                categoryUrl="#"
-                tag="Seasonal"
-                tagUrl="#"
-                author="Author Name"
-                authorUrl="#"
-                date="December 20, 2024"
-                title="Celebrate Diwali and Culinary Excellence at Sun Siyam Olhuveli"
-                description="Festive celebrations with culinary experiences at Olhuveli."
-                articleUrl="#"
-            />
-
-            {{-- Card 3 --}}
-            <x-post.card-news-small
-                image="{{ Vite::asset('resources/images/image-04.png') }}"
-                imageAlt="Young chef with medals"
-                category="Latest"
-                categoryUrl="#"
-                tag="People"
-                tagUrl="#"
-                author="Author Name"
-                authorUrl="#"
-                date="December 20, 2024"
-                title="FHAM 2025 Culinary Challenge began with the Young Chef competition."
-                description="A showcase of rising culinary talent kicking off FHAM 2025."
-                articleUrl="#"
-            />
-
-            {{-- Card 4 --}}
-            <x-post.card-news-small
-                image="{{ Vite::asset('resources/images/image-05.png') }}"
-                imageAlt="Food Carnival 2025 poster"
-                category="Latest"
-                categoryUrl="#"
-                tag="Event"
-                tagUrl="#"
-                author="Author Name"
-                authorUrl="#"
-                date="December 20, 2024"
-                title="Food Carnival 2025 coming on Jan 21st, Hulhumale. A weekend of pop-ups and street flavors!"
-                description="A vibrant food carnival with pop-ups and diverse street foods."
-                articleUrl="#"
-            />
-
-
-
+            {{-- Row 3, Col 2 --}}
+            <div>
+                <x-post.card-news-small
+                    image="{{ Vite::asset('resources/images/image-05.png') }}"
+                    imageAlt="Food Carnival 2025 poster"
+                    category="Latest"
+                    categoryUrl="#"
+                    tag="Event"
+                    tagUrl="#"
+                    author="Author Name"
+                    authorUrl="#"
+                    date="December 20, 2024"
+                    title="Food Carnival 2025 coming on Jan 21st, Hulhumale. A weekend of pop-ups and street flavors!"
+                    description="A vibrant food carnival with pop-ups and diverse street foods."
+                    articleUrl="#"
+                />
+            </div>
         </div>
 
         <div class="flex justify-center mt-10">
@@ -136,8 +232,6 @@
                 :iconRotate="true"
             />
         </div>
-
-
     </div>
 
 </div>

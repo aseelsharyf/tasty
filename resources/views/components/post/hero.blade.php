@@ -36,8 +36,13 @@
 <section class="flex flex-col md:flex-row w-full min-h-screen md:min-h-0">
 
     {{-- Image Side --}}
-    <div class="w-full h-[50vh] md:h-auto md:w-1/2 md:min-h-screen overflow-hidden relative">
-        <div class="absolute inset-0 hover:opacity-80 transition-opacity duration-200">
+    <div class="w-full h-[50vh] md:h-auto md:w-1/2 min-h-screen overflow-hidden relative">
+        {{-- <div class="absolute inset-0 hover:opacity-80 transition-opacity duration-200">
+            <img src="{{ $image }}"
+                 alt="{{ $imageAlt }}"
+                 class="absolute inset-0 w-full h-full object-cover object-center">
+        </div> --}}
+        <div class="absolute inset-0 ">
             <img src="{{ $image }}"
                  alt="{{ $imageAlt }}"
                  class="absolute inset-0 w-full h-full object-cover object-center">

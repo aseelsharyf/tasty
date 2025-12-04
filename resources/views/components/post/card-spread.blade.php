@@ -56,6 +56,7 @@
             <x-post.title
                 :title="$title"
                 :url="$articleUrl"
+                size="large"
                 lineClamp="line-clamp-4"
             />
 
@@ -76,6 +77,7 @@
             <x-post.title
                 :title="$title"
                 :url="$articleUrl"
+                size="large"
                 lineClamp="line-clamp-4"
             />
 
