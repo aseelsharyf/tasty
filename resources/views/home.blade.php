@@ -253,7 +253,7 @@
 
         <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
 
-        <div class="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth lg:overflow-visible">
+        <x-layout.card-grid mode="scroll" gap="gap-10">
             <div class="w-[310px] lg:w-[480px] shrink-0">
                 <x-cards.spread
                     image="{{ Vite::asset('resources/images/image-08.png') }}"
@@ -352,7 +352,7 @@
                 />
             </div>
 
-        </div>
+        </x-layout.card-grid>
     </div>
 </div>
 
@@ -384,7 +384,7 @@
             />
         </div>
 
-        <div class="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth pl-5 pr-20">
+        <x-layout.card-grid mode="scroll" gap="gap-10" paddingX="pl-5 pr-20">
             <div class="w-[310px] shrink-0">
                 <x-cards.restaurant
                     image="{{ Vite::asset('resources/images/image-15.png') }}"
@@ -444,7 +444,7 @@
                     articleUrl="/restaurant/soho"
                 />
             </div>
-        </div>
+        </x-layout.card-grid>
     </div>
 
     <div class="hidden md:block md:px-10">
@@ -550,7 +550,7 @@
 />
 
 <div class="w-full px-5 lg:px-10 py-16 bg-tasty-yellow overflow-hidden">
-    <div class="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth">
+    <x-layout.card-grid mode="scroll" gap="gap-10">
         <div class="w-[310px] lg:w-[480px] shrink-0">
             <x-cards.spread
                 image="{{ Vite::asset('resources/images/image-21.png') }}"
@@ -648,7 +648,7 @@
                 imagePosition="top"
             />
         </div>
-    </div>
+    </x-layout.card-grid>
 </div>
 
 
@@ -680,7 +680,7 @@
         </div>
     </div>
 
-    <div class="flex lg:grid lg:grid-cols-3 items-start gap-5 lg:gap-10 overflow-x-auto lg:overflow-visible scrollbar-hide scroll-smooth">
+    <x-layout.card-grid mode="scroll" :columns="3" gap="gap-5 lg:gap-10">
         <x-cards.recipe-small
             image="{{ Vite::asset('resources/images/image-27.png') }}"
             imageAlt="Squash pasta closeup"
@@ -713,7 +713,7 @@
             title="How to Make a Fantastic Omelet"
             url="#"
         />
-    </div>
+    </x-layout.card-grid>
 </div>
 
 
