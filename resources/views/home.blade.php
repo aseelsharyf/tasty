@@ -603,6 +603,118 @@
     contentBgColor="bg-tasty-yellow"
 />
 
+{{-- Ceylon Stories Section - Horizontal scroll --}}
+<div class="w-full px-5 lg:px-10 py-16 bg-tasty-yellow overflow-hidden">
+    <div class="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth">
+        {{-- Card 1 --}}
+        <div class="w-[310px] lg:w-[480px] shrink-0">
+            <x-post.card-spread
+                image="{{ Vite::asset('resources/images/image-21.png') }}"
+                imageAlt="Tea hill picker in green fields"
+                category="The Spread"
+                categoryUrl="#"
+                tag="On Ingredients"
+                tagUrl="#"
+                author="Aminath Ahmed"
+                authorUrl="#"
+                date="February 14, 2025"
+                title="Where Ceylon Begins: Walking the Endless Green of Lanka's Tea Hills"
+                description="Walking through misty rows of emerald green, meeting the pickers and stories behind Sri Lanka's most iconic leaf."
+                articleUrl="#"
+                imagePosition="top"
+            />
+        </div>
+
+        {{-- Separator --}}
+        <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
+
+        {{-- Card 2 --}}
+        <div class="w-[310px] lg:w-[480px] shrink-0">
+            <x-post.card-spread
+                image="{{ Vite::asset('resources/images/image-22.png') }}"
+                imageAlt="Heritage café interior with tables"
+                category="The Spread"
+                categoryUrl="#"
+                tag="Section"
+                tagUrl="#"
+                author="Mohamed Ashraf"
+                authorUrl="#"
+                date="January 8, 2025"
+                title="A Morning at Colombo's Heritage Café, Where Time Moves Softer"
+                description="Quiet columns, slow mornings, and a café that pours history with every cup. A taste of Sri Lanka's timeless charm."
+                articleUrl="#"
+                imagePosition="bottom"
+            />
+        </div>
+
+        {{-- Separator --}}
+        <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
+
+        {{-- Card 3 --}}
+        <div class="w-[310px] lg:w-[480px] shrink-0">
+            <x-post.card-spread
+                image="{{ Vite::asset('resources/images/image-23.png') }}"
+                imageAlt="Street vendor frying snacks"
+                category="The Spread"
+                categoryUrl="#"
+                tag="On Ingredients"
+                tagUrl="#"
+                author="Hanan Saeed"
+                authorUrl="#"
+                date="September 22, 2025"
+                title="Heat, Hustle & Street Bites"
+                description="From spicy short eats to crispy fritters made on the fly, Sri Lanka's street vendors turn sidewalks into open-air kitchens. Loud, fast, chaotic — and absolutely delicious."
+                articleUrl="#"
+                imagePosition="top"
+            />
+        </div>
+
+        {{-- Separator --}}
+        <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
+
+        {{-- Card 4 --}}
+        <div class="w-[310px] lg:w-[480px] shrink-0">
+            <x-post.card-spread
+                image="{{ Vite::asset('resources/images/image-24.png') }}"
+                imageAlt="Hanging bunches of bananas at market"
+                category="The Spread"
+                categoryUrl="#"
+                tag="Section"
+                tagUrl="#"
+                author="Aishath Fathimath"
+                authorUrl="#"
+                date="October 27, 2025"
+                title="Banana Country: Exploring the Wild, Colorful World of Lanka's Many Varieties"
+                description="Dozens of shapes, sizes, and sweetness levels — a colorful dive into Sri Lanka's banana farms and their wild variety."
+                articleUrl="#"
+                imagePosition="bottom"
+            />
+        </div>
+
+        {{-- Separator --}}
+        <div class="hidden lg:block w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white shrink-0"></div>
+
+        {{-- Card 5 --}}
+        <div class="w-[310px] lg:w-[480px] shrink-0">
+            <x-post.card-spread
+                image="{{ Vite::asset('resources/images/image-25.png') }}"
+                imageAlt="Man preparing banana leaves in a rustic doorway"
+                category="The Spread"
+                categoryUrl="#"
+                tag="On Ingredients"
+                tagUrl="#"
+                author="Aminath Ahmed"
+                authorUrl="#"
+                date="September 1, 2025"
+                title="Cooking on Green Gold: How the Banana Leaf Shapes Sri Lankan Flavor"
+                description="More than a natural plate, the banana leaf transforms aroma and texture. From wrapping curries to steaming rice, we explore how this simple leaf carries centuries of Lankan food tradition."
+                articleUrl="#"
+                imagePosition="top"
+            />
+        </div>
+    </div>
+</div>
+
 
 <x-subscribe/>
 
