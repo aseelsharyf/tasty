@@ -396,7 +396,7 @@
 {{-- Video Feature Section --}}
 <div class="w-full px-5 md:px-10 pt-16 pb-32 bg-gradient-to-b from-tasty-yellow to-white flex flex-col justify-start items-center gap-10">
     <x-post.card-video
-        video="{{ Vite::asset('resources/videos/nami-reveli.mp4') }}"
+        video="{{ Vite::asset('resources/images/image-13.png') }}"
         videoPoster="{{ Vite::asset('resources/images/image-13.png') }}"
         title="Nami at Reveli"
         subtitle="Sushi and steak by the sea"
