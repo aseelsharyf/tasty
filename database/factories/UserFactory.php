@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -23,9 +24,12 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $name = fake()->name();
+
         return [
-            'name' => fake()->name(),
+            'name' => $name,
             'email' => fake()->unique()->safeEmail(),
+            'username' => User::generateUniqueUsername($name),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
@@ -40,5 +44,65 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * Configure the user with the Admin role.
+     */
+    public function admin(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            $user->assignRole('Admin');
+        });
+    }
+
+    /**
+     * Configure the user with the Developer role.
+     */
+    public function developer(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            $user->assignRole('Developer');
+        });
+    }
+
+    /**
+     * Configure the user with the Editor role.
+     */
+    public function editor(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            $user->assignRole('Editor');
+        });
+    }
+
+    /**
+     * Configure the user with the Writer role.
+     */
+    public function writer(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            $user->assignRole('Writer');
+        });
+    }
+
+    /**
+     * Configure the user with the Photographer role.
+     */
+    public function photographer(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            $user->assignRole('Photographer');
+        });
+    }
+
+    /**
+     * Configure the user with the User role (no CMS access).
+     */
+    public function regularUser(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            $user->assignRole('User');
+        });
     }
 }

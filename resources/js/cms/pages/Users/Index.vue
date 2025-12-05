@@ -1,0 +1,371 @@
+<script setup lang="ts">
+import { Head, Link, router } from '@inertiajs/vue3';
+import { ref, watch, h, resolveComponent, computed } from 'vue';
+import { useDebounceFn } from '@vueuse/core';
+import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import { usePermission } from '../../composables/usePermission';
+import type { User, PaginatedResponse } from '../../types';
+import type { TableColumn } from '@nuxt/ui';
+
+const props = defineProps<{
+    users: PaginatedResponse<User>;
+    roles: string[];
+    filters: {
+        search?: string;
+        sort?: string;
+        direction?: 'asc' | 'desc';
+        roles?: string[];
+    };
+}>();
+
+const { can } = usePermission();
+
+const UAvatar = resolveComponent('UAvatar');
+const UBadge = resolveComponent('UBadge');
+const UButton = resolveComponent('UButton');
+const UDropdownMenu = resolveComponent('UDropdownMenu');
+
+const search = ref(props.filters.search || '');
+const selectedRoles = ref<string[]>(props.filters.roles || []);
+const deleteModalOpen = ref(false);
+const userToDelete = ref<User | null>(null);
+
+const roleFilterOptions = computed(() =>
+    props.roles.map((role) => ({ label: role, value: role }))
+);
+
+function applyFilters(overrides: Record<string, any> = {}) {
+    router.get('/cms/users', {
+        search: search.value || undefined,
+        roles: selectedRoles.value.length > 0 ? selectedRoles.value : undefined,
+        sort: props.filters.sort,
+        direction: props.filters.direction,
+        ...overrides,
+    }, {
+        preserveState: true,
+        replace: true,
+    });
+}
+
+const debouncedSearch = useDebounceFn(() => {
+    applyFilters();
+}, 300);
+
+watch(search, () => {
+    debouncedSearch();
+});
+
+watch(selectedRoles, () => {
+    applyFilters();
+}, { deep: true });
+
+function clearRoleFilter() {
+    selectedRoles.value = [];
+}
+
+function sortBy(field: string) {
+    const currentSort = props.filters.sort || 'created_at';
+    const currentDirection = props.filters.direction || 'desc';
+
+    let newDirection: 'asc' | 'desc' = 'asc';
+    if (currentSort === field) {
+        newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+    }
+
+    applyFilters({
+        sort: field,
+        direction: newDirection,
+    });
+}
+
+function getSortIcon(field: string) {
+    const currentSort = props.filters.sort || 'created_at';
+    const currentDirection = props.filters.direction || 'desc';
+
+    if (currentSort !== field) {
+        return 'i-lucide-arrow-up-down';
+    }
+    return currentDirection === 'asc' ? 'i-lucide-arrow-up-narrow-wide' : 'i-lucide-arrow-down-wide-narrow';
+}
+
+function confirmDelete(user: User) {
+    userToDelete.value = user;
+    deleteModalOpen.value = true;
+}
+
+function deleteUser() {
+    if (userToDelete.value) {
+        router.delete(`/cms/users/${userToDelete.value.uuid}`, {
+            onSuccess: () => {
+                deleteModalOpen.value = false;
+                userToDelete.value = null;
+            },
+        });
+    }
+}
+
+function getRowActions(row: User) {
+    const actions: any[][] = [];
+
+    if (can('users.edit')) {
+        actions.push([
+            {
+                label: 'Edit',
+                icon: 'i-lucide-pencil',
+                to: `/cms/users/${row.uuid}/edit`,
+            },
+        ]);
+    }
+
+    if (can('users.delete')) {
+        actions.push([
+            {
+                label: 'Delete',
+                icon: 'i-lucide-trash',
+                color: 'error' as const,
+                onSelect: () => confirmDelete(row),
+            },
+        ]);
+    }
+
+    return actions;
+}
+
+const columns: TableColumn<User>[] = [
+    {
+        accessorKey: 'name',
+        header: () => {
+            return h(UButton, {
+                color: 'neutral',
+                variant: 'ghost',
+                label: 'User',
+                icon: getSortIcon('name'),
+                class: '-mx-2.5',
+                onClick: () => sortBy('name'),
+            });
+        },
+        cell: ({ row }) => {
+            return h('div', { class: 'flex items-center gap-3' }, [
+                h(UAvatar, {
+                    src: row.original.avatar_url,
+                    alt: row.original.name,
+                    size: 'md',
+                }),
+                h('div', undefined, [
+                    h('p', { class: 'font-medium text-highlighted' }, row.original.name),
+                    h('p', { class: 'text-muted text-sm' }, `@${row.original.username}`),
+                ]),
+            ]);
+        },
+    },
+    {
+        accessorKey: 'email',
+        header: () => {
+            return h(UButton, {
+                color: 'neutral',
+                variant: 'ghost',
+                label: 'Email',
+                icon: getSortIcon('email'),
+                class: '-mx-2.5',
+                onClick: () => sortBy('email'),
+            });
+        },
+        cell: ({ row }) => row.original.email,
+    },
+    {
+        accessorKey: 'roles',
+        header: 'Roles',
+        cell: ({ row }) => {
+            const roles = row.original.roles || [];
+            if (roles.length === 0) {
+                return h('span', { class: 'text-muted' }, 'No roles');
+            }
+            return h(
+                'div',
+                { class: 'flex flex-wrap gap-1' },
+                roles.map((role) =>
+                    h(
+                        UBadge,
+                        {
+                            color: role === 'Admin' ? 'primary' : 'neutral',
+                            variant: 'subtle',
+                            size: 'sm',
+                        },
+                        () => role
+                    )
+                )
+            );
+        },
+    },
+    {
+        accessorKey: 'created_at',
+        header: () => {
+            return h(UButton, {
+                color: 'neutral',
+                variant: 'ghost',
+                label: 'Created',
+                icon: getSortIcon('created_at'),
+                class: '-mx-2.5',
+                onClick: () => sortBy('created_at'),
+            });
+        },
+        cell: ({ row }) => {
+            return new Date(row.original.created_at).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+            });
+        },
+    },
+    {
+        id: 'actions',
+        cell: ({ row }) => {
+            const actions = getRowActions(row.original);
+            if (actions.length === 0) return null;
+
+            return h(
+                'div',
+                { class: 'text-right' },
+                h(
+                    UDropdownMenu,
+                    {
+                        content: { align: 'end' },
+                        items: actions,
+                    },
+                    () =>
+                        h(UButton, {
+                            icon: 'i-lucide-ellipsis-vertical',
+                            color: 'neutral',
+                            variant: 'ghost',
+                            class: 'ml-auto',
+                        })
+                )
+            );
+        },
+    },
+];
+</script>
+
+<template>
+    <Head title="Users" />
+
+    <DashboardLayout>
+        <UDashboardPanel id="users">
+            <template #header>
+                <UDashboardNavbar title="Users">
+                    <template #leading>
+                        <UDashboardSidebarCollapse />
+                    </template>
+
+                    <template #right>
+                        <Link v-if="can('users.create')" href="/cms/users/create">
+                            <UButton icon="i-lucide-plus">
+                                Add User
+                            </UButton>
+                        </Link>
+                    </template>
+                </UDashboardNavbar>
+            </template>
+
+            <template #body>
+                <div class="flex flex-wrap items-center gap-3 mb-4">
+                    <UInput
+                        v-model="search"
+                        class="w-full sm:max-w-xs"
+                        icon="i-lucide-search"
+                        placeholder="Search users..."
+                    />
+
+                    <USelectMenu
+                        v-model="selectedRoles"
+                        :items="roleFilterOptions"
+                        value-key="value"
+                        multiple
+                        class="w-full sm:w-48"
+                        placeholder="Filter by roles"
+                        :search-input="false"
+                    />
+
+                    <UButton
+                        v-if="selectedRoles.length > 0"
+                        color="neutral"
+                        variant="ghost"
+                        size="sm"
+                        icon="i-lucide-x"
+                        @click="clearRoleFilter"
+                    >
+                        Clear
+                    </UButton>
+
+                    <div class="text-sm text-muted ml-auto">
+                        {{ users.total }} user{{ users.total !== 1 ? 's' : '' }}
+                    </div>
+                </div>
+
+                <UTable
+                    :data="users.data"
+                    :columns="columns"
+                    :ui="{
+                        base: 'table-fixed border-separate border-spacing-0',
+                        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+                        tbody: '[&>tr]:last:[&>td]:border-b-0',
+                        th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+                        td: 'border-b border-default',
+                        separator: 'h-0',
+                    }"
+                />
+
+                <div
+                    v-if="users.last_page > 1"
+                    class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto"
+                >
+                    <div class="text-sm text-muted">
+                        Showing {{ users.from }} to {{ users.to }} of {{ users.total }}
+                    </div>
+
+                    <UPagination
+                        :default-page="users.current_page"
+                        :items-per-page="users.per_page"
+                        :total="users.total"
+                        @update:page="(p: number) => router.get('/cms/users', { ...filters, page: p })"
+                    />
+                </div>
+            </template>
+        </UDashboardPanel>
+
+        <!-- Delete Confirmation Modal -->
+        <UModal v-model:open="deleteModalOpen">
+            <template #content>
+                <UCard :ui="{ body: 'p-6' }">
+                    <div class="flex items-start gap-4">
+                        <div class="flex items-center justify-center size-12 rounded-full bg-error/10 shrink-0">
+                            <UIcon name="i-lucide-alert-triangle" class="size-6 text-error" />
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-highlighted">Delete User</h3>
+                            <p class="mt-2 text-sm text-muted">
+                                Are you sure you want to delete <strong class="text-highlighted">{{ userToDelete?.name }}</strong>? This action cannot be undone.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-6">
+                        <UButton
+                            color="neutral"
+                            variant="outline"
+                            @click="deleteModalOpen = false"
+                        >
+                            Cancel
+                        </UButton>
+                        <UButton
+                            color="error"
+                            @click="deleteUser"
+                        >
+                            Delete
+                        </UButton>
+                    </div>
+                </UCard>
+            </template>
+        </UModal>
+    </DashboardLayout>
+</template>

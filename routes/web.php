@@ -29,3 +29,6 @@ Route::get('/submit-story', function () {
 Route::get('/advertise', function () {
     return view('pages.advertise');
 })->name('advertise');
+
+// CMS Routes
+Route::prefix('cms')->group(base_path('routes/cms.php'));
