@@ -18,6 +18,15 @@
         "vue-tsc": "^3.1.5"
     },
     "dependencies": {
+        "@editorjs/code": "^2.9.3",
+        "@editorjs/delimiter": "^1.4.2",
+        "@editorjs/editorjs": "^2.31.0",
+        "@editorjs/embed": "^2.7.7",
+        "@editorjs/header": "^2.8.8",
+        "@editorjs/image": "^2.10.3",
+        "@editorjs/list": "^2.0.9",
+        "@editorjs/quote": "^2.7.6",
+        "@editorjs/table": "^2.4.5",
         "@inertiajs/vue3": "^2.2.19",
         "@nuxt/ui": "^4.2.1",
         "@types/sortablejs": "^1.15.9",

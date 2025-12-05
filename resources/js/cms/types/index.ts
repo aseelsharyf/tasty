@@ -50,3 +50,117 @@ export interface PaginatedResponse<T> {
     from: number;
     to: number;
 }
+
+export interface Category {
+    id: number;
+    uuid: string;
+    name: string;
+    slug: string;
+    description?: string | null;
+    parent_id?: number | null;
+    order?: number;
+    posts_count?: number;
+    depth?: number;
+    children?: Category[];
+    parent?: {
+        id: number;
+        name: string;
+    } | null;
+}
+
+export interface CategoryTreeItem {
+    id: number;
+    uuid: string;
+    name: string;
+    slug: string;
+    description?: string | null;
+    posts_count: number;
+    order: number;
+    children: CategoryTreeItem[];
+}
+
+export interface ParentOption {
+    id: number;
+    name: string;
+    depth: number;
+}
+
+export interface Tag {
+    id: number;
+    uuid: string;
+    name: string;
+    slug: string;
+    posts_count?: number;
+    created_at?: string;
+}
+
+export interface Author {
+    id: number;
+    name: string;
+    avatar_url?: string | null;
+}
+
+export interface RecipeMeta {
+    prep_time?: number;
+    cook_time?: number;
+    servings?: number;
+    difficulty?: 'easy' | 'medium' | 'hard';
+    ingredients?: string[];
+    nutrition?: {
+        calories?: number;
+        protein?: number;
+        carbs?: number;
+        fat?: number;
+    };
+}
+
+export interface Post {
+    id: number;
+    uuid: string;
+    title: string;
+    subtitle?: string;
+    slug: string;
+    excerpt?: string;
+    content?: any;
+    post_type: 'article' | 'recipe';
+    status: 'draft' | 'pending' | 'published' | 'scheduled';
+    language_code?: string;
+    author?: Author | null;
+    categories?: Category[];
+    tags?: Tag[];
+    featured_image_url?: string | null;
+    featured_image_thumb?: string | null;
+    recipe_meta?: RecipeMeta | null;
+    meta_title?: string;
+    meta_description?: string;
+    published_at?: string | null;
+    scheduled_at?: string | null;
+    created_at: string;
+    updated_at: string;
+    deleted_at?: string | null;
+}
+
+export interface PostCounts {
+    all: number;
+    draft: number;
+    pending: number;
+    published: number;
+    scheduled: number;
+    trashed: number;
+}
+
+export interface PostFilters {
+    status?: string;
+    search?: string;
+    post_type?: string;
+    author?: number;
+    category?: number;
+    language?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
+
+export interface PostTypeOption {
+    value: string;
+    label: string;
+}

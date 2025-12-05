@@ -1,8 +1,62 @@
 @import "tailwindcss" theme(static);
 @import "@nuxt/ui";
 
+/* MV Typewriter Font - Dhivehi/Thaana */
+@font-face {
+    font-family: 'MV Typewriter';
+    src: url('/build/fonts/mvtyper.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'MV Typewriter';
+    src: url('/build/fonts/mvtypebold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
 @theme static {
     --font-sans: 'Inter', sans-serif;
+    --font-dhivehi: 'MV Typewriter', 'MV Faseyha', 'Faruma', sans-serif;
+}
+
+/* Dhivehi font utility class with increased size for top/bottom characters */
+.font-dhivehi {
+    font-family: var(--font-dhivehi);
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+}
+
+/* Dhivehi text size variants - larger to accommodate fili marks */
+.text-dhivehi-sm {
+    font-size: 1rem; /* 16px instead of 14px */
+}
+
+.text-dhivehi-base {
+    font-size: 1.125rem; /* 18px instead of 16px */
+}
+
+.text-dhivehi-lg {
+    font-size: 1.375rem; /* 22px instead of 18px */
+}
+
+.text-dhivehi-xl {
+    font-size: 1.625rem; /* 26px instead of 20px */
+}
+
+.text-dhivehi-2xl {
+    font-size: 2rem; /* 32px instead of 24px */
+}
+
+.text-dhivehi-3xl {
+    font-size: 2.5rem; /* 40px instead of 30px */
+}
+
+.text-dhivehi-4xl {
+    font-size: 3rem; /* 48px instead of 36px */
 }
 
 /* Neutral color scheme similar to shadcn-ui */

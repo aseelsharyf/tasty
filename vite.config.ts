@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
 import ui from '@nuxt/ui/vite';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig({
     plugins: [
@@ -30,6 +31,14 @@ export default defineConfig({
                     neutral: 'zinc',
                 },
             },
+        }),
+        viteStaticCopy({
+            targets: [
+                {
+                    src: 'resources/fonts/*',
+                    dest: 'fonts',
+                },
+            ],
         }),
     ],
     resolve: {

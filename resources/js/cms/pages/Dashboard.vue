@@ -3,10 +3,33 @@ import { Head, Link } from '@inertiajs/vue3';
 import DashboardLayout from '../layouts/DashboardLayout.vue';
 import type { DropdownMenuItem } from '@nuxt/ui';
 
+interface RecentPost {
+    id: number;
+    uuid: string;
+    title: string;
+    status: string;
+    post_type: string;
+    author: {
+        name: string;
+        avatar_url?: string | null;
+    } | null;
+    created_at: string;
+}
+
 defineProps<{
     stats: {
         users: number;
+        posts: number;
+        published: number;
+        drafts: number;
+        pending: number;
+        scheduled: number;
+        articles: number;
+        recipes: number;
+        categories: number;
+        tags: number;
     };
+    recentPosts: RecentPost[];
 }>();
 
 const quickActions: DropdownMenuItem[][] = [
@@ -28,6 +51,28 @@ const quickActions: DropdownMenuItem[][] = [
         },
     ],
 ];
+
+function getStatusColor(status: string): string {
+    switch (status) {
+        case 'published':
+            return 'success';
+        case 'draft':
+            return 'neutral';
+        case 'pending':
+            return 'warning';
+        case 'scheduled':
+            return 'info';
+        default:
+            return 'neutral';
+    }
+}
+
+function formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+    });
+}
 </script>
 
 <template>
@@ -60,53 +105,100 @@ const quickActions: DropdownMenuItem[][] = [
 
                 <!-- Stats Grid -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <UPageCard variant="outline">
-                        <div class="flex items-center gap-4">
-                            <div class="flex items-center justify-center size-12 rounded-xl bg-primary/10">
-                                <UIcon name="i-lucide-users" class="size-6 text-primary" />
+                    <Link href="/cms/posts">
+                        <UPageCard variant="outline" class="hover:border-primary transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center justify-center size-12 rounded-xl bg-primary/10">
+                                    <UIcon name="i-lucide-file-text" class="size-6 text-primary" />
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-muted">Total Posts</p>
+                                    <p class="text-2xl font-semibold text-highlighted">{{ stats.posts }}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="text-sm font-medium text-muted">Total Users</p>
-                                <p class="text-2xl font-semibold text-highlighted">{{ stats.users }}</p>
-                            </div>
-                        </div>
-                    </UPageCard>
+                        </UPageCard>
+                    </Link>
 
-                    <UPageCard variant="outline">
-                        <div class="flex items-center gap-4">
-                            <div class="flex items-center justify-center size-12 rounded-xl bg-success/10">
-                                <UIcon name="i-lucide-file-text" class="size-6 text-success" />
+                    <Link href="/cms/posts?status=published">
+                        <UPageCard variant="outline" class="hover:border-success transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center justify-center size-12 rounded-xl bg-success/10">
+                                    <UIcon name="i-lucide-globe" class="size-6 text-success" />
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-muted">Published</p>
+                                    <p class="text-2xl font-semibold text-highlighted">{{ stats.published }}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="text-sm font-medium text-muted">Published Posts</p>
-                                <p class="text-2xl font-semibold text-highlighted">0</p>
-                            </div>
-                        </div>
-                    </UPageCard>
+                        </UPageCard>
+                    </Link>
 
-                    <UPageCard variant="outline">
-                        <div class="flex items-center gap-4">
-                            <div class="flex items-center justify-center size-12 rounded-xl bg-warning/10">
-                                <UIcon name="i-lucide-clipboard-check" class="size-6 text-warning" />
+                    <Link href="/cms/posts?status=pending">
+                        <UPageCard variant="outline" class="hover:border-warning transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center justify-center size-12 rounded-xl bg-warning/10">
+                                    <UIcon name="i-lucide-clipboard-check" class="size-6 text-warning" />
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-muted">Pending Review</p>
+                                    <p class="text-2xl font-semibold text-highlighted">{{ stats.pending }}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="text-sm font-medium text-muted">In Copydesk</p>
-                                <p class="text-2xl font-semibold text-highlighted">0</p>
-                            </div>
-                        </div>
-                    </UPageCard>
+                        </UPageCard>
+                    </Link>
 
-                    <UPageCard variant="outline">
-                        <div class="flex items-center gap-4">
-                            <div class="flex items-center justify-center size-12 rounded-xl bg-info/10">
-                                <UIcon name="i-lucide-message-square" class="size-6 text-info" />
+                    <Link href="/cms/users">
+                        <UPageCard variant="outline" class="hover:border-info transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center justify-center size-12 rounded-xl bg-info/10">
+                                    <UIcon name="i-lucide-users" class="size-6 text-info" />
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-muted">Users</p>
+                                    <p class="text-2xl font-semibold text-highlighted">{{ stats.users }}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="text-sm font-medium text-muted">Pending Comments</p>
-                                <p class="text-2xl font-semibold text-highlighted">0</p>
+                        </UPageCard>
+                    </Link>
+                </div>
+
+                <!-- Secondary Stats -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                    <Link href="/cms/posts?status=draft">
+                        <UPageCard variant="outline" :ui="{ body: 'p-4' }" class="hover:border-primary/50 transition-colors">
+                            <div class="text-center">
+                                <p class="text-2xl font-semibold text-highlighted">{{ stats.drafts }}</p>
+                                <p class="text-xs font-medium text-muted">Drafts</p>
                             </div>
-                        </div>
-                    </UPageCard>
+                        </UPageCard>
+                    </Link>
+
+                    <Link href="/cms/posts?status=scheduled">
+                        <UPageCard variant="outline" :ui="{ body: 'p-4' }" class="hover:border-primary/50 transition-colors">
+                            <div class="text-center">
+                                <p class="text-2xl font-semibold text-highlighted">{{ stats.scheduled }}</p>
+                                <p class="text-xs font-medium text-muted">Scheduled</p>
+                            </div>
+                        </UPageCard>
+                    </Link>
+
+                    <Link href="/cms/posts?post_type=article">
+                        <UPageCard variant="outline" :ui="{ body: 'p-4' }" class="hover:border-primary/50 transition-colors">
+                            <div class="text-center">
+                                <p class="text-2xl font-semibold text-highlighted">{{ stats.articles }}</p>
+                                <p class="text-xs font-medium text-muted">Articles</p>
+                            </div>
+                        </UPageCard>
+                    </Link>
+
+                    <Link href="/cms/posts?post_type=recipe">
+                        <UPageCard variant="outline" :ui="{ body: 'p-4' }" class="hover:border-primary/50 transition-colors">
+                            <div class="text-center">
+                                <p class="text-2xl font-semibold text-highlighted">{{ stats.recipes }}</p>
+                                <p class="text-xs font-medium text-muted">Recipes</p>
+                            </div>
+                        </UPageCard>
+                    </Link>
                 </div>
 
                 <!-- Quick Actions & Recent Activity -->
@@ -165,14 +257,55 @@ const quickActions: DropdownMenuItem[][] = [
                     </UPageCard>
 
                     <UPageCard
-                        title="Recent Activity"
-                        description="Latest actions on your site"
+                        title="Recent Posts"
+                        description="Latest posts on your site"
                         variant="outline"
                     >
-                        <div class="flex flex-col items-center justify-center py-8 text-center">
-                            <UIcon name="i-lucide-activity" class="size-12 text-muted mb-3" />
-                            <p class="text-muted text-sm">No recent activity</p>
-                            <p class="text-dimmed text-xs mt-1">Activity will appear here once you start using the CMS</p>
+                        <div v-if="recentPosts.length === 0" class="flex flex-col items-center justify-center py-8 text-center">
+                            <UIcon name="i-lucide-file-text" class="size-12 text-muted mb-3" />
+                            <p class="text-muted text-sm">No posts yet</p>
+                            <p class="text-dimmed text-xs mt-1">Create your first post to get started</p>
+                        </div>
+                        <div v-else class="divide-y divide-default -mx-4">
+                            <Link
+                                v-for="post in recentPosts"
+                                :key="post.id"
+                                :href="`/cms/posts/${post.uuid}/edit`"
+                                class="flex items-center gap-3 px-4 py-3 hover:bg-elevated/50 transition-colors"
+                            >
+                                <div class="flex items-center justify-center size-8 rounded bg-muted/50 shrink-0">
+                                    <UIcon
+                                        :name="post.post_type === 'recipe' ? 'i-lucide-chef-hat' : 'i-lucide-file-text'"
+                                        class="size-4 text-muted"
+                                    />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-medium text-highlighted truncate">{{ post.title }}</p>
+                                    <p class="text-xs text-muted">
+                                        {{ post.author?.name || 'Unknown' }} · {{ formatDate(post.created_at) }}
+                                    </p>
+                                </div>
+                                <UBadge
+                                    :color="getStatusColor(post.status) as any"
+                                    variant="subtle"
+                                    size="sm"
+                                >
+                                    {{ post.status }}
+                                </UBadge>
+                            </Link>
+                        </div>
+                        <div v-if="recentPosts.length > 0" class="pt-4 mt-2 border-t border-default">
+                            <Link href="/cms/posts">
+                                <UButton
+                                    color="neutral"
+                                    variant="ghost"
+                                    size="sm"
+                                    trailing-icon="i-lucide-arrow-right"
+                                    block
+                                >
+                                    View all posts
+                                </UButton>
+                            </Link>
                         </div>
                     </UPageCard>
                 </div>

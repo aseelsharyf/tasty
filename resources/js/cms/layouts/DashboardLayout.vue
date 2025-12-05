@@ -1,10 +1,20 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { usePermission } from '../composables/usePermission';
+import { useSidebar } from '../composables/useSidebar';
 import TastyLogo from '../components/TastyLogo.vue';
 import type { PageProps } from '../types';
 import type { NavigationMenuItem, DropdownMenuItem, CommandPaletteItem, CommandPaletteGroup } from '@nuxt/ui';
+
+interface Language {
+    id: number;
+    code: string;
+    name: string;
+    native_name: string;
+    direction: 'ltr' | 'rtl';
+    is_default: boolean;
+}
 
 const page = usePage<PageProps>();
 const user = computed(() => page.props.auth?.user);
@@ -12,15 +22,53 @@ const flash = computed(() => page.props.flash);
 
 const { can } = usePermission();
 
+// Languages for dynamic post navigation
+const languages = ref<Language[]>([]);
+
+async function fetchLanguages() {
+    try {
+        const response = await fetch('/cms/languages');
+        languages.value = await response.json();
+    } catch (error) {
+        console.error('Failed to fetch languages:', error);
+    }
+}
+
+onMounted(() => {
+    fetchLanguages();
+});
+
 const sidebarOpen = ref(false);
 const sidebarCollapsed = ref(false);
 
+// Use shared sidebar state
+const { isHidden: sidebarHidden } = useSidebar();
+
 // Helper to check if current URL matches
 function isActive(path: string, exact = false): boolean {
+    // Parse the path and current URL to handle query parameters
+    const [pathBase, pathQuery] = path.split('?');
+    const [urlBase, urlQuery] = page.url.split('?');
+
     if (exact) {
+        // For exact match, compare both base and query string
         return page.url === path;
     }
-    return page.url.startsWith(path);
+
+    // If path has query params, check if current URL has same base and query params
+    if (pathQuery) {
+        return urlBase === pathBase && urlQuery === pathQuery;
+    }
+
+    // For paths without query params, match base path exactly (not startsWith)
+    // to avoid /cms/posts matching /cms/posts?status=draft
+    return urlBase === pathBase;
+}
+
+// Check if URL starts with path (for parent menu items)
+function isActivePrefix(path: string): boolean {
+    const [urlBase] = page.url.split('?');
+    return urlBase.startsWith(path);
 }
 
 // Build navigation items based on permissions
@@ -36,44 +84,29 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => {
     ];
 
     if (can(['posts.view', 'posts.create', 'posts.edit-own'])) {
+        // Generate language-specific post navigation
+        const postChildren: NavigationMenuItem[] = languages.value.map((lang) => ({
+            label: lang.name,
+            to: `/cms/posts/${lang.code}`,
+            icon: lang.direction === 'rtl' ? 'i-lucide-align-right' : 'i-lucide-align-left',
+            active: isActivePrefix(`/cms/posts/${lang.code}`),
+        }));
+
+        // Fallback if languages haven't loaded yet
+        if (postChildren.length === 0) {
+            postChildren.push(
+                { label: 'English', to: '/cms/posts/en', icon: 'i-lucide-align-left', active: isActivePrefix('/cms/posts/en') },
+                { label: 'Dhivehi', to: '/cms/posts/dv', icon: 'i-lucide-align-right', active: isActivePrefix('/cms/posts/dv') },
+            );
+        }
+
         items.push({
             label: 'Posts',
             icon: 'i-lucide-file-text',
-            to: '/cms/posts',
-            active: isActive('/cms/posts'),
-            defaultOpen: isActive('/cms/posts'),
-            children: [
-                {
-                    label: 'All Posts',
-                    to: '/cms/posts',
-                    icon: 'i-lucide-list',
-                },
-                {
-                    label: 'Drafts',
-                    to: '/cms/posts/drafts',
-                    icon: 'i-lucide-file-edit',
-                },
-                {
-                    label: 'In Copydesk',
-                    to: '/cms/posts/copydesk',
-                    icon: 'i-lucide-clipboard-check',
-                },
-                {
-                    label: 'Published',
-                    to: '/cms/posts/published',
-                    icon: 'i-lucide-globe',
-                },
-                {
-                    label: 'Scheduled',
-                    to: '/cms/posts/scheduled',
-                    icon: 'i-lucide-calendar-clock',
-                },
-                {
-                    label: 'Trashed',
-                    to: '/cms/posts/trashed',
-                    icon: 'i-lucide-trash-2',
-                },
-            ],
+            to: `/cms/posts/${languages.value.find(l => l.is_default)?.code || 'en'}`,
+            active: isActivePrefix('/cms/posts'),
+            defaultOpen: isActivePrefix('/cms/posts'),
+            children: postChildren,
         });
     }
 
@@ -273,29 +306,14 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
                     icon: 'i-lucide-sliders-horizontal',
                 },
                 {
-                    label: 'Writing',
-                    to: '/cms/settings/writing',
-                    icon: 'i-lucide-pencil',
+                    label: 'Languages',
+                    to: '/cms/settings/languages',
+                    icon: 'i-lucide-languages',
                 },
                 {
-                    label: 'Reading',
-                    to: '/cms/settings/reading',
-                    icon: 'i-lucide-book-open',
-                },
-                {
-                    label: 'SEO',
-                    to: '/cms/settings/seo',
-                    icon: 'i-lucide-search',
-                },
-                {
-                    label: 'Permalinks',
-                    to: '/cms/settings/permalinks',
-                    icon: 'i-lucide-link',
-                },
-                {
-                    label: 'Integrations',
-                    to: '/cms/settings/integrations',
-                    icon: 'i-lucide-plug',
+                    label: 'Post Types',
+                    to: '/cms/settings/post-types',
+                    icon: 'i-lucide-file-cog',
                 },
             ],
         });
@@ -479,36 +497,31 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
 <template>
     <UApp>
         <UDashboardGroup unit="rem" storage="local">
-            <UDashboardSidebar
-                id="cms-sidebar"
-                v-model:open="sidebarOpen"
-                v-model:collapsed="sidebarCollapsed"
-                collapsible
-                resizable
-                :min-size="14"
-                :max-size="20"
-                :default-size="16"
-                class="bg-elevated/25"
-                :ui="{
-                    footer: 'lg:border-t lg:border-default',
-                }"
-            >
+            <div :class="sidebarHidden ? 'hidden' : 'contents'">
+                <UDashboardSidebar
+                    id="cms-sidebar"
+                    v-model:open="sidebarOpen"
+                    v-model:collapsed="sidebarCollapsed"
+                    collapsible
+                    resizable
+                    :min-size="14"
+                    :max-size="20"
+                    :default-size="16"
+                    class="bg-elevated/25"
+                    :ui="{
+                        footer: 'lg:border-t lg:border-default',
+                    }"
+                >
                 <template #header="{ collapsed }">
                     <a
                         href="/cms"
-                        class="flex items-center gap-2.5 hover:opacity-80 transition-opacity w-full"
-                        :class="collapsed ? 'justify-center' : 'justify-center'"
+                        class="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+                        :class="collapsed ? 'justify-center' : ''"
                     >
                         <TastyLogo
-                            v-if="!collapsed"
-                            class="h-7 w-auto text-highlighted"
+                            :class="collapsed ? 'h-5 w-auto' : 'h-7 w-auto'"
+                            class="text-highlighted"
                         />
-                        <div
-                            v-else
-                            class="flex items-center justify-center size-8 rounded-lg bg-primary text-primary-foreground shrink-0"
-                        >
-                            <span class="font-bold text-sm">T</span>
-                        </div>
                     </a>
                 </template>
 
@@ -612,6 +625,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
                     </UDropdownMenu>
                 </template>
             </UDashboardSidebar>
+            </div>
 
             <slot />
 
