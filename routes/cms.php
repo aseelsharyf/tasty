@@ -52,8 +52,10 @@ Route::middleware(['auth', 'cms'])->group(function () {
 
     // Settings
     Route::middleware('permission:settings.view')->group(function () {
-        Route::get('settings', [SettingsController::class, 'index'])->name('cms.settings');
-        Route::put('settings', [SettingsController::class, 'update'])->name('cms.settings.update');
+        Route::get('settings/{tab?}', [SettingsController::class, 'index'])
+            ->name('cms.settings')
+            ->where('tab', 'general|seo|opengraph|favicons|social');
+        Route::post('settings', [SettingsController::class, 'update'])->name('cms.settings.update');
         Route::get('settings/post-types', [SettingsController::class, 'postTypes'])->name('cms.settings.post-types');
         Route::put('settings/post-types', [SettingsController::class, 'updatePostTypes'])->name('cms.settings.post-types.update');
 

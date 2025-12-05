@@ -3,12 +3,22 @@ import { watch, ref } from 'vue';
 import TagForm from './TagForm.vue';
 import type { Language } from '../types';
 
-defineProps<{
+interface TagWithTranslations {
+    id?: number;
+    uuid?: string;
+    name?: string;
+    name_translations?: Record<string, string>;
+    slug?: string;
+    posts_count?: number;
+}
+
+const props = defineProps<{
+    tag: TagWithTranslations | null;
     languages: Language[];
 }>();
 
 const emit = defineEmits<{
-    (e: 'close', created: boolean): void;
+    (e: 'close', updated: boolean): void;
 }>();
 
 const open = defineModel<boolean>('open', { default: false });
@@ -24,10 +34,10 @@ function onCancel() {
     emit('close', false);
 }
 
-// Reset form when slideover opens
-watch(open, (isOpen) => {
-    if (isOpen && formRef.value) {
-        formRef.value.reset();
+// Reset form when slideover opens with new tag
+watch([open, () => props.tag], ([isOpen, tag]) => {
+    if (isOpen && formRef.value && tag) {
+        // Form will auto-update via its internal watch
     }
 });
 </script>
@@ -35,16 +45,18 @@ watch(open, (isOpen) => {
 <template>
     <USlideover
         v-model:open="open"
-        title="Create Tag"
-        description="Add a new tag to label your content."
+        :title="`Edit Tag: ${tag?.name || ''}`"
+        description="Edit tag details and translations"
     >
         <slot />
 
         <template #body>
             <TagForm
+                v-if="tag"
                 ref="formRef"
+                :tag="tag"
                 :languages="languages"
-                mode="create"
+                mode="edit"
                 @success="onSuccess"
                 @cancel="onCancel"
             />

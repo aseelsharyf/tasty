@@ -2,10 +2,11 @@
 import { Head, router } from '@inertiajs/vue3';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import TagForm from '../../components/TagForm.vue';
-import type { Tag } from '../../types';
+import type { Tag, Language } from '../../types';
 
 const props = defineProps<{
     tag: Tag;
+    languages: Language[];
 }>();
 
 function onSuccess() {
@@ -34,6 +35,7 @@ function onCancel() {
                 <div class="max-w-xl mx-auto">
                     <TagForm
                         :tag="tag"
+                        :languages="languages"
                         mode="edit"
                         @success="onSuccess"
                         @cancel="onCancel"

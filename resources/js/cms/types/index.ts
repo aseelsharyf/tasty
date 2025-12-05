@@ -51,6 +51,13 @@ export interface PaginatedResponse<T> {
     to: number;
 }
 
+export interface Language {
+    code: string;
+    name: string;
+    native_name: string;
+    direction: 'ltr' | 'rtl';
+}
+
 export interface Category {
     id: number;
     uuid: string;
@@ -66,6 +73,7 @@ export interface Category {
         id: number;
         name: string;
     } | null;
+    translated_locales?: string[];
 }
 
 export interface CategoryTreeItem {
@@ -77,6 +85,7 @@ export interface CategoryTreeItem {
     posts_count: number;
     order: number;
     children: CategoryTreeItem[];
+    translated_locales?: string[];
 }
 
 export interface ParentOption {
@@ -92,6 +101,7 @@ export interface Tag {
     slug: string;
     posts_count?: number;
     created_at?: string;
+    translated_locales?: string[];
 }
 
 export interface Author {

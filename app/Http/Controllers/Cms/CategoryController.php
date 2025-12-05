@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Cms\StoreCategoryRequest;
 use App\Http\Requests\Cms\UpdateCategoryRequest;
 use App\Models\Category;
+use App\Models\Language;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -37,27 +38,55 @@ class CategoryController extends Controller
             ->withCount('posts')
             ->with('parent:id,name');
 
-        // Search
+        // Search - use model scope for translatable columns
         if ($isSearching) {
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
+                $q->whereTranslatedNameLike($search)
                     ->orWhere('slug', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhereRaw('description::text ILIKE ?', ["%{$search}%"]);
             });
         }
 
         // Sorting
-        $sortField = $request->get('sort', 'name');
+        $sortField = $request->get('sort', 'order');
         $sortDirection = $request->get('direction', 'asc');
-        $allowedSorts = ['name', 'slug', 'posts_count', 'created_at'];
+        $allowedSorts = ['name', 'slug', 'posts_count', 'created_at', 'order'];
+        $direction = $sortDirection === 'desc' ? 'desc' : 'asc';
 
-        if (in_array($sortField, $allowedSorts)) {
-            $query->orderBy($sortField, $sortDirection === 'desc' ? 'desc' : 'asc');
+        if ($sortField === 'name') {
+            // Sort by translated name using the current locale
+            $query->orderByTranslatedName(app()->getLocale(), $direction);
+        } elseif (in_array($sortField, $allowedSorts)) {
+            $query->orderBy($sortField, $direction);
+        } else {
+            // Default sort by order
+            $query->orderBy('order', 'asc');
         }
 
-        // Paginate for list view
-        $categories = $query->paginate(20)->withQueryString();
+        // Get active languages for translation status
+        $activeLanguages = Language::active()->ordered()->get();
+        $languageCodes = $activeLanguages->pluck('code')->toArray();
+
+        // Paginate for list view - transform to ensure translated names are strings
+        $categories = $query->paginate(20)
+            ->withQueryString()
+            ->through(fn (Category $cat) => [
+                'id' => $cat->id,
+                'uuid' => $cat->uuid,
+                'name' => $cat->name, // Returns translated string via HasTranslations
+                'slug' => $cat->slug,
+                'description' => $cat->description,
+                'posts_count' => $cat->posts_count,
+                'order' => $cat->order,
+                'parent_id' => $cat->parent_id,
+                'parent' => $cat->parent ? [
+                    'id' => $cat->parent->id,
+                    'name' => $cat->parent->name,
+                ] : null,
+                'created_at' => $cat->created_at,
+                'translated_locales' => array_keys($cat->getTranslations('name')),
+            ]);
 
         // Get parent options for the create slideover
         $parentOptions = $this->getParentOptions();
@@ -77,15 +106,28 @@ class CategoryController extends Controller
                 'root' => $rootCount,
                 'child' => $childCount,
             ],
+            'languages' => $activeLanguages->map(fn ($lang) => [
+                'code' => $lang->code,
+                'name' => $lang->name,
+                'native_name' => $lang->native_name,
+                'direction' => $lang->direction,
+            ]),
         ]);
     }
 
     public function create(): Response
     {
         $parentOptions = $this->getParentOptions();
+        $languages = Language::active()->ordered()->get();
 
         return Inertia::render('Categories/Create', [
             'parentOptions' => $parentOptions,
+            'languages' => $languages->map(fn ($lang) => [
+                'code' => $lang->code,
+                'name' => $lang->name,
+                'native_name' => $lang->native_name,
+                'direction' => $lang->direction,
+            ]),
         ]);
     }
 
@@ -93,14 +135,26 @@ class CategoryController extends Controller
     {
         $validated = $request->validated();
 
+        // Handle translations - filter out empty values
+        $name = $validated['name'];
+        if (is_array($name)) {
+            $name = array_filter($name, fn ($v) => $v !== null && $v !== '');
+        }
+
+        $description = $validated['description'] ?? null;
+        if (is_array($description)) {
+            $description = array_filter($description, fn ($v) => $v !== null && $v !== '');
+            $description = empty($description) ? null : $description;
+        }
+
         // Get max order for the parent level
         $maxOrder = Category::where('parent_id', $validated['parent_id'] ?? null)
             ->max('order') ?? 0;
 
         Category::create([
-            'name' => $validated['name'],
+            'name' => $name,
             'slug' => $validated['slug'] ?? null,
-            'description' => $validated['description'] ?? null,
+            'description' => $description,
             'parent_id' => $validated['parent_id'] ?? null,
             'order' => $maxOrder + 1,
         ]);
@@ -109,7 +163,7 @@ class CategoryController extends Controller
             ->with('success', 'Category created successfully.');
     }
 
-    public function edit(Category $category): Response
+    public function edit(Request $request, Category $category): Response|\Illuminate\Http\JsonResponse
     {
         $category->load('parent');
 
@@ -118,23 +172,47 @@ class CategoryController extends Controller
         $excludeIds[] = $category->id;
 
         $parentOptions = $this->getParentOptions($excludeIds);
+        $languages = Language::active()->ordered()->get();
+
+        $languagesData = $languages->map(fn ($lang) => [
+            'code' => $lang->code,
+            'name' => $lang->name,
+            'native_name' => $lang->native_name,
+            'direction' => $lang->direction,
+        ]);
+
+        $categoryData = [
+            'id' => $category->id,
+            'uuid' => $category->uuid,
+            'name' => $category->name, // Current locale translation
+            'name_translations' => $category->getTranslations('name'),
+            'slug' => $category->slug,
+            'description' => $category->description, // Current locale translation
+            'description_translations' => $category->getTranslations('description'),
+            'parent_id' => $category->parent_id,
+            'order' => $category->order,
+            'posts_count' => $category->posts_count,
+            'parent' => $category->parent ? [
+                'id' => $category->parent->id,
+                'name' => $category->parent->name,
+            ] : null,
+        ];
+
+        // Return JSON for AJAX requests
+        if ($request->wantsJson()) {
+            return response()->json([
+                'props' => [
+                    'category' => $categoryData,
+                    'parentOptions' => $parentOptions,
+                    'languages' => $languagesData,
+                ],
+            ]);
+        }
 
         return Inertia::render('Categories/Edit', [
-            'category' => [
-                'id' => $category->id,
-                'uuid' => $category->uuid,
-                'name' => $category->name,
-                'slug' => $category->slug,
-                'description' => $category->description,
-                'parent_id' => $category->parent_id,
-                'order' => $category->order,
-                'posts_count' => $category->posts_count,
-                'parent' => $category->parent ? [
-                    'id' => $category->parent->id,
-                    'name' => $category->parent->name,
-                ] : null,
-            ],
+            'category' => $categoryData,
             'parentOptions' => $parentOptions,
+            'languages' => $languagesData,
         ]);
     }
 
@@ -142,10 +220,22 @@ class CategoryController extends Controller
     {
         $validated = $request->validated();
 
+        // Handle translations - filter out empty values
+        $name = $validated['name'];
+        if (is_array($name)) {
+            $name = array_filter($name, fn ($v) => $v !== null && $v !== '');
+        }
+
+        $description = $validated['description'] ?? null;
+        if (is_array($description)) {
+            $description = array_filter($description, fn ($v) => $v !== null && $v !== '');
+            $description = empty($description) ? null : $description;
+        }
+
         $category->update([
-            'name' => $validated['name'],
+            'name' => $name,
             'slug' => $validated['slug'] ?? $category->slug,
-            'description' => $validated['description'] ?? null,
+            'description' => $description,
             'parent_id' => $validated['parent_id'] ?? null,
         ]);
 
@@ -240,6 +330,7 @@ class CategoryController extends Controller
             'description' => $category->description,
             'posts_count' => $category->posts_count,
             'order' => $category->order,
+            'translated_locales' => array_keys($category->getTranslations('name')),
             'children' => [],
         ];
 

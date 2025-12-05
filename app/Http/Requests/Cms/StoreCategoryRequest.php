@@ -22,9 +22,13 @@ class StoreCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            // Name can be string (single locale) or array (translations)
+            'name' => ['required'],
+            'name.*' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:categories,slug'],
-            'description' => ['nullable', 'string', 'max:1000'],
+            // Description can be string (single locale) or array (translations)
+            'description' => ['nullable'],
+            'description.*' => ['nullable', 'string', 'max:1000'],
             'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
         ];
     }

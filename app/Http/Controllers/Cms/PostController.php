@@ -23,6 +23,9 @@ class PostController extends Controller
         // Validate language
         $lang = Language::where('code', $language)->where('is_active', true)->firstOrFail();
 
+        // Set locale for translatable models
+        app()->setLocale($language);
+
         $status = $request->get('status', 'all');
         $sortField = $request->get('sort', 'created_at');
         $sortDirection = $request->get('direction', 'desc');
@@ -134,7 +137,7 @@ class PostController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        $categories = Category::orderBy('name')->get(['id', 'name']);
+        $categories = Category::orderByTranslatedName($language)->get();
 
         return Inertia::render('Posts/Index', [
             'posts' => $posts,
@@ -156,13 +159,16 @@ class PostController extends Controller
     {
         $lang = Language::where('code', $language)->firstOrFail();
 
+        // Set locale for translatable models
+        app()->setLocale($language);
+
         $categories = Category::whereNull('parent_id')
             ->with('children')
             ->orderBy('order')
             ->get()
             ->map(fn ($cat) => $this->formatCategoryForSelect($cat));
 
-        $tags = Tag::orderBy('name')->get(['id', 'uuid', 'name', 'slug']);
+        $tags = Tag::orderByTranslatedName($language)->get()->map(fn ($tag) => $this->formatTagForSelect($tag));
 
         return Inertia::render('Posts/Create', [
             'categories' => $categories,
@@ -241,13 +247,16 @@ class PostController extends Controller
     {
         $post->load(['categories', 'tags', 'author', 'language']);
 
+        // Set locale for translatable models
+        app()->setLocale($language);
+
         $categories = Category::whereNull('parent_id')
             ->with('children')
             ->orderBy('order')
             ->get()
             ->map(fn ($cat) => $this->formatCategoryForSelect($cat));
 
-        $tags = Tag::orderBy('name')->get(['id', 'uuid', 'name', 'slug']);
+        $tags = Tag::orderByTranslatedName($language)->get()->map(fn ($tag) => $this->formatTagForSelect($tag));
 
         $lang = $post->language ?? Language::getDefault();
 
@@ -392,6 +401,7 @@ class PostController extends Controller
             'name' => $prefix.$category->name,
             'slug' => $category->slug,
             'depth' => $depth,
+            'translations' => $category->getTranslations('name'),
         ];
 
         if ($category->children && $category->children->count() > 0) {
@@ -401,5 +411,16 @@ class PostController extends Controller
         }
 
         return $result;
+    }
+
+    private function formatTagForSelect(Tag $tag): array
+    {
+        return [
+            'id' => $tag->id,
+            'uuid' => $tag->uuid,
+            'name' => $tag->name,
+            'slug' => $tag->slug,
+            'translations' => $tag->getTranslations('name'),
+        ];
     }
 }

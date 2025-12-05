@@ -25,9 +25,13 @@ class UpdateCategoryRequest extends FormRequest
         $categoryId = $this->route('category')->id;
 
         return [
-            'name' => ['required', 'string', 'max:255'],
+            // Name can be string (single locale) or array (translations)
+            'name' => ['required'],
+            'name.*' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', Rule::unique('categories', 'slug')->ignore($categoryId)],
-            'description' => ['nullable', 'string', 'max:1000'],
+            // Description can be string (single locale) or array (translations)
+            'description' => ['nullable'],
+            'description.*' => ['nullable', 'string', 'max:1000'],
             'parent_id' => [
                 'nullable',
                 'integer',

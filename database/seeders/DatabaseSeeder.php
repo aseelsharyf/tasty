@@ -8,7 +8,7 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
+    // Note: We don't use WithoutModelEvents because we need UUID generation
 
     /**
      * Seed the application's database.
@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RolesAndPermissionsSeeder::class,
+            LanguageSeeder::class,
+            TaxonomySeeder::class,
         ]);
 
         // Create Admin user

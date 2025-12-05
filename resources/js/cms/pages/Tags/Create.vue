@@ -2,6 +2,11 @@
 import { Head, router } from '@inertiajs/vue3';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import TagForm from '../../components/TagForm.vue';
+import type { Language } from '../../types';
+
+defineProps<{
+    languages: Language[];
+}>();
 
 function onSuccess() {
     router.visit('/cms/tags');
@@ -28,6 +33,7 @@ function onCancel() {
             <template #body>
                 <div class="max-w-xl mx-auto">
                     <TagForm
+                        :languages="languages"
                         mode="create"
                         @success="onSuccess"
                         @cancel="onCancel"

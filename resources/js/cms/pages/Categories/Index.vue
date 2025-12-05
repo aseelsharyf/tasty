@@ -3,9 +3,15 @@ import { Head, router } from '@inertiajs/vue3';
 import { ref, computed, h, resolveComponent } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import CategoryCreateSlideover from '../../components/CategoryCreateSlideover.vue';
+import CategoryEditSlideover from '../../components/CategoryEditSlideover.vue';
 import { usePermission } from '../../composables/usePermission';
-import type { Category, CategoryTreeItem, ParentOption, PaginatedResponse } from '../../types';
+import type { Category, CategoryTreeItem, ParentOption, PaginatedResponse, Language } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
+
+interface CategoryWithTranslations extends Category {
+    name_translations?: Record<string, string>;
+    description_translations?: Record<string, string>;
+}
 
 const props = defineProps<{
     categories: PaginatedResponse<Category>;
@@ -21,6 +27,7 @@ const props = defineProps<{
         root: number;
         child: number;
     };
+    languages: Language[];
 }>();
 
 const { can } = usePermission();
@@ -36,6 +43,9 @@ const deleteModalOpen = ref(false);
 const categoryToDelete = ref<Category | null>(null);
 const viewMode = ref<'tree' | 'list'>('tree');
 const createModalOpen = ref(false);
+const editSlideoverOpen = ref(false);
+const categoryToEdit = ref<CategoryWithTranslations | null>(null);
+const loadingEdit = ref(false);
 const rowSelection = ref<Record<string, boolean>>({});
 const bulkDeleteModalOpen = ref(false);
 const bulkDeleting = ref(false);
@@ -110,9 +120,42 @@ function confirmDelete(category: Category | CategoryTreeItem) {
     deleteModalOpen.value = true;
 }
 
+async function openEditSlideover(category: Category | CategoryTreeItem) {
+    // Fetch full category data with translations via Inertia partial reload
+    loadingEdit.value = true;
+
+    try {
+        // Use fetch to get the category data with translations
+        const response = await fetch(`/cms/categories/${category.uuid}/edit`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch category');
+
+        const data = await response.json();
+        categoryToEdit.value = data.props.category;
+        editSlideoverOpen.value = true;
+    } catch (error) {
+        console.error('Failed to load category for editing:', error);
+    } finally {
+        loadingEdit.value = false;
+    }
+}
+
+function onEditClose(updated: boolean) {
+    editSlideoverOpen.value = false;
+    categoryToEdit.value = null;
+    if (updated) {
+        router.reload({ only: ['categories', 'tree', 'counts'] });
+    }
+}
+
 function deleteCategory() {
     if (categoryToDelete.value) {
-        router.delete(`/cms/categories/${categoryToDelete.value.id}`, {
+        router.delete(`/cms/categories/${categoryToDelete.value.uuid}`, {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 categoryToDelete.value = null;
@@ -129,7 +172,7 @@ function getRowActions(row: Category) {
             {
                 label: 'Edit',
                 icon: 'i-lucide-pencil',
-                to: `/cms/categories/${row.id}/edit`,
+                onSelect: () => openEditSlideover(row),
             },
         ]);
     }
@@ -146,6 +189,29 @@ function getRowActions(row: Category) {
     }
 
     return actions;
+}
+
+// Helper to render translation status badges
+function renderTranslationStatus(translatedLocales: string[] | undefined) {
+    if (!translatedLocales || props.languages.length <= 1) return null;
+
+    return h('div', { class: 'flex items-center gap-1' },
+        props.languages.map(lang => {
+            const isTranslated = translatedLocales.includes(lang.code);
+            return h(
+                'span',
+                {
+                    class: `inline-flex items-center justify-center size-5 text-[10px] font-medium rounded ${
+                        isTranslated
+                            ? 'bg-success/10 text-success'
+                            : 'bg-muted/20 text-muted'
+                    }`,
+                    title: isTranslated ? `${lang.name} translation available` : `No ${lang.name} translation`,
+                },
+                lang.code.toUpperCase()
+            );
+        })
+    );
 }
 
 function getSortIcon(field: string) {
@@ -242,6 +308,11 @@ const columns: TableColumn<Category>[] = [
         },
     },
     {
+        id: 'translations',
+        header: 'Translations',
+        cell: ({ row }) => renderTranslationStatus(row.original.translated_locales),
+    },
+    {
         id: 'actions',
         cell: ({ row }) => {
             const actions = getRowActions(row.original);
@@ -299,6 +370,7 @@ const flattenedTree = computed(() => flattenTree(props.tree));
                             v-if="can('categories.create')"
                             v-model:open="createModalOpen"
                             :parent-options="parentOptions"
+                            :languages="languages"
                         >
                             <UButton icon="i-lucide-plus">
                                 Add Category
@@ -328,20 +400,20 @@ const flattenedTree = computed(() => flattenTree(props.tree));
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <UButtonGroup>
+                        <UFieldGroup>
                             <UButton
                                 :color="viewMode === 'tree' ? 'primary' : 'neutral'"
-                                :variant="viewMode === 'tree' ? 'solid' : 'ghost'"
+                                :variant="viewMode === 'tree' ? 'solid' : 'outline'"
                                 icon="i-lucide-git-branch"
                                 @click="viewMode = 'tree'"
                             />
                             <UButton
                                 :color="viewMode === 'list' ? 'primary' : 'neutral'"
-                                :variant="viewMode === 'list' ? 'solid' : 'ghost'"
+                                :variant="viewMode === 'list' ? 'solid' : 'outline'"
                                 icon="i-lucide-list"
                                 @click="viewMode = 'list'"
                             />
-                        </UButtonGroup>
+                        </UFieldGroup>
                         <span class="text-sm text-muted">
                             {{ counts.total }} categories
                             <span class="text-xs">({{ counts.root }} parent, {{ counts.child }} child)</span>
@@ -381,10 +453,27 @@ const flattenedTree = computed(() => flattenTree(props.tree));
                             {{ item.posts_count }} posts
                         </UBadge>
 
+                        <!-- Translation Status Badges -->
+                        <div v-if="languages.length > 1" class="flex items-center gap-1">
+                            <span
+                                v-for="lang in languages"
+                                :key="lang.code"
+                                :class="[
+                                    'inline-flex items-center justify-center size-5 text-[10px] font-medium rounded',
+                                    item.translated_locales?.includes(lang.code)
+                                        ? 'bg-success/10 text-success'
+                                        : 'bg-muted/20 text-muted'
+                                ]"
+                                :title="item.translated_locales?.includes(lang.code) ? `${lang.name} translation available` : `No ${lang.name} translation`"
+                            >
+                                {{ lang.code.toUpperCase() }}
+                            </span>
+                        </div>
+
                         <UDropdownMenu
                             :content="{ align: 'end' }"
                             :items="[
-                                can('categories.edit') ? [{ label: 'Edit', icon: 'i-lucide-pencil', to: `/cms/categories/${item.id}/edit` }] : [],
+                                can('categories.edit') ? [{ label: 'Edit', icon: 'i-lucide-pencil', onSelect: () => openEditSlideover(item) }] : [],
                                 can('categories.delete') ? [{ label: 'Delete', icon: 'i-lucide-trash', color: 'error', onSelect: () => confirmDelete(item) }] : [],
                             ].filter(g => g.length > 0)"
                         >
@@ -570,5 +659,14 @@ const flattenedTree = computed(() => flattenTree(props.tree));
                 </UCard>
             </template>
         </UModal>
+
+        <!-- Edit Category Slideover -->
+        <CategoryEditSlideover
+            v-model:open="editSlideoverOpen"
+            :category="categoryToEdit"
+            :parent-options="parentOptions"
+            :languages="languages"
+            @close="onEditClose"
+        />
     </DashboardLayout>
 </template>

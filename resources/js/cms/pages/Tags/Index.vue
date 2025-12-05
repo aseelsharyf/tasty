@@ -3,9 +3,14 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, computed, h, resolveComponent } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import TagCreateSlideover from '../../components/TagCreateSlideover.vue';
+import TagEditSlideover from '../../components/TagEditSlideover.vue';
 import { usePermission } from '../../composables/usePermission';
-import type { Tag, PaginatedResponse } from '../../types';
+import type { Tag, PaginatedResponse, Language } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
+
+interface TagWithTranslations extends Tag {
+    name_translations?: Record<string, string>;
+}
 
 const props = defineProps<{
     tags: PaginatedResponse<Tag>;
@@ -14,6 +19,7 @@ const props = defineProps<{
         sort?: string;
         direction?: 'asc' | 'desc';
     };
+    languages: Language[];
 }>();
 
 const { can } = usePermission();
@@ -27,6 +33,8 @@ const search = ref(props.filters.search || '');
 const deleteModalOpen = ref(false);
 const tagToDelete = ref<Tag | null>(null);
 const createSlideoverOpen = ref(false);
+const editSlideoverOpen = ref(false);
+const tagToEdit = ref<TagWithTranslations | null>(null);
 const rowSelection = ref<Record<string, boolean>>({});
 const bulkDeleteModalOpen = ref(false);
 const bulkDeleting = ref(false);
@@ -91,12 +99,40 @@ function confirmDelete(tag: Tag) {
 
 function deleteTag() {
     if (tagToDelete.value) {
-        router.delete(`/cms/tags/${tagToDelete.value.id}`, {
+        router.delete(`/cms/tags/${tagToDelete.value.uuid}`, {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 tagToDelete.value = null;
             },
         });
+    }
+}
+
+async function openEditSlideover(tag: Tag) {
+    try {
+        // Fetch full tag data with translations via AJAX
+        const response = await fetch(`/cms/tags/${tag.uuid}/edit`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch tag');
+
+        const data = await response.json();
+        tagToEdit.value = data.props.tag;
+        editSlideoverOpen.value = true;
+    } catch (error) {
+        console.error('Failed to load tag for editing:', error);
+    }
+}
+
+function onEditClose(updated: boolean) {
+    editSlideoverOpen.value = false;
+    tagToEdit.value = null;
+    if (updated) {
+        router.reload({ only: ['tags'] });
     }
 }
 
@@ -120,7 +156,7 @@ function getRowActions(row: Tag) {
             {
                 label: 'Edit',
                 icon: 'i-lucide-pencil',
-                to: `/cms/tags/${row.id}/edit`,
+                onSelect: () => openEditSlideover(row),
             },
         ]);
     }
@@ -137,6 +173,29 @@ function getRowActions(row: Tag) {
     }
 
     return actions;
+}
+
+// Helper to render translation status badges
+function renderTranslationStatus(translatedLocales: string[] | undefined) {
+    if (!translatedLocales || props.languages.length <= 1) return null;
+
+    return h('div', { class: 'flex items-center gap-1' },
+        props.languages.map(lang => {
+            const isTranslated = translatedLocales.includes(lang.code);
+            return h(
+                'span',
+                {
+                    class: `inline-flex items-center justify-center size-5 text-[10px] font-medium rounded ${
+                        isTranslated
+                            ? 'bg-success/10 text-success'
+                            : 'bg-muted/20 text-muted'
+                    }`,
+                    title: isTranslated ? `${lang.name} translation available` : `No ${lang.name} translation`,
+                },
+                lang.code.toUpperCase()
+            );
+        })
+    );
 }
 
 const columns: TableColumn<Tag>[] = [
@@ -199,6 +258,11 @@ const columns: TableColumn<Tag>[] = [
         },
     },
     {
+        id: 'translations',
+        header: 'Translations',
+        cell: ({ row }) => renderTranslationStatus(row.original.translated_locales),
+    },
+    {
         id: 'actions',
         cell: ({ row }) => {
             const actions = getRowActions(row.original);
@@ -242,6 +306,7 @@ const columns: TableColumn<Tag>[] = [
                         <TagCreateSlideover
                             v-if="can('tags.create')"
                             v-model:open="createSlideoverOpen"
+                            :languages="languages"
                         >
                             <UButton icon="i-lucide-plus">
                                 Add Tag
@@ -431,5 +496,13 @@ const columns: TableColumn<Tag>[] = [
                 </UCard>
             </template>
         </UModal>
+
+        <!-- Edit Tag Slideover -->
+        <TagEditSlideover
+            v-model:open="editSlideoverOpen"
+            :tag="tagToEdit"
+            :languages="languages"
+            @close="onEditClose"
+        />
     </DashboardLayout>
 </template>

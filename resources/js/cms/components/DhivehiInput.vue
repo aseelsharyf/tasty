@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted, nextTick } from 'vue';
 import { useDhivehiKeyboard, type DhivehiLayout } from '../composables/useDhivehiKeyboard';
 
 const props = withDefaults(defineProps<{
@@ -28,7 +28,10 @@ const emit = defineEmits<{
     (e: 'update:modelValue', value: string): void;
 }>();
 
-const inputRef = ref<HTMLInputElement | HTMLTextAreaElement | null>(null);
+// Reference to the Nuxt UI component
+const componentRef = ref<any>(null);
+// Reference to the actual HTML input/textarea element
+const inputEl = ref<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
 const { enabled, layout, toggle, handleKeyDown, direction, layoutOptions } = useDhivehiKeyboard({
     defaultEnabled: props.defaultEnabled,
@@ -37,9 +40,38 @@ const { enabled, layout, toggle, handleKeyDown, direction, layoutOptions } = use
 
 const fontClass = computed(() => (enabled.value ? 'font-dhivehi' : ''));
 
+// Get the actual HTML input element from the Nuxt UI component
+function getInputElement(): HTMLInputElement | HTMLTextAreaElement | null {
+    if (componentRef.value) {
+        // Try to find the input element within the component
+        const el = componentRef.value.$el || componentRef.value;
+        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+            return el;
+        }
+        // Look for input or textarea within the component
+        return el.querySelector?.('input, textarea') || null;
+    }
+    return null;
+}
+
+onMounted(() => {
+    nextTick(() => {
+        inputEl.value = getInputElement();
+    });
+});
+
+// Re-get element when component updates
+watch(componentRef, () => {
+    nextTick(() => {
+        inputEl.value = getInputElement();
+    });
+});
+
 function onKeyDown(e: KeyboardEvent) {
-    if (inputRef.value) {
-        handleKeyDown(e, inputRef.value);
+    // Get the element directly from the event target as fallback
+    const el = inputEl.value || (e.target as HTMLInputElement | HTMLTextAreaElement);
+    if (el && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) {
+        handleKeyDown(e, el);
     }
 }
 
@@ -57,65 +89,66 @@ watch(() => props.disabled, (isDisabled) => {
 </script>
 
 <template>
-    <div class="dhivehi-input-wrapper relative">
+    <div class="dhivehi-input-wrapper w-full">
         <!-- Input Field -->
         <template v-if="type === 'input'">
-            <UInput
-                ref="inputRef"
-                :model-value="modelValue"
-                :placeholder="placeholder"
-                :size="size"
-                :disabled="disabled"
-                :dir="direction"
-                :class="fontClass"
-                :ui="{ trailing: showToggle ? 'pe-10' : undefined }"
-                @keydown="onKeyDown"
-                @input="onInput"
-            >
-                <template v-if="showToggle" #trailing>
-                    <button
-                        type="button"
-                        class="p-1 rounded hover:bg-muted/50 transition-colors"
-                        :class="{ 'text-primary': enabled, 'text-muted': !enabled }"
-                        @click="toggle"
-                        :title="enabled ? 'Switch to English' : 'Switch to Dhivehi'"
-                    >
-                        <UIcon
-                            :name="enabled ? 'i-lucide-languages' : 'i-lucide-keyboard'"
-                            class="size-4"
-                        />
-                    </button>
-                </template>
-            </UInput>
+            <div class="flex items-center gap-2 w-full">
+                <UInput
+                    ref="componentRef"
+                    :model-value="modelValue"
+                    :placeholder="placeholder"
+                    :size="size"
+                    :disabled="disabled"
+                    :dir="direction"
+                    :class="[fontClass, 'flex-1']"
+                    class="w-full"
+                    @keydown="onKeyDown"
+                    @input="onInput"
+                />
+                <UButton
+                    v-if="showToggle"
+                    type="button"
+                    :color="enabled ? 'primary' : 'neutral'"
+                    :variant="enabled ? 'soft' : 'ghost'"
+                    size="sm"
+                    square
+                    @click="toggle"
+                    :title="enabled ? 'Switch to English (EN)' : 'Switch to Dhivehi (DV)'"
+                >
+                    <span class="text-xs font-medium">{{ enabled ? 'DV' : 'EN' }}</span>
+                </UButton>
+            </div>
         </template>
 
         <!-- Textarea Field -->
         <template v-else>
-            <div class="relative">
-                <UTextarea
-                    ref="inputRef"
-                    :model-value="modelValue"
-                    :placeholder="placeholder"
-                    :rows="rows"
-                    :disabled="disabled"
-                    :dir="direction"
-                    :class="fontClass"
-                    @keydown="onKeyDown"
-                    @input="onInput"
-                />
-                <button
-                    v-if="showToggle"
-                    type="button"
-                    class="absolute top-2 right-2 p-1 rounded hover:bg-muted/50 transition-colors"
-                    :class="{ 'text-primary': enabled, 'text-muted': !enabled }"
-                    @click="toggle"
-                    :title="enabled ? 'Switch to English' : 'Switch to Dhivehi'"
-                >
-                    <UIcon
-                        :name="enabled ? 'i-lucide-languages' : 'i-lucide-keyboard'"
-                        class="size-4"
+            <div class="w-full">
+                <div class="flex items-start gap-2">
+                    <UTextarea
+                        ref="componentRef"
+                        :model-value="modelValue"
+                        :placeholder="placeholder"
+                        :rows="rows"
+                        :disabled="disabled"
+                        :dir="direction"
+                        :class="[fontClass, 'flex-1']"
+                        class="w-full"
+                        @keydown="onKeyDown"
+                        @input="onInput"
                     />
-                </button>
+                    <UButton
+                        v-if="showToggle"
+                        type="button"
+                        :color="enabled ? 'primary' : 'neutral'"
+                        :variant="enabled ? 'soft' : 'ghost'"
+                        size="sm"
+                        square
+                        @click="toggle"
+                        :title="enabled ? 'Switch to English (EN)' : 'Switch to Dhivehi (DV)'"
+                    >
+                        <span class="text-xs font-medium">{{ enabled ? 'DV' : 'EN' }}</span>
+                    </UButton>
+                </div>
             </div>
         </template>
 

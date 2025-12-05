@@ -2,11 +2,12 @@
 import { Head, router } from '@inertiajs/vue3';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import CategoryForm from '../../components/CategoryForm.vue';
-import type { Category, ParentOption } from '../../types';
+import type { Category, ParentOption, Language } from '../../types';
 
 const props = defineProps<{
     category: Category;
     parentOptions: ParentOption[];
+    languages: Language[];
 }>();
 
 function onSuccess() {
@@ -36,6 +37,7 @@ function onCancel() {
                     <CategoryForm
                         :category="category"
                         :parent-options="parentOptions"
+                        :languages="languages"
                         mode="edit"
                         @success="onSuccess"
                         @cancel="onCancel"

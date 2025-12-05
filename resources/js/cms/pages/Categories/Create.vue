@@ -2,10 +2,11 @@
 import { Head, router } from '@inertiajs/vue3';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import CategoryForm from '../../components/CategoryForm.vue';
-import type { ParentOption } from '../../types';
+import type { ParentOption, Language } from '../../types';
 
 defineProps<{
     parentOptions: ParentOption[];
+    languages: Language[];
 }>();
 
 function onSuccess() {
@@ -34,6 +35,7 @@ function onCancel() {
                 <div class="max-w-xl mx-auto">
                     <CategoryForm
                         :parent-options="parentOptions"
+                        :languages="languages"
                         mode="create"
                         @success="onSuccess"
                         @cancel="onCancel"

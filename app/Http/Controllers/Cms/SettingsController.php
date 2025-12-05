@@ -7,17 +7,41 @@ use App\Models\Language;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class SettingsController extends Controller
 {
-    public function index(): Response
+    public function index(?string $tab = 'general'): Response
     {
         return Inertia::render('Settings/Index', [
+            'tab' => $tab,
             'settings' => [
+                // General
+                'site_name' => Setting::get('site.name', config('app.name')),
+                'site_tagline' => Setting::get('site.tagline', ''),
                 'app_name' => config('app.name'),
                 'app_url' => config('app.url'),
+                // SEO & Meta
+                'meta_keywords' => Setting::get('seo.meta_keywords', ''),
+                'meta_description' => Setting::get('seo.meta_description', ''),
+                // OpenGraph
+                'og_title' => Setting::get('seo.og_title', ''),
+                'og_description' => Setting::get('seo.og_description', ''),
+                'og_image' => Setting::get('seo.og_image', ''),
+                // Favicons
+                'favicon' => Setting::get('site.favicon', ''),
+                'favicon_16' => Setting::get('site.favicon_16', ''),
+                'favicon_32' => Setting::get('site.favicon_32', ''),
+                'apple_touch_icon' => Setting::get('site.apple_touch_icon', ''),
+                // Social Links
+                'social_facebook' => Setting::get('social.facebook', ''),
+                'social_twitter' => Setting::get('social.twitter', ''),
+                'social_instagram' => Setting::get('social.instagram', ''),
+                'social_youtube' => Setting::get('social.youtube', ''),
+                'social_tiktok' => Setting::get('social.tiktok', ''),
+                'social_linkedin' => Setting::get('social.linkedin', ''),
             ],
         ]);
     }
@@ -53,11 +77,100 @@ class SettingsController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
-        // Settings update logic would go here
-        // For now, just redirect back with a success message
+        $validated = $request->validate([
+            // Tab tracking
+            '_tab' => ['nullable', 'string', 'in:general,seo,opengraph,favicons,social'],
+            // General
+            'site_name' => ['nullable', 'string', 'max:255'],
+            'site_tagline' => ['nullable', 'string', 'max:500'],
+            // SEO & Meta
+            'meta_keywords' => ['nullable', 'string', 'max:500'],
+            'meta_description' => ['nullable', 'string', 'max:500'],
+            // OpenGraph
+            'og_title' => ['nullable', 'string', 'max:200'],
+            'og_description' => ['nullable', 'string', 'max:500'],
+            'og_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            // Favicons
+            'favicon' => ['nullable', 'file', 'mimes:ico,png,svg', 'max:512'],
+            'favicon_16' => ['nullable', 'image', 'mimes:png', 'max:512'],
+            'favicon_32' => ['nullable', 'image', 'mimes:png', 'max:512'],
+            'apple_touch_icon' => ['nullable', 'image', 'mimes:png', 'max:512'],
+            // Social Links
+            'social_facebook' => ['nullable', 'url', 'max:255'],
+            'social_twitter' => ['nullable', 'url', 'max:255'],
+            'social_instagram' => ['nullable', 'url', 'max:255'],
+            'social_youtube' => ['nullable', 'url', 'max:255'],
+            'social_tiktok' => ['nullable', 'url', 'max:255'],
+            'social_linkedin' => ['nullable', 'url', 'max:255'],
+            // Removals
+            'remove_og_image' => ['nullable', 'boolean'],
+            'remove_favicon' => ['nullable', 'boolean'],
+            'remove_favicon_16' => ['nullable', 'boolean'],
+            'remove_favicon_32' => ['nullable', 'boolean'],
+            'remove_apple_touch_icon' => ['nullable', 'boolean'],
+        ]);
 
-        return redirect()->route('cms.settings')
+        // General settings
+        Setting::set('site.name', $validated['site_name'] ?? '', 'site');
+        Setting::set('site.tagline', $validated['site_tagline'] ?? '', 'site');
+
+        // SEO settings
+        Setting::set('seo.meta_keywords', $validated['meta_keywords'] ?? '', 'seo');
+        Setting::set('seo.meta_description', $validated['meta_description'] ?? '', 'seo');
+
+        // OpenGraph settings
+        Setting::set('seo.og_title', $validated['og_title'] ?? '', 'seo');
+        Setting::set('seo.og_description', $validated['og_description'] ?? '', 'seo');
+
+        // Handle OG image upload
+        if ($request->hasFile('og_image')) {
+            $path = $request->file('og_image')->store('settings', 'public');
+            $this->deleteOldFile('seo.og_image');
+            Setting::set('seo.og_image', $path, 'seo');
+        } elseif ($request->boolean('remove_og_image')) {
+            $this->deleteOldFile('seo.og_image');
+            Setting::set('seo.og_image', '', 'seo');
+        }
+
+        // Handle favicon uploads
+        $faviconMap = [
+            'favicon' => 'site.favicon',
+            'favicon_16' => 'site.favicon_16',
+            'favicon_32' => 'site.favicon_32',
+            'apple_touch_icon' => 'site.apple_touch_icon',
+        ];
+
+        foreach ($faviconMap as $field => $key) {
+            if ($request->hasFile($field)) {
+                $path = $request->file($field)->store('settings/favicons', 'public');
+                $this->deleteOldFile($key);
+                Setting::set($key, $path, 'site');
+            } elseif ($request->boolean("remove_{$field}")) {
+                $this->deleteOldFile($key);
+                Setting::set($key, '', 'site');
+            }
+        }
+
+        // Social links
+        Setting::set('social.facebook', $validated['social_facebook'] ?? '', 'social');
+        Setting::set('social.twitter', $validated['social_twitter'] ?? '', 'social');
+        Setting::set('social.instagram', $validated['social_instagram'] ?? '', 'social');
+        Setting::set('social.youtube', $validated['social_youtube'] ?? '', 'social');
+        Setting::set('social.tiktok', $validated['social_tiktok'] ?? '', 'social');
+        Setting::set('social.linkedin', $validated['social_linkedin'] ?? '', 'social');
+
+        $tab = $validated['_tab'] ?? 'general';
+
+        return redirect()->route('cms.settings', ['tab' => $tab])
             ->with('success', 'Settings updated successfully.');
+    }
+
+    private function deleteOldFile(string $settingKey): void
+    {
+        $oldPath = Setting::get($settingKey);
+        if ($oldPath && Storage::disk('public')->exists($oldPath)) {
+            Storage::disk('public')->delete($oldPath);
+        }
     }
 
     public function languages(): Response
