@@ -4,7 +4,7 @@ import { usePage, router } from '@inertiajs/vue3';
 import { usePermission } from '../composables/usePermission';
 import TastyLogo from '../components/TastyLogo.vue';
 import type { PageProps } from '../types';
-import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui';
+import type { NavigationMenuItem, DropdownMenuItem, CommandPaletteItem, CommandPaletteGroup } from '@nuxt/ui';
 
 const page = usePage<PageProps>();
 const user = computed(() => page.props.auth?.user);
@@ -314,6 +314,133 @@ const bottomNavItems = computed<NavigationMenuItem[]>(() => [
     },
 ]);
 
+// Search functionality
+const searchOpen = ref(false);
+const searchTerm = ref('');
+
+// Build search groups from navigation
+const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
+    const groups: CommandPaletteGroup<CommandPaletteItem>[] = [];
+
+    // Navigation group
+    const navItems: CommandPaletteItem[] = [];
+
+    // Add main nav items
+    for (const item of mainNavItems.value) {
+        if (item.to) {
+            navItems.push({
+                label: item.label || '',
+                icon: item.icon as string,
+                to: item.to as string,
+                onSelect: () => {
+                    router.visit(item.to as string);
+                    searchOpen.value = false;
+                },
+            });
+        }
+        if (item.children) {
+            for (const child of item.children) {
+                navItems.push({
+                    label: child.label || '',
+                    suffix: item.label,
+                    icon: child.icon as string,
+                    to: child.to as string,
+                    onSelect: () => {
+                        router.visit(child.to as string);
+                        searchOpen.value = false;
+                    },
+                });
+            }
+        }
+    }
+
+    // Add taxonomy nav items
+    for (const item of taxonomyNavItems.value) {
+        if (item.type === 'label') continue;
+        if (item.to) {
+            navItems.push({
+                label: item.label || '',
+                icon: item.icon as string,
+                to: item.to as string,
+                onSelect: () => {
+                    router.visit(item.to as string);
+                    searchOpen.value = false;
+                },
+            });
+        }
+    }
+
+    // Add engagement nav items
+    for (const item of engagementNavItems.value) {
+        if (item.type === 'label') continue;
+        if (item.to) {
+            navItems.push({
+                label: item.label || '',
+                icon: item.icon as string,
+                to: item.to as string,
+                onSelect: () => {
+                    router.visit(item.to as string);
+                    searchOpen.value = false;
+                },
+            });
+        }
+        if (item.children) {
+            for (const child of item.children) {
+                navItems.push({
+                    label: child.label || '',
+                    suffix: item.label,
+                    icon: child.icon as string,
+                    to: child.to as string,
+                    onSelect: () => {
+                        router.visit(child.to as string);
+                        searchOpen.value = false;
+                    },
+                });
+            }
+        }
+    }
+
+    // Add admin nav items
+    for (const item of adminNavItems.value) {
+        if (item.type === 'label') continue;
+        if (item.to) {
+            navItems.push({
+                label: item.label || '',
+                icon: item.icon as string,
+                to: item.to as string,
+                onSelect: () => {
+                    router.visit(item.to as string);
+                    searchOpen.value = false;
+                },
+            });
+        }
+        if (item.children) {
+            for (const child of item.children) {
+                navItems.push({
+                    label: child.label || '',
+                    suffix: item.label,
+                    icon: child.icon as string,
+                    to: child.to as string,
+                    onSelect: () => {
+                        router.visit(child.to as string);
+                        searchOpen.value = false;
+                    },
+                });
+            }
+        }
+    }
+
+    if (navItems.length > 0) {
+        groups.push({
+            id: 'navigation',
+            label: 'Navigation',
+            items: navItems,
+        });
+    }
+
+    return groups;
+});
+
 // User menu items
 const userMenuItems = computed<DropdownMenuItem[][]>(() => [
     [
@@ -369,8 +496,8 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
                 <template #header="{ collapsed }">
                     <a
                         href="/cms"
-                        class="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
-                        :class="collapsed ? 'justify-center' : ''"
+                        class="flex items-center gap-2.5 hover:opacity-80 transition-opacity w-full"
+                        :class="collapsed ? 'justify-center' : 'justify-center'"
                     >
                         <TastyLogo
                             v-if="!collapsed"
@@ -395,6 +522,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
                         block
                         :square="collapsed"
                         class="mb-2"
+                        @click="searchOpen = true"
                     >
                         <template v-if="!collapsed" #trailing>
                             <div class="flex items-center gap-0.5 ms-auto">
@@ -486,6 +614,14 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
             </UDashboardSidebar>
 
             <slot />
+
+            <!-- Dashboard Search (Command Palette) -->
+            <UDashboardSearch
+                v-model:open="searchOpen"
+                v-model:search-term="searchTerm"
+                :groups="searchGroups"
+                placeholder="Search navigation..."
+            />
 
             <!-- Flash Messages Toast -->
             <Teleport to="body">
