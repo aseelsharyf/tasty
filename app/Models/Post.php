@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
@@ -51,6 +52,7 @@ class Post extends Model implements HasMedia
         'recipe_meta',
         'meta_title',
         'meta_description',
+        'allow_comments',
     ];
 
     protected $appends = [
@@ -65,6 +67,7 @@ class Post extends Model implements HasMedia
             'recipe_meta' => 'array',
             'published_at' => 'datetime',
             'scheduled_at' => 'datetime',
+            'allow_comments' => 'boolean',
         ];
     }
 
@@ -113,11 +116,20 @@ class Post extends Model implements HasMedia
         return $this->belongsTo(Language::class, 'language_code', 'code');
     }
 
-    // TODO: Uncomment when Comment model is created
-    // public function comments(): HasMany
-    // {
-    //     return $this->hasMany(Comment::class);
-    // }
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    public function approvedComments(): HasMany
+    {
+        return $this->comments()->approved();
+    }
+
+    public function pendingComments(): HasMany
+    {
+        return $this->comments()->pending();
+    }
 
     // Scopes
 

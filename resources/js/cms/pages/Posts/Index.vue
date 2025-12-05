@@ -5,7 +5,7 @@ import { useDebounceFn } from '@vueuse/core';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
 import type { Post, PostCounts, PostFilters, Author, Category, PaginatedResponse } from '../../types';
-import type { TableColumn } from '@nuxt/ui';
+import type { TableColumn, NavigationMenuItem } from '@nuxt/ui';
 
 interface LanguageInfo {
     code: string;
@@ -47,14 +47,57 @@ const selectedCategory = ref<string | null>(props.filters.category?.toString() |
 const deleteModalOpen = ref(false);
 const postToDelete = ref<Post | null>(null);
 
-const statusTabs = computed(() => [
-    { value: 'all', label: 'All', count: props.counts.all },
-    { value: 'draft', label: 'Drafts', count: props.counts.draft },
-    { value: 'pending', label: 'Pending', count: props.counts.pending },
-    { value: 'published', label: 'Published', count: props.counts.published },
-    { value: 'scheduled', label: 'Scheduled', count: props.counts.scheduled },
-    { value: 'trashed', label: 'Trash', count: props.counts.trashed },
-]);
+// Navigation menu items for status tabs
+const statusLinks = computed<NavigationMenuItem[][]>(() => [[
+    {
+        label: 'All',
+        icon: 'i-lucide-layout-list',
+        badge: props.counts.all,
+        to: `/cms/posts/${currentLanguageCode.value}`,
+        active: currentStatus.value === 'all',
+        onSelect: () => changeStatus('all'),
+    },
+    {
+        label: 'Drafts',
+        icon: 'i-lucide-file-edit',
+        badge: props.counts.draft,
+        to: `/cms/posts/${currentLanguageCode.value}?status=draft`,
+        active: currentStatus.value === 'draft',
+        onSelect: () => changeStatus('draft'),
+    },
+    {
+        label: 'Pending',
+        icon: 'i-lucide-clock',
+        badge: props.counts.pending,
+        to: `/cms/posts/${currentLanguageCode.value}?status=pending`,
+        active: currentStatus.value === 'pending',
+        onSelect: () => changeStatus('pending'),
+    },
+    {
+        label: 'Published',
+        icon: 'i-lucide-globe',
+        badge: props.counts.published,
+        to: `/cms/posts/${currentLanguageCode.value}?status=published`,
+        active: currentStatus.value === 'published',
+        onSelect: () => changeStatus('published'),
+    },
+    {
+        label: 'Scheduled',
+        icon: 'i-lucide-calendar-clock',
+        badge: props.counts.scheduled,
+        to: `/cms/posts/${currentLanguageCode.value}?status=scheduled`,
+        active: currentStatus.value === 'scheduled',
+        onSelect: () => changeStatus('scheduled'),
+    },
+    {
+        label: 'Trash',
+        icon: 'i-lucide-trash',
+        badge: props.counts.trashed,
+        to: `/cms/posts/${currentLanguageCode.value}?status=trashed`,
+        active: currentStatus.value === 'trashed',
+        onSelect: () => changeStatus('trashed'),
+    },
+]]);
 
 const postTypeOptions = [
     { label: 'All Types', value: null },
@@ -465,33 +508,13 @@ const columns = computed<TableColumn<Post>[]>(() => {
                         </UButton>
                     </template>
                 </UDashboardNavbar>
+
+                <UDashboardToolbar>
+                    <UNavigationMenu :items="statusLinks" highlight class="-mx-1 flex-1" />
+                </UDashboardToolbar>
             </template>
 
             <template #body>
-                <!-- Status Tabs -->
-                <div class="flex items-center gap-1 border-b border-default mb-4 -mt-2 overflow-x-auto">
-                    <button
-                        v-for="tab in statusTabs"
-                        :key="tab.value"
-                        class="px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px"
-                        :class="currentStatus === tab.value
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-muted hover:text-highlighted'"
-                        @click="changeStatus(tab.value)"
-                    >
-                        {{ tab.label }}
-                        <span
-                            v-if="tab.count > 0"
-                            class="ml-1.5 px-1.5 py-0.5 text-xs rounded-full"
-                            :class="currentStatus === tab.value
-                                ? 'bg-primary/10 text-primary'
-                                : 'bg-muted/50 text-muted'"
-                        >
-                            {{ tab.count }}
-                        </span>
-                    </button>
-                </div>
-
                 <!-- Filters -->
                 <div class="flex flex-wrap items-center gap-3 mb-4">
                     <UInput

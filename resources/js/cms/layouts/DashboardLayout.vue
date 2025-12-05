@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { usePermission } from '../composables/usePermission';
 import { useSidebar } from '../composables/useSidebar';
@@ -19,6 +19,33 @@ interface Language {
 const page = usePage<PageProps>();
 const user = computed(() => page.props.auth?.user);
 const flash = computed(() => page.props.flash);
+
+// Toast visibility with auto-dismiss
+const showToast = ref(false);
+let toastTimeout: ReturnType<typeof setTimeout> | null = null;
+
+watch(flash, (newFlash) => {
+    if (newFlash?.success || newFlash?.error) {
+        showToast.value = true;
+
+        // Clear any existing timeout
+        if (toastTimeout) {
+            clearTimeout(toastTimeout);
+        }
+
+        // Auto-dismiss after 4 seconds
+        toastTimeout = setTimeout(() => {
+            showToast.value = false;
+        }, 4000);
+    }
+}, { immediate: true });
+
+function dismissToast() {
+    showToast.value = false;
+    if (toastTimeout) {
+        clearTimeout(toastTimeout);
+    }
+}
 
 const { can } = usePermission();
 
@@ -206,28 +233,32 @@ const engagementNavItems = computed<NavigationMenuItem[]>(() => {
             label: 'Comments',
             icon: 'i-lucide-message-square',
             to: '/cms/comments',
-            active: isActive('/cms/comments'),
-            defaultOpen: isActive('/cms/comments'),
+            active: isActivePrefix('/cms/comments'),
+            defaultOpen: isActivePrefix('/cms/comments'),
             children: [
                 {
                     label: 'All Comments',
                     to: '/cms/comments',
                     icon: 'i-lucide-messages-square',
+                    active: isActive('/cms/comments', true) || (isActive('/cms/comments') && !page.url.includes('status=')),
                 },
                 {
-                    label: 'Pending',
-                    to: '/cms/comments/pending',
-                    icon: 'i-lucide-clock',
+                    label: 'Moderation Queue',
+                    to: '/cms/comments/queue',
+                    icon: 'i-lucide-inbox',
+                    active: isActivePrefix('/cms/comments/queue'),
                 },
                 {
                     label: 'Approved',
-                    to: '/cms/comments/approved',
+                    to: '/cms/comments?status=approved',
                     icon: 'i-lucide-check-circle',
+                    active: page.url.includes('status=approved'),
                 },
                 {
                     label: 'Spam',
-                    to: '/cms/comments/spam',
+                    to: '/cms/comments?status=spam',
                     icon: 'i-lucide-shield-alert',
+                    active: page.url.includes('status=spam'),
                 },
             ],
         });
@@ -648,22 +679,26 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
                     leave-to-class="opacity-0 translate-y-2"
                 >
                     <div
-                        v-if="flash?.success || flash?.error"
-                        class="fixed bottom-4 right-4 z-50 max-w-sm"
+                        v-if="showToast && (flash?.success || flash?.error)"
+                        class="fixed bottom-4 right-4 z-[100] max-w-sm shadow-xl rounded-lg"
                     >
                         <UAlert
                             v-if="flash.success"
                             color="success"
-                            variant="soft"
+                            variant="solid"
                             :title="flash.success"
                             icon="i-lucide-check-circle"
+                            :close-button="{ icon: 'i-lucide-x', color: 'white', variant: 'link' }"
+                            @close="dismissToast"
                         />
                         <UAlert
                             v-if="flash.error"
                             color="error"
-                            variant="soft"
+                            variant="solid"
                             :title="flash.error"
                             icon="i-lucide-alert-circle"
+                            :close-button="{ icon: 'i-lucide-x', color: 'white', variant: 'link' }"
+                            @close="dismissToast"
                         />
                     </div>
                 </Transition>

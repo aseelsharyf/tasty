@@ -68,7 +68,9 @@ class RolesAndPermissionsSeeder extends Seeder
             // Comments
             'comments.view',
             'comments.moderate',
+            'comments.edit',
             'comments.delete',
+            'comments.manage-bans',
 
             // Settings
             'settings.view',
@@ -118,7 +120,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'tags.delete',
             'comments.view',
             'comments.moderate',
+            'comments.edit',
             'comments.delete',
+            'comments.manage-bans',
             'settings.view',
             'settings.edit',
             'analytics.view',
@@ -146,6 +150,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'tags.edit',
             'comments.view',
             'comments.moderate',
+            'comments.edit',
             'comments.delete',
         ]);
 
@@ -160,6 +165,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'categories.view',
             'tags.view',
             'tags.create',
+            'comments.view', // Can view comments on their own posts
         ]);
 
         // Create Photographer role

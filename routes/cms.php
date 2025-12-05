@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Cms\AuthController;
 use App\Http\Controllers\Cms\CategoryController;
+use App\Http\Controllers\Cms\CommentBanController;
+use App\Http\Controllers\Cms\CommentController;
 use App\Http\Controllers\Cms\DashboardController;
 use App\Http\Controllers\Cms\LanguageController;
 use App\Http\Controllers\Cms\PostController;
@@ -136,5 +138,28 @@ Route::middleware(['auth', 'cms'])->group(function () {
             'destroy' => 'cms.tags.destroy',
         ]);
         Route::delete('tags/bulk', [TagController::class, 'bulkDestroy'])->name('cms.tags.bulk-destroy');
+    });
+
+    // Comments Management
+    Route::middleware('permission:comments.view')->group(function () {
+        Route::get('comments', [CommentController::class, 'index'])->name('cms.comments.index');
+        Route::get('comments/queue', [CommentController::class, 'queue'])->name('cms.comments.queue');
+        Route::get('comments/statistics', [CommentController::class, 'statistics'])->name('cms.comments.statistics');
+        Route::get('comments/search-posts', [CommentController::class, 'searchPosts'])->name('cms.comments.search-posts');
+        Route::post('comments/bulk', [CommentController::class, 'bulkAction'])->name('cms.comments.bulk');
+
+        // Comment Bans (must be before {comment} wildcard)
+        Route::get('comments/bans', [CommentBanController::class, 'index'])->name('cms.comments.bans');
+        Route::post('comments/bans', [CommentBanController::class, 'store'])->name('cms.comments.bans.store');
+        Route::delete('comments/bans/{ban}', [CommentBanController::class, 'destroy'])->name('cms.comments.bans.destroy');
+
+        // Single comment actions
+        Route::get('comments/{comment}', [CommentController::class, 'show'])->name('cms.comments.show');
+        Route::put('comments/{comment}', [CommentController::class, 'update'])->name('cms.comments.update');
+        Route::post('comments/{comment}/approve', [CommentController::class, 'approve'])->name('cms.comments.approve');
+        Route::post('comments/{comment}/spam', [CommentController::class, 'spam'])->name('cms.comments.spam');
+        Route::post('comments/{comment}/trash', [CommentController::class, 'trash'])->name('cms.comments.trash');
+        Route::post('comments/{comment}/restore', [CommentController::class, 'restore'])->name('cms.comments.restore');
+        Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('cms.comments.destroy');
     });
 });
