@@ -103,7 +103,7 @@ class CommentController extends Controller
     {
         $query = Comment::query()
             ->pending()
-            ->with(['post:id,title,slug', 'user:id,name,email'])
+            ->with(['post:id,title,slug', 'user:id,name,email', 'parent:id,uuid,content,author_name,user_id', 'parent.user:id,name'])
             ->orderBy('created_at', 'asc');
 
         // Search
@@ -125,17 +125,27 @@ class CommentController extends Controller
                 'id' => $comment->id,
                 'uuid' => $comment->uuid,
                 'content' => $comment->content,
+                'content_excerpt' => \Illuminate\Support\Str::limit($comment->content, 100),
+                'status' => $comment->status,
                 'author_display_name' => $comment->author_display_name,
                 'author_display_email' => $comment->author_display_email,
                 'author_ip' => $comment->author_ip,
                 'gravatar_url' => $comment->gravatar_url,
                 'is_registered_user' => $comment->is_registered_user,
+                'is_edited' => $comment->is_edited,
                 'post' => $comment->post ? [
                     'id' => $comment->post->id,
                     'title' => $comment->post->title,
                     'slug' => $comment->post->slug,
                 ] : null,
+                'parent' => $comment->parent ? [
+                    'id' => $comment->parent->id,
+                    'uuid' => $comment->parent->uuid,
+                    'author_name' => $comment->parent->author_display_name,
+                    'content_excerpt' => \Illuminate\Support\Str::limit($comment->parent->content, 80),
+                ] : null,
                 'created_at' => $comment->created_at,
+                'edited_at' => $comment->edited_at,
             ]),
             'pendingCount' => $pendingCount,
             'filters' => $request->only(['search']),
