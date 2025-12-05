@@ -1,22 +1,44 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import TastyLogo from '../../components/TastyLogo.vue';
+
+interface DevUser {
+    name: string;
+    email: string;
+    role: string;
+}
 
 const props = defineProps<{
     isLocal?: boolean;
-    testCredentials?: {
-        email: string;
-        password: string;
-    } | null;
+    devUsers?: DevUser[] | null;
 }>();
 
 const form = useForm({
-    email: props.testCredentials?.email ?? '',
-    password: props.testCredentials?.password ?? '',
+    email: '',
+    password: 'password',
     remember: false,
 });
 
 const showPassword = ref(false);
+
+const selectedUser = computed({
+    get: () => props.devUsers?.find((u) => u.email === form.email) ?? null,
+    set: (user: DevUser | null) => {
+        if (user) {
+            form.email = user.email;
+            form.password = 'password';
+        }
+    },
+});
+
+const roleColors: Record<string, string> = {
+    Admin: 'error',
+    Developer: 'info',
+    Editor: 'success',
+    Writer: 'warning',
+    Photographer: 'secondary',
+};
 
 function onSubmit() {
     form.post('/cms/login', {
@@ -32,12 +54,29 @@ function onSubmit() {
                 <!-- Logo and Title -->
                 <div class="text-center">
                     <div class="flex justify-center mb-6">
-                        <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-500 text-white shadow-lg shadow-primary-500/30">
-                            <UIcon name="i-lucide-utensils" class="w-8 h-8" />
-                        </div>
+                        <TastyLogo class="h-10 w-auto text-gray-900 dark:text-white" />
                     </div>
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Welcome back</h1>
                     <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Sign in to your CMS account</p>
+                </div>
+
+                <!-- Dev User Switcher -->
+                <div v-if="isLocal && devUsers?.length" class="space-y-2">
+                    <p class="text-xs font-medium text-center text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Quick Login (Dev Only)
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <UButton
+                            v-for="user in devUsers"
+                            :key="user.email"
+                            size="xs"
+                            :color="selectedUser?.email === user.email ? (roleColors[user.role] as any) : 'neutral'"
+                            :variant="selectedUser?.email === user.email ? 'solid' : 'outline'"
+                            @click="selectedUser = user"
+                        >
+                            {{ user.role }}
+                        </UButton>
+                    </div>
                 </div>
 
                 <!-- Form Card -->

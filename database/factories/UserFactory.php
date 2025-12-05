@@ -27,6 +27,7 @@ class UserFactory extends Factory
         $name = fake()->name();
 
         return [
+            'uuid' => (string) Str::uuid(),
             'name' => $name,
             'email' => fake()->unique()->safeEmail(),
             'username' => User::generateUniqueUsername($name),

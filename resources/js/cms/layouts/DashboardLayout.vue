@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { usePermission } from '../composables/usePermission';
+import TastyLogo from '../components/TastyLogo.vue';
 import type { PageProps } from '../types';
 import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui';
 
@@ -366,20 +367,22 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
                 }"
             >
                 <template #header="{ collapsed }">
-                    <div
-                        class="flex items-center gap-2.5"
+                    <a
+                        href="/cms"
+                        class="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
                         :class="collapsed ? 'justify-center' : ''"
                     >
-                        <div class="flex items-center justify-center size-8 rounded-lg bg-primary text-primary-foreground shrink-0">
-                            <UIcon name="i-lucide-utensils" class="size-5" />
-                        </div>
-                        <span
+                        <TastyLogo
                             v-if="!collapsed"
-                            class="font-semibold text-highlighted truncate"
+                            class="h-7 w-auto text-highlighted"
+                        />
+                        <div
+                            v-else
+                            class="flex items-center justify-center size-8 rounded-lg bg-primary text-primary-foreground shrink-0"
                         >
-                            Tasty CMS
-                        </span>
-                    </div>
+                            <span class="font-bold text-sm">T</span>
+                        </div>
+                    </a>
                 </template>
 
                 <template #default="{ collapsed }">
