@@ -152,34 +152,29 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => {
             {
                 label: 'All Media',
                 to: '/cms/media',
-                icon: 'i-lucide-folder',
+                icon: 'i-lucide-grid-3x3',
+                active: isActive('/cms/media', true) || (isActive('/cms/media') && !page.url.includes('type=')),
             },
             {
                 label: 'Images',
-                to: '/cms/media/images',
+                to: '/cms/media?type=images',
                 icon: 'i-lucide-image',
+                active: page.url.includes('type=images'),
             },
             {
-                label: 'Documents',
-                to: '/cms/media/documents',
-                icon: 'i-lucide-file-text',
+                label: 'Videos',
+                to: '/cms/media?type=videos',
+                icon: 'i-lucide-video',
+                active: page.url.includes('type=videos'),
             },
         ];
-
-        if (can('media.upload')) {
-            mediaChildren.push({
-                label: 'Upload New',
-                to: '/cms/media/upload',
-                icon: 'i-lucide-upload',
-            });
-        }
 
         items.push({
             label: 'Media',
             icon: 'i-lucide-image',
             to: '/cms/media',
-            active: isActive('/cms/media'),
-            defaultOpen: isActive('/cms/media'),
+            active: isActivePrefix('/cms/media'),
+            defaultOpen: isActivePrefix('/cms/media'),
             children: mediaChildren,
         });
     }
@@ -345,6 +340,11 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
                     label: 'Post Types',
                     to: '/cms/settings/post-types',
                     icon: 'i-lucide-file-cog',
+                },
+                {
+                    label: 'Media',
+                    to: '/cms/settings/media',
+                    icon: 'i-lucide-crop',
                 },
             ],
         });

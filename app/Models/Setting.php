@@ -123,4 +123,39 @@ class Setting extends Model
     {
         static::set('content.post_types', $postTypes, 'content');
     }
+
+    /**
+     * Get default crop presets for media.
+     *
+     * @return array<int, array{name: string, label: string, width: int, height: int}>
+     */
+    public static function getDefaultCropPresets(): array
+    {
+        return [
+            ['name' => 'thumbnail', 'label' => 'Thumbnail', 'width' => 300, 'height' => 200],
+            ['name' => 'medium', 'label' => 'Medium', 'width' => 800, 'height' => 600],
+            ['name' => 'large', 'label' => 'Large', 'width' => 1920, 'height' => 1080],
+            ['name' => 'social', 'label' => 'Social (OG)', 'width' => 1200, 'height' => 630],
+        ];
+    }
+
+    /**
+     * Get crop presets from settings, with fallback to defaults.
+     *
+     * @return array<int, array{name: string, label: string, width: int, height: int}>
+     */
+    public static function getCropPresets(): array
+    {
+        return static::get('media.crop_presets', static::getDefaultCropPresets());
+    }
+
+    /**
+     * Save crop presets to settings.
+     *
+     * @param  array<int, array{name: string, label: string, width: int, height: int}>  $presets
+     */
+    public static function setCropPresets(array $presets): void
+    {
+        static::set('media.crop_presets', $presets, 'media');
+    }
 }

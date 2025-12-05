@@ -1,0 +1,286 @@
+<script setup lang="ts">
+import { Head, useForm, router } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import DashboardLayout from '../../layouts/DashboardLayout.vue';
+
+interface CropPreset {
+    name: string;
+    label: string;
+    width: number;
+    height: number;
+}
+
+const props = defineProps<{
+    cropPresets: CropPreset[];
+    defaultCropPresets: CropPreset[];
+}>();
+
+const form = useForm({
+    crop_presets: [...props.cropPresets],
+});
+
+const editingIndex = ref<number | null>(null);
+const editingPreset = ref<CropPreset | null>(null);
+
+function addPreset() {
+    form.crop_presets.push({
+        name: '',
+        label: '',
+        width: 800,
+        height: 600,
+    });
+    editingIndex.value = form.crop_presets.length - 1;
+    editingPreset.value = { ...form.crop_presets[editingIndex.value] };
+}
+
+function editPreset(index: number) {
+    editingIndex.value = index;
+    editingPreset.value = { ...form.crop_presets[index] };
+}
+
+function savePreset() {
+    if (editingIndex.value !== null && editingPreset.value) {
+        form.crop_presets[editingIndex.value] = { ...editingPreset.value };
+    }
+    editingIndex.value = null;
+    editingPreset.value = null;
+}
+
+function cancelEdit() {
+    // Remove if it was a new empty preset
+    if (editingIndex.value !== null && !form.crop_presets[editingIndex.value].name) {
+        form.crop_presets.splice(editingIndex.value, 1);
+    }
+    editingIndex.value = null;
+    editingPreset.value = null;
+}
+
+function removePreset(index: number) {
+    if (confirm('Remove this crop preset?')) {
+        form.crop_presets.splice(index, 1);
+    }
+}
+
+function resetToDefaults() {
+    if (confirm('Reset to default crop presets? This will remove any custom presets.')) {
+        form.crop_presets = [...props.defaultCropPresets];
+    }
+}
+
+function onSubmit() {
+    form.put('/cms/settings/media', {
+        preserveScroll: true,
+    });
+}
+
+function formatDimensions(preset: CropPreset): string {
+    return `${preset.width} x ${preset.height}`;
+}
+
+const aspectRatio = computed(() => {
+    if (!editingPreset.value) return '';
+    const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
+    const divisor = gcd(editingPreset.value.width, editingPreset.value.height);
+    return `${editingPreset.value.width / divisor}:${editingPreset.value.height / divisor}`;
+});
+</script>
+
+<template>
+    <Head title="Media Settings" />
+
+    <DashboardLayout>
+        <UDashboardPanel id="media-settings" :ui="{ body: 'lg:py-12' }">
+            <template #header>
+                <UDashboardNavbar title="Media Settings">
+                    <template #leading>
+                        <UDashboardSidebarCollapse />
+                    </template>
+
+                    <template #right>
+                        <UButton
+                            color="neutral"
+                            variant="ghost"
+                            icon="i-lucide-arrow-left"
+                            to="/cms/settings"
+                        >
+                            Back to Settings
+                        </UButton>
+                    </template>
+                </UDashboardNavbar>
+            </template>
+
+            <template #body>
+                <div class="flex flex-col gap-4 sm:gap-6 lg:gap-12 w-full lg:max-w-2xl mx-auto">
+                    <UPageCard
+                        title="Crop Presets"
+                        description="Define the available image crop sizes. These presets determine what image variations are generated when media is uploaded."
+                        variant="naked"
+                        orientation="horizontal"
+                        class="mb-4"
+                    >
+                        <div class="flex gap-2 w-fit lg:ms-auto">
+                            <UButton
+                                label="Reset to Defaults"
+                                color="neutral"
+                                variant="ghost"
+                                icon="i-lucide-rotate-ccw"
+                                @click="resetToDefaults"
+                            />
+                            <UButton
+                                label="Save Changes"
+                                color="neutral"
+                                :loading="form.processing"
+                                @click="onSubmit"
+                            />
+                        </div>
+                    </UPageCard>
+
+                    <UPageCard variant="subtle">
+                        <!-- Presets List -->
+                        <div class="space-y-3">
+                            <div
+                                v-for="(preset, index) in form.crop_presets"
+                                :key="index"
+                                class="flex items-center justify-between gap-4 p-3 rounded-lg border border-default bg-default/50"
+                            >
+                                <template v-if="editingIndex === index && editingPreset">
+                                    <!-- Edit Mode -->
+                                    <div class="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                        <UInput
+                                            v-model="editingPreset.name"
+                                            placeholder="slug_name"
+                                            size="sm"
+                                        >
+                                            <template #leading>
+                                                <span class="text-xs text-muted">Name</span>
+                                            </template>
+                                        </UInput>
+                                        <UInput
+                                            v-model="editingPreset.label"
+                                            placeholder="Display Label"
+                                            size="sm"
+                                        >
+                                            <template #leading>
+                                                <span class="text-xs text-muted">Label</span>
+                                            </template>
+                                        </UInput>
+                                        <UInput
+                                            v-model.number="editingPreset.width"
+                                            type="number"
+                                            :min="10"
+                                            :max="4000"
+                                            size="sm"
+                                        >
+                                            <template #leading>
+                                                <span class="text-xs text-muted">W</span>
+                                            </template>
+                                        </UInput>
+                                        <UInput
+                                            v-model.number="editingPreset.height"
+                                            type="number"
+                                            :min="10"
+                                            :max="4000"
+                                            size="sm"
+                                        >
+                                            <template #leading>
+                                                <span class="text-xs text-muted">H</span>
+                                            </template>
+                                        </UInput>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-xs text-muted mr-2">{{ aspectRatio }}</span>
+                                        <UButton
+                                            icon="i-lucide-check"
+                                            color="success"
+                                            variant="ghost"
+                                            size="xs"
+                                            @click="savePreset"
+                                        />
+                                        <UButton
+                                            icon="i-lucide-x"
+                                            color="neutral"
+                                            variant="ghost"
+                                            size="xs"
+                                            @click="cancelEdit"
+                                        />
+                                    </div>
+                                </template>
+
+                                <template v-else>
+                                    <!-- View Mode -->
+                                    <div class="flex items-center gap-4">
+                                        <div
+                                            class="shrink-0 rounded border border-default bg-muted/30 flex items-center justify-center"
+                                            :style="{
+                                                width: Math.min(preset.width / 20, 60) + 'px',
+                                                height: Math.min(preset.height / 20, 40) + 'px',
+                                            }"
+                                        >
+                                            <UIcon name="i-lucide-image" class="size-4 text-muted" />
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-highlighted">
+                                                {{ preset.label }}
+                                            </p>
+                                            <p class="text-xs text-muted">
+                                                {{ preset.name }} &middot; {{ formatDimensions(preset) }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <UButton
+                                            icon="i-lucide-pencil"
+                                            color="neutral"
+                                            variant="ghost"
+                                            size="xs"
+                                            @click="editPreset(index)"
+                                        />
+                                        <UButton
+                                            icon="i-lucide-trash"
+                                            color="error"
+                                            variant="ghost"
+                                            size="xs"
+                                            @click="removePreset(index)"
+                                        />
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Empty State -->
+                            <div
+                                v-if="form.crop_presets.length === 0"
+                                class="text-center py-8 text-muted"
+                            >
+                                <UIcon name="i-lucide-crop" class="size-12 mx-auto mb-4 opacity-50" />
+                                <p>No crop presets defined.</p>
+                                <p class="text-sm">Add a preset to define available image sizes.</p>
+                            </div>
+                        </div>
+
+                        <USeparator class="my-4" />
+
+                        <!-- Add Button -->
+                        <UButton
+                            icon="i-lucide-plus"
+                            color="neutral"
+                            variant="soft"
+                            block
+                            @click="addPreset"
+                        >
+                            Add Crop Preset
+                        </UButton>
+                    </UPageCard>
+
+                    <!-- Info -->
+                    <UAlert
+                        color="info"
+                        variant="subtle"
+                        icon="i-lucide-info"
+                        title="About Crop Presets"
+                        description="Crop presets define the image variations that are automatically generated when images are uploaded. The 'name' is used as an identifier in code, while the 'label' is shown in the UI. Changing these settings will only affect newly uploaded images."
+                    />
+                </div>
+            </template>
+        </UDashboardPanel>
+    </DashboardLayout>
+</template>

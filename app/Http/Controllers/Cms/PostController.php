@@ -212,6 +212,7 @@ class PostController extends Controller
             'status' => $validated['status'] ?? Post::STATUS_DRAFT,
             'published_at' => $validated['status'] === Post::STATUS_PUBLISHED ? now() : null,
             'scheduled_at' => $validated['scheduled_at'] ?? null,
+            'featured_media_id' => $validated['featured_media_id'] ?? null,
             'recipe_meta' => $validated['recipe_meta'] ?? null,
             'meta_title' => $validated['meta_title'] ?? null,
             'meta_description' => $validated['meta_description'] ?? null,
@@ -249,7 +250,7 @@ class PostController extends Controller
 
     public function edit(string $language, Post $post): Response
     {
-        $post->load(['categories', 'tags', 'author', 'language']);
+        $post->load(['categories', 'tags', 'author', 'language', 'featuredMedia']);
 
         // Set locale for translatable models
         app()->setLocale($language);
@@ -282,6 +283,20 @@ class PostController extends Controller
                 'meta_description' => $post->meta_description,
                 'featured_image_url' => $post->featured_image_url,
                 'featured_image_thumb' => $post->featured_image_thumb,
+                'featured_media_id' => $post->featured_media_id,
+                'featured_media' => $post->featuredMedia ? [
+                    'id' => $post->featuredMedia->id,
+                    'uuid' => $post->featuredMedia->uuid,
+                    'type' => $post->featuredMedia->type,
+                    'url' => $post->featuredMedia->url,
+                    'thumbnail_url' => $post->featuredMedia->thumbnail_url,
+                    'title' => $post->featuredMedia->title,
+                    'alt_text' => $post->featuredMedia->alt_text,
+                    'caption' => $post->featuredMedia->caption,
+                    'credit_display' => $post->featuredMedia->credit_display,
+                    'is_image' => $post->featuredMedia->is_image,
+                    'is_video' => $post->featuredMedia->is_video,
+                ] : null,
                 'category_id' => $post->categories->first()?->id,
                 'tags' => $post->tags->pluck('id'),
                 'language_code' => $post->language_code,
@@ -323,6 +338,7 @@ class PostController extends Controller
             'post_type' => $validated['post_type'] ?? $post->post_type,
             'status' => $validated['status'] ?? $post->status,
             'scheduled_at' => $validated['scheduled_at'] ?? null,
+            'featured_media_id' => $validated['featured_media_id'] ?? null,
             'recipe_meta' => $validated['recipe_meta'] ?? null,
             'meta_title' => $validated['meta_title'] ?? null,
             'meta_description' => $validated['meta_description'] ?? null,

@@ -6,6 +6,8 @@ use App\Http\Controllers\Cms\CommentBanController;
 use App\Http\Controllers\Cms\CommentController;
 use App\Http\Controllers\Cms\DashboardController;
 use App\Http\Controllers\Cms\LanguageController;
+use App\Http\Controllers\Cms\MediaController;
+use App\Http\Controllers\Cms\MediaFolderController;
 use App\Http\Controllers\Cms\PostController;
 use App\Http\Controllers\Cms\RoleController;
 use App\Http\Controllers\Cms\SettingsController;
@@ -60,6 +62,8 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::post('settings', [SettingsController::class, 'update'])->name('cms.settings.update');
         Route::get('settings/post-types', [SettingsController::class, 'postTypes'])->name('cms.settings.post-types');
         Route::put('settings/post-types', [SettingsController::class, 'updatePostTypes'])->name('cms.settings.post-types.update');
+        Route::get('settings/media', [SettingsController::class, 'media'])->name('cms.settings.media');
+        Route::put('settings/media', [SettingsController::class, 'updateMedia'])->name('cms.settings.media.update');
 
         // Languages
         Route::get('settings/languages', [SettingsController::class, 'languages'])->name('cms.settings.languages');
@@ -161,5 +165,35 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::post('comments/{comment}/trash', [CommentController::class, 'trash'])->name('cms.comments.trash');
         Route::post('comments/{comment}/restore', [CommentController::class, 'restore'])->name('cms.comments.restore');
         Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('cms.comments.destroy');
+    });
+
+    // Media Management
+    Route::middleware('permission:media.view')->group(function () {
+        Route::get('media', [MediaController::class, 'index'])->name('cms.media.index');
+        Route::get('media/picker', [MediaController::class, 'picker'])->name('cms.media.picker');
+        Route::get('media/trashed', [MediaController::class, 'trashed'])->name('cms.media.trashed');
+        Route::get('media/{media}', [MediaController::class, 'show'])->name('cms.media.show');
+
+        Route::middleware('permission:media.upload')->group(function () {
+            Route::post('media', [MediaController::class, 'store'])->name('cms.media.store');
+        });
+
+        Route::middleware('permission:media.edit')->group(function () {
+            Route::put('media/{media}', [MediaController::class, 'update'])->name('cms.media.update');
+            Route::post('media/bulk', [MediaController::class, 'bulkAction'])->name('cms.media.bulk');
+        });
+
+        Route::middleware('permission:media.delete')->group(function () {
+            Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('cms.media.destroy');
+            Route::post('media/{uuid}/restore', [MediaController::class, 'restore'])->name('cms.media.restore');
+            Route::delete('media/{uuid}/force', [MediaController::class, 'forceDelete'])->name('cms.media.force-delete');
+        });
+
+        // Media Folders
+        Route::get('media-folders', [MediaFolderController::class, 'index'])->name('cms.media-folders.index');
+        Route::get('media-folders/list', [MediaFolderController::class, 'list'])->name('cms.media-folders.list');
+        Route::post('media-folders', [MediaFolderController::class, 'store'])->name('cms.media-folders.store');
+        Route::put('media-folders/{folder}', [MediaFolderController::class, 'update'])->name('cms.media-folders.update');
+        Route::delete('media-folders/{folder}', [MediaFolderController::class, 'destroy'])->name('cms.media-folders.destroy');
     });
 });

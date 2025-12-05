@@ -49,6 +49,7 @@ class Post extends Model implements HasMedia
         'published_at',
         'scheduled_at',
         'featured_image_id',
+        'featured_media_id',
         'recipe_meta',
         'meta_title',
         'meta_description',
@@ -119,6 +120,11 @@ class Post extends Model implements HasMedia
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
+    }
+
+    public function featuredMedia(): BelongsTo
+    {
+        return $this->belongsTo(MediaItem::class, 'featured_media_id');
     }
 
     public function approvedComments(): HasMany
@@ -199,11 +205,21 @@ class Post extends Model implements HasMedia
 
     public function getFeaturedImageUrlAttribute(): ?string
     {
+        // Prefer MediaItem over Spatie media collection
+        if ($this->featuredMedia) {
+            return $this->featuredMedia->url;
+        }
+
         return $this->getFirstMediaUrl('featured', 'large') ?: null;
     }
 
     public function getFeaturedImageThumbAttribute(): ?string
     {
+        // Prefer MediaItem over Spatie media collection
+        if ($this->featuredMedia) {
+            return $this->featuredMedia->thumbnail_url;
+        }
+
         return $this->getFirstMediaUrl('featured', 'thumb') ?: null;
     }
 

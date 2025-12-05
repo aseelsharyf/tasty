@@ -273,4 +273,28 @@ class SettingsController extends Controller
         return redirect()->route('cms.settings.languages')
             ->with('success', 'Languages reordered successfully.');
     }
+
+    public function media(): Response
+    {
+        return Inertia::render('Settings/Media', [
+            'cropPresets' => Setting::getCropPresets(),
+            'defaultCropPresets' => Setting::getDefaultCropPresets(),
+        ]);
+    }
+
+    public function updateMedia(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'crop_presets' => ['required', 'array'],
+            'crop_presets.*.name' => ['required', 'string', 'max:50', 'regex:/^[a-z_]+$/'],
+            'crop_presets.*.label' => ['required', 'string', 'max:100'],
+            'crop_presets.*.width' => ['required', 'integer', 'min:10', 'max:4000'],
+            'crop_presets.*.height' => ['required', 'integer', 'min:10', 'max:4000'],
+        ]);
+
+        Setting::setCropPresets($validated['crop_presets']);
+
+        return redirect()->route('cms.settings.media')
+            ->with('success', 'Media settings updated successfully.');
+    }
 }

@@ -36,6 +36,7 @@ class StorePostRequest extends FormRequest
             'tags' => ['nullable', 'array'],
             'tags.*' => ['integer', 'exists:tags,id'],
             'featured_image' => ['nullable', 'image', 'max:5120'], // 5MB
+            'featured_media_id' => ['nullable', 'integer', 'exists:media_items,id'],
             'recipe_meta' => ['nullable', 'array'],
             'recipe_meta.prep_time' => ['nullable', 'integer', 'min:0'],
             'recipe_meta.cook_time' => ['nullable', 'integer', 'min:0'],

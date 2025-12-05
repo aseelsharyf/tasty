@@ -41,6 +41,7 @@ class UpdatePostRequest extends FormRequest
             'tags' => ['nullable', 'array'],
             'tags.*' => ['integer', 'exists:tags,id'],
             'featured_image' => ['nullable', 'image', 'max:5120'],
+            'featured_media_id' => ['nullable', 'integer', 'exists:media_items,id'],
             'remove_featured_image' => ['nullable', 'boolean'],
             'recipe_meta' => ['nullable', 'array'],
             'recipe_meta.prep_time' => ['nullable', 'integer', 'min:0'],

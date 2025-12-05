@@ -7,7 +7,12 @@ import Quote from '@editorjs/quote';
 import Delimiter from '@editorjs/delimiter';
 import Table from '@editorjs/table';
 import Code from '@editorjs/code';
+import MediaBlock, { type MediaBlockItem } from '../editor-tools/MediaBlock';
+import '../editor-tools/media-block.css';
 import type { DhivehiLayout } from '../composables/useDhivehiKeyboard';
+
+// Media selection callback type
+export type MediaSelectCallback = (options: { multiple: boolean }) => Promise<MediaBlockItem[] | null>;
 
 // Character mappings from JTK library (duplicated here for editor use)
 const TRANS_FROM = "qwertyuiop[]\\asdfghjkl;'zxcvbnm,./QWERTYUIOP{}|ASDFGHJKL:\"ZXCVBNM<>?()";
@@ -24,6 +29,7 @@ const props = defineProps<{
     rtl?: boolean;
     dhivehiEnabled?: boolean;
     dhivehiLayout?: DhivehiLayout;
+    onSelectMedia?: MediaSelectCallback;
 }>();
 
 const emit = defineEmits<{
@@ -131,6 +137,13 @@ const initEditor = async () => {
                 class: Code,
                 config: {
                     placeholder: codePlaceholder,
+                },
+            },
+            media: {
+                class: MediaBlock,
+                config: {
+                    placeholder: isRtlMode ? 'މީޑީއާ އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add media',
+                    onSelectMedia: props.onSelectMedia,
                 },
             },
         },

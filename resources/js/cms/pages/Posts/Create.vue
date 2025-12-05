@@ -2,10 +2,30 @@
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
-import BlockEditor from '../../components/BlockEditor.vue';
+import BlockEditor, { type MediaSelectCallback } from '../../components/BlockEditor.vue';
+import MediaPickerModal from '../../components/MediaPickerModal.vue';
+import type { MediaBlockItem } from '../../editor-tools/MediaBlock';
 import { useSidebar } from '../../composables/useSidebar';
 import { useDhivehiKeyboard } from '../../composables/useDhivehiKeyboard';
 import type { Category, Tag, PostTypeOption } from '../../types';
+
+interface MediaItem {
+    id: number;
+    uuid: string;
+    type: 'image' | 'video_local' | 'video_embed';
+    url: string | null;
+    thumbnail_url: string | null;
+    title: string | null;
+    alt_text: string | null;
+    caption?: string | null;
+    credit_display?: {
+        name: string;
+        url: string | null;
+        role: string | null;
+    } | null;
+    is_image: boolean;
+    is_video: boolean;
+}
 
 interface LanguageInfo {
     code: string;
@@ -64,7 +84,7 @@ const form = useForm({
     scheduled_at: '',
     category_id: null as number | null,
     tags: [] as number[],
-    featured_image: null as File | null,
+    featured_media_id: null as number | null,
     recipe_meta: {
         prep_time: null as number | null,
         cook_time: null as number | null,
@@ -75,6 +95,71 @@ const form = useForm({
     meta_title: '',
     meta_description: '',
 });
+
+// Unified media picker state
+const mediaPickerOpen = ref(false);
+const mediaPickerType = ref<'all' | 'images' | 'videos'>('images');
+const mediaPickerMultiple = ref(false);
+const mediaPickerPurpose = ref<'cover' | 'editor'>('cover');
+const selectedFeaturedMedia = ref<MediaItem | null>(null);
+
+// For editor callback
+let editorMediaResolve: ((items: MediaBlockItem[] | null) => void) | null = null;
+
+// Open media picker for cover photo
+function openCoverPicker() {
+    mediaPickerType.value = 'images';
+    mediaPickerMultiple.value = false;
+    mediaPickerPurpose.value = 'cover';
+    mediaPickerOpen.value = true;
+}
+
+// Callback for BlockEditor to open media picker
+const handleEditorSelectMedia: MediaSelectCallback = ({ multiple }) => {
+    return new Promise((resolve) => {
+        mediaPickerType.value = 'all';
+        mediaPickerMultiple.value = multiple;
+        mediaPickerPurpose.value = 'editor';
+        editorMediaResolve = resolve;
+        mediaPickerOpen.value = true;
+    });
+};
+
+// Handle media selection from unified picker
+function handleMediaSelect(items: MediaItem[]) {
+    if (mediaPickerPurpose.value === 'cover') {
+        // Cover photo selection
+        if (items.length > 0) {
+            const item = items[0];
+            selectedFeaturedMedia.value = item;
+            form.featured_media_id = item.id;
+        }
+    } else if (mediaPickerPurpose.value === 'editor' && editorMediaResolve) {
+        // Editor block selection - convert to MediaBlockItem format
+        const blockItems: MediaBlockItem[] = items.map(item => ({
+            id: item.id,
+            uuid: item.uuid,
+            url: item.url || '',
+            thumbnail_url: item.thumbnail_url,
+            title: item.title,
+            alt_text: item.alt_text,
+            caption: item.caption || item.title || null,
+            credit_display: item.credit_display || null,
+            is_image: item.is_image === true,
+            is_video: item.is_video === true,
+        }));
+        editorMediaResolve(blockItems.length > 0 ? blockItems : null);
+        editorMediaResolve = null;
+    }
+}
+
+// Handle picker close without selection
+function handleMediaPickerClose(open: boolean) {
+    if (!open && mediaPickerPurpose.value === 'editor' && editorMediaResolve) {
+        editorMediaResolve(null);
+        editorMediaResolve = null;
+    }
+}
 
 // Sidebar toggle for mobile
 const sidebarOpen = ref(false);
@@ -229,20 +314,9 @@ const tagOptions = computed(() =>
     props.tags.map((tag) => ({ label: tag.name, value: tag.id }))
 );
 
-const featuredImagePreview = ref<string | null>(null);
-
-function handleFeaturedImage(event: Event) {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0];
-    if (file) {
-        form.featured_image = file;
-        featuredImagePreview.value = URL.createObjectURL(file);
-    }
-}
-
-function removeFeaturedImage() {
-    form.featured_image = null;
-    featuredImagePreview.value = null;
+function removeFeaturedMedia() {
+    selectedFeaturedMedia.value = null;
+    form.featured_media_id = null;
 }
 
 const newIngredient = ref('');
@@ -495,6 +569,7 @@ function goBack() {
                                 :rtl="isRtl"
                                 :dhivehi-enabled="dhivehiEnabled"
                                 :dhivehi-layout="dhivehiLayout"
+                                :on-select-media="handleEditorSelectMedia"
                             />
                         </div>
                     </div>
@@ -596,24 +671,34 @@ function goBack() {
                                     <UIcon name="i-lucide-image" class="size-4 text-muted" />
                                     <span class="text-xs font-medium text-muted uppercase tracking-wider">Cover</span>
                                 </div>
-                                <div v-if="featuredImagePreview" class="relative mb-2">
-                                    <img :src="featuredImagePreview" alt="Cover" class="w-full h-28 object-cover rounded-lg" />
+                                <div v-if="selectedFeaturedMedia" class="relative mb-2">
+                                    <img
+                                        :src="selectedFeaturedMedia.thumbnail_url || selectedFeaturedMedia.url || ''"
+                                        :alt="selectedFeaturedMedia.title || 'Cover'"
+                                        class="w-full h-28 object-cover rounded-lg"
+                                    />
                                     <UButton
                                         color="neutral"
                                         variant="solid"
                                         icon="i-lucide-x"
                                         size="xs"
                                         class="absolute top-1.5 right-1.5"
-                                        @click="removeFeaturedImage"
+                                        @click="removeFeaturedMedia"
                                     />
-                                </div>
-                                <label class="block cursor-pointer">
-                                    <div class="border border-dashed border-default rounded-lg px-3 py-4 text-center hover:border-primary hover:bg-primary/5 transition-colors">
-                                        <UIcon name="i-lucide-upload" class="size-5 text-muted mx-auto mb-1" />
-                                        <p class="text-xs text-muted">{{ featuredImagePreview ? 'Replace' : 'Upload cover image' }}</p>
+                                    <div v-if="selectedFeaturedMedia.credit_display" class="absolute bottom-1.5 left-1.5 right-1.5">
+                                        <span class="text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
+                                            {{ selectedFeaturedMedia.credit_display.name }}
+                                        </span>
                                     </div>
-                                    <input type="file" accept="image/*" class="hidden" @change="handleFeaturedImage" />
-                                </label>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="w-full border border-dashed border-default rounded-lg px-3 py-4 text-center hover:border-primary hover:bg-primary/5 transition-colors"
+                                    @click="openCoverPicker"
+                                >
+                                    <UIcon name="i-lucide-image-plus" class="size-5 text-muted mx-auto mb-1" />
+                                    <p class="text-xs text-muted">{{ selectedFeaturedMedia ? 'Change cover' : 'Select cover image' }}</p>
+                                </button>
                             </div>
 
                             <div class="h-px bg-default" />
@@ -746,6 +831,15 @@ function goBack() {
                 </div>
             </template>
         </UDashboardPanel>
+
+        <!-- Unified Media Picker Modal -->
+        <MediaPickerModal
+            v-model:open="mediaPickerOpen"
+            :type="mediaPickerType"
+            :multiple="mediaPickerMultiple"
+            @select="handleMediaSelect"
+            @update:open="handleMediaPickerClose"
+        />
     </DashboardLayout>
 </template>
 
