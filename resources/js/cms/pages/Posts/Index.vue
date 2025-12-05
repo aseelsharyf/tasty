@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, watch, h, resolveComponent, computed, onMounted } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
+import { ref, watch, computed } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
+import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
 import type { Post, PostCounts, PostFilters, Author, Category, PaginatedResponse } from '../../types';
-import type { TableColumn, NavigationMenuItem } from '@nuxt/ui';
+import type { NavigationMenuItem } from '@nuxt/ui';
 
 interface LanguageInfo {
     code: string;
@@ -33,11 +34,6 @@ const isRtlLanguage = computed(() => props.language.is_rtl);
 function createNewPost() {
     router.visit(`/cms/posts/${currentLanguageCode.value}/create`);
 }
-
-const UAvatar = resolveComponent('UAvatar');
-const UBadge = resolveComponent('UBadge');
-const UButton = resolveComponent('UButton');
-const UDropdownMenu = resolveComponent('UDropdownMenu');
 
 const search = ref(props.filters.search || '');
 const currentStatus = ref(props.filters.status || 'all');
@@ -148,31 +144,6 @@ function changeStatus(status: string) {
     applyFilters({ status: status !== 'all' ? status : undefined });
 }
 
-function sortBy(field: string) {
-    const currentSort = props.filters.sort || 'created_at';
-    const currentDirection = props.filters.direction || 'desc';
-
-    let newDirection: 'asc' | 'desc' = 'asc';
-    if (currentSort === field) {
-        newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-    }
-
-    applyFilters({
-        sort: field,
-        direction: newDirection,
-    });
-}
-
-function getSortIcon(field: string) {
-    const currentSort = props.filters.sort || 'created_at';
-    const currentDirection = props.filters.direction || 'desc';
-
-    if (currentSort !== field) {
-        return 'i-lucide-arrow-up-down';
-    }
-    return currentDirection === 'asc' ? 'i-lucide-arrow-up-narrow-wide' : 'i-lucide-arrow-down-wide-narrow';
-}
-
 function confirmDelete(post: Post) {
     postToDelete.value = post;
     deleteModalOpen.value = true;
@@ -210,6 +181,11 @@ function unpublishPost(post: Post) {
     router.post(`/cms/posts/${langCode}/${post.uuid}/unpublish`);
 }
 
+function editPost(post: Post) {
+    const langCode = post.language_code || currentLanguageCode.value;
+    router.visit(`/cms/posts/${langCode}/${post.uuid}/edit`);
+}
+
 function getStatusColor(status: string): 'success' | 'warning' | 'primary' | 'info' | 'neutral' {
     switch (status) {
         case 'published':
@@ -229,17 +205,17 @@ function getPostTypeIcon(type: string) {
     return type === 'recipe' ? 'i-lucide-chef-hat' : 'i-lucide-file-text';
 }
 
-function getRowActions(row: Post) {
+function getRowActions(post: Post) {
     const actions: any[][] = [];
 
-    if (row.deleted_at) {
+    if (post.deleted_at) {
         // Trashed post actions
         if (can('posts.edit')) {
             actions.push([
                 {
                     label: 'Restore',
                     icon: 'i-lucide-undo',
-                    onSelect: () => restorePost(row),
+                    onSelect: () => restorePost(post),
                 },
             ]);
         }
@@ -249,38 +225,38 @@ function getRowActions(row: Post) {
                     label: 'Delete Permanently',
                     icon: 'i-lucide-trash',
                     color: 'error' as const,
-                    onSelect: () => forceDeletePost(row),
+                    onSelect: () => forceDeletePost(post),
                 },
             ]);
         }
     } else {
         // Normal post actions
         if (can('posts.edit')) {
-            const langCode = row.language_code || currentLanguageCode.value;
+            const langCode = post.language_code || currentLanguageCode.value;
             actions.push([
                 {
                     label: 'Edit',
                     icon: 'i-lucide-pencil',
-                    to: `/cms/posts/${langCode}/${row.uuid}/edit`,
+                    to: `/cms/posts/${langCode}/${post.uuid}/edit`,
                 },
             ]);
         }
 
         if (can('posts.publish')) {
-            if (row.status === 'published') {
+            if (post.status === 'published') {
                 actions.push([
                     {
                         label: 'Unpublish',
                         icon: 'i-lucide-eye-off',
-                        onSelect: () => unpublishPost(row),
+                        onSelect: () => unpublishPost(post),
                     },
                 ]);
-            } else if (row.status !== 'scheduled') {
+            } else if (post.status !== 'scheduled') {
                 actions.push([
                     {
                         label: 'Publish',
                         icon: 'i-lucide-globe',
-                        onSelect: () => publishPost(row),
+                        onSelect: () => publishPost(post),
                     },
                 ]);
             }
@@ -292,7 +268,7 @@ function getRowActions(row: Post) {
                     label: 'Move to Trash',
                     icon: 'i-lucide-trash',
                     color: 'error' as const,
-                    onSelect: () => confirmDelete(row),
+                    onSelect: () => confirmDelete(post),
                 },
             ]);
         }
@@ -301,190 +277,13 @@ function getRowActions(row: Post) {
     return actions;
 }
 
-// Column definitions
-const titleColumn: TableColumn<Post> = {
-    accessorKey: 'title',
-    header: () => {
-        return h(UButton, {
-            color: 'neutral',
-            variant: 'ghost',
-            label: 'Title',
-            icon: getSortIcon('title'),
-            class: '-mx-2.5',
-            onClick: () => sortBy('title'),
-        });
-    },
-    cell: ({ row }) => {
-        // Apply RTL styling only to title and excerpt text
-        const textClass = isRtlLanguage.value ? 'font-dhivehi text-right' : '';
-        const textDir = isRtlLanguage.value ? 'rtl' : 'ltr';
-
-        return h('div', { class: 'flex items-center gap-3' }, [
-            row.original.featured_image_thumb
-                ? h('img', {
-                    src: row.original.featured_image_thumb,
-                    alt: row.original.title,
-                    class: 'size-10 rounded object-cover shrink-0',
-                })
-                : h('div', { class: 'size-10 rounded bg-muted flex items-center justify-center shrink-0' }, [
-                    h('span', { class: getPostTypeIcon(row.original.post_type) }),
-                ]),
-            h('div', { class: 'min-w-0 flex-1' }, [
-                h('p', {
-                    class: ['font-medium text-highlighted line-clamp-1', textClass],
-                    dir: textDir,
-                }, row.original.title),
-                h('p', {
-                    class: ['text-muted text-sm line-clamp-1', textClass],
-                    dir: textDir,
-                }, row.original.excerpt || 'No excerpt'),
-            ]),
-        ]);
-    },
-};
-
-const authorColumn: TableColumn<Post> = {
-    accessorKey: 'author',
-    header: () => {
-        return h(UButton, {
-            color: 'neutral',
-            variant: 'ghost',
-            label: 'Author',
-            icon: getSortIcon('author'),
-            class: '-mx-2.5',
-            onClick: () => sortBy('author'),
-        });
-    },
-    cell: ({ row }) => {
-        if (!row.original.author) {
-            return h('span', { class: 'text-muted' }, '—');
-        }
-        return h('div', { class: 'flex items-center gap-2' }, [
-            h(UAvatar, {
-                src: row.original.author.avatar_url,
-                alt: row.original.author.name,
-                size: 'sm',
-            }),
-            h('span', undefined, row.original.author.name),
-        ]);
-    },
-};
-
-const categoriesColumn: TableColumn<Post> = {
-    accessorKey: 'categories',
-    header: 'Categories',
-    cell: ({ row }) => {
-        const categories = row.original.categories || [];
-        if (categories.length === 0) {
-            return h('span', { class: 'text-muted' }, '—');
-        }
-        return h(
-            'div',
-            { class: 'flex flex-wrap gap-1' },
-            categories.slice(0, 2).map((cat) =>
-                h(
-                    UBadge,
-                    { color: 'neutral', variant: 'subtle', size: 'sm' },
-                    () => cat.name
-                )
-            ).concat(
-                categories.length > 2
-                    ? [h('span', { class: 'text-muted text-sm' }, `+${categories.length - 2}`)]
-                    : []
-            )
-        );
-    },
-};
-
-const typeColumn: TableColumn<Post> = {
-    accessorKey: 'post_type',
-    header: 'Type',
-    cell: ({ row }) => {
-        return h(
-            UBadge,
-            {
-                color: row.original.post_type === 'recipe' ? 'warning' : 'primary',
-                variant: 'subtle',
-                size: 'sm',
-            },
-            () => row.original.post_type === 'recipe' ? 'Recipe' : 'Article'
-        );
-    },
-};
-
-const statusColumn: TableColumn<Post> = {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }) => {
-        return h(
-            UBadge,
-            {
-                color: getStatusColor(row.original.status),
-                variant: 'subtle',
-                size: 'sm',
-            },
-            () => row.original.status.charAt(0).toUpperCase() + row.original.status.slice(1)
-        );
-    },
-};
-
-const dateColumn: TableColumn<Post> = {
-    accessorKey: 'created_at',
-    header: () => {
-        return h(UButton, {
-            color: 'neutral',
-            variant: 'ghost',
-            label: 'Date',
-            icon: getSortIcon('created_at'),
-            class: '-mx-2.5',
-            onClick: () => sortBy('created_at'),
-        });
-    },
-    cell: ({ row }) => {
-        const date = row.original.published_at || row.original.created_at;
-        return new Date(date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
-    },
-};
-
-const actionsColumn: TableColumn<Post> = {
-    id: 'actions',
-    cell: ({ row }) => {
-        const actions = getRowActions(row.original);
-        if (actions.length === 0) return null;
-
-        return h(
-            'div',
-            { class: 'text-right' },
-            h(
-                UDropdownMenu,
-                {
-                    content: { align: 'end' },
-                    items: actions,
-                },
-                () =>
-                    h(UButton, {
-                        icon: 'i-lucide-ellipsis-vertical',
-                        color: 'neutral',
-                        variant: 'ghost',
-                        class: 'ml-auto',
-                    })
-            )
-        );
-    },
-};
-
-// Computed columns - RTL order: Date, Status, Type, Categories, Author, Title, Actions
-const columns = computed<TableColumn<Post>[]>(() => {
-    if (isRtlLanguage.value) {
-        return [dateColumn, statusColumn, typeColumn, categoriesColumn, authorColumn, titleColumn, actionsColumn];
-    }
-    // LTR order: Title, Author, Categories, Type, Status, Date, Actions
-    return [titleColumn, authorColumn, categoriesColumn, typeColumn, statusColumn, dateColumn, actionsColumn];
-});
+function formatDate(dateStr: string) {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
+}
 </script>
 
 <template>
@@ -588,25 +387,185 @@ const columns = computed<TableColumn<Post>[]>(() => {
                     </UButton>
                 </div>
 
-                <!-- Posts Table -->
-                <UTable
-                    v-else
-                    :data="posts.data"
-                    :columns="columns"
-                    :ui="{
-                        base: 'table-fixed border-separate border-spacing-0',
-                        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-                        tbody: '[&>tr]:last:[&>td]:border-b-0',
-                        th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-                        td: 'border-b border-default',
-                        separator: 'h-0',
-                    }"
-                />
+                <!-- Post Cards -->
+                <div v-else class="space-y-2">
+                    <div
+                        v-for="post in posts.data"
+                        :key="post.uuid"
+                        class="rounded-lg border border-default bg-default/50 hover:bg-elevated/50 transition-colors cursor-pointer"
+                        :class="{ 'opacity-60': post.deleted_at }"
+                        @click="editPost(post)"
+                    >
+                        <div class="p-3">
+                            <div class="flex items-start gap-3">
+                                <!-- Featured Image or Placeholder -->
+                                <div class="shrink-0">
+                                    <img
+                                        v-if="post.featured_image_thumb"
+                                        :src="post.featured_image_thumb"
+                                        :alt="post.title"
+                                        class="size-16 rounded-lg object-cover"
+                                    />
+                                    <div
+                                        v-else
+                                        class="size-16 rounded-lg bg-muted/50 flex items-center justify-center"
+                                    >
+                                        <UIcon :name="getPostTypeIcon(post.post_type)" class="size-6 text-muted" />
+                                    </div>
+                                </div>
+
+                                <!-- Content -->
+                                <div class="flex-1 min-w-0">
+                                    <!-- Title -->
+                                    <h3
+                                        class="font-medium text-highlighted line-clamp-1"
+                                        :class="{ 'font-dhivehi text-right': isRtlLanguage }"
+                                        :dir="isRtlLanguage ? 'rtl' : 'ltr'"
+                                    >
+                                        {{ post.title }}
+                                    </h3>
+
+                                    <!-- Excerpt -->
+                                    <p
+                                        v-if="post.excerpt"
+                                        class="text-sm text-muted line-clamp-1 mt-0.5"
+                                        :class="{ 'font-dhivehi text-right': isRtlLanguage }"
+                                        :dir="isRtlLanguage ? 'rtl' : 'ltr'"
+                                    >
+                                        {{ post.excerpt }}
+                                    </p>
+
+                                    <!-- Meta Row -->
+                                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted">
+                                        <!-- Author -->
+                                        <div v-if="post.author" class="flex items-center gap-1.5">
+                                            <UAvatar
+                                                :src="post.author.avatar_url"
+                                                :alt="post.author.name"
+                                                size="2xs"
+                                            />
+                                            <span>{{ post.author.name }}</span>
+                                        </div>
+
+                                        <span class="text-default/30">·</span>
+
+                                        <!-- Date -->
+                                        <span>{{ formatDate(post.published_at || post.created_at) }}</span>
+
+                                        <span class="text-default/30">·</span>
+
+                                        <!-- Categories -->
+                                        <div v-if="post.categories && post.categories.length > 0" class="flex items-center gap-1">
+                                            <span
+                                                v-for="(cat, idx) in post.categories.slice(0, 2)"
+                                                :key="cat.id"
+                                            >
+                                                {{ cat.name }}{{ idx < Math.min(post.categories.length, 2) - 1 ? ',' : '' }}
+                                            </span>
+                                            <span v-if="post.categories.length > 2">+{{ post.categories.length - 2 }}</span>
+                                        </div>
+                                        <span v-else class="italic">Uncategorized</span>
+                                    </div>
+
+                                    <!-- Status & Type Badges -->
+                                    <div class="flex flex-wrap items-center gap-2 mt-2">
+                                        <UBadge
+                                            :color="getStatusColor(post.status)"
+                                            variant="subtle"
+                                            size="xs"
+                                        >
+                                            {{ post.status.charAt(0).toUpperCase() + post.status.slice(1) }}
+                                        </UBadge>
+                                        <UBadge
+                                            :color="post.post_type === 'recipe' ? 'warning' : 'primary'"
+                                            variant="subtle"
+                                            size="xs"
+                                        >
+                                            {{ post.post_type === 'recipe' ? 'Recipe' : 'Article' }}
+                                        </UBadge>
+                                        <UBadge
+                                            v-if="post.deleted_at"
+                                            color="error"
+                                            variant="subtle"
+                                            size="xs"
+                                        >
+                                            Trashed
+                                        </UBadge>
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="flex items-center gap-1 shrink-0" @click.stop>
+                                    <template v-if="post.deleted_at">
+                                        <UButton
+                                            v-if="can('posts.edit')"
+                                            icon="i-lucide-undo"
+                                            color="neutral"
+                                            variant="ghost"
+                                            size="xs"
+                                            title="Restore"
+                                            @click="restorePost(post)"
+                                        />
+                                        <UButton
+                                            v-if="can('posts.delete')"
+                                            icon="i-lucide-trash-2"
+                                            color="error"
+                                            variant="ghost"
+                                            size="xs"
+                                            title="Delete Permanently"
+                                            @click="forceDeletePost(post)"
+                                        />
+                                    </template>
+                                    <template v-else>
+                                        <UButton
+                                            v-if="can('posts.edit')"
+                                            icon="i-lucide-pencil"
+                                            color="neutral"
+                                            variant="ghost"
+                                            size="xs"
+                                            title="Edit"
+                                            @click="editPost(post)"
+                                        />
+                                        <UButton
+                                            v-if="can('posts.publish') && post.status !== 'published'"
+                                            icon="i-lucide-globe"
+                                            color="success"
+                                            variant="ghost"
+                                            size="xs"
+                                            title="Publish"
+                                            @click="publishPost(post)"
+                                        />
+                                        <UButton
+                                            v-if="can('posts.publish') && post.status === 'published'"
+                                            icon="i-lucide-eye-off"
+                                            color="warning"
+                                            variant="ghost"
+                                            size="xs"
+                                            title="Unpublish"
+                                            @click="unpublishPost(post)"
+                                        />
+                                    </template>
+                                    <UDropdownMenu
+                                        :items="getRowActions(post)"
+                                        :content="{ align: 'end' }"
+                                    >
+                                        <UButton
+                                            icon="i-lucide-ellipsis-vertical"
+                                            color="neutral"
+                                            variant="ghost"
+                                            size="xs"
+                                        />
+                                    </UDropdownMenu>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Pagination -->
                 <div
                     v-if="posts.last_page > 1"
-                    class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto"
+                    class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-4"
                 >
                     <div class="text-sm text-muted">
                         Showing {{ posts.from }} to {{ posts.to }} of {{ posts.total }}

@@ -137,7 +137,11 @@ class PostController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        $categories = Category::orderByTranslatedName($language)->get();
+        $categories = Category::orderByTranslatedName($language)->get()
+            ->map(fn (Category $c) => [
+                'id' => $c->id,
+                'name' => $c->getTranslation('name', $language, false) ?: $c->getTranslation('name', 'en'),
+            ]);
 
         return Inertia::render('Posts/Index', [
             'posts' => $posts,
