@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ref, computed, h, resolveComponent, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import CommentSlideover from '../../components/CommentSlideover.vue';
 import { usePermission } from '../../composables/usePermission';
-import type { TableColumn } from '@nuxt/ui';
 import type { NavigationMenuItem } from '@nuxt/ui';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -26,6 +25,12 @@ interface Comment {
         id: number;
         title: string;
         slug: string;
+    } | null;
+    parent: {
+        id: number;
+        uuid: string;
+        author_name: string;
+        content_excerpt: string;
     } | null;
     created_at: string;
     edited_at: string | null;
@@ -65,16 +70,9 @@ const props = defineProps<{
 
 const { can } = usePermission();
 
-const UButton = resolveComponent('UButton');
-const UBadge = resolveComponent('UBadge');
-const UDropdownMenu = resolveComponent('UDropdownMenu');
-const UCheckbox = resolveComponent('UCheckbox');
-const UAvatar = resolveComponent('UAvatar');
-
 const search = ref(props.filters.search || '');
 const selectedStatus = ref(props.filters.status || '');
 const selectedPostId = ref(props.filters.post_id || '');
-const rowSelection = ref<Record<string, boolean>>({});
 const slideoverOpen = ref(false);
 const selectedComment = ref<Comment | null>(null);
 
@@ -112,17 +110,6 @@ const searchPosts = useDebounceFn(async (query: string) => {
 
 watch(postSearchQuery, (query) => {
     searchPosts(query);
-});
-
-const selectedCount = computed(() => {
-    return Object.values(rowSelection.value).filter(Boolean).length;
-});
-
-const selectedIds = computed(() => {
-    return Object.entries(rowSelection.value)
-        .filter(([_, selected]) => selected)
-        .map(([index]) => props.comments.data[parseInt(index)]?.uuid)
-        .filter(Boolean);
 });
 
 // Navigation menu items for status tabs
@@ -252,24 +239,6 @@ function deleteComment(comment: Comment) {
     }
 }
 
-function bulkAction(action: 'approve' | 'spam' | 'trash' | 'delete') {
-    if (selectedIds.value.length === 0) return;
-
-    if (action === 'delete' && !confirm(`Permanently delete ${selectedIds.value.length} comments?`)) {
-        return;
-    }
-
-    router.post('/cms/comments/bulk', {
-        action,
-        ids: selectedIds.value,
-    }, {
-        preserveScroll: true,
-        onSuccess: () => {
-            rowSelection.value = {};
-        },
-    });
-}
-
 function getStatusColor(status: string): 'warning' | 'success' | 'error' | 'neutral' {
     switch (status) {
         case 'pending': return 'warning';
@@ -356,148 +325,53 @@ function clearPostFilter() {
     applyFilters();
 }
 
-const bulkActions = [
-    [
-        { label: 'Approve', icon: 'i-lucide-check', onSelect: () => bulkAction('approve') },
-        { label: 'Mark as Spam', icon: 'i-lucide-shield-alert', onSelect: () => bulkAction('spam') },
-        { label: 'Trash', icon: 'i-lucide-trash', onSelect: () => bulkAction('trash') },
-    ],
-    [
-        { label: 'Delete Permanently', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => bulkAction('delete') },
-    ],
-];
+// Selection management for cards
+const selectedComments = ref<Set<string>>(new Set());
 
-const columns: TableColumn<Comment>[] = [
-    {
-        id: 'select',
-        header: ({ table }) => h(UCheckbox, {
-            'modelValue': table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected(),
-            'onUpdate:modelValue': (value: boolean | 'indeterminate') => table.toggleAllPageRowsSelected(!!value),
-            'ariaLabel': 'Select all',
-        }),
-        cell: ({ row }) => h(UCheckbox, {
-            'modelValue': row.getIsSelected(),
-            'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
-            'ariaLabel': 'Select row',
-        }),
-        enableSorting: false,
-        enableHiding: false,
-    },
-    {
-        id: 'author',
-        header: 'Author',
-        cell: ({ row }) => {
-            const comment = row.original;
-            return h('div', { class: 'flex items-center gap-3' }, [
-                h(UAvatar, {
-                    src: comment.gravatar_url,
-                    alt: comment.author_display_name,
-                    size: 'sm',
-                }),
-                h('div', {}, [
-                    h('div', { class: 'font-medium text-highlighted flex items-center gap-1.5' }, [
-                        comment.author_display_name,
-                        comment.is_registered_user && h('span', {
-                            class: 'i-lucide-badge-check size-4 text-primary',
-                            title: 'Registered user'
-                        }),
-                    ]),
-                    h('div', { class: 'text-xs text-muted' }, comment.author_display_email),
-                ]),
-            ]);
-        },
-    },
-    {
-        accessorKey: 'content_excerpt',
-        header: 'Comment',
-        cell: ({ row }) => {
-            const comment = row.original;
-            return h('div', { class: 'max-w-md' }, [
-                h('p', {
-                    class: 'text-sm text-default line-clamp-2 cursor-pointer hover:text-highlighted',
-                    onClick: () => openComment(comment),
-                }, comment.content_excerpt),
-                comment.replies_count > 0 && h('span', { class: 'text-xs text-muted mt-1 flex items-center gap-1' }, [
-                    h('span', { class: 'i-lucide-message-square size-3' }),
-                    `${comment.replies_count} ${comment.replies_count === 1 ? 'reply' : 'replies'}`,
-                ]),
-            ]);
-        },
-    },
-    {
-        id: 'post',
-        header: 'Post',
-        cell: ({ row }) => {
-            const post = row.original.post;
-            if (!post) return h('span', { class: 'text-muted' }, '-');
-            return h('a', {
-                href: `/cms/posts/${post.slug}`,
-                class: 'text-sm text-primary hover:underline line-clamp-1 max-w-48',
-            }, post.title);
-        },
-    },
-    {
-        accessorKey: 'status',
-        header: 'Status',
-        cell: ({ row }) => {
-            const comment = row.original;
-            return h('div', { class: 'flex items-center gap-2' }, [
-                h(UBadge, {
-                    color: getStatusColor(comment.status),
-                    variant: 'subtle',
-                }, () => comment.status.charAt(0).toUpperCase() + comment.status.slice(1)),
-                comment.is_edited && h(UBadge, {
-                    color: 'neutral',
-                    variant: 'subtle',
-                }, () => 'Edited'),
-            ]);
-        },
-    },
-    {
-        id: 'date',
-        header: () => h('button', {
-            class: 'flex items-center gap-1 hover:text-highlighted',
-            onClick: () => sortBy('created_at'),
-        }, [
-            'Date',
-            props.filters.sort === 'created_at' && h(
-                'span',
-                { class: 'i-lucide-' + (props.filters.direction === 'asc' ? 'chevron-up' : 'chevron-down') }
-            ),
-        ]),
-        cell: ({ row }) => {
-            return h('span', { class: 'text-sm text-muted whitespace-nowrap' },
-                formatDistanceToNow(new Date(row.original.created_at), { addSuffix: true })
-            );
-        },
-    },
-    {
-        id: 'actions',
-        cell: ({ row }) => {
-            const actions = getRowActions(row.original);
-            if (actions.length === 0) return null;
+function toggleSelect(uuid: string) {
+    if (selectedComments.value.has(uuid)) {
+        selectedComments.value.delete(uuid);
+    } else {
+        selectedComments.value.add(uuid);
+    }
+    selectedComments.value = new Set(selectedComments.value);
+}
 
-            return h(
-                'div',
-                { class: 'text-right' },
-                h(
-                    UDropdownMenu,
-                    {
-                        content: { align: 'end' },
-                        items: actions,
-                    },
-                    () =>
-                        h(UButton, {
-                            icon: 'i-lucide-ellipsis-vertical',
-                            color: 'neutral',
-                            variant: 'ghost',
-                            class: 'ml-auto',
-                        })
-                )
-            );
+function selectAll() {
+    if (selectedComments.value.size === props.comments.data.length) {
+        selectedComments.value.clear();
+    } else {
+        selectedComments.value = new Set(props.comments.data.map(c => c.uuid));
+    }
+    selectedComments.value = new Set(selectedComments.value);
+}
+
+const selectedUuids = computed(() => Array.from(selectedComments.value));
+
+const cardSelectedCount = computed(() => selectedComments.value.size);
+
+function clearCardSelection() {
+    selectedComments.value.clear();
+    selectedComments.value = new Set();
+}
+
+function cardBulkAction(action: 'approve' | 'spam' | 'trash' | 'delete') {
+    if (selectedUuids.value.length === 0) return;
+
+    if (action === 'delete' && !confirm(`Permanently delete ${selectedUuids.value.length} comments?`)) {
+        return;
+    }
+
+    router.post('/cms/comments/bulk', {
+        action,
+        ids: selectedUuids.value,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            clearCardSelection();
         },
-    },
-];
+    });
+}
 </script>
 
 <template>
@@ -597,13 +471,13 @@ const columns: TableColumn<Comment>[] = [
 
                 <!-- Bulk Actions Bar -->
                 <div
-                    v-if="selectedCount > 0"
+                    v-if="cardSelectedCount > 0"
                     class="flex items-center justify-between gap-3 p-3 mb-4 rounded-lg bg-elevated border border-default"
                 >
                     <div class="flex items-center gap-2">
                         <UIcon name="i-lucide-check-square" class="size-5 text-primary" />
                         <span class="text-sm font-medium">
-                            {{ selectedCount }} {{ selectedCount === 1 ? 'comment' : 'comments' }} selected
+                            {{ cardSelectedCount }} {{ cardSelectedCount === 1 ? 'comment' : 'comments' }} selected
                         </span>
                     </div>
                     <div class="flex items-center gap-2">
@@ -611,39 +485,207 @@ const columns: TableColumn<Comment>[] = [
                             color="neutral"
                             variant="ghost"
                             size="sm"
-                            @click="clearSelection"
+                            @click="clearCardSelection"
                         >
                             Clear
                         </UButton>
-                        <UDropdownMenu
-                            :items="bulkActions"
-                            :content="{ align: 'end' }"
+                        <UButton
+                            color="success"
+                            variant="soft"
+                            size="sm"
+                            icon="i-lucide-check"
+                            @click="cardBulkAction('approve')"
                         >
-                            <UButton
-                                color="primary"
-                                variant="soft"
-                                size="sm"
-                                trailing-icon="i-lucide-chevron-down"
-                            >
-                                Actions
-                            </UButton>
-                        </UDropdownMenu>
+                            Approve
+                        </UButton>
+                        <UButton
+                            color="warning"
+                            variant="soft"
+                            size="sm"
+                            icon="i-lucide-shield-alert"
+                            @click="cardBulkAction('spam')"
+                        >
+                            Spam
+                        </UButton>
+                        <UButton
+                            color="neutral"
+                            variant="soft"
+                            size="sm"
+                            icon="i-lucide-trash"
+                            @click="cardBulkAction('trash')"
+                        >
+                            Trash
+                        </UButton>
                     </div>
                 </div>
 
-                <UTable
-                    v-model:row-selection="rowSelection"
-                    :data="comments.data"
-                    :columns="columns"
-                    :ui="{
-                        base: 'table-fixed border-separate border-spacing-0',
-                        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-                        tbody: '[&>tr]:last:[&>td]:border-b-0',
-                        th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-                        td: 'border-b border-default',
-                        separator: 'h-0',
-                    }"
-                />
+                <!-- Select All -->
+                <div v-if="comments.data.length > 0" class="flex items-center gap-2 mb-4">
+                    <UCheckbox
+                        :model-value="cardSelectedCount === comments.data.length && comments.data.length > 0"
+                        :indeterminate="cardSelectedCount > 0 && cardSelectedCount < comments.data.length"
+                        @update:model-value="selectAll"
+                    />
+                    <span class="text-sm text-muted">Select all on this page</span>
+                </div>
+
+                <!-- Comment Cards -->
+                <div class="space-y-2">
+                    <div
+                        v-for="comment in comments.data"
+                        :key="comment.uuid"
+                        class="rounded-lg border border-default bg-default/50 hover:bg-elevated/50 transition-colors"
+                        :class="{ 'ring-2 ring-primary': selectedComments.has(comment.uuid) }"
+                    >
+                        <div class="p-3">
+                            <!-- Header: Author, Post, Date, Status -->
+                            <div class="flex items-start gap-2.5">
+                                <!-- Checkbox -->
+                                <UCheckbox
+                                    :model-value="selectedComments.has(comment.uuid)"
+                                    class="mt-0.5"
+                                    @update:model-value="toggleSelect(comment.uuid)"
+                                />
+
+                                <!-- Clickable content area -->
+                                <div
+                                    class="flex items-start gap-2.5 flex-1 min-w-0 cursor-pointer"
+                                    @click="openComment(comment)"
+                                >
+                                    <!-- Avatar -->
+                                    <UAvatar
+                                        :src="comment.gravatar_url"
+                                        :alt="comment.author_display_name"
+                                        size="sm"
+                                        class="shrink-0 mt-0.5"
+                                    />
+
+                                    <!-- Content -->
+                                    <div class="flex-1 min-w-0">
+                                        <!-- Author & Meta -->
+                                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                                            <span class="font-medium text-highlighted">
+                                                {{ comment.author_display_name }}
+                                            </span>
+                                            <UIcon
+                                                v-if="comment.is_registered_user"
+                                                name="i-lucide-badge-check"
+                                                class="size-3.5 text-primary"
+                                            />
+                                            <span class="text-muted">on</span>
+                                            <a
+                                                v-if="comment.post"
+                                                :href="`/cms/posts/${comment.post.slug}`"
+                                                class="text-primary hover:underline font-medium truncate max-w-xs"
+                                                @click.stop
+                                            >
+                                                {{ comment.post.title }}
+                                            </a>
+                                            <span v-else class="text-muted italic">deleted post</span>
+                                            <span class="text-muted">·</span>
+                                            <span class="text-muted">{{ formatDistanceToNow(new Date(comment.created_at), { addSuffix: true }) }}</span>
+                                        </div>
+
+                                        <!-- Parent Comment Indicator -->
+                                        <div
+                                            v-if="comment.parent"
+                                            class="flex items-start gap-1.5 mt-1.5 text-xs text-muted bg-muted/30 rounded px-2 py-1.5"
+                                        >
+                                            <UIcon name="i-lucide-corner-down-right" class="size-3 shrink-0 mt-0.5" />
+                                            <span>
+                                                Reply to <span class="font-medium text-highlighted">{{ comment.parent.author_name }}</span>:
+                                                "{{ comment.parent.content_excerpt }}"
+                                            </span>
+                                        </div>
+
+                                        <!-- Comment Content -->
+                                        <p class="text-sm text-default mt-1.5 line-clamp-2">
+                                            {{ comment.content_excerpt }}
+                                        </p>
+
+                                        <!-- Status & Replies Row -->
+                                        <div class="flex flex-wrap items-center gap-2 text-xs text-muted mt-2">
+                                            <UBadge
+                                                :color="getStatusColor(comment.status)"
+                                                variant="subtle"
+                                                size="xs"
+                                            >
+                                                {{ comment.status.charAt(0).toUpperCase() + comment.status.slice(1) }}
+                                            </UBadge>
+                                            <UBadge
+                                                v-if="comment.is_edited"
+                                                color="neutral"
+                                                variant="subtle"
+                                                size="xs"
+                                            >
+                                                Edited
+                                            </UBadge>
+                                            <template v-if="comment.replies_count > 0">
+                                                <span class="flex items-center gap-1">
+                                                    <UIcon name="i-lucide-message-square" class="size-3" />
+                                                    {{ comment.replies_count }} {{ comment.replies_count === 1 ? 'reply' : 'replies' }}
+                                                </span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <template v-if="can('comments.moderate')">
+                                        <UButton
+                                            v-if="comment.status !== 'approved'"
+                                            icon="i-lucide-check"
+                                            color="success"
+                                            variant="ghost"
+                                            size="xs"
+                                            title="Approve"
+                                            @click="approveComment(comment)"
+                                        />
+                                        <UButton
+                                            v-if="comment.status !== 'spam'"
+                                            icon="i-lucide-shield-alert"
+                                            color="warning"
+                                            variant="ghost"
+                                            size="xs"
+                                            title="Mark as Spam"
+                                            @click="spamComment(comment)"
+                                        />
+                                        <UButton
+                                            v-if="comment.status !== 'trashed'"
+                                            icon="i-lucide-trash"
+                                            color="neutral"
+                                            variant="ghost"
+                                            size="xs"
+                                            title="Trash"
+                                            @click="trashComment(comment)"
+                                        />
+                                        <UButton
+                                            v-if="comment.status === 'trashed'"
+                                            icon="i-lucide-undo"
+                                            color="neutral"
+                                            variant="ghost"
+                                            size="xs"
+                                            title="Restore"
+                                            @click="restoreComment(comment)"
+                                        />
+                                    </template>
+                                    <UDropdownMenu
+                                        :items="getRowActions(comment)"
+                                        :content="{ align: 'end' }"
+                                    >
+                                        <UButton
+                                            icon="i-lucide-ellipsis-vertical"
+                                            color="neutral"
+                                            variant="ghost"
+                                            size="xs"
+                                        />
+                                    </UDropdownMenu>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Pagination -->
                 <div v-if="comments.last_page > 1" class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-4">

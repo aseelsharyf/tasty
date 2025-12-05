@@ -15,7 +15,7 @@ class CommentController extends Controller
     public function index(Request $request): Response
     {
         $query = Comment::query()
-            ->with(['post:id,title,slug', 'user:id,name,email'])
+            ->with(['post:id,title,slug', 'user:id,name,email', 'parent:id,uuid,content,author_name,user_id', 'parent.user:id,name'])
             ->withCount('replies');
 
         // Filter by status
@@ -83,6 +83,12 @@ class CommentController extends Controller
                     'id' => $comment->post->id,
                     'title' => $comment->post->title,
                     'slug' => $comment->post->slug,
+                ] : null,
+                'parent' => $comment->parent ? [
+                    'id' => $comment->parent->id,
+                    'uuid' => $comment->parent->uuid,
+                    'author_name' => $comment->parent->author_display_name,
+                    'content_excerpt' => \Illuminate\Support\Str::limit($comment->parent->content, 80),
                 ] : null,
                 'created_at' => $comment->created_at,
                 'edited_at' => $comment->edited_at,

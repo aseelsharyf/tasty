@@ -22,6 +22,12 @@ interface Comment {
         title: string;
         slug: string;
     } | null;
+    parent: {
+        id: number;
+        uuid: string;
+        author_name: string;
+        content_excerpt: string;
+    } | null;
     created_at: string;
     edited_at: string | null;
 }
@@ -217,6 +223,15 @@ function handleDelete() {
                         </div>
                     </div>
 
+                    <!-- Parent Comment -->
+                    <div v-if="comment.parent" class="rounded-lg bg-muted/30 border border-default p-3">
+                        <div class="flex items-center gap-1.5 text-xs text-muted mb-2">
+                            <UIcon name="i-lucide-corner-down-right" class="size-3" />
+                            <span>In reply to <span class="font-medium text-highlighted">{{ comment.parent.author_name }}</span></span>
+                        </div>
+                        <p class="text-sm text-default italic">"{{ comment.parent.content_excerpt }}"</p>
+                    </div>
+
                     <USeparator />
 
                     <!-- Comment Content -->
@@ -269,21 +284,9 @@ function handleDelete() {
                 </div>
 
                 <template #footer>
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <!-- Delete button -->
-                        <UButton
-                            v-if="can('comments.delete')"
-                            icon="i-lucide-trash-2"
-                            color="error"
-                            variant="ghost"
-                            size="sm"
-                            @click="handleDelete"
-                        >
-                            Delete Permanently
-                        </UButton>
-
+                    <div class="space-y-3">
                         <!-- Status action buttons -->
-                        <div v-if="can('comments.moderate')" class="flex items-center gap-2 ml-auto">
+                        <div v-if="can('comments.moderate')" class="flex items-center justify-end gap-2">
                             <UButton
                                 v-if="comment.status === 'trashed'"
                                 icon="i-lucide-undo"
@@ -326,6 +329,19 @@ function handleDelete() {
                                     Trash
                                 </UButton>
                             </template>
+                        </div>
+
+                        <!-- Delete button -->
+                        <div v-if="can('comments.delete')" class="flex justify-end border-t border-default pt-3 -mb-1">
+                            <UButton
+                                icon="i-lucide-trash-2"
+                                color="error"
+                                variant="ghost"
+                                size="xs"
+                                @click="handleDelete"
+                            >
+                                Delete Permanently
+                            </UButton>
                         </div>
                     </div>
                 </template>
