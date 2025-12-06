@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -105,5 +106,31 @@ class User extends Authenticatable implements HasMedia
     public function getAvatarUrlAttribute(): ?string
     {
         return $this->getFirstMediaUrl('avatar', 'thumb') ?: null;
+    }
+
+    /**
+     * Get user's targets.
+     */
+    public function targets(): HasMany
+    {
+        return $this->hasMany(UserTarget::class);
+    }
+
+    /**
+     * Get user's posts.
+     */
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class, 'author_id');
+    }
+
+    /**
+     * Get current target for a period type.
+     */
+    public function getCurrentTarget(string $periodType = UserTarget::PERIOD_MONTHLY): ?UserTarget
+    {
+        return $this->targets()
+            ->current($periodType)
+            ->first();
     }
 }

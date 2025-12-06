@@ -108,6 +108,13 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => {
             active: isActive('/cms', true),
             onSelect: () => { sidebarOpen.value = false; },
         },
+        {
+            label: 'Targets',
+            icon: 'i-lucide-target',
+            to: '/cms/targets',
+            active: isActivePrefix('/cms/targets'),
+            onSelect: () => { sidebarOpen.value = false; },
+        },
     ];
 
     if (can(['posts.view', 'posts.create', 'posts.edit-own'])) {

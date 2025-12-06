@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import TastyLogo from '../../components/TastyLogo.vue';
 
 interface DevUser {
@@ -21,24 +21,47 @@ const form = useForm({
 });
 
 const showPassword = ref(false);
-
-const selectedUser = computed({
-    get: () => props.devUsers?.find((u) => u.email === form.email) ?? null,
-    set: (user: DevUser | null) => {
-        if (user) {
-            form.email = user.email;
-            form.password = 'password';
-        }
-    },
-});
+const selectedDevUser = ref<DevUser | null>(null);
 
 const roleColors: Record<string, string> = {
     Admin: 'error',
     Developer: 'info',
     Editor: 'success',
     Writer: 'warning',
-    Photographer: 'secondary',
+    Photographer: 'neutral',
 };
+
+const roleIcons: Record<string, string> = {
+    Admin: 'i-lucide-shield',
+    Developer: 'i-lucide-code',
+    Editor: 'i-lucide-pen-tool',
+    Writer: 'i-lucide-pencil',
+    Photographer: 'i-lucide-camera',
+};
+
+// Dev user options for dropdown
+const devUserOptions = computed(() => {
+    return props.devUsers?.map(user => ({
+        label: user.name,
+        value: user.email,
+        suffix: user.role,
+        icon: roleIcons[user.role] || 'i-lucide-user',
+        user,
+    })) || [];
+});
+
+// Watch for dev user selection and auto-login
+function onDevUserSelect(option: typeof devUserOptions.value[number] | null) {
+    if (option) {
+        selectedDevUser.value = option.user;
+        form.email = option.user.email;
+        form.password = 'password';
+        // Auto-submit after a brief delay for visual feedback
+        setTimeout(() => {
+            onSubmit();
+        }, 100);
+    }
+}
 
 function onSubmit() {
     form.post('/cms/login', {
@@ -60,24 +83,70 @@ function onSubmit() {
                     <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Sign in to your CMS account</p>
                 </div>
 
-                <!-- Dev User Switcher -->
-                <div v-if="isLocal && devUsers?.length" class="space-y-2">
-                    <p class="text-xs font-medium text-center text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Quick Login (Dev Only)
-                    </p>
-                    <div class="flex flex-wrap justify-center gap-2">
-                        <UButton
-                            v-for="user in devUsers"
-                            :key="user.email"
-                            size="xs"
-                            :color="selectedUser?.email === user.email ? (roleColors[user.role] as any) : 'neutral'"
-                            :variant="selectedUser?.email === user.email ? 'solid' : 'outline'"
-                            @click="selectedUser = user"
+                <!-- Dev Mode: Quick User Selector Dropdown -->
+                <template v-if="isLocal && devUsers?.length">
+                    <UCard :ui="{ root: 'border-dashed border-2 border-warning/50 bg-warning/5', body: 'p-4' }">
+                        <div class="flex items-center gap-2 mb-3">
+                            <UIcon name="i-lucide-zap" class="size-4 text-warning" />
+                            <span class="text-xs font-semibold uppercase tracking-wider text-warning">
+                                Dev Quick Login
+                            </span>
+                        </div>
+
+                        <USelectMenu
+                            :items="devUserOptions"
+                            value-key="value"
+                            placeholder="Select a user to login..."
+                            icon="i-lucide-user"
+                            size="lg"
+                            class="w-full"
+                            :loading="form.processing"
+                            @update:model-value="onDevUserSelect"
                         >
-                            {{ user.role }}
-                        </UButton>
+                            <template #item="{ item }">
+                                <div class="flex items-center gap-3 w-full py-1">
+                                    <div
+                                        class="flex items-center justify-center size-8 rounded-full"
+                                        :class="`bg-${roleColors[item.suffix] || 'neutral'}/10`"
+                                    >
+                                        <UIcon
+                                            :name="item.icon"
+                                            class="size-4"
+                                            :class="`text-${roleColors[item.suffix] || 'neutral'}`"
+                                        />
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium truncate">{{ item.label }}</p>
+                                        <p class="text-xs text-muted truncate">{{ item.value }}</p>
+                                    </div>
+                                    <UBadge
+                                        :color="(roleColors[item.suffix] as any) || 'neutral'"
+                                        variant="subtle"
+                                        size="xs"
+                                    >
+                                        {{ item.suffix }}
+                                    </UBadge>
+                                </div>
+                            </template>
+                        </USelectMenu>
+
+                        <p v-if="form.processing" class="text-xs text-center text-muted mt-3">
+                            <UIcon name="i-lucide-loader-2" class="size-3 animate-spin inline mr-1" />
+                            Signing in...
+                        </p>
+                    </UCard>
+
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-200 dark:border-gray-800" />
+                        </div>
+                        <div class="relative flex justify-center text-xs uppercase">
+                            <span class="bg-gray-50 dark:bg-gray-950 px-2 text-gray-400">
+                                or sign in manually
+                            </span>
+                        </div>
                     </div>
-                </div>
+                </template>
 
                 <!-- Form Card -->
                 <UCard :ui="{ root: 'shadow-xl shadow-gray-200/50 dark:shadow-none', body: 'p-6 sm:p-8' }">

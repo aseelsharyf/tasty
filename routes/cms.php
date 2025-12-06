@@ -14,6 +14,7 @@ use App\Http\Controllers\Cms\RoleController;
 use App\Http\Controllers\Cms\SettingsController;
 use App\Http\Controllers\Cms\TagController;
 use App\Http\Controllers\Cms\UserController;
+use App\Http\Controllers\Cms\UserTargetController;
 use App\Http\Controllers\Cms\WorkflowController;
 use App\Models\Language;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +41,18 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('cms.notifications.mark-all-read');
         Route::delete('/read', [NotificationController::class, 'destroyRead'])->name('cms.notifications.destroy-read');
         Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('cms.notifications.destroy');
+    });
+
+    // User Targets
+    Route::prefix('targets')->group(function () {
+        Route::get('/', [UserTargetController::class, 'index'])->name('cms.targets.index');
+        Route::post('/', [UserTargetController::class, 'store'])->name('cms.targets.store');
+        Route::get('/current', [UserTargetController::class, 'current'])->name('cms.targets.current');
+        Route::put('/{target}', [UserTargetController::class, 'update'])->name('cms.targets.update');
+        Route::post('/assign/{targetUser}', [UserTargetController::class, 'assign'])
+            ->middleware('permission:users.edit')
+            ->name('cms.targets.assign');
+        Route::delete('/{target}', [UserTargetController::class, 'destroy'])->name('cms.targets.destroy');
     });
 
     // Users Management
