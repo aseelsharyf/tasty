@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasUuid;
+use App\Models\Concerns\HasWorkflow;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +18,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Post extends Model implements HasMedia
 {
-    use HasFactory, HasUuid, InteractsWithMedia, SoftDeletes;
+    use HasFactory, HasUuid, HasWorkflow, InteractsWithMedia, SoftDeletes;
 
     public const STATUS_DRAFT = 'draft';
 
@@ -46,11 +47,14 @@ class Post extends Model implements HasMedia
         'content',
         'post_type',
         'status',
+        'workflow_status',
         'published_at',
         'scheduled_at',
         'featured_image_id',
         'featured_media_id',
-        'recipe_meta',
+        'active_version_id',
+        'draft_version_id',
+        'custom_fields',
         'meta_title',
         'meta_description',
         'allow_comments',
@@ -65,7 +69,7 @@ class Post extends Model implements HasMedia
     {
         return [
             'content' => 'array',
-            'recipe_meta' => 'array',
+            'custom_fields' => 'array',
             'published_at' => 'datetime',
             'scheduled_at' => 'datetime',
             'allow_comments' => 'boolean',
@@ -285,5 +289,64 @@ class Post extends Model implements HasMedia
         $this->update([
             'status' => self::STATUS_PENDING,
         ]);
+    }
+
+    // Workflow overrides
+
+    /**
+     * Get the fields that should be included in version snapshots.
+     *
+     * @return array<string>
+     */
+    public function getVersionableFields(): array
+    {
+        return [
+            'title',
+            'subtitle',
+            'excerpt',
+            'content',
+            'meta_title',
+            'meta_description',
+            'featured_media_id',
+            'custom_fields',
+            'allow_comments',
+        ];
+    }
+
+    /**
+     * Get custom field definitions from post type configuration.
+     * The field definitions are cached for performance.
+     *
+     * @return array<int, array{name: string, label: string, type: string, suffix?: string, options?: array}>
+     */
+    public function getCustomFieldDefinitions(): array
+    {
+        $postTypes = Setting::getPostTypes();
+
+        foreach ($postTypes as $postType) {
+            if ($postType['slug'] === $this->post_type) {
+                return $postType['fields'] ?? [];
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Get a specific custom field value.
+     */
+    public function getCustomField(string $name, mixed $default = null): mixed
+    {
+        return data_get($this->custom_fields, $name, $default);
+    }
+
+    /**
+     * Set a specific custom field value.
+     */
+    public function setCustomField(string $name, mixed $value): void
+    {
+        $fields = $this->custom_fields ?? [];
+        $fields[$name] = $value;
+        $this->custom_fields = $fields;
     }
 }

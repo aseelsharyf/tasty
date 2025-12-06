@@ -633,27 +633,31 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
                 </template>
 
                 <template #footer="{ collapsed }">
-                    <UDropdownMenu
-                        :items="userMenuItems"
-                        :content="{ align: 'center', collisionPadding: 12 }"
-                        :ui="{ content: collapsed ? 'w-48' : 'w-(--reka-dropdown-menu-trigger-width)' }"
-                    >
-                        <UButton
-                            v-bind="{
-                                avatar: { alt: user?.name },
-                                label: collapsed ? undefined : user?.name,
-                                trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down',
-                            }"
-                            color="neutral"
-                            variant="ghost"
-                            block
-                            :square="collapsed"
-                            class="data-[state=open]:bg-elevated"
-                            :ui="{
-                                trailingIcon: 'text-dimmed',
-                            }"
-                        />
-                    </UDropdownMenu>
+                    <div class="flex items-center gap-2" :class="collapsed ? 'flex-col' : ''">
+                        <!-- User Dropdown -->
+                        <UDropdownMenu
+                            :items="userMenuItems"
+                            :content="{ align: 'center', collisionPadding: 12 }"
+                            :ui="{ content: collapsed ? 'w-48' : 'w-48' }"
+                            class="flex-1"
+                        >
+                            <UButton
+                                v-bind="{
+                                    avatar: { alt: user?.name },
+                                    label: collapsed ? undefined : user?.name,
+                                    trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down',
+                                }"
+                                color="neutral"
+                                variant="ghost"
+                                :block="!collapsed"
+                                :square="collapsed"
+                                class="data-[state=open]:bg-elevated"
+                                :ui="{
+                                    trailingIcon: 'text-dimmed',
+                                }"
+                            />
+                        </UDropdownMenu>
+                    </div>
                 </template>
             </UDashboardSidebar>
             </div>

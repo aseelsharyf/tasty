@@ -110,19 +110,8 @@ export interface Author {
     avatar_url?: string | null;
 }
 
-export interface RecipeMeta {
-    prep_time?: number;
-    cook_time?: number;
-    servings?: number;
-    difficulty?: 'easy' | 'medium' | 'hard';
-    ingredients?: string[];
-    nutrition?: {
-        calories?: number;
-        protein?: number;
-        carbs?: number;
-        fat?: number;
-    };
-}
+// Dynamic custom fields - structure depends on post type configuration
+export type CustomFields = Record<string, unknown> | null;
 
 export interface Post {
     id: number;
@@ -134,13 +123,14 @@ export interface Post {
     content?: any;
     post_type: 'article' | 'recipe';
     status: 'draft' | 'pending' | 'published' | 'scheduled';
+    workflow_status?: 'draft' | 'review' | 'copydesk' | 'approved' | 'rejected' | 'published';
     language_code?: string;
     author?: Author | null;
     categories?: Category[];
     tags?: Tag[];
     featured_image_url?: string | null;
     featured_image_thumb?: string | null;
-    recipe_meta?: RecipeMeta | null;
+    custom_fields?: CustomFields;
     meta_title?: string;
     meta_description?: string;
     published_at?: string | null;

@@ -158,4 +158,100 @@ class Setting extends Model
     {
         static::set('media.crop_presets', $presets, 'media');
     }
+
+    /**
+     * Get the default workflow configuration.
+     *
+     * @return array<string, mixed>
+     */
+    public static function getDefaultWorkflow(): array
+    {
+        return [
+            'name' => 'Default Editorial Workflow',
+            'states' => [
+                ['key' => 'draft', 'label' => 'Draft', 'color' => 'neutral', 'icon' => 'i-lucide-file-edit'],
+                ['key' => 'review', 'label' => 'Editorial Review', 'color' => 'warning', 'icon' => 'i-lucide-eye'],
+                ['key' => 'copydesk', 'label' => 'Copy Desk', 'color' => 'info', 'icon' => 'i-lucide-spell-check'],
+                ['key' => 'approved', 'label' => 'Approved', 'color' => 'success', 'icon' => 'i-lucide-check-circle'],
+                ['key' => 'rejected', 'label' => 'Needs Revision', 'color' => 'error', 'icon' => 'i-lucide-alert-circle'],
+                ['key' => 'published', 'label' => 'Published', 'color' => 'primary', 'icon' => 'i-lucide-globe'],
+            ],
+            'transitions' => [
+                ['from' => 'draft', 'to' => 'review', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Submit for Review'],
+                ['from' => 'review', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Send to Copy Desk'],
+                ['from' => 'review', 'to' => 'rejected', 'roles' => ['Editor', 'Admin'], 'label' => 'Request Revisions'],
+                ['from' => 'copydesk', 'to' => 'approved', 'roles' => ['Editor', 'Admin'], 'label' => 'Approve'],
+                ['from' => 'copydesk', 'to' => 'rejected', 'roles' => ['Editor', 'Admin'], 'label' => 'Request Revisions'],
+                ['from' => 'rejected', 'to' => 'review', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Resubmit'],
+                ['from' => 'approved', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
+                ['from' => 'published', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Unpublish'],
+            ],
+            'publish_roles' => ['Editor', 'Admin'],
+        ];
+    }
+
+    /**
+     * Get workflow configuration for a specific content type, with fallback to default.
+     *
+     * @return array<string, mixed>
+     */
+    public static function getWorkflow(?string $postType = null): array
+    {
+        // Check for post-type specific workflow first
+        if ($postType) {
+            $typeWorkflow = static::get("workflow.post_type.{$postType}");
+            if ($typeWorkflow) {
+                return $typeWorkflow;
+            }
+        }
+
+        // Fall back to default workflow
+        return static::get('workflow.default', static::getDefaultWorkflow());
+    }
+
+    /**
+     * Set workflow configuration for a specific content type.
+     *
+     * @param  array<string, mixed>  $workflow
+     */
+    public static function setWorkflow(array $workflow, ?string $postType = null): void
+    {
+        $key = $postType ? "workflow.post_type.{$postType}" : 'workflow.default';
+        static::set($key, $workflow, 'workflow');
+    }
+
+    /**
+     * Get all workflow configurations.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function getAllWorkflows(): array
+    {
+        $workflows = [];
+
+        // Get the default workflow
+        $workflows['default'] = static::get('workflow.default', static::getDefaultWorkflow());
+
+        // Get all post-type specific workflows
+        $postTypes = static::getPostTypes();
+        foreach ($postTypes as $postType) {
+            $typeWorkflow = static::get("workflow.post_type.{$postType['slug']}");
+            if ($typeWorkflow) {
+                $workflows[$postType['slug']] = $typeWorkflow;
+            }
+        }
+
+        return $workflows;
+    }
+
+    /**
+     * Delete a workflow configuration for a specific post type.
+     * (Will fall back to default workflow)
+     */
+    public static function deleteWorkflow(string $postType): void
+    {
+        $key = "workflow.post_type.{$postType}";
+        static::where('key', $key)->delete();
+        Cache::forget("setting.{$key}");
+    }
 }

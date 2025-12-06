@@ -15,11 +15,17 @@ class PostSeeder extends Seeder
     {
         // Get existing writers/editors or create them
         $authors = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['admin', 'editor', 'writer']);
+            $query->whereIn('name', ['Admin', 'Editor', 'Writer']);
         })->get();
 
         if ($authors->isEmpty()) {
             $authors = User::take(3)->get();
+        }
+
+        if ($authors->isEmpty()) {
+            $this->command->warn('No users found. Skipping PostSeeder.');
+
+            return;
         }
 
         // Get languages
@@ -43,8 +49,12 @@ class PostSeeder extends Seeder
                 ->withLanguage($language->code)
                 ->create([
                     'author_id' => fn () => $authors->random()->id,
+                    'workflow_status' => 'approved',
                 ])
                 ->each(function ($post) use ($categories, $tags) {
+                    // Create a version for the post using HasWorkflow trait method
+                    $post->createVersion(null, 'Initial version');
+
                     // Attach 1-3 random categories
                     if ($categories->isNotEmpty()) {
                         $post->categories()->attach(
@@ -59,7 +69,7 @@ class PostSeeder extends Seeder
                     }
                 });
 
-            // Create 3 draft posts per language
+            // Create 3 draft posts per language (assigned to random writers)
             Post::factory()
                 ->count(3)
                 ->draft()
@@ -67,7 +77,25 @@ class PostSeeder extends Seeder
                 ->withLanguage($language->code)
                 ->create([
                     'author_id' => fn () => $authors->random()->id,
-                ]);
+                    'workflow_status' => 'draft',
+                ])
+                ->each(function ($post) {
+                    $post->createVersion(null, 'Initial draft');
+                });
+
+            // Create 2 pending review posts per language
+            Post::factory()
+                ->count(2)
+                ->pending()
+                ->article()
+                ->withLanguage($language->code)
+                ->create([
+                    'author_id' => fn () => $authors->random()->id,
+                    'workflow_status' => 'review',
+                ])
+                ->each(function ($post) {
+                    $post->createVersion(null, 'Submitted for review');
+                });
 
             // Create 2 recipes per language
             Post::factory()
@@ -77,7 +105,11 @@ class PostSeeder extends Seeder
                 ->withLanguage($language->code)
                 ->create([
                     'author_id' => fn () => $authors->random()->id,
-                ]);
+                    'workflow_status' => 'approved',
+                ])
+                ->each(function ($post) {
+                    $post->createVersion(null, 'Initial version');
+                });
 
             $this->command->info("Created posts for language: {$language->name}");
         }

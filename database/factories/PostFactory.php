@@ -47,11 +47,19 @@ class PostFactory extends Factory
         ]);
     }
 
+    public function pending(): static
+    {
+        return $this->state(fn () => [
+            'status' => Post::STATUS_PENDING,
+            'published_at' => null,
+        ]);
+    }
+
     public function article(): static
     {
         return $this->state(fn () => [
             'post_type' => Post::TYPE_ARTICLE,
-            'recipe_meta' => null,
+            'custom_fields' => null,
         ]);
     }
 
@@ -59,7 +67,7 @@ class PostFactory extends Factory
     {
         return $this->state(fn () => [
             'post_type' => Post::TYPE_RECIPE,
-            'recipe_meta' => [
+            'custom_fields' => [
                 'prep_time' => fake()->numberBetween(5, 30),
                 'cook_time' => fake()->numberBetween(10, 120),
                 'servings' => fake()->numberBetween(2, 8),

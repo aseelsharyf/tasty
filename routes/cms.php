@@ -8,11 +8,13 @@ use App\Http\Controllers\Cms\DashboardController;
 use App\Http\Controllers\Cms\LanguageController;
 use App\Http\Controllers\Cms\MediaController;
 use App\Http\Controllers\Cms\MediaFolderController;
+use App\Http\Controllers\Cms\NotificationController;
 use App\Http\Controllers\Cms\PostController;
 use App\Http\Controllers\Cms\RoleController;
 use App\Http\Controllers\Cms\SettingsController;
 use App\Http\Controllers\Cms\TagController;
 use App\Http\Controllers\Cms\UserController;
+use App\Http\Controllers\Cms\WorkflowController;
 use App\Models\Language;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +30,17 @@ Route::middleware(['auth', 'cms'])->group(function () {
 
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('cms.dashboard');
+
+    // Notifications
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('cms.notifications.index');
+        Route::get('/recent', [NotificationController::class, 'recent'])->name('cms.notifications.recent');
+        Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('cms.notifications.unread-count');
+        Route::post('/{notification}/read', [NotificationController::class, 'markAsRead'])->name('cms.notifications.read');
+        Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('cms.notifications.mark-all-read');
+        Route::delete('/read', [NotificationController::class, 'destroyRead'])->name('cms.notifications.destroy-read');
+        Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('cms.notifications.destroy');
+    });
 
     // Users Management
     Route::middleware('permission:users.view')->group(function () {
@@ -71,6 +84,12 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::put('settings/languages/{language}', [SettingsController::class, 'updateLanguage'])->name('cms.settings.languages.update');
         Route::delete('settings/languages/{language}', [SettingsController::class, 'destroyLanguage'])->name('cms.settings.languages.destroy');
         Route::post('settings/languages/reorder', [SettingsController::class, 'reorderLanguages'])->name('cms.settings.languages.reorder');
+
+        // Workflows
+        Route::get('settings/workflows', [SettingsController::class, 'workflows'])->name('cms.settings.workflows');
+        Route::post('settings/workflows', [SettingsController::class, 'storeWorkflow'])->name('cms.settings.workflows.store');
+        Route::put('settings/workflows/{key}', [SettingsController::class, 'updateWorkflow'])->name('cms.settings.workflows.update');
+        Route::delete('settings/workflows/{key}', [SettingsController::class, 'destroyWorkflow'])->name('cms.settings.workflows.destroy');
     });
 
     // Languages API (for fetching available languages)
@@ -195,5 +214,51 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::post('media-folders', [MediaFolderController::class, 'store'])->name('cms.media-folders.store');
         Route::put('media-folders/{folder}', [MediaFolderController::class, 'update'])->name('cms.media-folders.update');
         Route::delete('media-folders/{folder}', [MediaFolderController::class, 'destroy'])->name('cms.media-folders.destroy');
+    });
+
+    // Workflow Routes
+    Route::prefix('workflow')->group(function () {
+        // Version transitions
+        Route::post('versions/{version}/transition', [WorkflowController::class, 'transition'])
+            ->name('cms.workflow.transition');
+
+        // Get available transitions for a version
+        Route::get('versions/{version}/transitions', [WorkflowController::class, 'availableTransitions'])
+            ->name('cms.workflow.transitions');
+
+        // Editorial comments on versions
+        Route::get('versions/{version}/comments', [WorkflowController::class, 'comments'])
+            ->name('cms.workflow.comments');
+        Route::post('versions/{version}/comments', [WorkflowController::class, 'addComment'])
+            ->name('cms.workflow.comments.add');
+
+        // Resolve/unresolve comments
+        Route::post('comments/{comment}/resolve', [WorkflowController::class, 'resolveComment'])
+            ->name('cms.workflow.comments.resolve');
+        Route::post('comments/{comment}/unresolve', [WorkflowController::class, 'unresolveComment'])
+            ->name('cms.workflow.comments.unresolve');
+
+        // Version history for content
+        Route::get('{type}/{uuid}/history', [WorkflowController::class, 'history'])
+            ->name('cms.workflow.history');
+
+        // Compare versions
+        Route::get('versions/{versionA}/compare/{versionB}', [WorkflowController::class, 'compare'])
+            ->name('cms.workflow.compare');
+
+        // Revert to a previous version
+        Route::post('versions/{version}/revert', [WorkflowController::class, 'revert'])
+            ->name('cms.workflow.revert')
+            ->middleware('permission:workflow.revert');
+
+        // Publish an approved version
+        Route::post('versions/{version}/publish', [WorkflowController::class, 'publish'])
+            ->name('cms.workflow.publish')
+            ->middleware('permission:workflow.publish');
+
+        // Unpublish content
+        Route::post('{type}/{uuid}/unpublish', [WorkflowController::class, 'unpublish'])
+            ->name('cms.workflow.unpublish')
+            ->middleware('permission:workflow.publish');
     });
 });

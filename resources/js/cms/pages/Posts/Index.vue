@@ -201,6 +201,49 @@ function getStatusColor(status: string): 'success' | 'warning' | 'primary' | 'in
     }
 }
 
+function getWorkflowStatusColor(status: string): 'success' | 'warning' | 'primary' | 'info' | 'neutral' | 'error' {
+    switch (status) {
+        case 'draft':
+            return 'neutral';
+        case 'review':
+            return 'warning';
+        case 'copydesk':
+            return 'info';
+        case 'approved':
+            return 'primary';
+        case 'rejected':
+            return 'error';
+        case 'published':
+            return 'success';
+        default:
+            return 'neutral';
+    }
+}
+
+function getWorkflowStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+        draft: 'Draft',
+        review: 'In Review',
+        copydesk: 'Copydesk',
+        approved: 'Approved',
+        rejected: 'Needs Revision',
+        published: 'Published',
+    };
+    return labels[status] || status;
+}
+
+function getWorkflowStatusIcon(status: string): string {
+    const icons: Record<string, string> = {
+        draft: 'i-lucide-file-edit',
+        review: 'i-lucide-eye',
+        copydesk: 'i-lucide-spell-check-2',
+        approved: 'i-lucide-check-circle',
+        rejected: 'i-lucide-alert-circle',
+        published: 'i-lucide-globe',
+    };
+    return icons[status] || 'i-lucide-circle';
+}
+
 function getPostTypeIcon(type: string) {
     return type === 'recipe' ? 'i-lucide-chef-hat' : 'i-lucide-file-text';
 }
@@ -469,6 +512,17 @@ function formatDate(dateStr: string) {
 
                                     <!-- Status & Type Badges -->
                                     <div class="flex flex-wrap items-center gap-2 mt-2">
+                                        <!-- Workflow Status - prominent for editorial visibility -->
+                                        <UBadge
+                                            v-if="post.workflow_status && post.workflow_status !== post.status"
+                                            :color="getWorkflowStatusColor(post.workflow_status)"
+                                            variant="soft"
+                                            size="xs"
+                                            class="gap-1"
+                                        >
+                                            <UIcon :name="getWorkflowStatusIcon(post.workflow_status)" class="size-3" />
+                                            {{ getWorkflowStatusLabel(post.workflow_status) }}
+                                        </UBadge>
                                         <UBadge
                                             :color="getStatusColor(post.status)"
                                             variant="subtle"

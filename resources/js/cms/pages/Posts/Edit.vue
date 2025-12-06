@@ -4,9 +4,12 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import BlockEditor, { type MediaSelectCallback } from '../../components/BlockEditor.vue';
 import MediaPickerModal from '../../components/MediaPickerModal.vue';
+import NotificationDropdown from '../../components/NotificationDropdown.vue';
+import EditorialSlideover from '../../components/EditorialSlideover.vue';
 import type { MediaBlockItem } from '../../editor-tools/MediaBlock';
 import { useSidebar } from '../../composables/useSidebar';
 import { useDhivehiKeyboard } from '../../composables/useDhivehiKeyboard';
+import { useWorkflow, type WorkflowConfig } from '../../composables/useWorkflow';
 import type { Category, Tag, PostTypeOption, Post } from '../../types';
 
 interface MediaItem {
@@ -35,6 +38,27 @@ interface LanguageInfo {
     is_rtl: boolean;
 }
 
+interface WorkflowState {
+    key: string;
+    label: string;
+    color: string;
+    icon: string;
+}
+
+interface WorkflowTransition {
+    from: string;
+    to: string;
+    roles: string[];
+    label: string;
+}
+
+interface WorkflowConfig {
+    name: string;
+    states: WorkflowState[];
+    transitions: WorkflowTransition[];
+    publish_roles: string[];
+}
+
 // Sidebar control
 const { hide: hideSidebar, show: showSidebar } = useSidebar();
 
@@ -45,12 +69,64 @@ const props = defineProps<{
         language_code: string;
         featured_media?: MediaItem | null;
         featured_media_id?: number | null;
+        workflow_status?: string;
+        current_version_uuid?: string | null;
     };
     categories: Category[];
     tags: Tag[];
     postTypes: PostTypeOption[];
     language: LanguageInfo | null;
+    workflowConfig: WorkflowConfig;
 }>();
+
+// Workflow state
+const workflowStatus = ref(props.post.workflow_status || 'draft');
+const currentVersionUuid = ref(props.post.current_version_uuid || null);
+
+// Published posts are read-only - must unpublish or create new version to edit
+const isPublished = computed(() => props.post.status === 'published');
+const isReadOnly = computed(() => isPublished.value);
+
+// Editorial slideover state
+const editorialSlideoverOpen = ref(false);
+
+// Use workflow composable
+const workflow = useWorkflow(props.workflowConfig);
+const transitionLoading = workflow.loading;
+const toast = useToast();
+
+// Get the current workflow state from config (for badge styling)
+const currentWorkflowState = computed(() => workflow.getState(workflowStatus.value));
+
+// Available workflow transitions from current state
+const availableTransitions = computed(() => workflow.getAvailableTransitions(workflowStatus.value));
+
+// Workflow transition handling
+async function performQuickTransition(transition: { from: string; to: string; label: string }) {
+    if (!currentVersionUuid.value) {
+        toast.add({ title: 'Error', description: 'Save the post first before transitioning', color: 'error' });
+        return;
+    }
+
+    const result = await workflow.transition(currentVersionUuid.value, transition.to);
+    if (result.success) {
+        toast.add({ title: 'Success', description: `Moved to ${workflow.getStateLabel(transition.to)}`, color: 'success' });
+        workflowStatus.value = transition.to;
+        refreshPage();
+    } else {
+        toast.add({ title: 'Error', description: result.error || 'Transition failed', color: 'error' });
+    }
+}
+
+// Handle workflow transition from slideover
+function onWorkflowTransition(newStatus: string) {
+    workflowStatus.value = newStatus;
+}
+
+// Handle workflow refresh after transition
+function refreshPage() {
+    router.reload({ only: ['post', 'workflowConfig'] });
+}
 
 // Dhivehi keyboard for RTL content
 const isRtl = computed(() => props.language?.direction === 'rtl');
@@ -87,18 +163,11 @@ const form = useForm({
     excerpt: props.post.excerpt || '',
     content: props.post.content,
     post_type: props.post.post_type,
-    status: props.post.status,
     scheduled_at: props.post.scheduled_at || '',
     category_id: props.post.category_id ?? null,
     tags: props.post.tags || [],
     featured_media_id: props.post.featured_media_id ?? null,
-    recipe_meta: {
-        prep_time: props.post.recipe_meta?.prep_time || null,
-        cook_time: props.post.recipe_meta?.cook_time || null,
-        servings: props.post.recipe_meta?.servings || null,
-        difficulty: props.post.recipe_meta?.difficulty || '',
-        ingredients: props.post.recipe_meta?.ingredients || [],
-    },
+    custom_fields: (props.post.custom_fields || {}) as Record<string, unknown>,
     meta_title: props.post.meta_title || '',
     meta_description: props.post.meta_description || '',
 });
@@ -190,6 +259,9 @@ const lastSaved = ref<Date | null>(null);
 const isSaving = ref(false);
 
 function autoSave() {
+    // Don't auto-save published posts (read-only)
+    if (isReadOnly.value) return;
+
     // Only auto-save if there's a title
     if (!form.title.trim()) return;
 
@@ -267,23 +339,12 @@ const lastSavedText = computed(() => {
     return `Saved at ${lastSaved.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 });
 
-const showRecipeFields = computed(() => form.post_type === 'recipe');
-const showScheduleField = computed(() => form.status === 'scheduled');
+function removeFeaturedMedia() {
+    selectedFeaturedMedia.value = null;
+    form.featured_media_id = null;
+}
 
-const statusOptions = [
-    { label: 'Draft', value: 'draft' },
-    { label: 'Pending Review', value: 'pending' },
-    { label: 'Published', value: 'published' },
-    { label: 'Scheduled', value: 'scheduled' },
-];
-
-const difficultyOptions = [
-    { label: 'Select difficulty', value: '' },
-    { label: 'Easy', value: 'easy' },
-    { label: 'Medium', value: 'medium' },
-    { label: 'Hard', value: 'hard' },
-];
-
+// Category and tag options for sidebar
 const flattenedCategories = computed(() => {
     const flatten = (cats: Category[], depth = 0): { label: string; value: number }[] => {
         return cats.flatMap((cat) => {
@@ -301,24 +362,6 @@ const flattenedCategories = computed(() => {
 const tagOptions = computed(() =>
     props.tags.map((tag) => ({ label: tag.name, value: tag.id }))
 );
-
-function removeFeaturedMedia() {
-    selectedFeaturedMedia.value = null;
-    form.featured_media_id = null;
-}
-
-const newIngredient = ref('');
-
-function addIngredient() {
-    if (newIngredient.value.trim()) {
-        form.recipe_meta.ingredients.push(newIngredient.value.trim());
-        newIngredient.value = '';
-    }
-}
-
-function removeIngredient(index: number) {
-    form.recipe_meta.ingredients.splice(index, 1);
-}
 
 function generateSlug() {
     form.slug = form.title
@@ -383,11 +426,7 @@ const timeAgo = computed(() => {
     return 'just now';
 });
 
-function submit(status?: string) {
-    if (status) {
-        form.status = status;
-    }
-
+function submit() {
     const langCode = props.language?.code || props.post.language_code || 'en';
     form.post(`/cms/posts/${langCode}/${props.post.uuid}`, {
         forceFormData: true,
@@ -430,11 +469,12 @@ function deletePost() {
                             <div class="h-4 w-px bg-default" />
                             <span class="text-sm text-muted">Editing</span>
                             <UBadge
-                                :color="form.status === 'published' ? 'success' : form.status === 'pending' ? 'warning' : 'neutral'"
+                                :color="currentWorkflowState.color as any"
                                 variant="subtle"
                                 size="sm"
                             >
-                                {{ form.status }}
+                                <UIcon :name="currentWorkflowState.icon" class="size-3 mr-1" />
+                                {{ currentWorkflowState.label }}
                             </UBadge>
                             <UBadge
                                 v-if="language"
@@ -454,7 +494,7 @@ function deletePost() {
                                 <UIcon name="i-lucide-loader-2" class="size-3 animate-spin" />
                                 Saving...
                             </span>
-                            <span v-else-if="lastSavedText" class="text-xs text-muted">
+                            <span v-else-if="lastSavedText" class="text-xs text-muted hidden sm:inline">
                                 {{ lastSavedText }}
                             </span>
 
@@ -472,6 +512,18 @@ function deletePost() {
                                 />
                             </UTooltip>
 
+                            <!-- Notifications -->
+                            <NotificationDropdown />
+
+                            <!-- Editorial Slideover Toggle -->
+                            <UButton
+                                color="neutral"
+                                variant="ghost"
+                                icon="i-lucide-message-square"
+                                size="sm"
+                                @click="editorialSlideoverOpen = true"
+                            />
+
                             <!-- Fullscreen toggle -->
                             <UButton
                                 color="neutral"
@@ -482,29 +534,13 @@ function deletePost() {
                             />
 
                             <UButton
-                                color="neutral"
-                                variant="ghost"
-                                size="sm"
-                                :disabled="form.processing"
-                                @click="submit()"
-                            >
-                                Save
-                            </UButton>
-                            <UButton
-                                v-if="form.status !== 'published'"
-                                size="sm"
-                                :loading="form.processing"
-                                @click="submit('published')"
-                            >
-                                Publish
-                            </UButton>
-                            <UButton
-                                v-else
+                                v-if="!isReadOnly"
+                                color="primary"
                                 size="sm"
                                 :loading="form.processing"
                                 @click="submit()"
                             >
-                                Update
+                                Save Draft
                             </UButton>
                             <!-- Mobile sidebar toggle -->
                             <UButton
@@ -538,16 +574,32 @@ function deletePost() {
                         ]"
                     >
                         <div :class="['mx-auto px-6 py-12', isFullscreen ? 'max-w-screen-2xl' : 'max-w-2xl']">
+                            <!-- Read-only notice -->
+                            <div v-if="isReadOnly" class="mb-6 p-4 rounded-lg bg-warning/10 border border-warning/20">
+                                <div class="flex items-start gap-3">
+                                    <UIcon name="i-lucide-lock" class="size-5 text-warning shrink-0 mt-0.5" />
+                                    <div>
+                                        <p class="text-sm font-medium text-warning">This post is published</p>
+                                        <p class="text-xs text-muted mt-1">
+                                            Published content is read-only. To make changes, create a new draft version
+                                            or unpublish the post first.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Title -->
                             <input
                                 v-model="form.title"
                                 type="text"
                                 :placeholder="placeholders.title"
                                 :dir="textDirection"
+                                :readonly="isReadOnly"
                                 :class="[
                                     'w-full font-bold bg-transparent border-0 outline-none placeholder:text-muted/40 mb-2',
                                     textAlign,
                                     isRtl ? 'font-dhivehi text-dhivehi-4xl leading-relaxed placeholder:font-dhivehi' : 'text-4xl leading-tight',
+                                    isReadOnly ? 'cursor-not-allowed opacity-70' : '',
                                 ]"
                                 @keydown="onDhivehiKeyDown"
                             />
@@ -559,10 +611,12 @@ function deletePost() {
                                 type="text"
                                 :placeholder="placeholders.subtitle"
                                 :dir="textDirection"
+                                :readonly="isReadOnly"
                                 :class="[
                                     'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 mb-4',
                                     textAlign,
                                     isRtl ? 'font-dhivehi text-dhivehi-xl leading-relaxed placeholder:font-dhivehi' : 'text-xl',
+                                    isReadOnly ? 'cursor-not-allowed opacity-70' : '',
                                 ]"
                                 @keydown="onDhivehiKeyDown"
                             />
@@ -573,10 +627,12 @@ function deletePost() {
                                 :placeholder="placeholders.excerpt"
                                 rows="2"
                                 :dir="textDirection"
+                                :readonly="isReadOnly"
                                 :class="[
                                     'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 resize-none',
                                     textAlign,
                                     isRtl ? 'font-dhivehi text-dhivehi-base leading-relaxed placeholder:font-dhivehi' : 'text-base',
+                                    isReadOnly ? 'cursor-not-allowed opacity-70' : '',
                                 ]"
                                 @keydown="onDhivehiKeyDown"
                             />
@@ -589,15 +645,16 @@ function deletePost() {
                                 :dhivehi-enabled="dhivehiEnabled"
                                 :dhivehi-layout="dhivehiLayout"
                                 :on-select-media="handleEditorSelectMedia"
+                                :read-only="isReadOnly"
                             />
                         </div>
                     </div>
 
-                    <!-- Sidebar - hidden on mobile and in fullscreen, toggle with button -->
+                    <!-- Slim Sidebar - Document stats, cover, and actions only -->
                     <div
                         v-show="!isFullscreen"
                         :class="[
-                            'w-80 border-l border-default overflow-y-auto',
+                            'w-72 border-l border-default overflow-y-auto',
                             'bg-[var(--ui-bg)] lg:bg-elevated/25',
                             'fixed lg:relative inset-y-0 right-0 z-[60]',
                             'transition-transform duration-200 ease-in-out',
@@ -606,7 +663,7 @@ function deletePost() {
                     >
                         <!-- Mobile close button -->
                         <div class="lg:hidden flex items-center justify-between p-4 border-b border-default">
-                            <span class="text-sm font-medium">Post Settings</span>
+                            <span class="text-sm font-medium">Post Info</span>
                             <UButton
                                 color="neutral"
                                 variant="ghost"
@@ -615,78 +672,68 @@ function deletePost() {
                                 @click="sidebarOpen = false"
                             />
                         </div>
-                        <div class="p-4 space-y-6">
+                        <div class="p-4 space-y-5">
 
-                            <!-- Document Info -->
+                            <!-- Workflow Quick Actions -->
+                            <div v-if="availableTransitions.length > 0 && !isReadOnly">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <UIcon :name="currentWorkflowState.icon" class="size-4 text-muted" />
+                                    <span class="text-xs font-medium text-muted uppercase tracking-wider">Workflow</span>
+                                    <UBadge :color="workflow.getStateColor(workflowStatus)" variant="subtle" size="xs" class="ml-auto">
+                                        {{ currentWorkflowState.label }}
+                                    </UBadge>
+                                </div>
+                                <div class="space-y-2">
+                                    <UButton
+                                        v-for="transition in availableTransitions"
+                                        :key="`${transition.from}-${transition.to}`"
+                                        :color="workflow.getStateColor(transition.to)"
+                                        variant="soft"
+                                        size="sm"
+                                        block
+                                        :loading="transitionLoading"
+                                        @click="performQuickTransition(transition)"
+                                    >
+                                        <template #leading>
+                                            <UIcon name="i-lucide-arrow-right" class="size-4" />
+                                        </template>
+                                        {{ transition.label }}
+                                    </UButton>
+                                </div>
+                            </div>
+
+                            <!-- Current Status (when no actions available) -->
+                            <div v-else-if="isReadOnly" class="p-3 rounded-lg bg-success/10 border border-success/20">
+                                <div class="flex items-center gap-2">
+                                    <UIcon name="i-lucide-check-circle" class="size-5 text-success" />
+                                    <div>
+                                        <p class="text-sm font-medium text-success">Published</p>
+                                        <p class="text-xs text-muted">This post is live</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="availableTransitions.length > 0 || isReadOnly" class="h-px bg-default" />
+
+                            <!-- Document Stats -->
                             <div>
                                 <div class="flex items-center gap-2 mb-3">
                                     <UIcon name="i-lucide-file-text" class="size-4 text-muted" />
                                     <span class="text-xs font-medium text-muted uppercase tracking-wider">Document</span>
                                 </div>
-                                <div class="space-y-2">
-                                    <div class="flex items-center justify-between text-sm">
-                                        <span class="text-muted">Characters</span>
-                                        <span class="text-highlighted font-medium">{{ charCount.toLocaleString() }}</span>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="text-center p-2 rounded-lg bg-elevated/50">
+                                        <p class="text-lg font-semibold text-highlighted">{{ wordCount.toLocaleString() }}</p>
+                                        <p class="text-xs text-muted">words</p>
                                     </div>
-                                    <div class="flex items-center justify-between text-sm">
-                                        <span class="text-muted">Words</span>
-                                        <span class="text-highlighted font-medium">{{ wordCount.toLocaleString() }}</span>
-                                    </div>
-                                    <div class="flex items-center justify-between text-sm">
-                                        <span class="text-muted">Reading time</span>
-                                        <span class="text-highlighted font-medium">{{ readingTime }}</span>
-                                    </div>
-                                    <div class="flex items-center justify-between text-sm">
-                                        <span class="text-muted">Last saved</span>
-                                        <span class="text-highlighted font-medium">{{ timeAgo }}</span>
+                                    <div class="text-center p-2 rounded-lg bg-elevated/50">
+                                        <p class="text-lg font-semibold text-highlighted">{{ readingTime.replace(' read', '') }}</p>
+                                        <p class="text-xs text-muted">read time</p>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="h-px bg-default" />
-
-                            <!-- Status & Type -->
-                            <div>
-                                <div class="flex items-center gap-2 mb-3">
-                                    <UIcon name="i-lucide-settings-2" class="size-4 text-muted" />
-                                    <span class="text-xs font-medium text-muted uppercase tracking-wider">Settings</span>
-                                </div>
-                                <div class="space-y-3">
-                                    <div>
-                                        <label class="text-xs text-muted mb-1 block">Status</label>
-                                        <USelectMenu
-                                            v-model="form.status"
-                                            :items="statusOptions"
-                                            value-key="value"
-                                            size="sm"
-                                            class="w-full"
-                                        />
-                                    </div>
-                                    <div v-if="showScheduleField">
-                                        <label class="text-xs text-muted mb-1 block">Schedule for</label>
-                                        <UInput v-model="form.scheduled_at" type="datetime-local" size="sm" class="w-full" />
-                                    </div>
-                                    <div>
-                                        <label class="text-xs text-muted mb-1 block">Type</label>
-                                        <USelectMenu
-                                            v-model="form.post_type"
-                                            :items="postTypes"
-                                            value-key="value"
-                                            size="sm"
-                                            class="w-full"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label class="text-xs text-muted mb-1 block">URL Slug</label>
-                                        <div class="flex gap-1.5">
-                                            <UInput v-model="form.slug" placeholder="post-slug" size="sm" class="flex-1 min-w-0" />
-                                            <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-refresh-cw" @click="generateSlug" />
-                                        </div>
-                                    </div>
-                                    <div class="pt-2 text-xs text-muted space-y-1">
-                                        <p v-if="post.author"><span class="text-highlighted">Author:</span> {{ post.author.name }}</p>
-                                        <p v-if="post.published_at"><span class="text-highlighted">Published:</span> {{ new Date(post.published_at).toLocaleDateString() }}</p>
-                                    </div>
+                                <div class="mt-3 text-xs text-muted space-y-1">
+                                    <p><span class="text-highlighted">Last saved:</span> {{ timeAgo }}</p>
+                                    <p v-if="post.author"><span class="text-highlighted">Author:</span> {{ post.author.name }}</p>
                                 </div>
                             </div>
 
@@ -702,9 +749,10 @@ function deletePost() {
                                     <img
                                         :src="selectedFeaturedMedia.thumbnail_url || selectedFeaturedMedia.url || ''"
                                         :alt="selectedFeaturedMedia.title || 'Cover'"
-                                        class="w-full h-28 object-cover rounded-lg"
+                                        class="w-full h-32 object-cover rounded-lg"
                                     />
                                     <UButton
+                                        v-if="!isReadOnly"
                                         color="neutral"
                                         variant="solid"
                                         icon="i-lucide-x"
@@ -712,13 +760,9 @@ function deletePost() {
                                         class="absolute top-1.5 right-1.5"
                                         @click="removeFeaturedMedia"
                                     />
-                                    <div v-if="selectedFeaturedMedia.credit_display" class="absolute bottom-1.5 left-1.5 right-1.5">
-                                        <span class="text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
-                                            {{ selectedFeaturedMedia.credit_display.name }}
-                                        </span>
-                                    </div>
                                 </div>
                                 <button
+                                    v-if="!isReadOnly"
                                     type="button"
                                     class="w-full border border-dashed border-default rounded-lg px-3 py-4 text-center hover:border-primary hover:bg-primary/5 transition-colors"
                                     @click="openCoverPicker"
@@ -726,26 +770,48 @@ function deletePost() {
                                     <UIcon name="i-lucide-image-plus" class="size-5 text-muted mx-auto mb-1" />
                                     <p class="text-xs text-muted">{{ selectedFeaturedMedia ? 'Change cover' : 'Select cover image' }}</p>
                                 </button>
+                                <div v-else-if="!selectedFeaturedMedia" class="text-xs text-muted text-center py-4">
+                                    No cover image
+                                </div>
                             </div>
 
                             <div class="h-px bg-default" />
 
-                            <!-- Taxonomy -->
+                            <!-- Settings -->
                             <div>
                                 <div class="flex items-center gap-2 mb-3">
-                                    <UIcon name="i-lucide-folder" class="size-4 text-muted" />
-                                    <span class="text-xs font-medium text-muted uppercase tracking-wider">Organize</span>
+                                    <UIcon name="i-lucide-settings-2" class="size-4 text-muted" />
+                                    <span class="text-xs font-medium text-muted uppercase tracking-wider">Settings</span>
                                 </div>
                                 <div class="space-y-3">
+                                    <div>
+                                        <label class="text-xs text-muted mb-1 block">Type</label>
+                                        <USelectMenu
+                                            v-model="form.post_type"
+                                            :items="postTypes"
+                                            value-key="value"
+                                            size="sm"
+                                            class="w-full"
+                                            :disabled="isReadOnly"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-muted mb-1 block">URL Slug</label>
+                                        <div class="flex gap-1.5">
+                                            <UInput v-model="form.slug" placeholder="post-slug" size="sm" class="flex-1 min-w-0" :disabled="isReadOnly" />
+                                            <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-refresh-cw" :disabled="isReadOnly" @click="generateSlug" />
+                                        </div>
+                                    </div>
                                     <div>
                                         <label class="text-xs text-muted mb-1 block">Category</label>
                                         <USelectMenu
                                             v-model="form.category_id"
                                             :items="flattenedCategories"
                                             value-key="value"
-                                            placeholder="Select category..."
+                                            placeholder="Select..."
                                             size="sm"
                                             class="w-full"
+                                            :disabled="isReadOnly"
                                         />
                                     </div>
                                     <div>
@@ -759,120 +825,39 @@ function deletePost() {
                                             searchable
                                             size="sm"
                                             class="w-full"
+                                            :disabled="isReadOnly"
                                         />
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Recipe Details (conditional) -->
-                            <template v-if="showRecipeFields">
-                                <div class="h-px bg-default" />
-                                <div>
-                                    <div class="flex items-center gap-2 mb-3">
-                                        <UIcon name="i-lucide-chef-hat" class="size-4 text-muted" />
-                                        <span class="text-xs font-medium text-muted uppercase tracking-wider">Recipe</span>
-                                    </div>
-                                    <div class="space-y-3">
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label class="text-xs text-muted mb-1 block">Prep (min)</label>
-                                                <UInput v-model.number="form.recipe_meta.prep_time" type="number" min="0" size="sm" class="w-full" />
-                                            </div>
-                                            <div>
-                                                <label class="text-xs text-muted mb-1 block">Cook (min)</label>
-                                                <UInput v-model.number="form.recipe_meta.cook_time" type="number" min="0" size="sm" class="w-full" />
-                                            </div>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label class="text-xs text-muted mb-1 block">Servings</label>
-                                                <UInput v-model.number="form.recipe_meta.servings" type="number" min="1" size="sm" class="w-full" />
-                                            </div>
-                                            <div>
-                                                <label class="text-xs text-muted mb-1 block">Difficulty</label>
-                                                <USelectMenu v-model="form.recipe_meta.difficulty" :items="difficultyOptions" value-key="value" size="sm" class="w-full" />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label class="text-xs text-muted mb-1 block">Ingredients</label>
-                                            <div class="space-y-1.5">
-                                                <div v-for="(ingredient, index) in form.recipe_meta.ingredients" :key="index" class="flex gap-1.5">
-                                                    <UInput
-                                                        :model-value="ingredient"
-                                                        size="sm"
-                                                        class="flex-1 min-w-0"
-                                                        @update:model-value="form.recipe_meta.ingredients[index] = $event as string"
-                                                    />
-                                                    <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-x" @click="removeIngredient(index)" />
-                                                </div>
-                                                <div class="flex gap-1.5">
-                                                    <UInput
-                                                        v-model="newIngredient"
-                                                        placeholder="Add..."
-                                                        size="sm"
-                                                        class="flex-1 min-w-0"
-                                                        @keyup.enter.prevent="addIngredient"
-                                                    />
-                                                    <UButton size="sm" color="neutral" variant="soft" icon="i-lucide-plus" @click="addIngredient" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
 
                             <div class="h-px bg-default" />
 
-                            <!-- SEO -->
-                            <div>
-                                <div class="flex items-center gap-2 mb-3">
-                                    <UIcon name="i-lucide-search" class="size-4 text-muted" />
-                                    <span class="text-xs font-medium text-muted uppercase tracking-wider">SEO</span>
-                                </div>
-                                <div class="space-y-3">
-                                    <div>
-                                        <div class="flex items-center justify-between mb-1">
-                                            <label class="text-xs text-muted">Meta title</label>
-                                            <span class="text-xs text-muted">{{ form.meta_title?.length || 0 }}/70</span>
-                                        </div>
-                                        <UInput v-model="form.meta_title" placeholder="SEO title" maxlength="70" size="sm" class="w-full" />
-                                    </div>
-                                    <div>
-                                        <div class="flex items-center justify-between mb-1">
-                                            <label class="text-xs text-muted">Meta description</label>
-                                            <span class="text-xs text-muted">{{ form.meta_description?.length || 0 }}/160</span>
-                                        </div>
-                                        <UTextarea
-                                            v-model="form.meta_description"
-                                            placeholder="SEO description"
-                                            :rows="2"
-                                            maxlength="160"
-                                            class="w-full"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- Open Editorial Slideover -->
+                            <UButton
+                                color="neutral"
+                                variant="soft"
+                                icon="i-lucide-panel-right-open"
+                                block
+                                @click="editorialSlideoverOpen = true"
+                            >
+                                Editorial Panel
+                            </UButton>
 
                             <div class="h-px bg-default" />
 
                             <!-- Actions -->
-                            <div>
-                                <div class="flex items-center gap-2 mb-3">
-                                    <UIcon name="i-lucide-zap" class="size-4 text-muted" />
-                                    <span class="text-xs font-medium text-muted uppercase tracking-wider">Actions</span>
-                                </div>
-                                <div class="space-y-1">
-                                    <UButton
-                                        color="neutral"
-                                        variant="ghost"
-                                        icon="i-lucide-trash"
-                                        size="sm"
-                                        class="w-full justify-start text-error hover:bg-error/10"
-                                        @click="deletePost"
-                                    >
-                                        Move to trash
-                                    </UButton>
-                                </div>
+                            <div class="space-y-1">
+                                <UButton
+                                    color="neutral"
+                                    variant="ghost"
+                                    icon="i-lucide-trash"
+                                    size="sm"
+                                    class="w-full justify-start text-error hover:bg-error/10"
+                                    @click="deletePost"
+                                >
+                                    Move to trash
+                                </UButton>
                             </div>
 
                         </div>
@@ -888,6 +873,39 @@ function deletePost() {
             :multiple="mediaPickerMultiple"
             @select="handleMediaSelect"
             @update:open="handleMediaPickerClose"
+        />
+
+        <!-- Editorial Slideover -->
+        <EditorialSlideover
+            v-model:open="editorialSlideoverOpen"
+            content-type="posts"
+            :content-uuid="post.uuid"
+            :current-version-uuid="currentVersionUuid"
+            :workflow-status="workflowStatus"
+            :workflow-config="workflowConfig"
+            :categories="categories"
+            :tags="tags"
+            :post-types="postTypes"
+            :category-id="form.category_id"
+            :selected-tags="form.tags"
+            :post-type="form.post_type"
+            :slug="form.slug"
+            :meta-title="form.meta_title"
+            :meta-description="form.meta_description"
+            :custom-fields="form.custom_fields"
+            :is-read-only="isReadOnly"
+            :author="post.author"
+            :published-at="post.published_at"
+            @transition="onWorkflowTransition"
+            @refresh="refreshPage"
+            @update:category-id="form.category_id = $event"
+            @update:selected-tags="form.tags = $event"
+            @update:post-type="form.post_type = $event"
+            @update:slug="form.slug = $event"
+            @update:meta-title="form.meta_title = $event"
+            @update:meta-description="form.meta_description = $event"
+            @update:custom-fields="form.custom_fields = $event"
+            @generate-slug="generateSlug"
         />
     </DashboardLayout>
 </template>

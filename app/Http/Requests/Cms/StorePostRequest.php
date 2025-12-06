@@ -37,13 +37,8 @@ class StorePostRequest extends FormRequest
             'tags.*' => ['integer', 'exists:tags,id'],
             'featured_image' => ['nullable', 'image', 'max:5120'], // 5MB
             'featured_media_id' => ['nullable', 'integer', 'exists:media_items,id'],
-            'recipe_meta' => ['nullable', 'array'],
-            'recipe_meta.prep_time' => ['nullable', 'integer', 'min:0'],
-            'recipe_meta.cook_time' => ['nullable', 'integer', 'min:0'],
-            'recipe_meta.servings' => ['nullable', 'integer', 'min:1'],
-            'recipe_meta.difficulty' => ['nullable', Rule::in(['easy', 'medium', 'hard'])],
-            'recipe_meta.ingredients' => ['nullable', 'array'],
-            'recipe_meta.nutrition' => ['nullable', 'array'],
+            'custom_fields' => ['nullable', 'array'],
+            'custom_fields.*' => ['nullable'],
             'meta_title' => ['nullable', 'string', 'max:70'],
             'meta_description' => ['nullable', 'string', 'max:160'],
         ];

@@ -85,13 +85,7 @@ const form = useForm({
     category_id: null as number | null,
     tags: [] as number[],
     featured_media_id: null as number | null,
-    recipe_meta: {
-        prep_time: null as number | null,
-        cook_time: null as number | null,
-        servings: null as number | null,
-        difficulty: '' as string,
-        ingredients: [] as string[],
-    },
+    custom_fields: {} as Record<string, unknown>,
     meta_title: '',
     meta_description: '',
 });
@@ -321,15 +315,31 @@ function removeFeaturedMedia() {
 
 const newIngredient = ref('');
 
+// Helper to safely get/set custom fields
+function getCustomField<T>(key: string, defaultValue: T): T {
+    return (form.custom_fields?.[key] as T) ?? defaultValue;
+}
+
+function setCustomField(key: string, value: unknown) {
+    if (!form.custom_fields) {
+        form.custom_fields = {};
+    }
+    form.custom_fields[key] = value;
+}
+
 function addIngredient() {
     if (newIngredient.value.trim()) {
-        form.recipe_meta.ingredients.push(newIngredient.value.trim());
+        const ingredients = getCustomField<string[]>('ingredients', []);
+        ingredients.push(newIngredient.value.trim());
+        setCustomField('ingredients', ingredients);
         newIngredient.value = '';
     }
 }
 
 function removeIngredient(index: number) {
-    form.recipe_meta.ingredients.splice(index, 1);
+    const ingredients = getCustomField<string[]>('ingredients', []);
+    ingredients.splice(index, 1);
+    setCustomField('ingredients', ingredients);
 }
 
 function generateSlug() {
@@ -737,7 +747,7 @@ function goBack() {
                                 </div>
                             </div>
 
-                            <!-- Recipe Details (conditional) -->
+                            <!-- Recipe Details (conditional) - TODO: Make dynamic based on post type config -->
                             <template v-if="showRecipeFields">
                                 <div class="h-px bg-default" />
                                 <div>
@@ -749,32 +759,64 @@ function goBack() {
                                         <div class="grid grid-cols-2 gap-2">
                                             <div>
                                                 <label class="text-xs text-muted mb-1 block">Prep (min)</label>
-                                                <UInput v-model.number="form.recipe_meta.prep_time" type="number" min="0" size="sm" class="w-full" />
+                                                <UInput
+                                                    :model-value="getCustomField<number | null>('prep_time', null)"
+                                                    type="number"
+                                                    min="0"
+                                                    size="sm"
+                                                    class="w-full"
+                                                    @update:model-value="setCustomField('prep_time', $event)"
+                                                />
                                             </div>
                                             <div>
                                                 <label class="text-xs text-muted mb-1 block">Cook (min)</label>
-                                                <UInput v-model.number="form.recipe_meta.cook_time" type="number" min="0" size="sm" class="w-full" />
+                                                <UInput
+                                                    :model-value="getCustomField<number | null>('cook_time', null)"
+                                                    type="number"
+                                                    min="0"
+                                                    size="sm"
+                                                    class="w-full"
+                                                    @update:model-value="setCustomField('cook_time', $event)"
+                                                />
                                             </div>
                                         </div>
                                         <div class="grid grid-cols-2 gap-2">
                                             <div>
                                                 <label class="text-xs text-muted mb-1 block">Servings</label>
-                                                <UInput v-model.number="form.recipe_meta.servings" type="number" min="1" size="sm" class="w-full" />
+                                                <UInput
+                                                    :model-value="getCustomField<number | null>('servings', null)"
+                                                    type="number"
+                                                    min="1"
+                                                    size="sm"
+                                                    class="w-full"
+                                                    @update:model-value="setCustomField('servings', $event)"
+                                                />
                                             </div>
                                             <div>
                                                 <label class="text-xs text-muted mb-1 block">Difficulty</label>
-                                                <USelectMenu v-model="form.recipe_meta.difficulty" :items="difficultyOptions" value-key="value" size="sm" class="w-full" />
+                                                <USelectMenu
+                                                    :model-value="getCustomField<string>('difficulty', '')"
+                                                    :items="difficultyOptions"
+                                                    value-key="value"
+                                                    size="sm"
+                                                    class="w-full"
+                                                    @update:model-value="setCustomField('difficulty', $event)"
+                                                />
                                             </div>
                                         </div>
                                         <div>
                                             <label class="text-xs text-muted mb-1 block">Ingredients</label>
                                             <div class="space-y-1.5">
-                                                <div v-for="(ingredient, index) in form.recipe_meta.ingredients" :key="index" class="flex gap-1.5">
+                                                <div v-for="(ingredient, index) in getCustomField<string[]>('ingredients', [])" :key="index" class="flex gap-1.5">
                                                     <UInput
                                                         :model-value="ingredient"
                                                         size="sm"
                                                         class="flex-1 min-w-0"
-                                                        @update:model-value="form.recipe_meta.ingredients[index] = $event as string"
+                                                        @update:model-value="(val) => {
+                                                            const ingredients = getCustomField<string[]>('ingredients', []);
+                                                            ingredients[index] = val as string;
+                                                            setCustomField('ingredients', ingredients);
+                                                        }"
                                                     />
                                                     <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-x" @click="removeIngredient(index)" />
                                                 </div>

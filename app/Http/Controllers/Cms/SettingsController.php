@@ -297,4 +297,79 @@ class SettingsController extends Controller
         return redirect()->route('cms.settings.media')
             ->with('success', 'Media settings updated successfully.');
     }
+
+    public function workflows(): Response
+    {
+        $workflows = Setting::getAllWorkflows();
+        $availableRoles = \Spatie\Permission\Models\Role::pluck('name')->toArray();
+
+        return Inertia::render('Settings/Workflow', [
+            'workflows' => $workflows,
+            'availableRoles' => $availableRoles,
+        ]);
+    }
+
+    public function storeWorkflow(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'post_type' => ['required', 'string', 'max:50', 'regex:/^[a-z_]+$/'],
+            'name' => ['required', 'string', 'max:100'],
+            'workflow' => ['required', 'array'],
+            'workflow.name' => ['required', 'string', 'max:100'],
+            'workflow.states' => ['required', 'array', 'min:2'],
+            'workflow.states.*.key' => ['required', 'string', 'max:50'],
+            'workflow.states.*.label' => ['required', 'string', 'max:100'],
+            'workflow.states.*.color' => ['required', 'string', 'max:50'],
+            'workflow.states.*.icon' => ['required', 'string', 'max:100'],
+            'workflow.transitions' => ['required', 'array'],
+            'workflow.transitions.*.from' => ['required', 'string', 'max:50'],
+            'workflow.transitions.*.to' => ['required', 'string', 'max:50'],
+            'workflow.transitions.*.roles' => ['required', 'array'],
+            'workflow.transitions.*.label' => ['required', 'string', 'max:100'],
+            'workflow.publish_roles' => ['required', 'array'],
+        ]);
+
+        Setting::setWorkflow($validated['workflow'], $validated['post_type']);
+
+        return redirect()->route('cms.settings.workflows')
+            ->with('success', 'Workflow created successfully.');
+    }
+
+    public function updateWorkflow(Request $request, string $key): RedirectResponse
+    {
+        $validated = $request->validate([
+            'workflow' => ['required', 'array'],
+            'workflow.name' => ['required', 'string', 'max:100'],
+            'workflow.states' => ['required', 'array', 'min:2'],
+            'workflow.states.*.key' => ['required', 'string', 'max:50'],
+            'workflow.states.*.label' => ['required', 'string', 'max:100'],
+            'workflow.states.*.color' => ['required', 'string', 'max:50'],
+            'workflow.states.*.icon' => ['required', 'string', 'max:100'],
+            'workflow.transitions' => ['required', 'array'],
+            'workflow.transitions.*.from' => ['required', 'string', 'max:50'],
+            'workflow.transitions.*.to' => ['required', 'string', 'max:50'],
+            'workflow.transitions.*.roles' => ['required', 'array'],
+            'workflow.transitions.*.label' => ['required', 'string', 'max:100'],
+            'workflow.publish_roles' => ['required', 'array'],
+        ]);
+
+        $postType = $key === 'default' ? null : $key;
+        Setting::setWorkflow($validated['workflow'], $postType);
+
+        return redirect()->route('cms.settings.workflows')
+            ->with('success', 'Workflow updated successfully.');
+    }
+
+    public function destroyWorkflow(string $key): RedirectResponse
+    {
+        if ($key === 'default') {
+            return redirect()->route('cms.settings.workflows')
+                ->with('error', 'Cannot delete the default workflow.');
+        }
+
+        Setting::deleteWorkflow($key);
+
+        return redirect()->route('cms.settings.workflows')
+            ->with('success', 'Workflow deleted successfully.');
+    }
 }

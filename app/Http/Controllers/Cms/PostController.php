@@ -8,6 +8,7 @@ use App\Http\Requests\Cms\UpdatePostRequest;
 use App\Models\Category;
 use App\Models\Language;
 use App\Models\Post;
+use App\Models\Setting;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -35,6 +36,10 @@ class PostController extends Controller
             $sortField = 'created_at';
         }
 
+        /** @var User $user */
+        $user = Auth::user();
+        $isEditorOrAdmin = $user->hasAnyRole(['Admin', 'Editor', 'Developer']);
+
         $query = Post::query()
             ->where('language_code', $language)
             ->with([
@@ -52,6 +57,14 @@ class PostController extends Controller
             'trashed' => $query->onlyTrashed(),
             default => $query->withoutTrashed(),
         };
+
+        // Role-based filtering:
+        // - Draft: Writers see only their own drafts, Editors/Admins see all
+        // - Pending: Writers see only their own, Editors/Admins see all
+        // - Published: Everyone can see (read-only for non-authors/non-editors)
+        if (! $isEditorOrAdmin && in_array($status, ['draft', 'pending'])) {
+            $query->where('author_id', $user->id);
+        }
 
         // Filter by post type
         if ($request->filled('post_type')) {
@@ -120,17 +133,36 @@ class PostController extends Controller
                 'updated_at' => $post->updated_at,
                 'language_code' => $post->language_code,
                 'deleted_at' => $post->deleted_at,
+                'workflow_status' => $post->workflow_status ?? 'draft',
             ]);
 
-        // Get counts for status tabs (filtered by language)
-        $counts = [
-            'all' => Post::where('language_code', $language)->withoutTrashed()->count(),
-            'draft' => Post::where('language_code', $language)->draft()->count(),
-            'pending' => Post::where('language_code', $language)->pending()->count(),
-            'published' => Post::where('language_code', $language)->where('status', Post::STATUS_PUBLISHED)->count(),
-            'scheduled' => Post::where('language_code', $language)->where('status', Post::STATUS_SCHEDULED)->count(),
-            'trashed' => Post::where('language_code', $language)->onlyTrashed()->count(),
-        ];
+        // Get counts for status tabs (filtered by language and user role)
+        $baseQuery = fn () => Post::where('language_code', $language);
+
+        if ($isEditorOrAdmin) {
+            // Editors and Admins see all posts
+            $counts = [
+                'all' => $baseQuery()->withoutTrashed()->count(),
+                'draft' => $baseQuery()->draft()->count(),
+                'pending' => $baseQuery()->pending()->count(),
+                'published' => $baseQuery()->where('status', Post::STATUS_PUBLISHED)->count(),
+                'scheduled' => $baseQuery()->where('status', Post::STATUS_SCHEDULED)->count(),
+                'trashed' => $baseQuery()->onlyTrashed()->count(),
+            ];
+        } else {
+            // Writers see their own drafts/pending, but all published posts
+            $counts = [
+                'all' => $baseQuery()->withoutTrashed()->where(function ($q) use ($user) {
+                    $q->where('author_id', $user->id)
+                        ->orWhere('status', Post::STATUS_PUBLISHED);
+                })->count(),
+                'draft' => $baseQuery()->draft()->where('author_id', $user->id)->count(),
+                'pending' => $baseQuery()->pending()->where('author_id', $user->id)->count(),
+                'published' => $baseQuery()->where('status', Post::STATUS_PUBLISHED)->count(),
+                'scheduled' => $baseQuery()->where('status', Post::STATUS_SCHEDULED)->where('author_id', $user->id)->count(),
+                'trashed' => $baseQuery()->onlyTrashed()->where('author_id', $user->id)->count(),
+            ];
+        }
 
         // Get filter options
         $authors = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['Admin', 'Developer', 'Writer', 'Editor']))
@@ -155,6 +187,10 @@ class PostController extends Controller
                 'native_name' => $lang->native_name,
                 'direction' => $lang->direction,
                 'is_rtl' => $lang->isRtl(),
+            ],
+            'userCapabilities' => [
+                'isEditorOrAdmin' => $isEditorOrAdmin,
+                'userId' => $user->id,
             ],
         ]);
     }
@@ -200,6 +236,7 @@ class PostController extends Controller
             abort(404, 'Invalid language code');
         }
 
+        // Create post with draft status initially (workflow controls publishing)
         $post = Post::create([
             'author_id' => Auth::id(),
             'language_code' => $language,
@@ -209,11 +246,11 @@ class PostController extends Controller
             'excerpt' => $validated['excerpt'] ?? null,
             'content' => $validated['content'] ?? null,
             'post_type' => $validated['post_type'] ?? Post::TYPE_ARTICLE,
-            'status' => $validated['status'] ?? Post::STATUS_DRAFT,
-            'published_at' => $validated['status'] === Post::STATUS_PUBLISHED ? now() : null,
+            'status' => Post::STATUS_DRAFT, // Always start as draft
+            'workflow_status' => 'draft',
             'scheduled_at' => $validated['scheduled_at'] ?? null,
             'featured_media_id' => $validated['featured_media_id'] ?? null,
-            'recipe_meta' => $validated['recipe_meta'] ?? null,
+            'custom_fields' => $validated['custom_fields'] ?? null,
             'meta_title' => $validated['meta_title'] ?? null,
             'meta_description' => $validated['meta_description'] ?? null,
         ]);
@@ -235,12 +272,12 @@ class PostController extends Controller
                 ->toMediaCollection('featured');
         }
 
-        $message = $post->status === Post::STATUS_PUBLISHED
-            ? 'Post published successfully.'
-            : 'Post saved as draft.';
+        // Create initial version using HasWorkflow trait method
+        $post->createVersion(null, 'Initial version');
 
-        return redirect()->route('cms.posts.index', ['language' => $language])
-            ->with('success', $message);
+        // Redirect to edit page so user can use workflow
+        return redirect()->route('cms.posts.edit', ['language' => $language, 'post' => $post])
+            ->with('success', 'Post created. Use the workflow panel to submit for review.');
     }
 
     public function show(string $language, Post $post): Response
@@ -250,7 +287,7 @@ class PostController extends Controller
 
     public function edit(string $language, Post $post): Response
     {
-        $post->load(['categories', 'tags', 'author', 'language', 'featuredMedia']);
+        $post->load(['categories', 'tags', 'author', 'language', 'featuredMedia', 'draftVersion']);
 
         // Set locale for translatable models
         app()->setLocale($language);
@@ -265,6 +302,12 @@ class PostController extends Controller
 
         $lang = $post->language ?? Language::getDefault();
 
+        // Get workflow configuration for this post type
+        $workflowConfig = Setting::getWorkflow($post->post_type);
+
+        // Get current version UUID (draft version if exists, otherwise null)
+        $currentVersionUuid = $post->draftVersion?->uuid;
+
         return Inertia::render('Posts/Edit', [
             'post' => [
                 'id' => $post->id,
@@ -276,9 +319,10 @@ class PostController extends Controller
                 'content' => $post->content,
                 'post_type' => $post->post_type,
                 'status' => $post->status,
+                'workflow_status' => $post->workflow_status ?? 'draft',
                 'published_at' => $post->published_at,
                 'scheduled_at' => $post->scheduled_at,
-                'recipe_meta' => $post->recipe_meta,
+                'custom_fields' => $post->custom_fields,
                 'meta_title' => $post->meta_title,
                 'meta_description' => $post->meta_description,
                 'featured_image_url' => $post->featured_image_url,
@@ -306,6 +350,7 @@ class PostController extends Controller
                 ] : null,
                 'created_at' => $post->created_at,
                 'updated_at' => $post->updated_at,
+                'current_version_uuid' => $currentVersionUuid,
             ],
             'categories' => $categories,
             'tags' => $tags,
@@ -320,6 +365,7 @@ class PostController extends Controller
                 'direction' => $lang->direction,
                 'is_rtl' => $lang->isRtl(),
             ] : null,
+            'workflowConfig' => $workflowConfig,
         ]);
     }
 
@@ -327,8 +373,8 @@ class PostController extends Controller
     {
         $validated = $request->validated();
 
-        $wasPublished = $post->isPublished();
-
+        // Don't allow direct status changes - workflow controls this
+        // Only update content fields
         $post->update([
             'title' => $validated['title'],
             'subtitle' => $validated['subtitle'] ?? null,
@@ -336,18 +382,12 @@ class PostController extends Controller
             'excerpt' => $validated['excerpt'] ?? null,
             'content' => $validated['content'] ?? null,
             'post_type' => $validated['post_type'] ?? $post->post_type,
-            'status' => $validated['status'] ?? $post->status,
             'scheduled_at' => $validated['scheduled_at'] ?? null,
             'featured_media_id' => $validated['featured_media_id'] ?? null,
-            'recipe_meta' => $validated['recipe_meta'] ?? null,
+            'custom_fields' => $validated['custom_fields'] ?? null,
             'meta_title' => $validated['meta_title'] ?? null,
             'meta_description' => $validated['meta_description'] ?? null,
         ]);
-
-        // Set published_at if just published
-        if (! $wasPublished && $post->status === Post::STATUS_PUBLISHED) {
-            $post->update(['published_at' => now()]);
-        }
 
         // Sync category and tags
         if (! empty($validated['category_id'])) {
@@ -365,8 +405,11 @@ class PostController extends Controller
             $post->clearMediaCollection('featured');
         }
 
+        // Update or create version with latest content using HasWorkflow trait method
+        $post->createVersion();
+
         return redirect()->route('cms.posts.edit', ['language' => $language, 'post' => $post])
-            ->with('success', 'Post updated successfully.');
+            ->with('success', 'Post saved.');
     }
 
     public function destroy(string $language, Post $post): RedirectResponse

@@ -72,6 +72,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'comments.delete',
             'comments.manage-bans',
 
+            // Workflow
+            'workflow.view',
+            'workflow.transition',
+            'workflow.comment',
+            'workflow.publish',
+            'workflow.revert',
+
             // Settings
             'settings.view',
             'settings.edit',
@@ -123,6 +130,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'comments.edit',
             'comments.delete',
             'comments.manage-bans',
+            'workflow.view',
+            'workflow.transition',
+            'workflow.comment',
+            'workflow.publish',
+            'workflow.revert',
             'settings.view',
             'settings.edit',
             'analytics.view',
@@ -152,6 +164,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'comments.moderate',
             'comments.edit',
             'comments.delete',
+            'workflow.view',
+            'workflow.transition',
+            'workflow.comment',
+            'workflow.publish',
+            'workflow.revert',
         ]);
 
         // Create Writer role
@@ -166,6 +183,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'tags.view',
             'tags.create',
             'comments.view', // Can view comments on their own posts
+            'workflow.view',
+            'workflow.transition', // Limited transitions defined in workflow config
+            'workflow.comment',
         ]);
 
         // Create Photographer role
