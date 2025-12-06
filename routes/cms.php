@@ -10,6 +10,7 @@ use App\Http\Controllers\Cms\MediaController;
 use App\Http\Controllers\Cms\MediaFolderController;
 use App\Http\Controllers\Cms\NotificationController;
 use App\Http\Controllers\Cms\PostController;
+use App\Http\Controllers\Cms\ProfileController;
 use App\Http\Controllers\Cms\RoleController;
 use App\Http\Controllers\Cms\SettingsController;
 use App\Http\Controllers\Cms\TagController;
@@ -31,6 +32,17 @@ Route::middleware(['auth', 'cms'])->group(function () {
 
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('cms.dashboard');
+
+    // Profile
+    Route::prefix('profile')->group(function () {
+        Route::get('/{tab?}', [ProfileController::class, 'index'])
+            ->name('cms.profile')
+            ->where('tab', 'profile|avatar|security');
+        Route::put('/', [ProfileController::class, 'update'])->name('cms.profile.update');
+        Route::put('/password', [ProfileController::class, 'updatePassword'])->name('cms.profile.password');
+        Route::post('/avatar', [ProfileController::class, 'updateAvatar'])->name('cms.profile.avatar');
+        Route::delete('/avatar', [ProfileController::class, 'destroyAvatar'])->name('cms.profile.avatar.destroy');
+    });
 
     // Notifications
     Route::prefix('notifications')->group(function () {
