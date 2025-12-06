@@ -102,6 +102,9 @@ class UserStatsService
 
         return $targets->map(fn (UserTarget $target) => [
             'id' => $target->id,
+            'target_type' => $target->target_type,
+            'target_type_label' => UserTarget::getTargetTypeLabel($target->target_type),
+            'target_type_icon' => UserTarget::getTargetTypeIcon($target->target_type),
             'period_type' => $target->period_type,
             'target_count' => $target->target_count,
             'category_id' => $target->category_id,

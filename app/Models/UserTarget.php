@@ -11,15 +11,28 @@ class UserTarget extends Model
 {
     use HasFactory;
 
+    // Period types
     public const PERIOD_WEEKLY = 'weekly';
 
     public const PERIOD_MONTHLY = 'monthly';
 
     public const PERIOD_YEARLY = 'yearly';
 
+    // Target types (content types)
+    public const TYPE_ALL = 'all';
+
+    public const TYPE_POST = 'post';
+
+    public const TYPE_IMAGE = 'image';
+
+    public const TYPE_AUDIO = 'audio';
+
+    public const TYPE_VIDEO = 'video';
+
     protected $fillable = [
         'user_id',
         'category_id',
+        'target_type',
         'period_type',
         'period_start',
         'target_count',
@@ -68,6 +81,14 @@ class UserTarget extends Model
     public function scopeOfType($query, string $periodType)
     {
         return $query->where('period_type', $periodType);
+    }
+
+    /**
+     * Filter by target type (content type).
+     */
+    public function scopeForTargetType($query, string $targetType)
+    {
+        return $query->where('target_type', $targetType);
     }
 
     /**
@@ -121,6 +142,43 @@ class UserTarget extends Model
     // === Helpers ===
 
     /**
+     * Get all available target types.
+     */
+    public static function getTargetTypes(): array
+    {
+        return [
+            self::TYPE_ALL => 'All Content',
+            self::TYPE_POST => 'Posts',
+            self::TYPE_IMAGE => 'Images',
+            self::TYPE_AUDIO => 'Audio',
+            self::TYPE_VIDEO => 'Videos',
+        ];
+    }
+
+    /**
+     * Get icon for target type.
+     */
+    public static function getTargetTypeIcon(string $type): string
+    {
+        return match ($type) {
+            self::TYPE_ALL => 'i-lucide-layers',
+            self::TYPE_POST => 'i-lucide-file-text',
+            self::TYPE_IMAGE => 'i-lucide-image',
+            self::TYPE_AUDIO => 'i-lucide-music',
+            self::TYPE_VIDEO => 'i-lucide-video',
+            default => 'i-lucide-target',
+        };
+    }
+
+    /**
+     * Get label for target type.
+     */
+    public static function getTargetTypeLabel(string $type): string
+    {
+        return self::getTargetTypes()[$type] ?? ucfirst($type);
+    }
+
+    /**
      * Check if this is a category-specific target.
      */
     public function isCategorySpecific(): bool
@@ -157,7 +215,7 @@ class UserTarget extends Model
      */
     public function getProgress(): array
     {
-        $current = $this->countPublishedInPeriod();
+        $current = $this->countInPeriod();
         $percentage = $this->target_count > 0
             ? min(100, round(($current / $this->target_count) * 100))
             : 0;
@@ -171,9 +229,24 @@ class UserTarget extends Model
     }
 
     /**
+     * Count items in this target's period based on target type.
+     */
+    public function countInPeriod(): int
+    {
+        return match ($this->target_type) {
+            self::TYPE_POST => $this->countPostsInPeriod(),
+            self::TYPE_IMAGE => $this->countMediaInPeriod('image'),
+            self::TYPE_AUDIO => $this->countMediaInPeriod('audio'),
+            self::TYPE_VIDEO => $this->countMediaInPeriod('video'),
+            self::TYPE_ALL => $this->countAllInPeriod(),
+            default => $this->countPostsInPeriod(),
+        };
+    }
+
+    /**
      * Count published posts in this target's period.
      */
-    public function countPublishedInPeriod(): int
+    public function countPostsInPeriod(): int
     {
         $periodEnd = $this->getPeriodEnd();
 
@@ -189,6 +262,38 @@ class UserTarget extends Model
         }
 
         return $query->count();
+    }
+
+    /**
+     * Count media uploads in this target's period.
+     */
+    public function countMediaInPeriod(string $mediaType): int
+    {
+        $periodEnd = $this->getPeriodEnd();
+
+        $query = Media::where('uploaded_by', $this->user_id)
+            ->where('type', $mediaType)
+            ->whereBetween('created_at', [$this->period_start, $periodEnd]);
+
+        // If category-specific, filter by tag (for images/videos tagged with category)
+        if ($this->category_id !== null) {
+            $query->whereHas('tags', function ($q) {
+                $q->where('tags.id', $this->category_id);
+            });
+        }
+
+        return $query->count();
+    }
+
+    /**
+     * Count all content types in this target's period.
+     */
+    public function countAllInPeriod(): int
+    {
+        return $this->countPostsInPeriod()
+            + $this->countMediaInPeriod('image')
+            + $this->countMediaInPeriod('audio')
+            + $this->countMediaInPeriod('video');
     }
 
     /**
@@ -247,7 +352,7 @@ class UserTarget extends Model
      */
     public function getDisplayLabel(): string
     {
-        $label = self::getPeriodLabel($this->period_type);
+        $label = self::getTargetTypeLabel($this->target_type);
 
         if ($this->category) {
             $label .= ' - '.$this->category->name;

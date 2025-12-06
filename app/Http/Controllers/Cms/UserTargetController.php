@@ -55,6 +55,9 @@ class UserTargetController extends Controller
             ->map(function ($writer) {
                 $targets = $writer->targets->map(fn (UserTarget $target) => [
                     'id' => $target->id,
+                    'target_type' => $target->target_type,
+                    'target_type_label' => UserTarget::getTargetTypeLabel($target->target_type),
+                    'target_type_icon' => UserTarget::getTargetTypeIcon($target->target_type),
                     'target_count' => $target->target_count,
                     'category_id' => $target->category_id,
                     'category_name' => $target->category?->name,
@@ -84,6 +87,7 @@ class UserTargetController extends Controller
         return Inertia::render('Targets/Index', [
             'writers' => $writers,
             'categories' => $categories,
+            'targetTypes' => UserTarget::getTargetTypes(),
             'periodType' => $periodType,
             'periodLabel' => UserTarget::getPeriodLabel($periodType),
             'isAdmin' => true,
@@ -108,6 +112,7 @@ class UserTargetController extends Controller
             'targets' => $targets,
             'stats' => $stats,
             'categories' => $categories,
+            'targetTypes' => UserTarget::getTargetTypes(),
             'periodType' => $periodType,
             'periodLabel' => UserTarget::getPeriodLabel($periodType),
             'isAdmin' => false,
@@ -124,17 +129,20 @@ class UserTargetController extends Controller
 
         $validated = $request->validate([
             'period_type' => ['required', 'in:weekly,monthly,yearly'],
+            'target_type' => ['required', 'in:all,post,image,audio,video'],
             'target_count' => ['required', 'integer', 'min:1', 'max:1000'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
         ]);
 
         $periodStart = UserTarget::getPeriodStart($validated['period_type']);
         $categoryId = $validated['category_id'] ?? null;
+        $targetType = $validated['target_type'];
 
-        // Check if target already exists for this period + category
+        // Check if target already exists for this period + category + target_type
         $existingTarget = UserTarget::forUser($user->id)
             ->forPeriod($validated['period_type'])
             ->forCategory($categoryId)
+            ->forTargetType($targetType)
             ->first();
 
         if ($existingTarget) {
@@ -155,6 +163,7 @@ class UserTargetController extends Controller
         UserTarget::create([
             'user_id' => $user->id,
             'category_id' => $categoryId,
+            'target_type' => $targetType,
             'period_type' => $validated['period_type'],
             'period_start' => $periodStart,
             'target_count' => $validated['target_count'],
@@ -200,6 +209,7 @@ class UserTargetController extends Controller
 
         $validated = $request->validate([
             'period_type' => ['required', 'in:weekly,monthly,yearly'],
+            'target_type' => ['required', 'in:all,post,image,audio,video'],
             'target_count' => ['required', 'integer', 'min:1', 'max:1000'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -207,11 +217,13 @@ class UserTargetController extends Controller
 
         $periodStart = UserTarget::getPeriodStart($validated['period_type']);
         $categoryId = $validated['category_id'] ?? null;
+        $targetType = $validated['target_type'];
 
         UserTarget::updateOrCreate(
             [
                 'user_id' => $targetUser->id,
                 'category_id' => $categoryId,
+                'target_type' => $targetType,
                 'period_type' => $validated['period_type'],
                 'period_start' => $periodStart,
             ],
@@ -223,8 +235,9 @@ class UserTargetController extends Controller
         );
 
         $categoryName = $categoryId ? Category::find($categoryId)?->name : 'Overall';
+        $typeName = UserTarget::getTargetTypeLabel($targetType);
 
-        return redirect()->back()->with('success', "Target ({$categoryName}) assigned to {$targetUser->name}.");
+        return redirect()->back()->with('success', "{$typeName} target ({$categoryName}) assigned to {$targetUser->name}.");
     }
 
     /**

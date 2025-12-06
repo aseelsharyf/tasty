@@ -13,6 +13,9 @@ interface TargetProgress {
 
 interface Target {
     id: number;
+    target_type: string;
+    target_type_label: string;
+    target_type_icon: string;
     target_count: number;
     category_id: number | null;
     category_name: string | null;
@@ -40,6 +43,7 @@ interface Category {
 const props = defineProps<{
     writers: Writer[];
     categories: Category[];
+    targetTypes: Record<string, string>;
     periodType: string;
     periodLabel: string;
     isAdmin: boolean;
@@ -91,6 +95,7 @@ const selectedWriterForTarget = ref<Writer | null>(null);
 const showAssignModal = ref(false);
 const assignForm = ref({
     period_type: props.periodType,
+    target_type: 'post',
     target_count: 10,
     category_id: null as number | null,
     notes: '',
@@ -103,6 +108,7 @@ function openAssignModal(writer: Writer, existingTarget?: Target) {
     editingTarget.value = existingTarget || null;
     assignForm.value = {
         period_type: props.periodType,
+        target_type: existingTarget?.target_type || 'post',
         target_count: existingTarget?.target_count || 10,
         category_id: existingTarget?.category_id || null,
         notes: existingTarget?.notes || '',
@@ -153,16 +159,6 @@ async function confirmDelete() {
     }
 }
 
-// Get overall target for a writer
-function getOverallTarget(writer: Writer): Target | undefined {
-    return writer.targets.find(t => t.category_id === null);
-}
-
-// Get category targets for a writer
-function getCategoryTargets(writer: Writer): Target[] {
-    return writer.targets.filter(t => t.category_id !== null);
-}
-
 // Progress color
 function getProgressColor(percentage: number): string {
     if (percentage >= 100) return 'success';
@@ -183,6 +179,27 @@ const periodOptions = [
     { label: 'Monthly', value: 'monthly' },
     { label: 'Yearly', value: 'yearly' },
 ];
+
+// Target type options
+const targetTypeOptions = computed(() =>
+    Object.entries(props.targetTypes).map(([value, label]) => ({
+        label,
+        value,
+        icon: getTargetTypeIcon(value),
+    }))
+);
+
+// Target type icons
+function getTargetTypeIcon(type: string): string {
+    const icons: Record<string, string> = {
+        all: 'i-lucide-layers',
+        post: 'i-lucide-file-text',
+        image: 'i-lucide-image',
+        audio: 'i-lucide-music',
+        video: 'i-lucide-video',
+    };
+    return icons[type] || 'i-lucide-target';
+}
 
 // Writer options for adding new target
 const writerOptions = computed(() => {
@@ -279,62 +296,20 @@ function onSelectNewWriter(option: typeof writerOptions.value[number] | null) {
 
                                     <!-- Targets Grid -->
                                     <div class="space-y-3 mt-3">
-                                        <!-- Overall Target -->
-                                        <div v-if="getOverallTarget(writer)" class="flex items-center gap-4">
-                                            <div class="flex items-center gap-2 w-32 shrink-0">
-                                                <UIcon name="i-lucide-target" class="size-4 text-primary" />
-                                                <span class="text-sm font-medium">Overall</span>
-                                            </div>
-                                            <div class="flex-1 flex items-center gap-3">
-                                                <div class="flex-1 max-w-xs">
-                                                    <div class="h-2 bg-muted/20 rounded-full overflow-hidden">
-                                                        <div
-                                                            class="h-full rounded-full transition-all"
-                                                            :class="`bg-${getProgressColor(getOverallTarget(writer)!.progress.percentage)}`"
-                                                            :style="{ width: `${getOverallTarget(writer)!.progress.percentage}%` }"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <span class="text-sm font-medium whitespace-nowrap w-20">
-                                                    {{ getOverallTarget(writer)!.progress.current }}/{{ getOverallTarget(writer)!.progress.target }}
-                                                </span>
-                                                <UBadge
-                                                    v-if="getOverallTarget(writer)!.is_assigned"
-                                                    color="info"
-                                                    variant="subtle"
-                                                    size="xs"
-                                                    class="hidden sm:flex"
-                                                >
-                                                    {{ getOverallTarget(writer)!.assigned_by_name }}
-                                                </UBadge>
-                                            </div>
-                                            <div class="flex items-center gap-1">
-                                                <UButton
-                                                    size="xs"
-                                                    variant="ghost"
-                                                    color="neutral"
-                                                    icon="i-lucide-edit"
-                                                    @click="openAssignModal(writer, getOverallTarget(writer))"
-                                                />
-                                                <UButton
-                                                    size="xs"
-                                                    variant="ghost"
-                                                    color="error"
-                                                    icon="i-lucide-trash-2"
-                                                    @click="openDeleteModal(getOverallTarget(writer)!, writer)"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <!-- Category Targets -->
                                         <div
-                                            v-for="target in getCategoryTargets(writer)"
+                                            v-for="target in writer.targets"
                                             :key="target.id"
                                             class="flex items-center gap-4"
                                         >
-                                            <div class="flex items-center gap-2 w-32 shrink-0">
-                                                <UIcon name="i-lucide-folder" class="size-4 text-muted" />
-                                                <span class="text-sm truncate">{{ target.category_name }}</span>
+                                            <div class="flex items-center gap-2 w-40 shrink-0">
+                                                <UIcon :name="target.target_type_icon" class="size-4 text-primary" />
+                                                <div class="flex flex-col">
+                                                    <span class="text-sm font-medium">{{ target.target_type_label }}</span>
+                                                    <span v-if="target.category_name" class="text-xs text-muted truncate">
+                                                        {{ target.category_name }}
+                                                    </span>
+                                                    <span v-else class="text-xs text-muted">Overall</span>
+                                                </div>
                                             </div>
                                             <div class="flex-1 flex items-center gap-3">
                                                 <div class="flex-1 max-w-xs">
@@ -438,17 +413,14 @@ function onSelectNewWriter(option: typeof writerOptions.value[number] | null) {
             </template>
         </UDashboardPanel>
 
-        <!-- Add Target to New Writer Modal -->
-        <UModal v-model:open="showAddWriterModal">
-            <template #content>
-                <UCard>
-                    <template #header>
-                        <div class="flex items-center gap-2">
-                            <UIcon name="i-lucide-user-plus" class="size-5 text-primary" />
-                            <h3 class="font-semibold">Add Target</h3>
-                        </div>
-                    </template>
-
+        <!-- Add Target to New Writer Slideover -->
+        <USlideover
+            v-model:open="showAddWriterModal"
+            title="Add Target"
+            description="Select a writer to assign a target"
+        >
+            <template #body>
+                <div class="space-y-4">
                     <UFormField label="Select Writer">
                         <UInputMenu
                             v-model:query="newWriterSearch"
@@ -479,100 +451,101 @@ function onSelectNewWriter(option: typeof writerOptions.value[number] | null) {
                         </UInputMenu>
                     </UFormField>
 
-                    <p v-if="writerOptions.length === 0" class="text-sm text-muted mt-4 text-center">
+                    <p v-if="writerOptions.length === 0" class="text-sm text-muted text-center py-4">
                         All writers already have targets for this period.
                     </p>
-
-                    <template #footer>
-                        <div class="flex justify-end">
-                            <UButton
-                                color="neutral"
-                                variant="ghost"
-                                @click="showAddWriterModal = false"
-                            >
-                                Cancel
-                            </UButton>
-                        </div>
-                    </template>
-                </UCard>
+                </div>
             </template>
-        </UModal>
 
-        <!-- Assign Target Modal -->
-        <UModal v-model:open="showAssignModal">
-            <template #content>
-                <UCard>
-                    <template #header>
-                        <div class="flex items-center gap-2">
-                            <UIcon name="i-lucide-target" class="size-5 text-primary" />
-                            <h3 class="font-semibold">
-                                {{ editingTarget ? 'Edit' : 'Assign' }} Target
-                                <span v-if="selectedWriterForTarget" class="text-muted font-normal">
-                                    - {{ selectedWriterForTarget.name }}
-                                </span>
-                            </h3>
-                        </div>
-                    </template>
-
-                    <div class="space-y-4">
-                        <UFormField label="Category">
-                            <USelectMenu
-                                v-model="assignForm.category_id"
-                                :items="categoryOptions"
-                                value-key="value"
-                                placeholder="Select category..."
-                            />
-                            <template #hint>
-                                Leave as "Overall" to set a target for all articles
-                            </template>
-                        </UFormField>
-
-                        <UFormField label="Period">
-                            <USelectMenu
-                                v-model="assignForm.period_type"
-                                :items="periodOptions"
-                                value-key="value"
-                            />
-                        </UFormField>
-
-                        <UFormField label="Target (number of articles)">
-                            <UInput
-                                v-model.number="assignForm.target_count"
-                                type="number"
-                                min="1"
-                                max="1000"
-                            />
-                        </UFormField>
-
-                        <UFormField label="Notes (optional)">
-                            <UTextarea
-                                v-model="assignForm.notes"
-                                placeholder="Add any notes for the writer..."
-                                :rows="2"
-                            />
-                        </UFormField>
-                    </div>
-
-                    <template #footer>
-                        <div class="flex justify-end gap-2">
-                            <UButton
-                                color="neutral"
-                                variant="ghost"
-                                @click="showAssignModal = false"
-                            >
-                                Cancel
-                            </UButton>
-                            <UButton
-                                :loading="savingAssignment"
-                                @click="submitAssignment"
-                            >
-                                {{ editingTarget ? 'Update' : 'Assign' }} Target
-                            </UButton>
-                        </div>
-                    </template>
-                </UCard>
+            <template #footer>
+                <div class="flex justify-end">
+                    <UButton
+                        color="neutral"
+                        variant="ghost"
+                        @click="showAddWriterModal = false"
+                    >
+                        Cancel
+                    </UButton>
+                </div>
             </template>
-        </UModal>
+        </USlideover>
+
+        <!-- Assign Target Slideover -->
+        <USlideover
+            v-model:open="showAssignModal"
+            :title="editingTarget ? 'Edit Target' : 'Assign Target'"
+            :description="selectedWriterForTarget ? `Set target for ${selectedWriterForTarget.name}` : ''"
+        >
+            <template #body>
+                <div class="space-y-4">
+                    <UFormField label="Content Type">
+                        <USelectMenu
+                            v-model="assignForm.target_type"
+                            :items="targetTypeOptions"
+                            :icon="getTargetTypeIcon(assignForm.target_type)"
+                            value-key="value"
+                            class="w-full"
+                        />
+                    </UFormField>
+
+                    <UFormField label="Category" help="Leave as 'Overall' to set a target across all categories">
+                        <USelectMenu
+                            v-model="assignForm.category_id"
+                            :items="categoryOptions"
+                            value-key="value"
+                            placeholder="Select category..."
+                            class="w-full"
+                        />
+                    </UFormField>
+
+                    <UFormField label="Period">
+                        <USelectMenu
+                            v-model="assignForm.period_type"
+                            :items="periodOptions"
+                            value-key="value"
+                            class="w-full"
+                        />
+                    </UFormField>
+
+                    <UFormField label="Target Count">
+                        <UInput
+                            v-model.number="assignForm.target_count"
+                            type="number"
+                            min="1"
+                            max="1000"
+                            class="w-full"
+                        />
+                    </UFormField>
+
+                    <UFormField label="Notes (optional)">
+                        <UTextarea
+                            v-model="assignForm.notes"
+                            placeholder="Add any notes for the writer..."
+                            :rows="3"
+                            class="w-full"
+                        />
+                    </UFormField>
+                </div>
+            </template>
+
+            <template #footer>
+                <div class="flex justify-end gap-2">
+                    <UButton
+                        color="neutral"
+                        variant="ghost"
+                        @click="showAssignModal = false"
+                    >
+                        Cancel
+                    </UButton>
+                    <UButton
+                        :loading="savingAssignment"
+                        @click="submitAssignment"
+                    >
+                        {{ editingTarget ? 'Update' : 'Assign' }} Target
+                    </UButton>
+                </div>
+            </template>
+        </USlideover>
 
         <!-- Delete Confirmation Modal -->
         <UModal v-model:open="showDeleteModal">
@@ -588,9 +561,13 @@ function onSelectNewWriter(option: typeof writerOptions.value[number] | null) {
                     <p class="text-muted">
                         Are you sure you want to remove the
                         <span class="font-medium text-highlighted">
-                            {{ targetToDelete?.target.category_name || 'Overall' }}
+                            {{ targetToDelete?.target.target_type_label }}
                         </span>
-                        target for
+                        target
+                        <template v-if="targetToDelete?.target.category_name">
+                            (<span class="text-highlighted">{{ targetToDelete?.target.category_name }}</span>)
+                        </template>
+                        for
                         <span class="font-medium text-highlighted">{{ targetToDelete?.writer.name }}</span>?
                     </p>
                     <p class="text-sm text-muted mt-2">
