@@ -21,7 +21,7 @@ const form = useForm({
 });
 
 const showPassword = ref(false);
-const selectedDevUser = ref<DevUser | null>(null);
+const selectedDevUserEmail = ref<string | null>(null);
 
 const roleColors: Record<string, string> = {
     Admin: 'error',
@@ -46,22 +46,20 @@ const devUserOptions = computed(() => {
         value: user.email,
         suffix: user.role,
         icon: roleIcons[user.role] || 'i-lucide-user',
-        user,
     })) || [];
 });
 
 // Watch for dev user selection and auto-login
-function onDevUserSelect(option: typeof devUserOptions.value[number] | null) {
-    if (option) {
-        selectedDevUser.value = option.user;
-        form.email = option.user.email;
+watch(selectedDevUserEmail, (email) => {
+    if (email) {
+        form.email = email;
         form.password = 'password';
         // Auto-submit after a brief delay for visual feedback
         setTimeout(() => {
             onSubmit();
-        }, 100);
+        }, 150);
     }
-}
+});
 
 function onSubmit() {
     form.post('/cms/login', {
@@ -94,6 +92,7 @@ function onSubmit() {
                         </div>
 
                         <USelectMenu
+                            v-model="selectedDevUserEmail"
                             :items="devUserOptions"
                             value-key="value"
                             placeholder="Select a user to login..."
@@ -101,7 +100,6 @@ function onSubmit() {
                             size="lg"
                             class="w-full"
                             :loading="form.processing"
-                            @update:model-value="onDevUserSelect"
                         >
                             <template #item="{ item }">
                                 <div class="flex items-center gap-3 w-full py-1">
