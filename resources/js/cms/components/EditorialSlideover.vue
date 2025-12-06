@@ -19,6 +19,14 @@ interface User {
     avatar_url: string | null;
 }
 
+interface ContentSnapshot {
+    title?: string;
+    subtitle?: string;
+    excerpt?: string;
+    content?: unknown;
+    [key: string]: unknown;
+}
+
 interface Comment {
     id: number;
     uuid: string;
@@ -51,6 +59,7 @@ interface Version {
     created_by: User | null;
     created_at: string;
     transitions: Transition[];
+    content_snapshot?: ContentSnapshot;
 }
 
 interface WorkflowTransitionConfig {
@@ -85,6 +94,17 @@ interface PostTypeConfig {
     fields?: PostTypeField[];
 }
 
+interface VersionListItem {
+    uuid: string;
+    version_number: number;
+    workflow_status: string;
+    is_active: boolean;
+    is_current: boolean;
+    is_draft: boolean;
+    created_by: { name: string } | null;
+    created_at: string;
+}
+
 // === Props & Emits ===
 
 const props = defineProps<{
@@ -94,6 +114,7 @@ const props = defineProps<{
     currentVersionUuid: string | null;
     workflowStatus: string;
     workflowConfig: WorkflowConfig;
+    versionsList?: VersionListItem[];
     categories: Category[];
     tags: Tag[];
     postTypes: { value: string; label: string }[];
@@ -109,6 +130,7 @@ const props = defineProps<{
     isReadOnly: boolean;
     author?: { name: string } | null;
     publishedAt?: string | null;
+    postStatus?: string; // The actual post status (draft/published/scheduled/archived)
 }>();
 
 const emit = defineEmits<{
@@ -124,6 +146,7 @@ const emit = defineEmits<{
     (e: 'update:metaDescription', value: string): void;
     (e: 'update:customFields', value: Record<string, unknown>): void;
     (e: 'generate-slug'): void;
+    (e: 'create-draft'): void;
 }>();
 
 // === Reactive State ===
@@ -148,6 +171,7 @@ const versionsLoading = ref(false);
 const versions = ref<Version[]>([]);
 const expandedVersions = ref<Set<number>>(new Set());
 const reverting = ref<number | null>(null);
+const creatingDraft = ref(false);
 
 // Workflow state
 const transitionsLoading = ref(false);
@@ -168,6 +192,25 @@ const currentState = computed(() => {
         color: 'neutral',
         icon: 'i-lucide-circle',
     };
+});
+
+// Check if post is currently published (read-only mode)
+// Use postStatus prop (the actual post status) with fallback to workflowStatus for backwards compatibility
+const isPublished = computed(() => props.postStatus === 'published' || props.workflowStatus === 'published');
+
+// Get the active (published) version UUID from versionsList
+const activeVersionUuid = computed(() => {
+    return props.versionsList?.find(v => v.is_active)?.uuid || null;
+});
+
+// Check if there's already a draft version (other than the current active one)
+const existingDraftVersion = computed(() => {
+    return props.versionsList?.find(v => v.is_draft && !v.is_active) || null;
+});
+
+// Check if current version is approved (can be published)
+const isCurrentVersionApproved = computed(() => {
+    return props.workflowStatus === 'approved';
 });
 
 const flattenedCategories = computed(() => {
@@ -287,6 +330,84 @@ function toggleExpand(versionId: number) {
     } else {
         expandedVersions.value.add(versionId);
     }
+}
+
+// Create a new draft from an existing version
+async function createDraftFromVersion(version: Version) {
+    creatingDraft.value = true;
+    try {
+        await axios.post(`/cms/workflow/versions/${version.uuid}/revert`);
+        toast.add({ title: 'Draft Created', description: `New draft created from version ${version.version_number}`, color: 'success' });
+        emit('create-draft');
+        emit('refresh');
+        await fetchVersions();
+    } catch (error: any) {
+        toast.add({ title: 'Error', description: error.response?.data?.message || 'Failed to create draft', color: 'error' });
+    } finally {
+        creatingDraft.value = false;
+    }
+}
+
+// Create a new draft from the current published version
+async function createNewDraft() {
+    // If there's already an existing draft, switch to it instead of creating a new one
+    if (existingDraftVersion.value) {
+        toast.add({
+            title: 'Draft Already Exists',
+            description: 'Switching to existing draft version.',
+            color: 'info'
+        });
+        emit('version-switch', existingDraftVersion.value.uuid);
+        emit('update:open', false);
+        return;
+    }
+
+    // Use the active (published) version to create the draft
+    const sourceVersionUuid = activeVersionUuid.value || props.currentVersionUuid;
+    if (!sourceVersionUuid) return;
+
+    const sourceVersion = versions.value.find(v => v.uuid === sourceVersionUuid);
+    if (sourceVersion) {
+        await createDraftFromVersion(sourceVersion);
+    }
+}
+
+// Preview a version's content - navigate via URL
+function openVersionPreview(version: Version) {
+    emit('version-switch', version.uuid);
+    emit('update:open', false); // Close slideover after switching
+}
+
+// Get dropdown items for a version
+function getVersionDropdownItems(version: Version) {
+    const items = [];
+
+    // Allow viewing/switching to any version except the current one
+    if (version.uuid !== props.currentVersionUuid) {
+        items.push({
+            label: 'View this version',
+            icon: 'i-lucide-eye',
+            onSelect: () => openVersionPreview(version),
+        });
+    }
+
+    if (version.uuid !== props.currentVersionUuid) {
+        items.push({
+            label: 'Create Draft From This',
+            icon: 'i-lucide-file-plus',
+            onSelect: () => createDraftFromVersion(version),
+        });
+    }
+
+    if (version.uuid !== props.currentVersionUuid && !isPublished.value) {
+        items.push({
+            label: 'Revert to this',
+            icon: 'i-lucide-rotate-ccw',
+            onSelect: () => revertToVersion(version),
+        });
+    }
+
+    return items;
 }
 
 // Workflow methods
@@ -566,13 +687,11 @@ const commentTypeOptions = [
                                             </p>
                                             <p v-if="version.version_note" class="text-xs text-muted mt-1 italic">"{{ version.version_note }}"</p>
                                         </div>
-                                        <UDropdownMenu v-if="version.uuid !== currentVersionUuid">
+                                        <UDropdownMenu
+                                            v-if="getVersionDropdownItems(version).length > 0"
+                                            :items="getVersionDropdownItems(version)"
+                                        >
                                             <UButton icon="i-lucide-more-vertical" color="neutral" variant="ghost" size="xs" />
-                                            <template #content>
-                                                <UDropdownMenuItem icon="i-lucide-rotate-ccw" @click="revertToVersion(version)">
-                                                    Revert to this
-                                                </UDropdownMenuItem>
-                                            </template>
                                         </UDropdownMenu>
                                     </div>
 
@@ -617,8 +736,101 @@ const commentTypeOptions = [
                             </div>
                         </div>
 
-                        <!-- Available Actions -->
-                        <div v-if="availableTransitions.length > 0">
+                        <!-- Published Post Actions -->
+                        <div v-if="isPublished" class="p-4 rounded-lg bg-elevated border border-default">
+                            <div class="flex items-start gap-3">
+                                <UIcon name="i-lucide-lock" class="size-5 text-muted shrink-0 mt-0.5" />
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium">This post is published</p>
+                                    <p class="text-xs text-muted mt-1">
+                                        Published content is read-only. To make changes, {{ existingDraftVersion ? 'edit the existing draft' : 'create a new draft version' }} or unpublish the post first.
+                                    </p>
+                                    <div class="flex flex-wrap gap-2 mt-3">
+                                        <!-- Show "Edit Draft" if draft exists, otherwise "Create New Draft" -->
+                                        <UButton
+                                            v-if="existingDraftVersion"
+                                            size="sm"
+                                            color="primary"
+                                            icon="i-lucide-edit"
+                                            @click="emit('version-switch', existingDraftVersion.uuid); emit('update:open', false)"
+                                        >
+                                            Edit Draft (v{{ existingDraftVersion.version_number }})
+                                        </UButton>
+                                        <UButton
+                                            v-else
+                                            size="sm"
+                                            color="primary"
+                                            icon="i-lucide-file-plus"
+                                            :loading="creatingDraft"
+                                            @click="createNewDraft"
+                                        >
+                                            Create New Draft
+                                        </UButton>
+                                        <!-- Show Unpublish button if transitions are loaded -->
+                                        <UButton
+                                            v-if="availableTransitions.some(t => t.to === 'draft')"
+                                            size="sm"
+                                            color="error"
+                                            variant="soft"
+                                            icon="i-lucide-globe-lock"
+                                            @click="openTransitionModal(availableTransitions.find(t => t.to === 'draft')!)"
+                                        >
+                                            Unpublish
+                                        </UButton>
+                                        <!-- Show loading state while fetching transitions -->
+                                        <UButton
+                                            v-else-if="transitionsLoading"
+                                            size="sm"
+                                            color="neutral"
+                                            variant="soft"
+                                            icon="i-lucide-loader-2"
+                                            disabled
+                                        >
+                                            <UIcon name="i-lucide-loader-2" class="animate-spin mr-1" />
+                                            Loading...
+                                        </UButton>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Approved Version - Publish Action -->
+                        <div v-else-if="isCurrentVersionApproved" class="p-4 rounded-lg bg-success/10 border border-success/20">
+                            <div class="flex items-start gap-3">
+                                <UIcon name="i-lucide-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-success">Ready to Publish</p>
+                                    <p class="text-xs text-muted mt-1">
+                                        This version has been approved and is ready to be published.
+                                    </p>
+                                    <div class="flex flex-wrap gap-2 mt-3">
+                                        <UButton
+                                            v-if="availableTransitions.some(t => t.to === 'published')"
+                                            size="sm"
+                                            color="success"
+                                            icon="i-lucide-globe"
+                                            @click="openTransitionModal(availableTransitions.find(t => t.to === 'published')!)"
+                                        >
+                                            Publish Now
+                                        </UButton>
+                                        <UButton
+                                            v-else-if="transitionsLoading"
+                                            size="sm"
+                                            color="neutral"
+                                            variant="soft"
+                                            icon="i-lucide-loader-2"
+                                            disabled
+                                        >
+                                            <UIcon name="i-lucide-loader-2" class="animate-spin mr-1" />
+                                            Loading...
+                                        </UButton>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Available Actions (for non-published posts) -->
+                        <div v-else-if="availableTransitions.length > 0">
                             <p class="text-xs text-muted mb-2">Available Actions</p>
                             <div class="space-y-2">
                                 <button
@@ -869,4 +1081,5 @@ const commentTypeOptions = [
             </UCard>
         </template>
     </UModal>
+
 </template>

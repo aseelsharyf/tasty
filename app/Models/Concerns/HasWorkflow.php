@@ -154,9 +154,15 @@ trait HasWorkflow
     {
         $draftVersion = $this->draftVersion;
 
-        if (! $draftVersion || ! $draftVersion->isDraft()) {
-            // No editable draft version - create a new one
-            return $this->createVersion($data, 'Updated from previous version');
+        // Verify the draft version exists AND belongs to this model
+        $isValidDraft = $draftVersion
+            && $draftVersion->isDraft()
+            && $draftVersion->versionable_type === static::class
+            && $draftVersion->versionable_id === $this->id;
+
+        if (! $isValidDraft) {
+            // No valid editable draft version - create a new one
+            return $this->createVersion($data, $draftVersion ? 'Updated from previous version' : 'Initial version');
         }
 
         // Update the existing draft version

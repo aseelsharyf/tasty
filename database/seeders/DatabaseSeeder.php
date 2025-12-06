@@ -21,11 +21,16 @@ class DatabaseSeeder extends Seeder
             TaxonomySeeder::class,
         ]);
 
-        // Create Admin user
+        // Create Admin users (2)
         User::factory()->admin()->create([
             'name' => 'Admin User',
             'email' => 'admin@tasty.test',
             'username' => 'admin',
+        ]);
+        User::factory()->admin()->create([
+            'name' => 'Sarah Admin',
+            'email' => 'sarah.admin@tasty.test',
+            'username' => 'sarah_admin',
         ]);
 
         // Create Developer user
@@ -35,24 +40,67 @@ class DatabaseSeeder extends Seeder
             'username' => 'developer',
         ]);
 
-        // Create Editor user
+        // Create Editor users (3)
         User::factory()->editor()->create([
             'name' => 'Editor User',
             'email' => 'editor@tasty.test',
             'username' => 'editor',
         ]);
+        User::factory()->editor()->create([
+            'name' => 'Maya Editor',
+            'email' => 'maya.editor@tasty.test',
+            'username' => 'maya_editor',
+        ]);
+        User::factory()->editor()->create([
+            'name' => 'Ahmed Editor',
+            'email' => 'ahmed.editor@tasty.test',
+            'username' => 'ahmed_editor',
+        ]);
 
-        // Create Writer users
-        User::factory()->writer()->count(3)->create();
+        // Create Writer users (4)
+        User::factory()->writer()->create([
+            'name' => 'Writer One',
+            'email' => 'writer1@tasty.test',
+            'username' => 'writer1',
+        ]);
+        User::factory()->writer()->create([
+            'name' => 'Fatima Writer',
+            'email' => 'fatima.writer@tasty.test',
+            'username' => 'fatima_writer',
+        ]);
+        User::factory()->writer()->create([
+            'name' => 'Ali Writer',
+            'email' => 'ali.writer@tasty.test',
+            'username' => 'ali_writer',
+        ]);
+        User::factory()->writer()->create([
+            'name' => 'Mariyam Writer',
+            'email' => 'mariyam.writer@tasty.test',
+            'username' => 'mariyam_writer',
+        ]);
 
-        // Create Photographer user
+        // Create Photographer users (2)
         User::factory()->photographer()->create([
             'name' => 'Photographer User',
             'email' => 'photographer@tasty.test',
             'username' => 'photographer',
         ]);
+        User::factory()->photographer()->create([
+            'name' => 'Hassan Photo',
+            'email' => 'hassan.photo@tasty.test',
+            'username' => 'hassan_photo',
+        ]);
 
         // Create regular users (no CMS access)
         User::factory()->regularUser()->count(5)->create();
+
+        // Seed workflow configuration
+        $this->call(WorkflowSeeder::class);
+
+        // Seed comprehensive CMS workflow data
+        $this->call(CmsWorkflowDataSeeder::class);
+
+        // Seed user comments on published posts
+        $this->call(CommentSeeder::class);
     }
 }

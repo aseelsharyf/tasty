@@ -17,7 +17,7 @@ class NotificationController extends Controller
     public function index(Request $request): Response
     {
         $query = CmsNotification::forUser(auth()->id())
-            ->with('triggeredByUser:id,name,avatar_url')
+            ->with('triggeredByUser')
             ->latest();
 
         // Filter by type
@@ -50,7 +50,7 @@ class NotificationController extends Controller
     public function recent(): JsonResponse
     {
         $notifications = CmsNotification::forUser(auth()->id())
-            ->with('triggeredByUser:id,name,avatar_url')
+            ->with('triggeredByUser')
             ->latest()
             ->limit(10)
             ->get()

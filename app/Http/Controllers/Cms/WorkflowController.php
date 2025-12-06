@@ -148,6 +148,7 @@ class WorkflowController extends Controller
                 'workflow_status' => $version->workflow_status,
                 'is_active' => $version->is_active,
                 'version_note' => $version->version_note,
+                'content_snapshot' => $version->content_snapshot,
                 'created_by' => $version->createdBy ? [
                     'id' => $version->createdBy->id,
                     'name' => $version->createdBy->name,

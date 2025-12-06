@@ -183,10 +183,10 @@ class Setting extends Model
                 ['from' => 'copydesk', 'to' => 'approved', 'roles' => ['Editor', 'Admin'], 'label' => 'Approve'],
                 ['from' => 'copydesk', 'to' => 'rejected', 'roles' => ['Editor', 'Admin'], 'label' => 'Request Revisions'],
                 ['from' => 'rejected', 'to' => 'review', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Resubmit'],
-                ['from' => 'approved', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
-                ['from' => 'published', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Unpublish'],
+                ['from' => 'approved', 'to' => 'published', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Publish'],
+                ['from' => 'published', 'to' => 'draft', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Unpublish'],
             ],
-            'publish_roles' => ['Editor', 'Admin'],
+            'publish_roles' => ['Editor', 'Admin', 'Developer'],
         ];
     }
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import BlockEditor, { type MediaSelectCallback } from '../../components/BlockEditor.vue';
 import MediaPickerModal from '../../components/MediaPickerModal.vue';
@@ -62,6 +62,29 @@ interface WorkflowConfig {
 // Sidebar control
 const { hide: hideSidebar, show: showSidebar } = useSidebar();
 
+interface PostTypeConfig {
+    key: string;
+    label: string;
+    fields?: {
+        name: string;
+        label: string;
+        type: 'text' | 'number' | 'textarea' | 'select' | 'toggle' | 'repeater';
+        suffix?: string;
+        options?: string[];
+    }[];
+}
+
+interface VersionListItem {
+    uuid: string;
+    version_number: number;
+    workflow_status: string;
+    is_active: boolean;
+    is_current: boolean;
+    is_draft: boolean;
+    created_by: { name: string } | null;
+    created_at: string;
+}
+
 const props = defineProps<{
     post: Post & {
         category_id: number | null;
@@ -75,8 +98,10 @@ const props = defineProps<{
     categories: Category[];
     tags: Tag[];
     postTypes: PostTypeOption[];
+    currentPostType?: PostTypeConfig | null;
     language: LanguageInfo | null;
     workflowConfig: WorkflowConfig;
+    versionsList?: VersionListItem[];
 }>();
 
 // Workflow state
@@ -89,6 +114,16 @@ const isReadOnly = computed(() => isPublished.value);
 
 // Editorial slideover state
 const editorialSlideoverOpen = ref(false);
+
+// Delete confirmation modal state
+const deleteModalOpen = ref(false);
+const isDeleting = ref(false);
+
+// Unpublish loading state
+const isUnpublishing = ref(false);
+
+// Create new draft loading state
+const creatingNewDraft = ref(false);
 
 // Use workflow composable
 const workflow = useWorkflow(props.workflowConfig);
@@ -125,7 +160,41 @@ function onWorkflowTransition(newStatus: string) {
 
 // Handle workflow refresh after transition
 function refreshPage() {
-    router.reload({ only: ['post', 'workflowConfig'] });
+    router.reload({ only: ['post', 'workflowConfig', 'versionsList'] });
+}
+
+// Version switcher - computed options for dropdown
+const versionDropdownItems = computed(() => {
+    if (!props.versionsList?.length) return [];
+    return props.versionsList.map(v => ({
+        label: `v${v.version_number}`,
+        value: v.uuid,
+        suffix: v.is_active ? 'Live' : v.is_draft ? 'Draft' : v.workflow_status,
+        is_current: v.is_current,
+    }));
+});
+
+// Current version display label
+const currentVersionLabel = computed(() => {
+    const current = props.versionsList?.find(v => v.uuid === currentVersionUuid.value);
+    if (!current) return 'v1';
+    let label = `v${current.version_number}`;
+    if (current.is_active) label += ' (Live)';
+    else if (current.is_draft) label += ' (Draft)';
+    return label;
+});
+
+// Switch to a different version via URL
+function switchToVersion(versionUuid: string) {
+    if (versionUuid === currentVersionUuid.value) return;
+    router.visit(
+        route('cms.posts.edit', {
+            language: props.post.language_code,
+            post: props.post.uuid,
+            version: versionUuid,
+        }),
+        { preserveState: false }
+    );
 }
 
 // Dhivehi keyboard for RTL content
@@ -171,6 +240,36 @@ const form = useForm({
     meta_title: props.post.meta_title || '',
     meta_description: props.post.meta_description || '',
 });
+
+// Get current post type config - either from props or find it from postTypes
+const currentPostType = computed<PostTypeConfig | null>(() => {
+    // First check if passed from backend
+    if (props.currentPostType) {
+        return props.currentPostType;
+    }
+    // Otherwise find from postTypes list based on form's current selection
+    const found = props.postTypes.find(pt => pt.value === form.post_type);
+    if (found && 'fields' in found) {
+        return {
+            key: found.value,
+            label: found.label,
+            fields: (found as any).fields || [],
+        };
+    }
+    return null;
+});
+
+// Title textarea ref for auto-resize
+const titleTextarea = ref<HTMLTextAreaElement | null>(null);
+
+// Auto-resize title textarea to fit content
+function autoResizeTitle() {
+    const textarea = titleTextarea.value;
+    if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+}
 
 // Unified media picker state
 const mediaPickerOpen = ref(false);
@@ -318,6 +417,8 @@ function handleKeydown(e: KeyboardEvent) {
 
 onMounted(() => {
     document.addEventListener('keydown', handleKeydown);
+    // Auto-resize title on mount if there's existing content
+    nextTick(() => autoResizeTitle());
 });
 
 onBeforeUnmount(() => {
@@ -441,10 +542,100 @@ function goBack() {
     router.visit(`/cms/posts/${langCode}`);
 }
 
+function openDeleteModal() {
+    deleteModalOpen.value = true;
+}
+
 function deletePost() {
-    if (confirm('Are you sure you want to move this post to trash?')) {
-        const langCode = props.language?.code || props.post.language_code || 'en';
-        router.delete(`/cms/posts/${langCode}/${props.post.uuid}`);
+    isDeleting.value = true;
+    const langCode = props.language?.code || props.post.language_code || 'en';
+    router.delete(`/cms/posts/${langCode}/${props.post.uuid}`, {
+        onSuccess: () => {
+            deleteModalOpen.value = false;
+            isDeleting.value = false;
+        },
+        onError: () => {
+            isDeleting.value = false;
+        },
+    });
+}
+
+// Unpublish confirmation modal
+const unpublishModalOpen = ref(false);
+
+function openUnpublishModal() {
+    unpublishModalOpen.value = true;
+}
+
+// Quick unpublish - transitions to draft status
+async function unpublishPost() {
+    if (!currentVersionUuid.value) {
+        toast.add({ title: 'Error', description: 'No version to unpublish', color: 'error' });
+        return;
+    }
+
+    isUnpublishing.value = true;
+    try {
+        const result = await workflow.transition(currentVersionUuid.value, 'draft');
+        if (result.success) {
+            toast.add({ title: 'Unpublished', description: 'Post has been unpublished and moved to draft', color: 'success' });
+            workflowStatus.value = 'draft';
+            unpublishModalOpen.value = false;
+            // Full page reload to ensure all props are updated correctly (including post.status for isReadOnly)
+            router.visit(window.location.href, { preserveState: false });
+        } else {
+            toast.add({ title: 'Error', description: result.error || 'Failed to unpublish', color: 'error' });
+        }
+    } catch (error: any) {
+        toast.add({ title: 'Error', description: error.message || 'Failed to unpublish', color: 'error' });
+    } finally {
+        isUnpublishing.value = false;
+    }
+}
+
+// Get the active (published) version UUID
+const activeVersionUuid = computed(() => {
+    return props.versionsList?.find(v => v.is_active)?.uuid || null;
+});
+
+// Check if there's already a draft version (other than the current active one)
+// Check both is_draft flag and workflow_status as a fallback
+const existingDraftVersion = computed(() => {
+    return props.versionsList?.find(v =>
+        (v.is_draft || v.workflow_status === 'draft') && !v.is_active
+    ) || null;
+});
+
+// Create a new draft version from the published version
+async function createNewDraftVersion() {
+    // If there's already an existing draft, switch to it instead of creating a new one
+    if (existingDraftVersion.value) {
+        toast.add({
+            title: 'Draft Already Exists',
+            description: 'Switching to existing draft version.',
+            color: 'info'
+        });
+        switchToVersion(existingDraftVersion.value.uuid);
+        return;
+    }
+
+    // Use the active (published) version to create the draft, not the current version
+    const sourceVersionUuid = activeVersionUuid.value || currentVersionUuid.value;
+
+    if (!sourceVersionUuid) {
+        toast.add({ title: 'Error', description: 'No version to create draft from', color: 'error' });
+        return;
+    }
+
+    creatingNewDraft.value = true;
+    try {
+        await axios.post(`/cms/workflow/versions/${sourceVersionUuid}/revert`);
+        toast.add({ title: 'Draft Created', description: 'New draft version created. You can now make changes.', color: 'success' });
+        refreshPage();
+    } catch (error: any) {
+        toast.add({ title: 'Error', description: error.response?.data?.message || 'Failed to create draft', color: 'error' });
+    } finally {
+        creatingNewDraft.value = false;
     }
 }
 </script>
@@ -476,6 +667,37 @@ function deletePost() {
                                 <UIcon :name="currentWorkflowState.icon" class="size-3 mr-1" />
                                 {{ currentWorkflowState.label }}
                             </UBadge>
+                            <!-- Version Switcher Dropdown -->
+                            <UDropdownMenu
+                                v-if="versionDropdownItems.length > 1"
+                                :items="versionDropdownItems.map(v => ({
+                                    label: v.label + (v.suffix ? ` (${v.suffix})` : ''),
+                                    icon: v.is_current ? 'i-lucide-check' : 'i-lucide-history',
+                                    disabled: v.is_current,
+                                    onSelect: () => switchToVersion(v.value),
+                                }))"
+                            >
+                                <UButton
+                                    color="neutral"
+                                    variant="soft"
+                                    size="xs"
+                                    trailing-icon="i-lucide-chevron-down"
+                                >
+                                    <UIcon name="i-lucide-history" class="size-3 mr-1" />
+                                    {{ currentVersionLabel }}
+                                </UButton>
+                            </UDropdownMenu>
+                            <!-- Quick Unpublish button for published posts -->
+                            <UButton
+                                v-if="isPublished"
+                                color="error"
+                                variant="soft"
+                                size="xs"
+                                @click="openUnpublishModal"
+                            >
+                                <UIcon name="i-lucide-globe-lock" class="size-3 mr-1" />
+                                Unpublish
+                            </UButton>
                             <UBadge
                                 v-if="language"
                                 :color="isRtl ? 'warning' : 'primary'"
@@ -575,32 +797,65 @@ function deletePost() {
                     >
                         <div :class="['mx-auto px-6 py-12', isFullscreen ? 'max-w-screen-2xl' : 'max-w-2xl']">
                             <!-- Read-only notice -->
-                            <div v-if="isReadOnly" class="mb-6 p-4 rounded-lg bg-warning/10 border border-warning/20">
+                            <div v-if="isReadOnly" class="mb-6 p-4 rounded-lg bg-elevated border border-default">
                                 <div class="flex items-start gap-3">
-                                    <UIcon name="i-lucide-lock" class="size-5 text-warning shrink-0 mt-0.5" />
-                                    <div>
-                                        <p class="text-sm font-medium text-warning">This post is published</p>
+                                    <UIcon name="i-lucide-lock" class="size-5 text-muted shrink-0 mt-0.5" />
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium">This post is published</p>
                                         <p class="text-xs text-muted mt-1">
-                                            Published content is read-only. To make changes, create a new draft version
+                                            Published content is read-only. To make changes, {{ existingDraftVersion ? 'edit the existing draft' : 'create a new draft version' }}
                                             or unpublish the post first.
                                         </p>
+                                        <div class="flex flex-wrap gap-2 mt-3">
+                                            <!-- Show "Edit Draft" if draft exists, otherwise "Create New Draft" -->
+                                            <UButton
+                                                v-if="existingDraftVersion"
+                                                size="sm"
+                                                color="primary"
+                                                icon="i-lucide-edit"
+                                                @click="switchToVersion(existingDraftVersion.uuid)"
+                                            >
+                                                Edit Draft (v{{ existingDraftVersion.version_number }})
+                                            </UButton>
+                                            <UButton
+                                                v-else
+                                                size="sm"
+                                                color="primary"
+                                                icon="i-lucide-file-plus"
+                                                :loading="creatingNewDraft"
+                                                @click="createNewDraftVersion"
+                                            >
+                                                Create New Draft
+                                            </UButton>
+                                            <UButton
+                                                size="sm"
+                                                color="error"
+                                                variant="soft"
+                                                icon="i-lucide-globe-lock"
+                                                @click="openUnpublishModal"
+                                            >
+                                                Unpublish
+                                            </UButton>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Title -->
-                            <input
+                            <textarea
+                                ref="titleTextarea"
                                 v-model="form.title"
-                                type="text"
                                 :placeholder="placeholders.title"
                                 :dir="textDirection"
                                 :readonly="isReadOnly"
+                                rows="1"
                                 :class="[
-                                    'w-full font-bold bg-transparent border-0 outline-none placeholder:text-muted/40 mb-2',
+                                    'w-full font-bold bg-transparent border-0 outline-none placeholder:text-muted/40 mb-2 resize-none overflow-hidden',
                                     textAlign,
                                     isRtl ? 'font-dhivehi text-dhivehi-4xl leading-relaxed placeholder:font-dhivehi' : 'text-4xl leading-tight',
                                     isReadOnly ? 'cursor-not-allowed opacity-70' : '',
                                 ]"
+                                @input="autoResizeTitle"
                                 @keydown="onDhivehiKeyDown"
                             />
                             <p v-if="form.errors.title" class="text-error text-sm mb-2">{{ form.errors.title }}</p>
@@ -854,7 +1109,7 @@ function deletePost() {
                                     icon="i-lucide-trash"
                                     size="sm"
                                     class="w-full justify-start text-error hover:bg-error/10"
-                                    @click="deletePost"
+                                    @click="openDeleteModal"
                                 >
                                     Move to trash
                                 </UButton>
@@ -883,9 +1138,12 @@ function deletePost() {
             :current-version-uuid="currentVersionUuid"
             :workflow-status="workflowStatus"
             :workflow-config="workflowConfig"
+            :post-status="post.status"
+            :versions-list="versionsList"
             :categories="categories"
             :tags="tags"
             :post-types="postTypes"
+            :current-post-type="currentPostType"
             :category-id="form.category_id"
             :selected-tags="form.tags"
             :post-type="form.post_type"
@@ -898,6 +1156,8 @@ function deletePost() {
             :published-at="post.published_at"
             @transition="onWorkflowTransition"
             @refresh="refreshPage"
+            @create-draft="refreshPage"
+            @version-switch="switchToVersion"
             @update:category-id="form.category_id = $event"
             @update:selected-tags="form.tags = $event"
             @update:post-type="form.post_type = $event"
@@ -907,6 +1167,78 @@ function deletePost() {
             @update:custom-fields="form.custom_fields = $event"
             @generate-slug="generateSlug"
         />
+
+        <!-- Delete Confirmation Modal -->
+        <UModal v-model:open="deleteModalOpen">
+            <template #content>
+                <UCard>
+                    <template #header>
+                        <div class="flex items-center gap-2">
+                            <div class="size-10 rounded-full flex items-center justify-center bg-error/10">
+                                <UIcon name="i-lucide-trash-2" class="size-5 text-error" />
+                            </div>
+                            <div>
+                                <h3 class="font-semibold">Move to Trash</h3>
+                                <p class="text-sm text-muted">This action can be undone</p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <p class="text-sm">
+                        Are you sure you want to move <strong>"{{ post.title }}"</strong> to trash?
+                        You can restore it later from the trash.
+                    </p>
+
+                    <template #footer>
+                        <div class="flex justify-end gap-2">
+                            <UButton color="neutral" variant="ghost" @click="deleteModalOpen = false">
+                                Cancel
+                            </UButton>
+                            <UButton color="error" :loading="isDeleting" @click="deletePost">
+                                <UIcon name="i-lucide-trash-2" class="size-4 mr-1" />
+                                Move to Trash
+                            </UButton>
+                        </div>
+                    </template>
+                </UCard>
+            </template>
+        </UModal>
+
+        <!-- Unpublish Confirmation Modal -->
+        <UModal v-model:open="unpublishModalOpen">
+            <template #content>
+                <UCard>
+                    <template #header>
+                        <div class="flex items-center gap-2">
+                            <div class="size-10 rounded-full flex items-center justify-center bg-error/10">
+                                <UIcon name="i-lucide-globe-lock" class="size-5 text-error" />
+                            </div>
+                            <div>
+                                <h3 class="font-semibold">Unpublish Post</h3>
+                                <p class="text-sm text-muted">This will remove it from public view</p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <p class="text-sm">
+                        Are you sure you want to unpublish <strong>"{{ post.title }}"</strong>?
+                        The post will be moved back to draft status and will no longer be visible to the public.
+                    </p>
+
+                    <template #footer>
+                        <div class="flex justify-end gap-2">
+                            <UButton color="neutral" variant="ghost" @click="unpublishModalOpen = false">
+                                Cancel
+                            </UButton>
+                            <UButton color="error" :loading="isUnpublishing" @click="unpublishPost">
+                                <UIcon name="i-lucide-globe-lock" class="size-4 mr-1" />
+                                Unpublish
+                            </UButton>
+                        </div>
+                    </template>
+                </UCard>
+            </template>
+        </UModal>
     </DashboardLayout>
 </template>
 

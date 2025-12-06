@@ -29,8 +29,9 @@ class UpdatePostRequest extends FormRequest
             ],
             'excerpt' => ['nullable', 'string', 'max:500'],
             'content' => ['nullable', 'array'],
-            'post_type' => ['required', Rule::in([Post::TYPE_ARTICLE, Post::TYPE_RECIPE])],
-            'status' => ['required', Rule::in([
+            'post_type' => ['nullable', Rule::in([Post::TYPE_ARTICLE, Post::TYPE_RECIPE])],
+            // Status is controlled by workflow, not direct form submission
+            'status' => ['nullable', Rule::in([
                 Post::STATUS_DRAFT,
                 Post::STATUS_PENDING,
                 Post::STATUS_PUBLISHED,
@@ -45,8 +46,8 @@ class UpdatePostRequest extends FormRequest
             'remove_featured_image' => ['nullable', 'boolean'],
             'custom_fields' => ['nullable', 'array'],
             'custom_fields.*' => ['nullable'],
-            'meta_title' => ['nullable', 'string', 'max:70'],
-            'meta_description' => ['nullable', 'string', 'max:160'],
+            'meta_title' => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string', 'max:500'],
         ];
     }
 
@@ -60,8 +61,8 @@ class UpdatePostRequest extends FormRequest
             'slug.unique' => 'This slug is already in use. Please choose a different one.',
             'scheduled_at.after' => 'Scheduled date must be in the future.',
             'featured_image.max' => 'Featured image must be less than 5MB.',
-            'meta_title.max' => 'SEO title should be less than 70 characters.',
-            'meta_description.max' => 'SEO description should be less than 160 characters.',
+            'meta_title.max' => 'SEO title should be less than 255 characters.',
+            'meta_description.max' => 'SEO description should be less than 500 characters.',
         ];
     }
 }

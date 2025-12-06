@@ -212,13 +212,18 @@ class PostController extends Controller
 
         $tags = Tag::orderByTranslatedName($language)->get()->map(fn ($tag) => $this->formatTagForSelect($tag));
 
+        // Get post types from settings
+        $postTypes = collect(Setting::getPostTypes())->map(fn ($type) => [
+            'value' => $type['slug'],
+            'label' => $type['name'],
+            'icon' => $type['icon'] ?? null,
+            'fields' => $type['fields'] ?? [],
+        ])->values()->all();
+
         return Inertia::render('Posts/Create', [
             'categories' => $categories,
             'tags' => $tags,
-            'postTypes' => [
-                ['value' => Post::TYPE_ARTICLE, 'label' => 'Article'],
-                ['value' => Post::TYPE_RECIPE, 'label' => 'Recipe'],
-            ],
+            'postTypes' => $postTypes,
             'language' => [
                 'code' => $lang->code,
                 'name' => $lang->name,
@@ -288,10 +293,10 @@ class PostController extends Controller
         return $this->edit($language, $post);
     }
 
-    public function edit(string $language, Post $post): Response
+    public function edit(Request $request, string $language, Post $post): Response
     {
         $language = strtolower($language);
-        $post->load(['categories', 'tags', 'author', 'language', 'featuredMedia', 'draftVersion']);
+        $post->load(['categories', 'tags', 'author', 'language', 'featuredMedia', 'draftVersion', 'activeVersion', 'versions.createdBy']);
 
         // Set locale for translatable models
         app()->setLocale($language);
@@ -309,8 +314,60 @@ class PostController extends Controller
         // Get workflow configuration for this post type
         $workflowConfig = Setting::getWorkflow($post->post_type);
 
-        // Get current version UUID (draft version if exists, otherwise null)
-        $currentVersionUuid = $post->draftVersion?->uuid;
+        // Helper to check if a version belongs to this post
+        $isVersionValid = fn ($version) => $version
+            && $version->versionable_type === Post::class
+            && $version->versionable_id === $post->id;
+
+        // Get valid draft and active versions (verify they belong to this post)
+        $validDraftVersion = $isVersionValid($post->draftVersion) ? $post->draftVersion : null;
+        $validActiveVersion = $isVersionValid($post->activeVersion) ? $post->activeVersion : null;
+
+        // Get current version UUID - check query param first, then prefer draft version, fall back to active version
+        $requestedVersionUuid = $request->query('version');
+        $currentVersionUuid = $requestedVersionUuid
+            ?? $validDraftVersion?->uuid
+            ?? $validActiveVersion?->uuid
+            ?? $post->versions()->latest()->first()?->uuid;
+
+        // Validate the requested version belongs to this post
+        if ($requestedVersionUuid) {
+            $validVersion = $post->versions()->where('uuid', $requestedVersionUuid)->exists();
+            if (! $validVersion) {
+                $currentVersionUuid = $validDraftVersion?->uuid
+                    ?? $validActiveVersion?->uuid
+                    ?? $post->versions()->latest()->first()?->uuid;
+            }
+        }
+
+        // Get list of versions for the version switcher dropdown
+        $versionsList = $post->versions()
+            ->orderByDesc('version_number')
+            ->get()
+            ->map(fn ($v) => [
+                'uuid' => $v->uuid,
+                'version_number' => $v->version_number,
+                'workflow_status' => $v->workflow_status,
+                'is_active' => $v->is_active,
+                'is_current' => $v->uuid === $currentVersionUuid,
+                'is_draft' => $validDraftVersion?->uuid === $v->uuid,
+                'created_by' => $v->createdBy ? [
+                    'name' => $v->createdBy->name,
+                ] : null,
+                'created_at' => $v->created_at->toIso8601String(),
+            ]);
+
+        // Get post types from settings with their custom fields
+        $postTypes = collect(Setting::getPostTypes())->map(fn ($type) => [
+            'value' => $type['slug'],
+            'label' => $type['name'],
+            'icon' => $type['icon'] ?? null,
+            'fields' => $type['fields'] ?? [],
+        ])->values()->all();
+
+        // Find the current post type config for custom fields
+        $currentPostTypeConfig = collect(Setting::getPostTypes())
+            ->firstWhere('slug', $post->post_type);
 
         return Inertia::render('Posts/Edit', [
             'post' => [
@@ -358,10 +415,12 @@ class PostController extends Controller
             ],
             'categories' => $categories,
             'tags' => $tags,
-            'postTypes' => [
-                ['value' => Post::TYPE_ARTICLE, 'label' => 'Article'],
-                ['value' => Post::TYPE_RECIPE, 'label' => 'Recipe'],
-            ],
+            'postTypes' => $postTypes,
+            'currentPostType' => $currentPostTypeConfig ? [
+                'key' => $currentPostTypeConfig['slug'],
+                'label' => $currentPostTypeConfig['name'],
+                'fields' => $currentPostTypeConfig['fields'] ?? [],
+            ] : null,
             'language' => $lang ? [
                 'code' => $lang->code,
                 'name' => $lang->name,
@@ -370,6 +429,7 @@ class PostController extends Controller
                 'is_rtl' => $lang->isRtl(),
             ] : null,
             'workflowConfig' => $workflowConfig,
+            'versionsList' => $versionsList,
         ]);
     }
 
@@ -409,8 +469,12 @@ class PostController extends Controller
             $post->clearMediaCollection('featured');
         }
 
-        // Update or create version with latest content using HasWorkflow trait method
-        $post->createVersion();
+        // Build content snapshot for versioning
+        $contentSnapshot = $post->buildContentSnapshot();
+
+        // Update existing draft version or create new one if needed
+        // Use updateDraftVersion which will update existing draft or create new if none exists
+        $post->updateDraftVersion($contentSnapshot);
 
         return redirect()->route('cms.posts.edit', ['language' => $language, 'post' => $post])
             ->with('success', 'Post saved.');

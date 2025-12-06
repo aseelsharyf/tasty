@@ -154,12 +154,14 @@ class WorkflowService
                     $this->publishVersion($version);
                 }
 
-                // If unpublishing (to draft), deactivate the version
+                // If unpublishing (to draft), deactivate the version and set it as the draft version
                 if ($fromStatus === ContentVersion::STATUS_PUBLISHED && $toStatus === ContentVersion::STATUS_DRAFT) {
                     $version->deactivate();
                     $content->update([
                         'status' => 'draft',
                         'published_at' => null,
+                        'active_version_id' => null,
+                        'draft_version_id' => $version->id, // Set this version as the draft version for editing
                     ]);
                 }
 
@@ -186,9 +188,16 @@ class WorkflowService
             throw new \Exception('Only approved versions can be published');
         }
 
+        // Validate that content has required fields before publishing
+        $content = $version->versionable;
+        if ($content) {
+            $this->validatePublishRequirements($content);
+        }
+
         DB::transaction(function () use ($version) {
-            // Activate this version
+            // Activate this version and mark as published
             $version->activate();
+            $version->update(['workflow_status' => ContentVersion::STATUS_PUBLISHED]);
 
             // Update the parent content
             $content = $version->versionable;
@@ -414,6 +423,34 @@ class WorkflowService
         // Sync tags if present
         if (isset($snapshot['tag_ids']) && method_exists($content, 'tags')) {
             $content->tags()->sync($snapshot['tag_ids'] ?? []);
+        }
+    }
+
+    /**
+     * Validate that content meets publishing requirements.
+     *
+     * @throws \Exception
+     */
+    protected function validatePublishRequirements(Model $content): void
+    {
+        $errors = [];
+
+        // Check for category (if the content has categories)
+        if (method_exists($content, 'category')) {
+            if (empty($content->category_id)) {
+                $errors[] = 'A category must be assigned before publishing';
+            }
+        }
+
+        // Check for tags (if the content has tags relationship)
+        if (method_exists($content, 'tags')) {
+            if ($content->tags()->count() === 0) {
+                $errors[] = 'At least one tag must be assigned before publishing';
+            }
+        }
+
+        if (! empty($errors)) {
+            throw new \Exception(implode('. ', $errors));
         }
     }
 }

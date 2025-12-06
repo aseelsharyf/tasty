@@ -97,6 +97,28 @@ function toggleCompare(version: Version) {
     }
 }
 
+// Get dropdown items for a version
+function getVersionDropdownItems(version: Version) {
+    const items = [];
+
+    items.push({
+        label: selectedForCompare.value ? 'Compare with this' : 'Compare',
+        icon: 'i-lucide-git-compare',
+        onSelect: () => toggleCompare(version),
+    });
+
+    if (version.uuid !== props.currentVersionUuid) {
+        items.push({
+            label: 'Revert to this version',
+            icon: 'i-lucide-rotate-ccw',
+            disabled: reverting.value !== null,
+            onSelect: () => revertToVersion(version),
+        });
+    }
+
+    return items;
+}
+
 function toggleExpand(versionId: number) {
     if (expandedVersions.value.has(versionId)) {
         expandedVersions.value.delete(versionId);
@@ -297,29 +319,13 @@ watch(() => props.contentUuid, () => {
                                 @click="toggleExpand(version.id)"
                             />
 
-                            <UDropdownMenu>
+                            <UDropdownMenu :items="getVersionDropdownItems(version)">
                                 <UButton
                                     color="neutral"
                                     variant="ghost"
                                     icon="i-lucide-more-vertical"
                                     size="xs"
                                 />
-                                <template #content>
-                                    <UDropdownMenuItem
-                                        icon="i-lucide-git-compare"
-                                        @click="toggleCompare(version)"
-                                    >
-                                        {{ selectedForCompare ? 'Compare with this' : 'Compare' }}
-                                    </UDropdownMenuItem>
-                                    <UDropdownMenuItem
-                                        v-if="version.uuid !== currentVersionUuid"
-                                        icon="i-lucide-rotate-ccw"
-                                        :disabled="reverting !== null"
-                                        @click="revertToVersion(version)"
-                                    >
-                                        Revert to this version
-                                    </UDropdownMenuItem>
-                                </template>
                             </UDropdownMenu>
                         </div>
                     </div>
