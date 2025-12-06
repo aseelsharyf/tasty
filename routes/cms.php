@@ -100,40 +100,40 @@ Route::middleware(['auth', 'cms'])->group(function () {
         // Language-specific post listing
         Route::get('posts/{language}', [PostController::class, 'index'])
             ->name('cms.posts.index')
-            ->where('language', '[a-z]{2,5}');
+            ->where('language', '[a-zA-Z]{2,5}');
 
         // Create post (language required)
         Route::get('posts/{language}/create', [PostController::class, 'create'])
             ->name('cms.posts.create')
-            ->where('language', '[a-z]{2,5}');
+            ->where('language', '[a-zA-Z]{2,5}');
         Route::post('posts/{language}', [PostController::class, 'store'])
             ->name('cms.posts.store')
-            ->where('language', '[a-z]{2,5}');
+            ->where('language', '[a-zA-Z]{2,5}');
 
         // Edit/Update/Delete (language-agnostic since post already has language)
         Route::get('posts/{language}/{post}/edit', [PostController::class, 'edit'])
             ->name('cms.posts.edit')
-            ->where('language', '[a-z]{2,5}');
+            ->where('language', '[a-zA-Z]{2,5}');
         Route::put('posts/{language}/{post}', [PostController::class, 'update'])
             ->name('cms.posts.update')
-            ->where('language', '[a-z]{2,5}');
+            ->where('language', '[a-zA-Z]{2,5}');
         Route::delete('posts/{language}/{post}', [PostController::class, 'destroy'])
             ->name('cms.posts.destroy')
-            ->where('language', '[a-z]{2,5}');
+            ->where('language', '[a-zA-Z]{2,5}');
 
         // Additional post actions
         Route::post('posts/{language}/{post}/publish', [PostController::class, 'publish'])
             ->name('cms.posts.publish')
-            ->where('language', '[a-z]{2,5}');
+            ->where('language', '[a-zA-Z]{2,5}');
         Route::post('posts/{language}/{post}/unpublish', [PostController::class, 'unpublish'])
             ->name('cms.posts.unpublish')
-            ->where('language', '[a-z]{2,5}');
+            ->where('language', '[a-zA-Z]{2,5}');
         Route::post('posts/{language}/{post}/restore', [PostController::class, 'restore'])
             ->name('cms.posts.restore')
-            ->where('language', '[a-z]{2,5}');
+            ->where('language', '[a-zA-Z]{2,5}');
         Route::delete('posts/{language}/{post}/force', [PostController::class, 'forceDelete'])
             ->name('cms.posts.forceDelete')
-            ->where('language', '[a-z]{2,5}');
+            ->where('language', '[a-zA-Z]{2,5}');
     });
 
     // Categories Management

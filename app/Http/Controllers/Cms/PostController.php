@@ -21,7 +21,8 @@ class PostController extends Controller
 {
     public function index(Request $request, string $language): Response
     {
-        // Validate language
+        // Normalize and validate language (case-insensitive)
+        $language = strtolower($language);
         $lang = Language::where('code', $language)->where('is_active', true)->firstOrFail();
 
         // Set locale for translatable models
@@ -197,6 +198,7 @@ class PostController extends Controller
 
     public function create(string $language): Response
     {
+        $language = strtolower($language);
         $lang = Language::where('code', $language)->firstOrFail();
 
         // Set locale for translatable models
@@ -229,6 +231,7 @@ class PostController extends Controller
 
     public function store(StorePostRequest $request, string $language): RedirectResponse
     {
+        $language = strtolower($language);
         $validated = $request->validated();
 
         // Validate language code
@@ -287,6 +290,7 @@ class PostController extends Controller
 
     public function edit(string $language, Post $post): Response
     {
+        $language = strtolower($language);
         $post->load(['categories', 'tags', 'author', 'language', 'featuredMedia', 'draftVersion']);
 
         // Set locale for translatable models

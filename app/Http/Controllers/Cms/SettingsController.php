@@ -200,6 +200,9 @@ class SettingsController extends Controller
             Language::where('is_default', true)->update(['is_default' => false]);
         }
 
+        // Normalize language code to lowercase
+        $validated['code'] = strtolower($validated['code']);
+
         $maxOrder = Language::max('order') ?? 0;
         $validated['order'] = $maxOrder + 1;
 
