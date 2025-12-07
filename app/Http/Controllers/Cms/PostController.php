@@ -439,6 +439,7 @@ class PostController extends Controller
             'currentPostType' => $currentPostTypeConfig ? [
                 'key' => $currentPostTypeConfig['slug'],
                 'label' => $currentPostTypeConfig['name'],
+                'icon' => $currentPostTypeConfig['icon'] ?? null,
                 'fields' => $currentPostTypeConfig['fields'] ?? [],
             ] : null,
             'language' => $lang ? [

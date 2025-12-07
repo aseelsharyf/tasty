@@ -87,18 +87,33 @@ class Setting extends Model
                 'slug' => 'article',
                 'name' => 'Article',
                 'icon' => 'i-lucide-file-text',
+                'is_default' => true,
                 'fields' => [],
             ],
             [
                 'slug' => 'recipe',
                 'name' => 'Recipe',
                 'icon' => 'i-lucide-chef-hat',
+                'is_default' => true,
                 'fields' => [
                     ['name' => 'prep_time', 'label' => 'Prep Time', 'type' => 'number', 'suffix' => 'min'],
                     ['name' => 'cook_time', 'label' => 'Cook Time', 'type' => 'number', 'suffix' => 'min'],
                     ['name' => 'servings', 'label' => 'Servings', 'type' => 'number'],
                     ['name' => 'difficulty', 'label' => 'Difficulty', 'type' => 'select', 'options' => ['Easy', 'Medium', 'Hard']],
                     ['name' => 'ingredients', 'label' => 'Ingredients', 'type' => 'repeater'],
+                ],
+            ],
+            [
+                'slug' => 'people',
+                'name' => 'People',
+                'icon' => 'i-lucide-user',
+                'is_default' => true,
+                'fields' => [
+                    ['name' => 'role', 'label' => 'Role', 'type' => 'text'],
+                    ['name' => 'organization', 'label' => 'Organization', 'type' => 'text'],
+                    ['name' => 'bio', 'label' => 'Bio', 'type' => 'textarea'],
+                    ['name' => 'social_twitter', 'label' => 'Twitter/X', 'type' => 'text'],
+                    ['name' => 'social_linkedin', 'label' => 'LinkedIn', 'type' => 'text'],
                 ],
             ],
         ];

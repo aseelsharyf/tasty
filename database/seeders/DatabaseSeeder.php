@@ -2,105 +2,90 @@
 
 namespace Database\Seeders;
 
+use App\Models\Setting;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    // Note: We don't use WithoutModelEvents because we need UUID generation
-
     /**
-     * Seed the application's database.
+     * Seed the application's database for production.
+     *
+     * Seeds essential data:
+     * - Roles and permissions
+     * - Languages (English & Dhivehi)
+     * - Default post types
+     * - Workflow configuration
+     * - One sample user per role
      */
     public function run(): void
     {
         $this->call([
             RolesAndPermissionsSeeder::class,
             LanguageSeeder::class,
-            TaxonomySeeder::class,
+            WorkflowSeeder::class,
         ]);
 
-        // Create Admin users (2)
+        // Seed default post types
+        $this->seedPostTypes();
+
+        // Create one user per role type
+        $this->createSampleUsers();
+
+        $this->command->info('Production database seeded successfully!');
+    }
+
+    /**
+     * Seed default post types configuration.
+     */
+    protected function seedPostTypes(): void
+    {
+        // Use the defaults from Setting model
+        Setting::setPostTypes(Setting::getDefaultPostTypes());
+
+        $this->command->info('Default post types seeded.');
+    }
+
+    /**
+     * Create one sample user for each role.
+     */
+    protected function createSampleUsers(): void
+    {
+        // Admin user
         User::factory()->admin()->create([
             'name' => 'Admin User',
-            'email' => 'admin@tasty.test',
+            'email' => 'admin@example.com',
             'username' => 'admin',
         ]);
-        User::factory()->admin()->create([
-            'name' => 'Sarah Admin',
-            'email' => 'sarah.admin@tasty.test',
-            'username' => 'sarah_admin',
-        ]);
 
-        // Create Developer user
+        // Developer user
         User::factory()->developer()->create([
-            'name' => 'Dev User',
-            'email' => 'dev@tasty.test',
+            'name' => 'Developer User',
+            'email' => 'developer@example.com',
             'username' => 'developer',
         ]);
 
-        // Create Editor users (3)
+        // Editor user
         User::factory()->editor()->create([
             'name' => 'Editor User',
-            'email' => 'editor@tasty.test',
+            'email' => 'editor@example.com',
             'username' => 'editor',
         ]);
-        User::factory()->editor()->create([
-            'name' => 'Maya Editor',
-            'email' => 'maya.editor@tasty.test',
-            'username' => 'maya_editor',
-        ]);
-        User::factory()->editor()->create([
-            'name' => 'Ahmed Editor',
-            'email' => 'ahmed.editor@tasty.test',
-            'username' => 'ahmed_editor',
+
+        // Writer user
+        User::factory()->writer()->create([
+            'name' => 'Writer User',
+            'email' => 'writer@example.com',
+            'username' => 'writer',
         ]);
 
-        // Create Writer users (4)
-        User::factory()->writer()->create([
-            'name' => 'Writer One',
-            'email' => 'writer1@tasty.test',
-            'username' => 'writer1',
-        ]);
-        User::factory()->writer()->create([
-            'name' => 'Fatima Writer',
-            'email' => 'fatima.writer@tasty.test',
-            'username' => 'fatima_writer',
-        ]);
-        User::factory()->writer()->create([
-            'name' => 'Ali Writer',
-            'email' => 'ali.writer@tasty.test',
-            'username' => 'ali_writer',
-        ]);
-        User::factory()->writer()->create([
-            'name' => 'Mariyam Writer',
-            'email' => 'mariyam.writer@tasty.test',
-            'username' => 'mariyam_writer',
-        ]);
-
-        // Create Photographer users (2)
+        // Photographer user
         User::factory()->photographer()->create([
             'name' => 'Photographer User',
-            'email' => 'photographer@tasty.test',
+            'email' => 'photographer@example.com',
             'username' => 'photographer',
         ]);
-        User::factory()->photographer()->create([
-            'name' => 'Hassan Photo',
-            'email' => 'hassan.photo@tasty.test',
-            'username' => 'hassan_photo',
-        ]);
 
-        // Create regular users (no CMS access)
-        User::factory()->regularUser()->count(5)->create();
-
-        // Seed workflow configuration
-        $this->call(WorkflowSeeder::class);
-
-        // Seed comprehensive CMS workflow data
-        $this->call(CmsWorkflowDataSeeder::class);
-
-        // Seed user comments on published posts
-        $this->call(CommentSeeder::class);
+        $this->command->info('Sample users created (one per role).');
     }
 }

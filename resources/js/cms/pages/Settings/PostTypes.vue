@@ -16,6 +16,7 @@ interface PostType {
     slug: string;
     name: string;
     icon: string;
+    is_default?: boolean;
     fields: PostTypeField[];
 }
 
@@ -32,6 +33,7 @@ const editingPostType = ref<number | null>(null);
 const editingField = ref<{ postTypeIndex: number; fieldIndex: number } | null>(null);
 const addPostTypeModal = ref(false);
 const addFieldModal = ref(false);
+const editFieldModal = ref(false);
 const deletePostTypeModal = ref(false);
 const postTypeToDelete = ref<number | null>(null);
 
@@ -97,6 +99,7 @@ function addPostType() {
     }
     form.post_types.push({ ...newPostType.value });
     addPostTypeModal.value = false;
+    saveChanges();
 }
 
 function confirmDeletePostType(index: number) {
@@ -109,6 +112,7 @@ function deletePostType() {
         form.post_types.splice(postTypeToDelete.value, 1);
         deletePostTypeModal.value = false;
         postTypeToDelete.value = null;
+        saveChanges();
     }
 }
 
@@ -131,17 +135,37 @@ function addField() {
         }
         form.post_types[editingPostType.value].fields.push({ ...newField.value });
         addFieldModal.value = false;
+        saveChanges();
+    }
+}
+
+function openEditFieldModal(postTypeIndex: number, fieldIndex: number) {
+    editingField.value = { postTypeIndex, fieldIndex };
+    const field = form.post_types[postTypeIndex].fields[fieldIndex];
+    newField.value = { ...field, options: field.options ? [...field.options] : [] };
+    editFieldModal.value = true;
+}
+
+function updateField() {
+    if (editingField.value !== null) {
+        const { postTypeIndex, fieldIndex } = editingField.value;
+        form.post_types[postTypeIndex].fields[fieldIndex] = { ...newField.value };
+        editFieldModal.value = false;
+        editingField.value = null;
+        saveChanges();
     }
 }
 
 function removeField(postTypeIndex: number, fieldIndex: number) {
     form.post_types[postTypeIndex].fields.splice(fieldIndex, 1);
+    saveChanges();
 }
 
 function moveFieldUp(postTypeIndex: number, fieldIndex: number) {
     if (fieldIndex > 0) {
         const fields = form.post_types[postTypeIndex].fields;
         [fields[fieldIndex - 1], fields[fieldIndex]] = [fields[fieldIndex], fields[fieldIndex - 1]];
+        saveChanges();
     }
 }
 
@@ -149,15 +173,28 @@ function moveFieldDown(postTypeIndex: number, fieldIndex: number) {
     const fields = form.post_types[postTypeIndex].fields;
     if (fieldIndex < fields.length - 1) {
         [fields[fieldIndex], fields[fieldIndex + 1]] = [fields[fieldIndex + 1], fields[fieldIndex]];
+        saveChanges();
     }
 }
 
 function resetToDefaults() {
     form.post_types = [...props.defaultPostTypes];
+    saveChanges();
 }
 
-function onSubmit() {
-    form.put('/cms/settings/post-types');
+const toast = useToast();
+
+function saveChanges() {
+    form.put('/cms/settings/post-types', {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.add({ title: 'Saved', description: 'Post types updated successfully.', color: 'success' });
+        },
+        onError: (errors) => {
+            toast.add({ title: 'Error', description: 'Failed to save post types.', color: 'error' });
+            console.error('Post types save error:', errors);
+        },
+    });
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -192,7 +229,7 @@ const hasChanges = computed(() => {
                     <UForm
                         id="post-types-settings"
                         :state="form"
-                        @submit="onSubmit"
+                        @submit="saveChanges"
                     >
                         <UPageCard
                             title="Post Types"
@@ -240,6 +277,9 @@ const hasChanges = computed(() => {
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-2">
+                                        <UBadge v-if="postType.is_default" color="neutral" variant="subtle" size="xs">
+                                            Default
+                                        </UBadge>
                                         <UButton
                                             icon="i-lucide-plus"
                                             color="neutral"
@@ -250,6 +290,7 @@ const hasChanges = computed(() => {
                                             Add Field
                                         </UButton>
                                         <UButton
+                                            v-if="!postType.is_default"
                                             icon="i-lucide-trash"
                                             color="error"
                                             variant="ghost"
@@ -298,15 +339,26 @@ const hasChanges = computed(() => {
                                                 </span>
                                             </div>
                                             <p class="text-xs text-muted font-mono">{{ field.name }}</p>
+                                            <p v-if="field.type === 'select' && field.options?.length" class="text-xs text-muted mt-0.5">
+                                                Options: {{ field.options.join(', ') }}
+                                            </p>
                                         </div>
-                                        <UButton
-                                            icon="i-lucide-x"
-                                            color="neutral"
-                                            variant="ghost"
-                                            size="xs"
-                                            class="opacity-0 group-hover:opacity-100 transition-opacity"
-                                            @click="removeField(ptIndex, fIndex)"
-                                        />
+                                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <UButton
+                                                icon="i-lucide-pencil"
+                                                color="neutral"
+                                                variant="ghost"
+                                                size="xs"
+                                                @click="openEditFieldModal(ptIndex, fIndex)"
+                                            />
+                                            <UButton
+                                                icon="i-lucide-x"
+                                                color="neutral"
+                                                variant="ghost"
+                                                size="xs"
+                                                @click="removeField(ptIndex, fIndex)"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -489,6 +541,75 @@ const hasChanges = computed(() => {
                             Delete
                         </UButton>
                     </div>
+                </UCard>
+            </template>
+        </UModal>
+
+        <!-- Edit Field Modal -->
+        <UModal v-model:open="editFieldModal">
+            <template #content>
+                <UCard :ui="{ body: 'p-6' }">
+                    <h3 class="text-lg font-semibold text-highlighted mb-4">Edit Field</h3>
+
+                    <UForm :state="newField" class="space-y-4" @submit="updateField">
+                        <UFormField label="Label" name="label" required>
+                            <UInput
+                                v-model="newField.label"
+                                placeholder="e.g., Prep Time"
+                                class="w-full"
+                            />
+                        </UFormField>
+
+                        <UFormField label="Name (key)" name="name" help="Used in code and database">
+                            <UInput
+                                v-model="newField.name"
+                                placeholder="prep_time"
+                                class="w-full"
+                            />
+                        </UFormField>
+
+                        <UFormField label="Type" name="type">
+                            <USelectMenu
+                                v-model="newField.type"
+                                :items="fieldTypeOptions"
+                                value-key="value"
+                                class="w-full"
+                            />
+                        </UFormField>
+
+                        <UFormField v-if="newField.type === 'number'" label="Suffix" name="suffix">
+                            <UInput
+                                v-model="newField.suffix"
+                                placeholder="e.g., min, kg, etc."
+                                class="w-full"
+                            />
+                        </UFormField>
+
+                        <UFormField v-if="newField.type === 'select'" label="Options" name="options" help="Comma-separated list of options">
+                            <UInput
+                                :model-value="newField.options?.join(', ') ?? ''"
+                                placeholder="Easy, Medium, Hard"
+                                class="w-full"
+                                @update:model-value="(v: string) => newField.options = v.split(',').map(s => s.trim()).filter(Boolean)"
+                            />
+                        </UFormField>
+
+                        <div class="flex justify-end gap-2 pt-6">
+                            <UButton
+                                color="neutral"
+                                variant="ghost"
+                                @click="editFieldModal = false; editingField = null;"
+                            >
+                                Cancel
+                            </UButton>
+                            <UButton
+                                type="submit"
+                                :disabled="!newField.label"
+                            >
+                                Save Changes
+                            </UButton>
+                        </div>
+                    </UForm>
                 </UCard>
             </template>
         </UModal>

@@ -4,10 +4,26 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import BlockEditor, { type MediaSelectCallback } from '../../components/BlockEditor.vue';
 import MediaPickerModal from '../../components/MediaPickerModal.vue';
+import CustomFieldsPanel from '../../components/CustomFieldsPanel.vue';
 import type { MediaBlockItem } from '../../editor-tools/MediaBlock';
 import { useSidebar } from '../../composables/useSidebar';
 import { useDhivehiKeyboard } from '../../composables/useDhivehiKeyboard';
-import type { Category, Tag, PostTypeOption } from '../../types';
+import type { Category, Tag } from '../../types';
+
+interface PostTypeField {
+    name: string;
+    label: string;
+    type: 'text' | 'number' | 'textarea' | 'select' | 'toggle' | 'repeater';
+    suffix?: string;
+    options?: string[];
+}
+
+interface PostTypeWithFields {
+    value: string;
+    label: string;
+    icon?: string;
+    fields?: PostTypeField[];
+}
 
 interface MediaItem {
     id: number;
@@ -41,7 +57,7 @@ const { hide: hideSidebar, show: showSidebar } = useSidebar();
 const props = defineProps<{
     categories: Category[];
     tags: Tag[];
-    postTypes: PostTypeOption[];
+    postTypes: PostTypeWithFields[];
     language: LanguageInfo;
 }>();
 
@@ -273,7 +289,18 @@ const lastSavedText = computed(() => {
     return `Saved at ${lastSaved.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 });
 
-const showRecipeFields = computed(() => form.post_type === 'recipe');
+// Get current post type configuration (with fields)
+const currentPostType = computed(() => {
+    const type = props.postTypes.find(t => t.value === form.post_type);
+    if (!type) return null;
+    return {
+        key: type.value,
+        label: type.label,
+        icon: type.icon,
+        fields: type.fields || [],
+    };
+});
+
 const showScheduleField = computed(() => form.status === 'scheduled');
 
 const statusOptions = [
@@ -283,12 +310,6 @@ const statusOptions = [
     { label: 'Scheduled', value: 'scheduled' },
 ];
 
-const difficultyOptions = [
-    { label: 'Select difficulty', value: '' },
-    { label: 'Easy', value: 'easy' },
-    { label: 'Medium', value: 'medium' },
-    { label: 'Hard', value: 'hard' },
-];
 
 const flattenedCategories = computed(() => {
     const flatten = (cats: Category[], depth = 0): { label: string; value: number }[] => {
@@ -313,34 +334,6 @@ function removeFeaturedMedia() {
     form.featured_media_id = null;
 }
 
-const newIngredient = ref('');
-
-// Helper to safely get/set custom fields
-function getCustomField<T>(key: string, defaultValue: T): T {
-    return (form.custom_fields?.[key] as T) ?? defaultValue;
-}
-
-function setCustomField(key: string, value: unknown) {
-    if (!form.custom_fields) {
-        form.custom_fields = {};
-    }
-    form.custom_fields[key] = value;
-}
-
-function addIngredient() {
-    if (newIngredient.value.trim()) {
-        const ingredients = getCustomField<string[]>('ingredients', []);
-        ingredients.push(newIngredient.value.trim());
-        setCustomField('ingredients', ingredients);
-        newIngredient.value = '';
-    }
-}
-
-function removeIngredient(index: number) {
-    const ingredients = getCustomField<string[]>('ingredients', []);
-    ingredients.splice(index, 1);
-    setCustomField('ingredients', ingredients);
-}
 
 function generateSlug() {
     form.slug = form.title
@@ -747,94 +740,12 @@ function goBack() {
                                 </div>
                             </div>
 
-                            <!-- Recipe Details (conditional) - TODO: Make dynamic based on post type config -->
-                            <template v-if="showRecipeFields">
-                                <div class="h-px bg-default" />
-                                <div>
-                                    <div class="flex items-center gap-2 mb-3">
-                                        <UIcon name="i-lucide-chef-hat" class="size-4 text-muted" />
-                                        <span class="text-xs font-medium text-muted uppercase tracking-wider">Recipe</span>
-                                    </div>
-                                    <div class="space-y-3">
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label class="text-xs text-muted mb-1 block">Prep (min)</label>
-                                                <UInput
-                                                    :model-value="getCustomField<number | null>('prep_time', null)"
-                                                    type="number"
-                                                    min="0"
-                                                    size="sm"
-                                                    class="w-full"
-                                                    @update:model-value="setCustomField('prep_time', $event)"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label class="text-xs text-muted mb-1 block">Cook (min)</label>
-                                                <UInput
-                                                    :model-value="getCustomField<number | null>('cook_time', null)"
-                                                    type="number"
-                                                    min="0"
-                                                    size="sm"
-                                                    class="w-full"
-                                                    @update:model-value="setCustomField('cook_time', $event)"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label class="text-xs text-muted mb-1 block">Servings</label>
-                                                <UInput
-                                                    :model-value="getCustomField<number | null>('servings', null)"
-                                                    type="number"
-                                                    min="1"
-                                                    size="sm"
-                                                    class="w-full"
-                                                    @update:model-value="setCustomField('servings', $event)"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label class="text-xs text-muted mb-1 block">Difficulty</label>
-                                                <USelectMenu
-                                                    :model-value="getCustomField<string>('difficulty', '')"
-                                                    :items="difficultyOptions"
-                                                    value-key="value"
-                                                    size="sm"
-                                                    class="w-full"
-                                                    @update:model-value="setCustomField('difficulty', $event)"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label class="text-xs text-muted mb-1 block">Ingredients</label>
-                                            <div class="space-y-1.5">
-                                                <div v-for="(ingredient, index) in getCustomField<string[]>('ingredients', [])" :key="index" class="flex gap-1.5">
-                                                    <UInput
-                                                        :model-value="ingredient"
-                                                        size="sm"
-                                                        class="flex-1 min-w-0"
-                                                        @update:model-value="(val) => {
-                                                            const ingredients = getCustomField<string[]>('ingredients', []);
-                                                            ingredients[index] = val as string;
-                                                            setCustomField('ingredients', ingredients);
-                                                        }"
-                                                    />
-                                                    <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-x" @click="removeIngredient(index)" />
-                                                </div>
-                                                <div class="flex gap-1.5">
-                                                    <UInput
-                                                        v-model="newIngredient"
-                                                        placeholder="Add..."
-                                                        size="sm"
-                                                        class="flex-1 min-w-0"
-                                                        @keyup.enter.prevent="addIngredient"
-                                                    />
-                                                    <UButton size="sm" color="neutral" variant="soft" icon="i-lucide-plus" @click="addIngredient" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
+                            <!-- Dynamic Custom Fields based on Post Type -->
+                            <CustomFieldsPanel
+                                :post-type="currentPostType"
+                                :custom-fields="form.custom_fields"
+                                @update:custom-fields="form.custom_fields = $event"
+                            />
 
                             <div class="h-px bg-default" />
 

@@ -91,6 +91,7 @@ interface PostTypeField {
 interface PostTypeConfig {
     key: string;
     label: string;
+    icon?: string;
     fields?: PostTypeField[];
 }
 
@@ -450,9 +451,32 @@ async function performTransition() {
     }
 }
 
-// Custom fields helper
+// Custom fields helpers
 function updateCustomField(key: string, value: unknown) {
     emit('update:customFields', { ...props.customFields, [key]: value });
+}
+
+// For repeater fields - add item
+function addRepeaterItem(name: string, value: string) {
+    if (!value.trim()) return;
+    const items = getCustomField<string[]>(name, []);
+    updateCustomField(name, [...items, value.trim()]);
+}
+
+// For repeater fields - remove item
+function removeRepeaterItem(name: string, index: number) {
+    const items = getCustomField<string[]>(name, []);
+    const newItems = [...items];
+    newItems.splice(index, 1);
+    updateCustomField(name, newItems);
+}
+
+// For repeater fields - update item
+function updateRepeaterItem(name: string, index: number, value: string) {
+    const items = getCustomField<string[]>(name, []);
+    const newItems = [...items];
+    newItems[index] = value;
+    updateCustomField(name, newItems);
 }
 
 function getCustomField<T>(key: string, defaultValue: T): T {
@@ -939,7 +963,7 @@ const commentTypeOptions = [
                         <!-- Dynamic Custom Fields -->
                         <div v-if="currentPostType?.fields?.length" class="space-y-3">
                             <div class="flex items-center gap-2 mb-2">
-                                <UIcon name="i-lucide-sliders-horizontal" class="size-4 text-muted" />
+                                <UIcon :name="currentPostType.icon || 'i-lucide-sliders-horizontal'" class="size-4 text-muted" />
                                 <span class="text-xs font-medium text-muted uppercase tracking-wider">{{ currentPostType.label }} Fields</span>
                             </div>
                             <template v-for="field in currentPostType.fields" :key="field.name">
@@ -999,6 +1023,56 @@ const commentTypeOptions = [
                                         :disabled="isReadOnly"
                                         @update:model-value="updateCustomField(field.name, $event)"
                                     />
+                                </div>
+
+                                <!-- Repeater -->
+                                <div v-else-if="field.type === 'repeater'">
+                                    <label class="text-sm font-medium mb-1.5 block">{{ field.label }}</label>
+                                    <div class="space-y-1.5">
+                                        <div
+                                            v-for="(item, index) in getCustomField<string[]>(field.name, [])"
+                                            :key="index"
+                                            class="flex gap-1.5"
+                                        >
+                                            <UInput
+                                                :model-value="item"
+                                                class="flex-1 min-w-0"
+                                                :disabled="isReadOnly"
+                                                @update:model-value="updateRepeaterItem(field.name, index, $event as string)"
+                                            />
+                                            <UButton
+                                                color="neutral"
+                                                variant="ghost"
+                                                icon="i-lucide-x"
+                                                :disabled="isReadOnly"
+                                                @click="removeRepeaterItem(field.name, index)"
+                                            />
+                                        </div>
+                                        <div v-if="!isReadOnly" class="flex gap-1.5">
+                                            <UInput
+                                                :id="`repeater-new-${field.name}`"
+                                                placeholder="Add..."
+                                                class="flex-1 min-w-0"
+                                                @keyup.enter.prevent="(e: KeyboardEvent) => {
+                                                    const input = e.target as HTMLInputElement;
+                                                    addRepeaterItem(field.name, input.value);
+                                                    input.value = '';
+                                                }"
+                                            />
+                                            <UButton
+                                                color="neutral"
+                                                variant="soft"
+                                                icon="i-lucide-plus"
+                                                @click="() => {
+                                                    const input = document.getElementById(`repeater-new-${field.name}`) as HTMLInputElement;
+                                                    if (input) {
+                                                        addRepeaterItem(field.name, input.value);
+                                                        input.value = '';
+                                                    }
+                                                }"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </template>
                         </div>
