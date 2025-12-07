@@ -8,6 +8,7 @@ use App\Http\Controllers\Cms\DashboardController;
 use App\Http\Controllers\Cms\LanguageController;
 use App\Http\Controllers\Cms\MediaController;
 use App\Http\Controllers\Cms\MediaFolderController;
+use App\Http\Controllers\Cms\MenuController;
 use App\Http\Controllers\Cms\NotificationController;
 use App\Http\Controllers\Cms\PostController;
 use App\Http\Controllers\Cms\ProfileController;
@@ -186,6 +187,24 @@ Route::middleware(['auth', 'cms'])->group(function () {
             'destroy' => 'cms.tags.destroy',
         ]);
         Route::delete('tags/bulk', [TagController::class, 'bulkDestroy'])->name('cms.tags.bulk-destroy');
+    });
+
+    // Menus Management
+    Route::middleware('permission:menus.view')->group(function () {
+        Route::resource('menus', MenuController::class)->except(['show'])->names([
+            'index' => 'cms.menus.index',
+            'create' => 'cms.menus.create',
+            'store' => 'cms.menus.store',
+            'edit' => 'cms.menus.edit',
+            'update' => 'cms.menus.update',
+            'destroy' => 'cms.menus.destroy',
+        ]);
+
+        // Menu Items
+        Route::post('menus/{menu}/items', [MenuController::class, 'addItem'])->name('cms.menus.items.store');
+        Route::put('menus/{menu}/items/{item}', [MenuController::class, 'updateItem'])->name('cms.menus.items.update');
+        Route::delete('menus/{menu}/items/{item}', [MenuController::class, 'destroyItem'])->name('cms.menus.items.destroy');
+        Route::post('menus/{menu}/items/reorder', [MenuController::class, 'reorderItems'])->name('cms.menus.items.reorder');
     });
 
     // Comments Management

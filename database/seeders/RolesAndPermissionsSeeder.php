@@ -65,6 +65,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'tags.edit',
             'tags.delete',
 
+            // Menus
+            'menus.view',
+            'menus.create',
+            'menus.edit',
+            'menus.delete',
+
             // Comments
             'comments.view',
             'comments.moderate',
@@ -125,6 +131,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'tags.create',
             'tags.edit',
             'tags.delete',
+            'menus.view',
+            'menus.create',
+            'menus.edit',
+            'menus.delete',
             'comments.view',
             'comments.moderate',
             'comments.edit',

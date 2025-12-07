@@ -24,9 +24,14 @@ function onCancel() {
     <DashboardLayout>
         <UDashboardPanel id="tags-edit">
             <template #header>
-                <UDashboardNavbar :title="`Edit: ${tag.name}`">
+                <UDashboardNavbar :ui="{ title: 'truncate max-w-[200px] sm:max-w-none' }">
                     <template #leading>
                         <UDashboardSidebarCollapse />
+                    </template>
+
+                    <template #title>
+                        <span class="hidden sm:inline">Edit:</span>
+                        <span class="truncate">{{ tag.name }}</span>
                     </template>
                 </UDashboardNavbar>
             </template>

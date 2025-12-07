@@ -139,7 +139,7 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => {
             icon: 'i-lucide-file-text',
             to: `/cms/posts/${languages.value.find(l => l.is_default)?.code || 'en'}`,
             active: isActivePrefix('/cms/posts'),
-            defaultOpen: isActivePrefix('/cms/posts'),
+            open: isActivePrefix('/cms/posts'),
             children: postChildren,
         });
     }
@@ -181,7 +181,7 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => {
             icon: 'i-lucide-image',
             to: '/cms/media',
             active: isActivePrefix('/cms/media'),
-            defaultOpen: isActivePrefix('/cms/media'),
+            open: isActivePrefix('/cms/media'),
             children: mediaChildren,
         });
     }
@@ -223,6 +223,27 @@ const taxonomyNavItems = computed<NavigationMenuItem[]>(() => {
     return items;
 });
 
+const layoutNavItems = computed<NavigationMenuItem[]>(() => {
+    const items: NavigationMenuItem[] = [];
+
+    if (can('menus.view')) {
+        items.push({
+            label: 'Layout',
+            type: 'label',
+        });
+
+        items.push({
+            label: 'Menus',
+            icon: 'i-lucide-menu',
+            to: '/cms/menus',
+            active: isActivePrefix('/cms/menus'),
+            onSelect: () => { sidebarOpen.value = false; },
+        });
+    }
+
+    return items;
+});
+
 const engagementNavItems = computed<NavigationMenuItem[]>(() => {
     const items: NavigationMenuItem[] = [];
 
@@ -236,7 +257,7 @@ const engagementNavItems = computed<NavigationMenuItem[]>(() => {
             icon: 'i-lucide-message-square',
             to: '/cms/comments',
             active: isActivePrefix('/cms/comments'),
-            defaultOpen: isActivePrefix('/cms/comments'),
+            open: isActivePrefix('/cms/comments'),
             children: [
                 {
                     label: 'All Comments',
@@ -309,8 +330,8 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
             label: 'Users',
             icon: 'i-lucide-users',
             to: '/cms/users',
-            active: isActive('/cms/users') || isActive('/cms/roles'),
-            defaultOpen: isActive('/cms/users') || isActive('/cms/roles'),
+            active: isActivePrefix('/cms/users') || isActivePrefix('/cms/roles'),
+            open: isActivePrefix('/cms/users') || isActivePrefix('/cms/roles'),
             children: userChildren,
         });
     }
@@ -330,8 +351,8 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
             label: 'Settings',
             icon: 'i-lucide-settings',
             to: '/cms/settings',
-            active: isActive('/cms/settings'),
-            defaultOpen: isActive('/cms/settings'),
+            active: isActivePrefix('/cms/settings'),
+            open: isActivePrefix('/cms/settings'),
             children: [
                 {
                     label: 'General',
@@ -412,6 +433,22 @@ const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
 
     // Add taxonomy nav items
     for (const item of taxonomyNavItems.value) {
+        if (item.type === 'label') continue;
+        if (item.to) {
+            navItems.push({
+                label: item.label || '',
+                icon: item.icon as string,
+                to: item.to as string,
+                onSelect: () => {
+                    router.visit(item.to as string);
+                    searchOpen.value = false;
+                },
+            });
+        }
+    }
+
+    // Add layout nav items
+    for (const item of layoutNavItems.value) {
         if (item.type === 'label') continue;
         if (item.to) {
             navItems.push({
@@ -598,6 +635,18 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
                         v-if="taxonomyNavItems.length > 0"
                         :collapsed="collapsed"
                         :items="taxonomyNavItems"
+                        orientation="vertical"
+                        highlight
+                        tooltip
+                        popover
+                        class="mt-4"
+                    />
+
+                    <!-- Layout Section -->
+                    <UNavigationMenu
+                        v-if="layoutNavItems.length > 0"
+                        :collapsed="collapsed"
+                        :items="layoutNavItems"
                         orientation="vertical"
                         highlight
                         tooltip

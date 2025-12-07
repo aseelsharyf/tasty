@@ -164,3 +164,46 @@ export interface PostTypeOption {
     value: string;
     label: string;
 }
+
+export interface Menu {
+    id: number;
+    uuid: string;
+    name: string;
+    name_translations?: Record<string, string>;
+    location: string;
+    description?: string | null;
+    description_translations?: Record<string, string>;
+    is_active: boolean;
+    all_items_count?: number;
+    items?: MenuItemTreeItem[];
+    created_at?: string;
+    translated_locales?: string[];
+}
+
+export interface MenuItem {
+    id: number;
+    uuid: string;
+    menu_id: number;
+    parent_id: number | null;
+    label: string;
+    label_translations?: Record<string, string>;
+    type: 'custom' | 'external' | 'category' | 'post';
+    url?: string | null;
+    linkable_type?: string | null;
+    linkable_id?: number | null;
+    target: '_self' | '_blank';
+    icon?: string | null;
+    css_classes?: string[] | null;
+    order: number;
+    is_active: boolean;
+}
+
+export interface MenuItemTreeItem extends MenuItem {
+    children: MenuItemTreeItem[];
+}
+
+export interface CategoryOption {
+    id: number;
+    name: string;
+    slug: string;
+}

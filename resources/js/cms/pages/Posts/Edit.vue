@@ -705,24 +705,26 @@ function openDiff() {
             <template #header>
                 <UDashboardNavbar>
                     <template #leading>
-                        <div class="flex items-center gap-3">
-                            <UDashboardSidebarCollapse />
+                        <div class="flex items-center gap-1.5 sm:gap-3 min-w-0 overflow-hidden">
+                            <UDashboardSidebarCollapse class="shrink-0" />
                             <UButton
                                 color="neutral"
                                 variant="ghost"
                                 icon="i-lucide-arrow-left"
                                 size="sm"
+                                class="shrink-0"
                                 @click="goBack"
                             />
-                            <div class="h-4 w-px bg-default" />
-                            <span class="text-sm text-muted">Editing</span>
+                            <div class="h-4 w-px bg-default shrink-0 hidden sm:block" />
+                            <span class="text-sm text-muted hidden sm:inline shrink-0">Editing</span>
                             <UBadge
                                 :color="currentWorkflowState.color as any"
                                 variant="subtle"
                                 size="sm"
+                                class="shrink-0"
                             >
                                 <UIcon :name="currentWorkflowState.icon" class="size-3 mr-1" />
-                                {{ currentWorkflowState.label }}
+                                <span class="hidden xs:inline">{{ currentWorkflowState.label }}</span>
                             </UBadge>
                             <!-- Version Switcher Dropdown -->
                             <UDropdownMenu
@@ -738,6 +740,7 @@ function openDiff() {
                                     variant="soft"
                                     size="xs"
                                     trailing-icon="i-lucide-chevron-down"
+                                    class="shrink-0"
                                 >
                                     <UIcon name="i-lucide-history" class="size-3 mr-1" />
                                     {{ currentVersionLabel }}
@@ -749,16 +752,18 @@ function openDiff() {
                                 color="error"
                                 variant="soft"
                                 size="xs"
+                                class="shrink-0 hidden md:flex"
                                 @click="openUnpublishModal"
                             >
                                 <UIcon name="i-lucide-globe-lock" class="size-3 mr-1" />
-                                Unpublish
+                                <span class="hidden lg:inline">Unpublish</span>
                             </UButton>
                             <UBadge
                                 v-if="language"
                                 :color="isRtl ? 'warning' : 'primary'"
                                 variant="subtle"
                                 size="sm"
+                                class="shrink-0 hidden sm:flex"
                             >
                                 <span :class="isRtl ? 'font-dhivehi' : ''">{{ language.native_name }}</span>
                             </UBadge>

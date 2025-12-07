@@ -16,8 +16,9 @@ class DatabaseSeeder extends Seeder
      * Seeds essential data:
      * - Roles and permissions
      * - Languages (English & Dhivehi)
-     * - Default post types
      * - Workflow configuration
+     * - Navigation menus (header, footer, social)
+     * - Default post types
      * - One sample user per role
      */
     public function run(): void
@@ -26,6 +27,7 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             LanguageSeeder::class,
             WorkflowSeeder::class,
+            NavigationSeeder::class,
         ]);
 
         // Seed default post types

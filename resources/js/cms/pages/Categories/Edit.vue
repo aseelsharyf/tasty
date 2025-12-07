@@ -25,9 +25,14 @@ function onCancel() {
     <DashboardLayout>
         <UDashboardPanel id="categories-edit">
             <template #header>
-                <UDashboardNavbar :title="`Edit: ${category.name}`">
+                <UDashboardNavbar :ui="{ title: 'truncate max-w-[200px] sm:max-w-none' }">
                     <template #leading>
                         <UDashboardSidebarCollapse />
+                    </template>
+
+                    <template #title>
+                        <span class="hidden sm:inline">Edit:</span>
+                        <span class="truncate">{{ category.name }}</span>
                     </template>
                 </UDashboardNavbar>
             </template>
