@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -51,40 +53,62 @@ class DatabaseSeeder extends Seeder
      */
     protected function createSampleUsers(): void
     {
+        $password = Hash::make('password');
+
         // Admin user
-        User::factory()->admin()->create([
+        $admin = User::create([
+            'uuid' => (string) Str::uuid(),
             'name' => 'Admin User',
             'email' => 'admin@example.com',
             'username' => 'admin',
+            'email_verified_at' => now(),
+            'password' => $password,
         ]);
+        $admin->assignRole('Admin');
 
         // Developer user
-        User::factory()->developer()->create([
+        $developer = User::create([
+            'uuid' => (string) Str::uuid(),
             'name' => 'Developer User',
             'email' => 'developer@example.com',
             'username' => 'developer',
+            'email_verified_at' => now(),
+            'password' => $password,
         ]);
+        $developer->assignRole('Developer');
 
         // Editor user
-        User::factory()->editor()->create([
+        $editor = User::create([
+            'uuid' => (string) Str::uuid(),
             'name' => 'Editor User',
             'email' => 'editor@example.com',
             'username' => 'editor',
+            'email_verified_at' => now(),
+            'password' => $password,
         ]);
+        $editor->assignRole('Editor');
 
         // Writer user
-        User::factory()->writer()->create([
+        $writer = User::create([
+            'uuid' => (string) Str::uuid(),
             'name' => 'Writer User',
             'email' => 'writer@example.com',
             'username' => 'writer',
+            'email_verified_at' => now(),
+            'password' => $password,
         ]);
+        $writer->assignRole('Writer');
 
         // Photographer user
-        User::factory()->photographer()->create([
+        $photographer = User::create([
+            'uuid' => (string) Str::uuid(),
             'name' => 'Photographer User',
             'email' => 'photographer@example.com',
             'username' => 'photographer',
+            'email_verified_at' => now(),
+            'password' => $password,
         ]);
+        $photographer->assignRole('Photographer');
 
         $this->command->info('Sample users created (one per role).');
     }
