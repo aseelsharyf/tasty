@@ -130,6 +130,14 @@ class WorkflowService
             throw new \Exception("User is not allowed to transition to '{$toStatus}'");
         }
 
+        // Validate requirements before approval - category and tags must be set
+        if ($toStatus === ContentVersion::STATUS_APPROVED) {
+            $content = $version->versionable;
+            if ($content) {
+                $this->validateApprovalRequirements($content, $version);
+            }
+        }
+
         return DB::transaction(function () use ($version, $toStatus, $comment, $user) {
             $fromStatus = $version->workflow_status;
 
@@ -423,6 +431,41 @@ class WorkflowService
         // Sync tags if present
         if (isset($snapshot['tag_ids']) && method_exists($content, 'tags')) {
             $content->tags()->sync($snapshot['tag_ids'] ?? []);
+        }
+    }
+
+    /**
+     * Validate that content meets approval requirements.
+     * Category and tags must be set before a post can be approved.
+     *
+     * @throws \Exception
+     */
+    protected function validateApprovalRequirements(Model $content, ContentVersion $version): void
+    {
+        $errors = [];
+
+        // Get category and tags from the version snapshot (not the content model)
+        // since the version may have different values than what's currently on the content
+        $snapshot = $version->content_snapshot ?? [];
+
+        // Check for category
+        if (method_exists($content, 'categories')) {
+            $categoryIds = $snapshot['category_ids'] ?? [];
+            if (empty($categoryIds)) {
+                $errors[] = 'A category must be assigned before approval';
+            }
+        }
+
+        // Check for tags
+        if (method_exists($content, 'tags')) {
+            $tagIds = $snapshot['tag_ids'] ?? [];
+            if (empty($tagIds)) {
+                $errors[] = 'At least one tag must be assigned before approval';
+            }
+        }
+
+        if (! empty($errors)) {
+            throw new \Exception(implode('. ', $errors));
         }
     }
 

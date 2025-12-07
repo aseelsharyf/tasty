@@ -331,14 +331,22 @@ class PostController extends Controller
             ?? $post->versions()->latest()->first()?->uuid;
 
         // Validate the requested version belongs to this post
+        $currentVersion = null;
         if ($requestedVersionUuid) {
-            $validVersion = $post->versions()->where('uuid', $requestedVersionUuid)->exists();
-            if (! $validVersion) {
+            $currentVersion = $post->versions()->where('uuid', $requestedVersionUuid)->first();
+            if (! $currentVersion) {
                 $currentVersionUuid = $validDraftVersion?->uuid
                     ?? $validActiveVersion?->uuid
                     ?? $post->versions()->latest()->first()?->uuid;
+                $currentVersion = $post->versions()->where('uuid', $currentVersionUuid)->first();
             }
+        } else {
+            // Load the current version for content snapshot
+            $currentVersion = $post->versions()->where('uuid', $currentVersionUuid)->first();
         }
+
+        // Get content from version snapshot if viewing a specific version
+        $versionSnapshot = $currentVersion?->content_snapshot ?? [];
 
         // Get list of versions for the version switcher dropdown
         $versionsList = $post->versions()
@@ -350,7 +358,8 @@ class PostController extends Controller
                 'workflow_status' => $v->workflow_status,
                 'is_active' => $v->is_active,
                 'is_current' => $v->uuid === $currentVersionUuid,
-                'is_draft' => $validDraftVersion?->uuid === $v->uuid,
+                // is_draft should reflect the actual workflow status, not just whether it's the draft_version_id
+                'is_draft' => $v->workflow_status === 'draft',
                 'created_by' => $v->createdBy ? [
                     'name' => $v->createdBy->name,
                 ] : null,
@@ -369,26 +378,32 @@ class PostController extends Controller
         $currentPostTypeConfig = collect(Setting::getPostTypes())
             ->firstWhere('slug', $post->post_type);
 
+        // When viewing a specific version, use its snapshot for content fields
+        // But keep using post model for metadata (status, published_at, etc.)
+        $useSnapshot = ! empty($versionSnapshot);
+
         return Inertia::render('Posts/Edit', [
             'post' => [
                 'id' => $post->id,
                 'uuid' => $post->uuid,
-                'title' => $post->title,
-                'subtitle' => $post->subtitle,
-                'slug' => $post->slug,
-                'excerpt' => $post->excerpt,
-                'content' => $post->content,
-                'post_type' => $post->post_type,
+                // Content fields - use snapshot if available
+                'title' => $useSnapshot ? ($versionSnapshot['title'] ?? $post->title) : $post->title,
+                'subtitle' => $useSnapshot ? ($versionSnapshot['subtitle'] ?? $post->subtitle) : $post->subtitle,
+                'slug' => $useSnapshot ? ($versionSnapshot['slug'] ?? $post->slug) : $post->slug,
+                'excerpt' => $useSnapshot ? ($versionSnapshot['excerpt'] ?? $post->excerpt) : $post->excerpt,
+                'content' => $useSnapshot ? ($versionSnapshot['content'] ?? $post->content) : $post->content,
+                'post_type' => $useSnapshot ? ($versionSnapshot['post_type'] ?? $post->post_type) : $post->post_type,
+                'custom_fields' => $useSnapshot ? ($versionSnapshot['custom_fields'] ?? $post->custom_fields) : $post->custom_fields,
+                'meta_title' => $useSnapshot ? ($versionSnapshot['meta_title'] ?? $post->meta_title) : $post->meta_title,
+                'meta_description' => $useSnapshot ? ($versionSnapshot['meta_description'] ?? $post->meta_description) : $post->meta_description,
+                'featured_media_id' => $useSnapshot ? ($versionSnapshot['featured_media_id'] ?? $post->featured_media_id) : $post->featured_media_id,
+                // Metadata fields - always from post model
                 'status' => $post->status,
-                'workflow_status' => $post->workflow_status ?? 'draft',
+                'workflow_status' => $currentVersion?->workflow_status ?? $post->workflow_status ?? 'draft',
                 'published_at' => $post->published_at,
                 'scheduled_at' => $post->scheduled_at,
-                'custom_fields' => $post->custom_fields,
-                'meta_title' => $post->meta_title,
-                'meta_description' => $post->meta_description,
                 'featured_image_url' => $post->featured_image_url,
                 'featured_image_thumb' => $post->featured_image_thumb,
-                'featured_media_id' => $post->featured_media_id,
                 'featured_media' => $post->featuredMedia ? [
                     'id' => $post->featuredMedia->id,
                     'uuid' => $post->featuredMedia->uuid,
@@ -402,8 +417,13 @@ class PostController extends Controller
                     'is_image' => $post->featuredMedia->is_image,
                     'is_video' => $post->featuredMedia->is_video,
                 ] : null,
-                'category_id' => $post->categories->first()?->id,
-                'tags' => $post->tags->pluck('id'),
+                // Taxonomy - use snapshot if available
+                'category_id' => $useSnapshot
+                    ? ($versionSnapshot['category_ids'][0] ?? $post->categories->first()?->id)
+                    : $post->categories->first()?->id,
+                'tags' => $useSnapshot
+                    ? ($versionSnapshot['tag_ids'] ?? $post->tags->pluck('id'))
+                    : $post->tags->pluck('id'),
                 'language_code' => $post->language_code,
                 'author' => $post->author ? [
                     'id' => $post->author->id,
@@ -437,8 +457,36 @@ class PostController extends Controller
     {
         $validated = $request->validated();
 
-        // Don't allow direct status changes - workflow controls this
-        // Only update content fields
+        // Check if the post is currently published
+        // If published, we only update the draft version's snapshot - NOT the post model
+        // This prevents changes from affecting the live published content
+        $isPublished = $post->status === Post::STATUS_PUBLISHED;
+
+        if ($isPublished) {
+            // Post is published - only update the draft version's snapshot
+            // Build content snapshot from the validated data (not from post model)
+            $contentSnapshot = [
+                'title' => $validated['title'],
+                'subtitle' => $validated['subtitle'] ?? null,
+                'excerpt' => $validated['excerpt'] ?? null,
+                'content' => $validated['content'] ?? null,
+                'meta_title' => $validated['meta_title'] ?? null,
+                'meta_description' => $validated['meta_description'] ?? null,
+                'featured_media_id' => $validated['featured_media_id'] ?? null,
+                'custom_fields' => $validated['custom_fields'] ?? null,
+                'allow_comments' => $validated['allow_comments'] ?? true,
+                'category_ids' => ! empty($validated['category_id']) ? [$validated['category_id']] : [],
+                'tag_ids' => $validated['tags'] ?? [],
+            ];
+
+            // Update only the draft version, not the post model
+            $post->updateDraftVersion($contentSnapshot);
+
+            return redirect()->route('cms.posts.edit', ['language' => $language, 'post' => $post])
+                ->with('success', 'Draft saved. Changes will apply when published.');
+        }
+
+        // Post is not published - update the post model directly
         $post->update([
             'title' => $validated['title'],
             'subtitle' => $validated['subtitle'] ?? null,
@@ -453,7 +501,7 @@ class PostController extends Controller
             'meta_description' => $validated['meta_description'] ?? null,
         ]);
 
-        // Sync category and tags
+        // Sync category and tags on the post model
         if (! empty($validated['category_id'])) {
             $post->categories()->sync([$validated['category_id']]);
         } else {
@@ -473,7 +521,6 @@ class PostController extends Controller
         $contentSnapshot = $post->buildContentSnapshot();
 
         // Update existing draft version or create new one if needed
-        // Use updateDraftVersion which will update existing draft or create new if none exists
         $post->updateDraftVersion($contentSnapshot);
 
         return redirect()->route('cms.posts.edit', ['language' => $language, 'post' => $post])

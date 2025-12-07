@@ -85,14 +85,14 @@ class ContentVersion extends Model
     /**
      * Create a workflow transition to a new status.
      */
-    public function transitionTo(string $toStatus, ?string $comment = null): WorkflowTransition
+    public function transitionTo(string $toStatus, ?string $comment = null, ?int $performedBy = null): WorkflowTransition
     {
         $fromStatus = $this->workflow_status;
 
         $transition = $this->transitions()->create([
             'from_status' => $fromStatus,
             'to_status' => $toStatus,
-            'performed_by' => auth()->id(),
+            'performed_by' => $performedBy ?? auth()->id(),
             'comment' => $comment,
         ]);
 

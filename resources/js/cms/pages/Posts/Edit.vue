@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import axios from 'axios';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import BlockEditor, { type MediaSelectCallback } from '../../components/BlockEditor.vue';
 import MediaPickerModal from '../../components/MediaPickerModal.vue';
@@ -108,9 +109,33 @@ const props = defineProps<{
 const workflowStatus = ref(props.post.workflow_status || 'draft');
 const currentVersionUuid = ref(props.post.current_version_uuid || null);
 
-// Published posts are read-only - must unpublish or create new version to edit
+// Check if the post itself is published (for UI indicators)
 const isPublished = computed(() => props.post.status === 'published');
-const isReadOnly = computed(() => isPublished.value);
+
+// Check if the current VERSION being viewed is editable
+// A version is read-only if:
+// 1. It's the active/published version (is_active = true), OR
+// 2. It's not in draft status (already submitted for review, approved, etc.)
+const currentVersionInfo = computed(() => {
+    return props.versionsList?.find(v => v.uuid === currentVersionUuid.value);
+});
+
+const isCurrentVersionDraft = computed(() => {
+    return currentVersionInfo.value?.workflow_status === 'draft';
+});
+
+const isCurrentVersionActive = computed(() => {
+    return currentVersionInfo.value?.is_active === true;
+});
+
+// Read-only if viewing the published/active version OR if the version is not in draft status
+const isReadOnly = computed(() => {
+    // If viewing the active (published) version, it's read-only
+    if (isCurrentVersionActive.value) return true;
+    // If the current version is not a draft, it's read-only (in review, approved, etc.)
+    if (!isCurrentVersionDraft.value) return true;
+    return false;
+});
 
 // Editorial slideover state
 const editorialSlideoverOpen = ref(false);
@@ -166,12 +191,23 @@ function refreshPage() {
 // Version switcher - computed options for dropdown
 const versionDropdownItems = computed(() => {
     if (!props.versionsList?.length) return [];
-    return props.versionsList.map(v => ({
-        label: `v${v.version_number}`,
-        value: v.uuid,
-        suffix: v.is_active ? 'Live' : v.is_draft ? 'Draft' : v.workflow_status,
-        is_current: v.is_current,
-    }));
+    return props.versionsList.map(v => {
+        // Build a clear suffix based on version state
+        let suffix = '';
+        if (v.is_active) {
+            suffix = 'Live';
+        } else {
+            // Show the workflow status label
+            const stateConfig = workflow.getState(v.workflow_status);
+            suffix = stateConfig.label;
+        }
+        return {
+            label: `v${v.version_number}`,
+            value: v.uuid,
+            suffix,
+            is_current: v.is_current,
+        };
+    });
 });
 
 // Current version display label
@@ -187,14 +223,8 @@ const currentVersionLabel = computed(() => {
 // Switch to a different version via URL
 function switchToVersion(versionUuid: string) {
     if (versionUuid === currentVersionUuid.value) return;
-    router.visit(
-        route('cms.posts.edit', {
-            language: props.post.language_code,
-            post: props.post.uuid,
-            version: versionUuid,
-        }),
-        { preserveState: false }
-    );
+    const url = `/cms/posts/${props.post.language_code}/${props.post.uuid}/edit?version=${versionUuid}`;
+    router.visit(url, { preserveState: false });
 }
 
 // Dhivehi keyboard for RTL content
@@ -623,7 +653,8 @@ async function createNewDraftVersion() {
     const sourceVersionUuid = activeVersionUuid.value || currentVersionUuid.value;
 
     if (!sourceVersionUuid) {
-        toast.add({ title: 'Error', description: 'No version to create draft from', color: 'error' });
+        console.error('createNewDraftVersion: No source version UUID found', { activeVersionUuid: activeVersionUuid.value, currentVersionUuid: currentVersionUuid.value });
+        toast.add({ title: 'Error', description: 'No version to create draft from. Please contact support.', color: 'error' });
         return;
     }
 
@@ -633,10 +664,36 @@ async function createNewDraftVersion() {
         toast.add({ title: 'Draft Created', description: 'New draft version created. You can now make changes.', color: 'success' });
         refreshPage();
     } catch (error: any) {
+        console.error('createNewDraftVersion: Failed to create draft', error);
         toast.add({ title: 'Error', description: error.response?.data?.message || 'Failed to create draft', color: 'error' });
     } finally {
         creatingNewDraft.value = false;
     }
+}
+
+// Publish the current approved version
+async function publishApprovedVersion() {
+    if (!currentVersionUuid.value) return;
+
+    const result = await workflow.transition(currentVersionUuid.value, 'published');
+    if (result.success) {
+        toast.add({ title: 'Published', description: 'Post has been published successfully', color: 'success' });
+        workflowStatus.value = 'published';
+        refreshPage();
+    } else {
+        toast.add({ title: 'Error', description: result.error || 'Failed to publish', color: 'error' });
+    }
+}
+
+function openPreview() {
+    // Open preview in new tab
+    const langCode = props.language?.code || props.post.language_code || 'en';
+    window.open(`/${langCode}/preview/${props.post.uuid}?version=${currentVersionUuid.value}`, '_blank');
+}
+
+function openDiff() {
+    // Navigate to diff view (placeholder for now)
+    toast.add({ title: 'Coming Soon', description: 'Diff view is under development', color: 'info' });
 }
 </script>
 
@@ -672,8 +729,7 @@ async function createNewDraftVersion() {
                                 v-if="versionDropdownItems.length > 1"
                                 :items="versionDropdownItems.map(v => ({
                                     label: v.label + (v.suffix ? ` (${v.suffix})` : ''),
-                                    icon: v.is_current ? 'i-lucide-check' : 'i-lucide-history',
-                                    disabled: v.is_current,
+                                    icon: v.is_current ? 'i-lucide-check' : 'i-lucide-git-branch',
                                     onSelect: () => switchToVersion(v.value),
                                 }))"
                             >
@@ -756,7 +812,7 @@ async function createNewDraftVersion() {
                             />
 
                             <UButton
-                                v-if="!isReadOnly"
+                                v-if="!isReadOnly && workflowStatus !== 'approved'"
                                 color="primary"
                                 size="sm"
                                 :loading="form.processing"
@@ -764,6 +820,39 @@ async function createNewDraftVersion() {
                             >
                                 Save Draft
                             </UButton>
+
+                            <!-- Publish Button for Approved Versions -->
+                            <UButton
+                                v-if="workflowStatus === 'approved'"
+                                color="success"
+                                size="sm"
+                                :loading="transitionLoading"
+                                icon="i-lucide-rocket"
+                                @click="publishApprovedVersion"
+                            >
+                                Publish
+                            </UButton>
+
+                            <!-- Preview Button -->
+                             <UButton
+                                color="neutral"
+                                variant="ghost"
+                                icon="i-lucide-eye"
+                                size="sm"
+                                @click="openPreview"
+                                title="Preview"
+                            />
+
+                            <!-- Diff Button (if not draft) -->
+                            <UButton
+                                v-if="!isReadOnly && activeVersionUuid"
+                                color="neutral"
+                                variant="ghost"
+                                icon="i-lucide-git-compare"
+                                size="sm"
+                                @click="openDiff"
+                                title="Compare with Live"
+                            />
                             <!-- Mobile sidebar toggle -->
                             <UButton
                                 v-if="!isFullscreen"
@@ -801,12 +890,18 @@ async function createNewDraftVersion() {
                                 <div class="flex items-start gap-3">
                                     <UIcon name="i-lucide-lock" class="size-5 text-muted shrink-0 mt-0.5" />
                                     <div class="flex-1">
-                                        <p class="text-sm font-medium">This post is published</p>
-                                        <p class="text-xs text-muted mt-1">
-                                            Published content is read-only. To make changes, {{ existingDraftVersion ? 'edit the existing draft' : 'create a new draft version' }}
-                                            or unpublish the post first.
+                                        <p class="text-sm font-medium">
+                                            {{ isCurrentVersionActive ? 'This is the published version' : 'This version is in review' }}
                                         </p>
-                                        <div class="flex flex-wrap gap-2 mt-3">
+                                        <p class="text-xs text-muted mt-1">
+                                            <template v-if="isCurrentVersionActive">
+                                                Published content is read-only. To make changes, {{ existingDraftVersion ? 'edit the existing draft' : 'create a new draft version' }}.
+                                            </template>
+                                            <template v-else>
+                                                This version is currently in the workflow ({{ currentVersionInfo?.workflow_status }}). Only draft versions can be edited.
+                                            </template>
+                                        </p>
+                                        <div v-if="isCurrentVersionActive" class="flex flex-wrap gap-2 mt-3">
                                             <!-- Show "Edit Draft" if draft exists, otherwise "Create New Draft" -->
                                             <UButton
                                                 v-if="existingDraftVersion"

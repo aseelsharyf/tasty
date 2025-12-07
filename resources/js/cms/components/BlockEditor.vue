@@ -243,6 +243,8 @@ defineExpose({
 
 <style>
 /* Editor.js styling overrides - unscoped for nested elements */
+/* Uses Nuxt UI design system variables for consistency */
+
 .codex-editor__redactor {
     padding-bottom: 6rem;
 }
@@ -268,46 +270,29 @@ defineExpose({
     right: auto;
 }
 
+/* Text content */
 .ce-paragraph,
 .ce-header,
 .cdx-list__item {
-    color: var(--color-gray-900);
-}
-
-:root.dark .ce-paragraph,
-:root.dark .ce-header,
-:root.dark .cdx-list__item {
-    color: var(--color-gray-100);
+    color: var(--ui-text-highlighted);
 }
 
 .cdx-quote__text {
-    color: var(--color-gray-700);
-    border-left: 4px solid var(--color-primary-500);
+    color: var(--ui-text);
+    border-left: 4px solid var(--ui-primary);
     padding-left: 1rem;
 }
 
-:root.dark .cdx-quote__text {
-    color: var(--color-gray-300);
-}
-
 .cdx-quote__caption {
-    color: var(--color-gray-500);
+    color: var(--ui-text-muted);
     font-size: 0.875rem;
 }
 
-:root.dark .cdx-quote__caption {
-    color: var(--color-gray-400);
-}
-
 .ce-code__textarea {
-    background-color: var(--color-gray-100);
-    color: var(--color-gray-900);
-    border-radius: 0.5rem;
-}
-
-:root.dark .ce-code__textarea {
-    background-color: var(--color-gray-800);
-    color: var(--color-gray-100);
+    background-color: var(--ui-bg-elevated);
+    color: var(--ui-text-highlighted);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
 }
 
 .tc-table {
@@ -316,95 +301,374 @@ defineExpose({
 }
 
 .tc-cell {
-    border: 1px solid var(--color-gray-200);
+    border: 1px solid var(--ui-border);
     padding: 0.5rem;
-    color: var(--color-gray-900);
-}
-
-:root.dark .tc-cell {
-    border-color: var(--color-gray-700);
-    color: var(--color-gray-100);
+    color: var(--ui-text-highlighted);
 }
 
 .ce-delimiter::before {
-    color: var(--color-gray-400);
+    color: var(--ui-text-muted);
 }
 
-:root.dark .ce-delimiter::before {
-    color: var(--color-gray-500);
-}
-
-/* Toolbar styling */
+/* Toolbar buttons (+, settings) */
 .ce-toolbar__plus,
 .ce-toolbar__settings-btn {
-    color: var(--color-gray-500);
-}
-
-:root.dark .ce-toolbar__plus,
-:root.dark .ce-toolbar__settings-btn {
-    color: var(--color-gray-400);
+    color: var(--ui-text-muted);
+    background-color: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
 }
 
 .ce-toolbar__plus:hover,
 .ce-toolbar__settings-btn:hover {
-    color: var(--color-gray-700);
+    color: var(--ui-text-highlighted);
+    background-color: var(--ui-bg-elevated);
 }
 
-:root.dark .ce-toolbar__plus:hover,
-:root.dark .ce-toolbar__settings-btn:hover {
-    color: var(--color-gray-200);
-}
-
+/* Inline toolbar (bold, italic, link, etc.) */
 .ce-inline-toolbar {
-    background-color: var(--color-white);
-    border-color: var(--color-gray-200);
+    background-color: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-:root.dark .ce-inline-toolbar {
-    background-color: var(--color-gray-800);
-    border-color: var(--color-gray-700);
+.dark .ce-inline-toolbar {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .ce-inline-tool {
-    color: var(--color-gray-600);
-}
-
-:root.dark .ce-inline-tool {
-    color: var(--color-gray-300);
+    color: var(--ui-text-muted);
 }
 
 .ce-inline-tool:hover {
-    background-color: var(--color-gray-100);
+    background-color: var(--ui-bg-elevated);
+    color: var(--ui-text-highlighted);
 }
 
-:root.dark .ce-inline-tool:hover {
-    background-color: var(--color-gray-700);
+.ce-inline-tool--active {
+    color: var(--ui-primary);
 }
 
+/* Popover / Block menu (+ button dropdown) */
 .ce-popover {
-    background-color: var(--color-white);
-    border-color: var(--color-gray-200);
+    background-color: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-:root.dark .ce-popover {
-    background-color: var(--color-gray-800);
-    border-color: var(--color-gray-700);
+.dark .ce-popover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.ce-popover__container {
+    background-color: var(--ui-bg);
 }
 
 .ce-popover-item__title {
-    color: var(--color-gray-900);
+    color: var(--ui-text-highlighted);
 }
 
-:root.dark .ce-popover-item__title {
-    color: var(--color-gray-100);
+.ce-popover-item__secondary-title {
+    color: var(--ui-text-muted);
+}
+
+.ce-popover-item__icon,
+.ce-popover-item__icon--tool {
+    background-color: var(--ui-bg-elevated) !important;
+    border: 1px solid var(--ui-border) !important;
+    border-radius: var(--ui-radius) !important;
+}
+
+.ce-popover-item__icon svg,
+.ce-popover-item__icon--tool svg {
+    color: var(--ui-text-muted) !important;
 }
 
 .ce-popover-item:hover {
-    background-color: var(--color-gray-100);
+    background-color: var(--ui-bg-elevated);
 }
 
-:root.dark .ce-popover-item:hover {
-    background-color: var(--color-gray-700);
+.ce-popover-item:hover .ce-popover-item__icon,
+.ce-popover-item:hover .ce-popover-item__icon--tool {
+    background-color: var(--ui-bg-accented) !important;
+    border-color: var(--ui-border-accented) !important;
+}
+
+.ce-popover-item:hover .ce-popover-item__icon svg,
+.ce-popover-item:hover .ce-popover-item__icon--tool svg {
+    color: var(--ui-text-highlighted) !important;
+}
+
+.ce-popover-item--focused {
+    background-color: var(--ui-bg-elevated) !important;
+}
+
+/* Settings menu (gear icon dropdown) */
+.ce-settings {
+    background-color: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark .ce-settings {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.cdx-settings-button {
+    color: var(--ui-text-muted);
+}
+
+.cdx-settings-button:hover {
+    background-color: var(--ui-bg-elevated);
+    color: var(--ui-text-highlighted);
+}
+
+.cdx-settings-button--active {
+    color: var(--ui-primary);
+}
+
+/* Conversion toolbar */
+.ce-conversion-toolbar {
+    background-color: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark .ce-conversion-toolbar {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.ce-conversion-tool {
+    color: var(--ui-text-muted);
+}
+
+.ce-conversion-tool:hover {
+    background-color: var(--ui-bg-elevated);
+    color: var(--ui-text-highlighted);
+}
+
+.ce-conversion-tool__icon {
+    background-color: var(--ui-bg-elevated);
+    border: 1px solid var(--ui-border);
+}
+
+/* Search input in block menu */
+.cdx-search-field,
+.ce-popover__search {
+    background-color: var(--ui-bg-muted) !important;
+    border: 1px solid var(--ui-border) !important;
+    border-radius: var(--ui-radius) !important;
+}
+
+.cdx-search-field__input {
+    color: var(--ui-text-highlighted) !important;
+    background-color: transparent !important;
+}
+
+.cdx-search-field__input::placeholder {
+    color: var(--ui-text-dimmed) !important;
+}
+
+.cdx-search-field__icon svg {
+    color: var(--ui-text-muted) !important;
+}
+
+/* Block selection highlight */
+.ce-block--selected .ce-block__content {
+    background-color: var(--ui-bg-elevated);
+}
+
+/* Link tool input */
+.ce-inline-tool-input {
+    background-color: var(--ui-bg);
+    color: var(--ui-text-highlighted);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
+}
+
+.ce-inline-tool-input::placeholder {
+    color: var(--ui-text-dimmed);
+}
+
+/* Placeholder text */
+.ce-paragraph[data-placeholder]:empty::before,
+.ce-header[data-placeholder]:empty::before {
+    color: var(--ui-text-dimmed);
+}
+
+/* Scrollbar for popover */
+.ce-popover__items::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ce-popover__items::-webkit-scrollbar-track {
+    background: var(--ui-bg-elevated);
+}
+
+.ce-popover__items::-webkit-scrollbar-thumb {
+    background: var(--ui-border-accented);
+    border-radius: 3px;
+}
+
+/* Nothing found message */
+.ce-popover__nothing-found-message {
+    color: var(--ui-text-muted);
+}
+
+/* Header tune popover */
+.ce-popover--nested {
+    background-color: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+}
+
+/* Popover item hover with border radius */
+.ce-popover-item {
+    border-radius: var(--ui-radius);
+    transition: background-color 0.15s ease;
+}
+
+.ce-popover-item:hover .ce-popover-item__icon {
+    background-color: var(--ui-bg-accented);
+    border-color: var(--ui-border-accented);
+}
+
+/* Focus states / outlines */
+.ce-toolbar__plus:focus,
+.ce-toolbar__settings-btn:focus {
+    outline: 2px solid var(--ui-primary);
+    outline-offset: 2px;
+}
+
+.ce-inline-tool:focus {
+    outline: none;
+    background-color: var(--ui-bg-elevated);
+}
+
+.cdx-search-field:focus-within {
+    border-color: var(--ui-border-accented);
+    outline: none;
+}
+
+.ce-inline-tool-input:focus {
+    outline: none;
+    border-color: var(--ui-border-accented);
+}
+
+/* Block focus/hover states */
+.ce-block:hover .ce-block__content {
+    background-color: transparent;
+}
+
+.ce-block--focused {
+    background-color: transparent;
+}
+
+/* Inline toolbar dropdown */
+.ce-inline-toolbar__dropdown {
+    background-color: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
+}
+
+.ce-inline-toolbar__dropdown:hover {
+    background-color: var(--ui-bg-elevated);
+}
+
+/* Conversion tool icon */
+.ce-conversion-tool__icon svg {
+    color: var(--ui-text-muted);
+}
+
+.ce-conversion-tool:hover .ce-conversion-tool__icon {
+    background-color: var(--ui-bg-accented);
+}
+
+.ce-conversion-tool:hover .ce-conversion-tool__icon svg {
+    color: var(--ui-text-highlighted);
+}
+
+/* Tune button (move up/down, delete) */
+.ce-tune-btn {
+    color: var(--ui-text-muted);
+    background-color: transparent;
+}
+
+.ce-tune-btn:hover {
+    background-color: var(--ui-bg-elevated);
+    color: var(--ui-text-highlighted);
+}
+
+.ce-tune-btn--focused {
+    background-color: var(--ui-bg-elevated);
+}
+
+/* Popover header/section titles */
+.ce-popover-header {
+    color: var(--ui-text-muted);
+    border-bottom: 1px solid var(--ui-border);
+}
+
+/* List styling */
+.cdx-list__item::before {
+    color: var(--ui-text-muted);
+}
+
+/* Table controls */
+.tc-toolbox {
+    background-color: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark .tc-toolbox {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.tc-toolbox__toggler {
+    color: var(--ui-text-muted);
+}
+
+.tc-toolbox__toggler:hover {
+    color: var(--ui-text-highlighted);
+    background-color: var(--ui-bg-elevated);
+}
+
+.tc-add-column,
+.tc-add-row {
+    color: var(--ui-text-muted);
+    background-color: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+}
+
+.tc-add-column:hover,
+.tc-add-row:hover {
+    color: var(--ui-text-highlighted);
+    background-color: var(--ui-bg-elevated);
+}
+
+/* Code block */
+.ce-code__textarea:focus {
+    outline: none;
+    border-color: var(--ui-border-accented);
+}
+
+/* Link inline tool - actions */
+.ce-inline-tool-input--showed {
+    border-color: var(--ui-border-accented);
+}
+
+/* Popover search clear button */
+.cdx-search-field__icon--cross {
+    color: var(--ui-text-muted);
+}
+
+.cdx-search-field__icon--cross:hover {
+    color: var(--ui-text-highlighted);
 }
 
 /* RTL Support */
@@ -427,7 +691,7 @@ defineExpose({
 
 .block-editor--rtl .cdx-quote__text {
     border-left: none;
-    border-right: 4px solid var(--color-primary-500);
+    border-right: 4px solid var(--ui-primary);
     padding-left: 0;
     padding-right: 1rem;
 }
