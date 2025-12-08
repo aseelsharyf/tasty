@@ -9,7 +9,7 @@
     /* Font Families - From Figma */
     --font-sans: "Favorit", "DM Sans", system-ui, sans-serif;
     --font-mono: "Favorit Mono", "DM Mono", ui-monospace, monospace;
-    --font-display: "New Spirit", "Playfair Display", Georgia, serif;
+    --font-display: "new-spirit-condensed", serif;
 
     /* Colors - From Figma */
     --color-tasty-pure-white: #ffffff;
@@ -23,159 +23,139 @@
 /*
  * Typography System - From Figma Design
  * Mobile-first approach with lg: breakpoint for desktop
+ * Using New Spirit Condensed (Adobe Typekit) - weight 400
  *
- * ORIGINAL VALUES (for New Spirit font - restore when font is available):
- * ========================================================================
- * HEADINGS (font-display / New Spirit):
- * - h1: Mobile 60px/50px, Desktop 100px/86px, tracking -4%
- * - h2: Mobile 40px/44px, Desktop 64px/66px, tracking -4%
- * - h3: Mobile 32px/32px, Desktop 48px/48px, tracking -4%
- * - h4: Mobile 24px/24px, Desktop 32px/38px, tracking -4%
- * - h1-hero: Mobile 60px/50px, Desktop 200px/160px (for large hero text)
+ * HEADINGS (font-display / New Spirit Condensed):
+ * - h1-hero: Mobile 80px/70px, Desktop 200px/160px, tracking -8px, uppercase
+ * - h1: Mobile 48px/42px, Desktop 100px/86px, tracking -4px, uppercase
+ * - h2: Mobile 36px/40px, Desktop 64px/66px, tracking -2.56px
+ * - h3: Mobile 28px/32px, Desktop 48px/48px, tracking -1.92px
+ * - h4: Mobile 24px/28px, Desktop 32px/38px, tracking -1.28px
  *
  * BODY TEXT (font-sans / Favorit):
- * - body-sm: Mobile 12px/12px, Desktop 14px/12px
- * - body-md: Mobile 18px/24px, Desktop 20px/28px
- * - body-lg: Mobile 20px/26px, Desktop 24px/26px
+ * - body-sm: 14px/12px uppercase (tags, metadata)
+ * - body-md: Mobile 18px/26px, Desktop 20px/28px
+ * - body-lg: Mobile 20px/28px, Desktop 24px/26px
  *
  * NAVIGATION (font-mono / Favorit Mono):
- * - nav: 18px/26px
- *
- * CURRENT VALUES (adjusted for Playfair Display fallback):
- * ========================================================================
+ * - nav: 18px/26px uppercase
  */
 
 /* Heading Utilities */
 .text-h1 {
     font-family: var(--font-display);
-    /* Original: font-size: 60px; line-height: 50px; letter-spacing: -2.4px; */
     font-size: 48px;
-    line-height: 52px;
-    letter-spacing: -1.5px;
+    line-height: 42px;
+    letter-spacing: -1.92px;
+    text-transform: uppercase;
 }
 @media (min-width: 1024px) {
     .text-h1 {
-        /* Original: font-size: 100px; line-height: 86px; letter-spacing: -4px; */
-        font-size: 72px;
-        line-height: 76px;
-        letter-spacing: -2.5px;
+        font-size: 100px;
+        line-height: 86px;
+        letter-spacing: -4px;
     }
 }
 
 .text-h1-hero {
     font-family: var(--font-display);
-    /* Original: font-size: 60px; line-height: 50px; letter-spacing: -2.4px; */
-    font-size: 48px;
-    line-height: 52px;
-    letter-spacing: -1.5px;
+    font-size: 80px;
+    line-height: 70px;
+    letter-spacing: -3.2px;
     text-transform: uppercase;
 }
 @media (min-width: 1024px) {
     .text-h1-hero {
-        /* Original: font-size: 200px; line-height: 160px; letter-spacing: -8px; */
-        font-size: 120px;
-        line-height: 110px;
-        letter-spacing: -4px;
+        font-size: 200px;
+        line-height: 160px;
+        letter-spacing: -8px;
     }
 }
 
 .text-h2 {
     font-family: var(--font-display);
-    /* Original: font-size: 40px; line-height: 44px; letter-spacing: -1.6px; */
-    font-size: 32px;
-    line-height: 38px;
-    letter-spacing: -1px;
+    font-size: 36px;
+    line-height: 40px;
+    letter-spacing: -1.44px;
 }
 @media (min-width: 1024px) {
     .text-h2 {
-        /* Original: font-size: 64px; line-height: 66px; letter-spacing: -2.56px; */
-        font-size: 48px;
-        line-height: 54px;
-        letter-spacing: -1.5px;
+        font-size: 64px;
+        line-height: 66px;
+        letter-spacing: -2.56px;
     }
 }
 
 .text-h3 {
     font-family: var(--font-display);
-    /* Original: font-size: 32px; line-height: 32px; letter-spacing: -1.28px; */
-    font-size: 26px;
+    font-size: 28px;
     line-height: 32px;
-    letter-spacing: -0.8px;
+    letter-spacing: -1.12px;
 }
 @media (min-width: 1024px) {
     .text-h3 {
-        /* Original: font-size: 48px; line-height: 48px; letter-spacing: -1.92px; */
-        font-size: 36px;
-        line-height: 42px;
-        letter-spacing: -1.2px;
+        font-size: 48px;
+        line-height: 48px;
+        letter-spacing: -1.92px;
     }
 }
 
 .text-h4 {
     font-family: var(--font-display);
-    /* Original: font-size: 24px; line-height: 24px; letter-spacing: -0.96px; */
-    font-size: 20px;
-    line-height: 26px;
-    letter-spacing: -0.5px;
+    font-size: 24px;
+    line-height: 28px;
+    letter-spacing: -0.96px;
 }
 @media (min-width: 1024px) {
     .text-h4 {
-        /* Original: font-size: 32px; line-height: 38px; letter-spacing: -1.28px; */
-        font-size: 26px;
-        line-height: 32px;
-        letter-spacing: -0.8px;
+        font-size: 32px;
+        line-height: 38px;
+        letter-spacing: -1.28px;
     }
 }
 
 /* Body Text Utilities */
 .text-body-sm {
     font-family: var(--font-sans);
-    /* Original: font-size: 12px; line-height: 12px; */
     font-size: 12px;
-    line-height: 16px;
+    line-height: 12px;
 }
 @media (min-width: 1024px) {
     .text-body-sm {
-        /* Original: font-size: 14px; line-height: 12px; */
         font-size: 14px;
-        line-height: 18px;
+        line-height: 12px;
     }
 }
 
 .text-body-md {
     font-family: var(--font-sans);
-    /* Original: font-size: 18px; line-height: 24px; */
-    font-size: 16px;
+    font-size: 18px;
     line-height: 24px;
 }
 @media (min-width: 1024px) {
     .text-body-md {
-        /* Original: font-size: 20px; line-height: 28px; */
-        font-size: 18px;
+        font-size: 20px;
         line-height: 28px;
     }
 }
 
 .text-body-lg {
     font-family: var(--font-sans);
-    /* Original: font-size: 20px; line-height: 26px; */
-    font-size: 18px;
+    font-size: 20px;
     line-height: 26px;
 }
 @media (min-width: 1024px) {
     .text-body-lg {
-        /* Original: font-size: 24px; line-height: 26px; */
-        font-size: 20px;
-        line-height: 28px;
+        font-size: 24px;
+        line-height: 26px;
     }
 }
 
 /* Navigation Text */
 .text-nav {
     font-family: var(--font-mono);
-    /* Original: font-size: 18px; line-height: 26px; */
-    font-size: 16px;
-    line-height: 24px;
+    font-size: 18px;
+    line-height: 26px;
 }
 
 /* Custom Utilities - Hide Scrollbar */
