@@ -8,6 +8,7 @@ use App\Http\Requests\Cms\UpdatePostRequest;
 use App\Models\Category;
 use App\Models\Language;
 use App\Models\Post;
+use App\Models\PostEditLock;
 use App\Models\Setting;
 use App\Models\Tag;
 use App\Models\User;
@@ -301,6 +302,12 @@ class PostController extends Controller
         // Set locale for translatable models
         app()->setLocale($language);
 
+        // Try to acquire edit lock
+        $user = Auth::user();
+        $lock = PostEditLock::tryAcquire($post, $user);
+        $lockInfo = PostEditLock::getLockInfo($post);
+        $canEdit = $lock !== null || ($lockInfo && $lockInfo['is_stale']);
+
         $categories = Category::whereNull('parent_id')
             ->with('children')
             ->orderBy('order')
@@ -451,6 +458,12 @@ class PostController extends Controller
             ] : null,
             'workflowConfig' => $workflowConfig,
             'versionsList' => $versionsList,
+            'editLock' => [
+                'canEdit' => $canEdit,
+                'lock' => $lockInfo,
+                'isMine' => $lockInfo && $lockInfo['user_id'] === $user->id,
+                'heartbeatInterval' => PostEditLock::HEARTBEAT_INTERVAL_SECONDS * 1000, // in ms
+            ],
         ]);
     }
 

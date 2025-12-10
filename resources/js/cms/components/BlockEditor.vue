@@ -7,6 +7,7 @@ import Quote from '@editorjs/quote';
 import Delimiter from '@editorjs/delimiter';
 import Table from '@editorjs/table';
 import Code from '@editorjs/code';
+import LinkTool from '@editorjs/link';
 import MediaBlock, { type MediaBlockItem } from '../editor-tools/MediaBlock';
 import '../editor-tools/media-block.css';
 import type { DhivehiLayout } from '../composables/useDhivehiKeyboard';
@@ -101,6 +102,7 @@ const initEditor = async () => {
         readOnly: props.readOnly || false,
         data: props.modelValue || undefined,
         tools: {
+            // Order: Text (default), Heading, Media, Quote, Link, List, Delimiter, Table, Code
             header: {
                 class: Header,
                 config: {
@@ -109,11 +111,11 @@ const initEditor = async () => {
                     defaultLevel: 2,
                 },
             },
-            list: {
-                class: List,
-                inlineToolbar: true,
+            media: {
+                class: MediaBlock,
                 config: {
-                    defaultStyle: 'unordered',
+                    placeholder: isRtlMode ? 'މީޑީއާ އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add media',
+                    onSelectMedia: props.onSelectMedia,
                 },
             },
             quote: {
@@ -122,6 +124,19 @@ const initEditor = async () => {
                 config: {
                     quotePlaceholder: quotePlaceholder,
                     captionPlaceholder: quoteCaptionPlaceholder,
+                },
+            },
+            linkTool: {
+                class: LinkTool,
+                config: {
+                    endpoint: '/cms/api/fetch-url',
+                },
+            },
+            list: {
+                class: List,
+                inlineToolbar: true,
+                config: {
+                    defaultStyle: 'unordered',
                 },
             },
             delimiter: Delimiter,
@@ -137,13 +152,6 @@ const initEditor = async () => {
                 class: Code,
                 config: {
                     placeholder: codePlaceholder,
-                },
-            },
-            media: {
-                class: MediaBlock,
-                config: {
-                    placeholder: isRtlMode ? 'މީޑީއާ އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add media',
-                    onSelectMedia: props.onSelectMedia,
                 },
             },
         },
@@ -704,5 +712,10 @@ defineExpose({
 .block-editor--rtl .ce-toolbar__actions {
     left: auto;
     right: 0;
+}
+
+/* Link Tool - prevent image hiding in narrow mode */
+.codex-editor--narrow .link-tool__image {
+    display: block !important;
 }
 </style>

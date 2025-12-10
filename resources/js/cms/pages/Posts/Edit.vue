@@ -86,6 +86,20 @@ interface VersionListItem {
     created_at: string;
 }
 
+interface EditLockInfo {
+    canEdit: boolean;
+    lock: {
+        id: number;
+        user_id: number;
+        user_name: string;
+        locked_at: string;
+        last_heartbeat_at: string;
+        is_stale: boolean;
+    } | null;
+    isMine: boolean;
+    heartbeatInterval: number;
+}
+
 const props = defineProps<{
     post: Post & {
         category_id: number | null;
@@ -103,7 +117,84 @@ const props = defineProps<{
     language: LanguageInfo | null;
     workflowConfig: WorkflowConfig;
     versionsList?: VersionListItem[];
+    editLock: EditLockInfo;
 }>();
+
+// Edit lock state
+const lockStatus = ref(props.editLock);
+const heartbeatTimer = ref<ReturnType<typeof setInterval> | null>(null);
+const isTakingOver = ref(false);
+
+// Check if locked by someone else
+const isLockedByOther = computed(() => {
+    return lockStatus.value.lock !== null && !lockStatus.value.isMine;
+});
+
+// Can we take over the lock?
+const canTakeOver = computed(() => {
+    return isLockedByOther.value && lockStatus.value.lock?.is_stale;
+});
+
+// Start heartbeat to keep lock alive
+function startHeartbeat() {
+    if (heartbeatTimer.value) return;
+    if (!lockStatus.value.isMine) return;
+
+    heartbeatTimer.value = setInterval(async () => {
+        try {
+            await axios.post(`/cms/posts/${props.post.id}/lock/heartbeat`);
+        } catch (error) {
+            console.error('Failed to send heartbeat:', error);
+            // If heartbeat fails, we may have lost the lock
+            stopHeartbeat();
+        }
+    }, lockStatus.value.heartbeatInterval);
+}
+
+// Stop heartbeat
+function stopHeartbeat() {
+    if (heartbeatTimer.value) {
+        clearInterval(heartbeatTimer.value);
+        heartbeatTimer.value = null;
+    }
+}
+
+// Release lock when leaving page
+async function releaseLock() {
+    if (!lockStatus.value.isMine) return;
+    try {
+        await axios.post(`/cms/posts/${props.post.id}/lock/release`);
+    } catch (error) {
+        console.error('Failed to release lock:', error);
+    }
+}
+
+// Take over editing from someone else (only if lock is stale)
+async function takeOverEditing() {
+    isTakingOver.value = true;
+    try {
+        const response = await axios.post(`/cms/posts/${props.post.id}/lock/force`);
+        if (response.data.success) {
+            lockStatus.value = {
+                canEdit: true,
+                lock: response.data.lock,
+                isMine: true,
+                heartbeatInterval: lockStatus.value.heartbeatInterval,
+            };
+            startHeartbeat();
+            toast.add({ title: 'Success', description: 'You are now editing this post', color: 'success' });
+            // Reload page to get fresh content
+            router.reload();
+        }
+    } catch (error: any) {
+        toast.add({
+            title: 'Error',
+            description: error.response?.data?.message || 'Failed to take over editing',
+            color: 'error',
+        });
+    }
+    isTakingOver.value = false;
+}
 
 // Workflow state
 const workflowStatus = ref(props.post.workflow_status || 'draft');
@@ -128,8 +219,10 @@ const isCurrentVersionActive = computed(() => {
     return currentVersionInfo.value?.is_active === true;
 });
 
-// Read-only if viewing the published/active version OR if the version is not in draft status
+// Read-only if viewing the published/active version OR if the version is not in draft status OR if locked by someone else
 const isReadOnly = computed(() => {
+    // If locked by someone else, it's read-only
+    if (isLockedByOther.value && !canTakeOver.value) return true;
     // If viewing the active (published) version, it's read-only
     if (isCurrentVersionActive.value) return true;
     // If the current version is not a draft, it's read-only (in review, approved, etc.)
@@ -388,6 +481,9 @@ const lastSaved = ref<Date | null>(null);
 const isSaving = ref(false);
 
 function autoSave() {
+    // Don't auto-save if we don't have the lock
+    if (!lockStatus.value.isMine) return;
+
     // Don't auto-save published posts (read-only)
     if (isReadOnly.value) return;
 
@@ -449,6 +545,10 @@ onMounted(() => {
     document.addEventListener('keydown', handleKeydown);
     // Auto-resize title on mount if there's existing content
     nextTick(() => autoResizeTitle());
+    // Start heartbeat if we have the lock
+    if (lockStatus.value.isMine) {
+        startHeartbeat();
+    }
 });
 
 onBeforeUnmount(() => {
@@ -456,6 +556,9 @@ onBeforeUnmount(() => {
     if (autoSaveTimer.value) {
         clearTimeout(autoSaveTimer.value);
     }
+    // Stop heartbeat and release lock
+    stopHeartbeat();
+    releaseLock();
     // Restore sidebar when leaving the page
     showSidebar();
 });
@@ -874,6 +977,42 @@ function openDiff() {
             </template>
 
             <template #body>
+                <!-- Lock Warning Banner -->
+                <div
+                    v-if="isLockedByOther"
+                    class="bg-warning-50 dark:bg-warning-900/20 border-b border-warning-200 dark:border-warning-800 px-4 py-3"
+                >
+                    <div class="flex items-center justify-between gap-4 max-w-5xl mx-auto">
+                        <div class="flex items-center gap-3">
+                            <UIcon name="i-lucide-lock" class="size-5 text-warning-600 dark:text-warning-400" />
+                            <div>
+                                <p class="text-sm font-medium text-warning-800 dark:text-warning-200">
+                                    This post is being edited by {{ lockStatus.lock?.user_name }}
+                                </p>
+                                <p class="text-xs text-warning-600 dark:text-warning-400">
+                                    <template v-if="canTakeOver">
+                                        Their session appears to be inactive. You can take over editing.
+                                    </template>
+                                    <template v-else>
+                                        You can view this post but cannot make changes until they're done.
+                                    </template>
+                                </p>
+                            </div>
+                        </div>
+                        <UButton
+                            v-if="canTakeOver"
+                            color="warning"
+                            variant="solid"
+                            size="sm"
+                            :loading="isTakingOver"
+                            @click="takeOverEditing"
+                        >
+                            <UIcon name="i-lucide-user-check" class="size-4 mr-1" />
+                            Take Over
+                        </UButton>
+                    </div>
+                </div>
+
                 <div class="flex h-full relative">
                     <!-- Mobile sidebar overlay -->
                     <div

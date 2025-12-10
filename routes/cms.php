@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Cms\Api\FetchUrlController;
 use App\Http\Controllers\Cms\AuthController;
 use App\Http\Controllers\Cms\CategoryController;
 use App\Http\Controllers\Cms\CommentBanController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Cms\MediaItemCropController;
 use App\Http\Controllers\Cms\MenuController;
 use App\Http\Controllers\Cms\NotificationController;
 use App\Http\Controllers\Cms\PostController;
+use App\Http\Controllers\Cms\PostEditLockController;
 use App\Http\Controllers\Cms\ProfileController;
 use App\Http\Controllers\Cms\RoleController;
 use App\Http\Controllers\Cms\SettingsController;
@@ -122,6 +124,11 @@ Route::middleware(['auth', 'cms'])->group(function () {
     // Languages API (for fetching available languages)
     Route::get('languages', [LanguageController::class, 'index'])->name('cms.languages.index');
 
+    // API Routes
+    Route::prefix('api')->group(function () {
+        Route::get('fetch-url', FetchUrlController::class)->name('cms.api.fetch-url');
+    });
+
     // Posts Management
     Route::middleware('permission:posts.view')->group(function () {
         // Language-specific post listing
@@ -161,6 +168,15 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::delete('posts/{language}/{post}/force', [PostController::class, 'forceDelete'])
             ->name('cms.posts.forceDelete')
             ->where('language', '[a-zA-Z]{2,5}');
+
+        // Post Edit Locks
+        Route::prefix('posts/{post}/lock')->group(function () {
+            Route::get('status', [PostEditLockController::class, 'status'])->name('cms.posts.lock.status');
+            Route::post('acquire', [PostEditLockController::class, 'acquire'])->name('cms.posts.lock.acquire');
+            Route::post('heartbeat', [PostEditLockController::class, 'heartbeat'])->name('cms.posts.lock.heartbeat');
+            Route::post('release', [PostEditLockController::class, 'release'])->name('cms.posts.lock.release');
+            Route::post('force', [PostEditLockController::class, 'forceAcquire'])->name('cms.posts.lock.force');
+        });
     });
 
     // Categories Management
