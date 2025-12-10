@@ -1,4 +1,5 @@
 {{-- EditorJS Content Blocks Renderer --}}
+<div class="space-y-6">
 @foreach($blocks as $block)
     @php
         $type = $block['type'] ?? null;
@@ -8,39 +9,91 @@
     @switch($type)
         {{-- Paragraph --}}
         @case('paragraph')
-            <p>{!! $data['text'] ?? '' !!}</p>
+            <p class="leading-relaxed">{!! $data['text'] ?? '' !!}</p>
             @break
 
         {{-- Header --}}
         @case('header')
             @php $level = $data['level'] ?? 2; @endphp
-            <h{{ $level }}>{!! $data['text'] ?? '' !!}</h{{ $level }}>
+            <h{{ $level }} class="mt-8 first:mt-0">{!! $data['text'] ?? '' !!}</h{{ $level }}>
             @break
 
-        {{-- List --}}
+        {{-- List (supports both old string format and new nested format) --}}
         @case('list')
-            @php $style = $data['style'] ?? 'unordered'; @endphp
+            @php
+                $style = $data['style'] ?? 'unordered';
+                $items = $data['items'] ?? [];
+            @endphp
             @if($style === 'ordered')
-                <ol>
-                    @foreach($data['items'] ?? [] as $item)
-                        <li>{!! is_array($item) ? ($item['content'] ?? '') : $item !!}</li>
+                <ol class="list-decimal list-inside space-y-2 pl-2">
+                    @foreach($items as $item)
+                        @include('templates.posts.partials.list-item', ['item' => $item, 'ordered' => true])
                     @endforeach
                 </ol>
+            @elseif($style === 'checklist')
+                <ul class="space-y-2">
+                    @foreach($items as $item)
+                        @php
+                            $content = is_array($item) ? ($item['content'] ?? '') : $item;
+                            $checked = is_array($item) ? ($item['meta']['checked'] ?? false) : false;
+                        @endphp
+                        <li class="flex items-start gap-2">
+                            <span class="mt-1 flex-shrink-0">
+                                @if($checked)
+                                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                @else
+                                    <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"></rect>
+                                    </svg>
+                                @endif
+                            </span>
+                            <span class="{{ $checked ? 'line-through text-gray-500' : '' }}">{!! $content !!}</span>
+                        </li>
+                    @endforeach
+                </ul>
             @else
-                <ul>
-                    @foreach($data['items'] ?? [] as $item)
-                        <li>{!! is_array($item) ? ($item['content'] ?? '') : $item !!}</li>
+                <ul class="list-disc list-inside space-y-2 pl-2">
+                    @foreach($items as $item)
+                        @include('templates.posts.partials.list-item', ['item' => $item, 'ordered' => false])
                     @endforeach
                 </ul>
             @endif
             @break
 
+        {{-- Checklist (legacy separate block type) --}}
+        @case('checklist')
+            <ul class="space-y-2">
+                @foreach($data['items'] ?? [] as $item)
+                    @php
+                        $text = is_array($item) ? ($item['text'] ?? '') : $item;
+                        $checked = is_array($item) ? ($item['checked'] ?? false) : false;
+                    @endphp
+                    <li class="flex items-start gap-2">
+                        <span class="mt-1 flex-shrink-0">
+                            @if($checked)
+                                <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            @else
+                                <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"></rect>
+                                </svg>
+                            @endif
+                        </span>
+                        <span class="{{ $checked ? 'line-through text-gray-500' : '' }}">{!! $text !!}</span>
+                    </li>
+                @endforeach
+            </ul>
+            @break
+
         {{-- Quote --}}
         @case('quote')
-            <blockquote>
-                <p>{!! $data['text'] ?? '' !!}</p>
+            <blockquote class="border-l-4 border-gray-300 dark:border-gray-600 pl-6 py-2 my-6 italic">
+                <p class="text-lg">{!! $data['text'] ?? '' !!}</p>
                 @if($data['caption'] ?? null)
-                    <cite>{!! $data['caption'] !!}</cite>
+                    <cite class="block mt-2 text-sm text-gray-500 not-italic">&mdash; {!! $data['caption'] !!}</cite>
                 @endif
             </blockquote>
             @break
@@ -115,7 +168,15 @@
 
             @elseif($layout === 'grid')
                 {{-- Grid layout --}}
-                <div class="my-8 grid gap-4 grid-cols-{{ $gridColumns }}">
+                @php
+                    $gridClass = match((int)$gridColumns) {
+                        2 => 'grid-cols-2',
+                        3 => 'grid-cols-3',
+                        4 => 'grid-cols-4',
+                        default => 'grid-cols-3',
+                    };
+                @endphp
+                <div class="my-8 grid gap-4 {{ $gridClass }}">
                     @foreach($items as $item)
                         <figure class="m-0">
                             <img
@@ -167,27 +228,52 @@
 
         {{-- Delimiter --}}
         @case('delimiter')
-            <hr class="my-8" />
+            <div class="flex items-center justify-center my-10">
+                <span class="text-2xl text-gray-400 tracking-widest">* * *</span>
+            </div>
             @break
 
         {{-- Code --}}
         @case('code')
-            <pre class="rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-x-auto my-6"><code>{{ $data['code'] ?? '' }}</code></pre>
+            <pre class="rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-x-auto my-6 text-sm"><code>{{ $data['code'] ?? '' }}</code></pre>
             @break
 
         {{-- Table --}}
         @case('table')
+            @php
+                $withHeadings = $data['withHeadings'] ?? false;
+                $content = $data['content'] ?? [];
+            @endphp
             <div class="overflow-x-auto my-6">
-                <table class="min-w-full border-collapse">
-                    <tbody>
-                        @foreach($data['content'] ?? [] as $row)
+                <table class="min-w-full border-collapse border border-gray-200 dark:border-gray-700">
+                    @if($withHeadings && count($content) > 0)
+                        <thead class="bg-gray-50 dark:bg-gray-800">
                             <tr>
-                                @foreach($row as $cell)
-                                    <td class="border border-gray-300 dark:border-gray-600 px-4 py-2">{!! $cell !!}</td>
+                                @foreach($content[0] as $cell)
+                                    <th class="border border-gray-200 dark:border-gray-700 px-4 py-2 text-left font-semibold">{!! $cell !!}</th>
                                 @endforeach
                             </tr>
-                        @endforeach
-                    </tbody>
+                        </thead>
+                        <tbody>
+                            @foreach(array_slice($content, 1) as $row)
+                                <tr>
+                                    @foreach($row as $cell)
+                                        <td class="border border-gray-200 dark:border-gray-700 px-4 py-2">{!! $cell !!}</td>
+                                    @endforeach
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    @else
+                        <tbody>
+                            @foreach($content as $row)
+                                <tr>
+                                    @foreach($row as $cell)
+                                        <td class="border border-gray-200 dark:border-gray-700 px-4 py-2">{!! $cell !!}</td>
+                                    @endforeach
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    @endif
                 </table>
             </div>
             @break
@@ -199,7 +285,7 @@
                     href="{{ $data['link'] ?? '#' }}"
                     target="_blank"
                     rel="noopener"
-                    class="block no-underline border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:border-blue-500 transition-colors"
+                    class="block no-underline border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:border-primary-500 transition-colors"
                 >
                     <div class="flex">
                         @if($data['meta']['image']['url'] ?? null)
@@ -211,16 +297,27 @@
                                 />
                             </div>
                         @endif
-                        <div class="p-4">
+                        <div class="p-4 flex-1">
                             <p class="font-medium text-gray-900 dark:text-gray-100 mb-1">
                                 {{ $data['meta']['title'] ?? $data['link'] ?? 'Link' }}
                             </p>
                             @if($data['meta']['description'] ?? null)
                                 <p class="text-sm text-gray-500 line-clamp-2">{{ $data['meta']['description'] }}</p>
                             @endif
+                            <p class="text-xs text-gray-400 mt-2 truncate">{{ parse_url($data['link'] ?? '', PHP_URL_HOST) }}</p>
                         </div>
                     </div>
                 </a>
+            </div>
+            @break
+
+        {{-- Warning/Alert --}}
+        @case('warning')
+            <div class="my-6 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+                @if($data['title'] ?? null)
+                    <p class="font-semibold text-yellow-800 dark:text-yellow-200 mb-1">{{ $data['title'] }}</p>
+                @endif
+                <p class="text-yellow-700 dark:text-yellow-300">{!! $data['message'] ?? '' !!}</p>
             </div>
             @break
 
@@ -231,17 +328,38 @@
 
         {{-- Embed --}}
         @case('embed')
-            <div class="my-8 aspect-video">
-                <iframe
-                    src="{{ $data['embed'] ?? '' }}"
-                    class="w-full h-full rounded-lg"
-                    frameborder="0"
-                    allowfullscreen
-                ></iframe>
+            <div class="my-8">
+                <div class="aspect-video">
+                    <iframe
+                        src="{{ $data['embed'] ?? '' }}"
+                        class="w-full h-full rounded-lg"
+                        frameborder="0"
+                        allowfullscreen
+                    ></iframe>
+                </div>
+                @if($data['caption'] ?? null)
+                    <p class="text-center text-sm text-gray-500 mt-2">{!! $data['caption'] !!}</p>
+                @endif
             </div>
-            @if($data['caption'] ?? null)
-                <p class="text-center text-sm text-gray-500 mt-2">{!! $data['caption'] !!}</p>
-            @endif
+            @break
+
+        {{-- Attaches/Files --}}
+        @case('attaches')
+            <div class="my-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <a href="{{ $data['file']['url'] ?? '#' }}" target="_blank" rel="noopener" class="flex items-center gap-3 no-underline hover:bg-gray-50 dark:hover:bg-gray-800 -m-4 p-4 rounded-lg transition-colors">
+                    <div class="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ $data['title'] ?? $data['file']['name'] ?? 'File' }}</p>
+                        @if($data['file']['size'] ?? null)
+                            <p class="text-xs text-gray-500">{{ number_format($data['file']['size'] / 1024, 1) }} KB</p>
+                        @endif
+                    </div>
+                </a>
+            </div>
             @break
 
         @default
@@ -249,7 +367,9 @@
             @if(config('app.debug'))
                 <div class="my-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-xs">
                     <p class="font-mono text-yellow-600 dark:text-yellow-400">Unknown block: {{ $type }}</p>
+                    <pre class="mt-2 text-yellow-600 dark:text-yellow-400 overflow-auto">{{ json_encode($data, JSON_PRETTY_PRINT) }}</pre>
                 </div>
             @endif
     @endswitch
 @endforeach
+</div>
