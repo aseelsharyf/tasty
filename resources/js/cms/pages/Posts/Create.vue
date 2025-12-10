@@ -104,6 +104,7 @@ const form = useForm({
     custom_fields: {} as Record<string, unknown>,
     meta_title: '',
     meta_description: '',
+    show_author: true,
 });
 
 // Unified media picker state
@@ -736,6 +737,18 @@ function goBack() {
                                             size="sm"
                                             class="w-full"
                                         />
+                                    </div>
+                                    <!-- Display Options -->
+                                    <div class="pt-3 border-t border-default mt-3">
+                                        <label class="text-xs text-muted mb-2 block">Display Options</label>
+                                        <label class="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                v-model="form.show_author"
+                                                class="rounded border-default text-primary focus:ring-primary"
+                                            />
+                                            <span class="text-sm">Show author name</span>
+                                        </label>
                                     </div>
                                 </div>
                             </div>

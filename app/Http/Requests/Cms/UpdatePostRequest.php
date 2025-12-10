@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Cms;
 
 use App\Models\Post;
+use App\Services\PostTemplateRegistry;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -30,6 +31,11 @@ class UpdatePostRequest extends FormRequest
             'excerpt' => ['nullable', 'string', 'max:500'],
             'content' => ['nullable', 'array'],
             'post_type' => ['nullable', Rule::in([Post::TYPE_ARTICLE, Post::TYPE_RECIPE])],
+            'template' => ['nullable', 'string', 'max:50', function ($attribute, $value, $fail) {
+                if ($value && ! PostTemplateRegistry::exists($value)) {
+                    $fail('The selected template is invalid.');
+                }
+            }],
             // Status is controlled by workflow, not direct form submission
             'status' => ['nullable', Rule::in([
                 Post::STATUS_DRAFT,
@@ -48,6 +54,7 @@ class UpdatePostRequest extends FormRequest
             'custom_fields.*' => ['nullable'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:500'],
+            'show_author' => ['nullable', 'boolean'],
         ];
     }
 

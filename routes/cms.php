@@ -14,6 +14,7 @@ use App\Http\Controllers\Cms\MenuController;
 use App\Http\Controllers\Cms\NotificationController;
 use App\Http\Controllers\Cms\PostController;
 use App\Http\Controllers\Cms\PostEditLockController;
+use App\Http\Controllers\Cms\PostPreviewController;
 use App\Http\Controllers\Cms\ProfileController;
 use App\Http\Controllers\Cms\RoleController;
 use App\Http\Controllers\Cms\SettingsController;
@@ -127,7 +128,13 @@ Route::middleware(['auth', 'cms'])->group(function () {
     // API Routes
     Route::prefix('api')->group(function () {
         Route::get('fetch-url', FetchUrlController::class)->name('cms.api.fetch-url');
+        Route::post('preview/post', [PostPreviewController::class, 'render'])->name('cms.api.preview.post');
     });
+
+    // Post Preview (GET - loads from database)
+    Route::get('preview/{language}/{post}', [PostPreviewController::class, 'show'])
+        ->name('cms.posts.preview')
+        ->where('language', '[a-zA-Z]{2,5}');
 
     // Posts Management
     Route::middleware('permission:posts.view')->group(function () {

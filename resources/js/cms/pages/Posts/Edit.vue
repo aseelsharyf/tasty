@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import axios from 'axios';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
@@ -7,6 +7,7 @@ import BlockEditor, { type MediaSelectCallback } from '../../components/BlockEdi
 import MediaPickerModal from '../../components/MediaPickerModal.vue';
 import NotificationDropdown from '../../components/NotificationDropdown.vue';
 import EditorialSlideover from '../../components/EditorialSlideover.vue';
+import CustomFieldsPanel from '../../components/CustomFieldsPanel.vue';
 import type { MediaBlockItem } from '../../editor-tools/MediaBlock';
 import { useSidebar } from '../../composables/useSidebar';
 import { useDhivehiKeyboard } from '../../composables/useDhivehiKeyboard';
@@ -100,6 +101,16 @@ interface EditLockInfo {
     heartbeatInterval: number;
 }
 
+interface TemplateOption {
+    key: string;
+    name: string;
+    description: string;
+    icon: string;
+}
+
+// Get page props for CSRF token
+const page = usePage();
+
 const props = defineProps<{
     post: Post & {
         category_id: number | null;
@@ -109,6 +120,8 @@ const props = defineProps<{
         featured_media_id?: number | null;
         workflow_status?: string;
         current_version_uuid?: string | null;
+        template?: string;
+        show_author?: boolean;
     };
     categories: Category[];
     tags: Tag[];
@@ -118,6 +131,7 @@ const props = defineProps<{
     workflowConfig: WorkflowConfig;
     versionsList?: VersionListItem[];
     editLock: EditLockInfo;
+    templates: TemplateOption[];
 }>();
 
 // Edit lock state
@@ -142,7 +156,7 @@ function startHeartbeat() {
 
     heartbeatTimer.value = setInterval(async () => {
         try {
-            await axios.post(`/cms/posts/${props.post.id}/lock/heartbeat`);
+            await axios.post(`/cms/posts/${props.post.uuid}/lock/heartbeat`);
         } catch (error) {
             console.error('Failed to send heartbeat:', error);
             // If heartbeat fails, we may have lost the lock
@@ -163,7 +177,7 @@ function stopHeartbeat() {
 async function releaseLock() {
     if (!lockStatus.value.isMine) return;
     try {
-        await axios.post(`/cms/posts/${props.post.id}/lock/release`);
+        await axios.post(`/cms/posts/${props.post.uuid}/lock/release`);
     } catch (error) {
         console.error('Failed to release lock:', error);
     }
@@ -173,7 +187,7 @@ async function releaseLock() {
 async function takeOverEditing() {
     isTakingOver.value = true;
     try {
-        const response = await axios.post(`/cms/posts/${props.post.id}/lock/force`);
+        const response = await axios.post(`/cms/posts/${props.post.uuid}/lock/force`);
         if (response.data.success) {
             lockStatus.value = {
                 canEdit: true,
@@ -355,6 +369,7 @@ const form = useForm({
     excerpt: props.post.excerpt || '',
     content: props.post.content,
     post_type: props.post.post_type,
+    template: props.post.template || 'default',
     scheduled_at: props.post.scheduled_at || '',
     category_id: props.post.category_id ?? null,
     tags: props.post.tags || [],
@@ -362,12 +377,13 @@ const form = useForm({
     custom_fields: (props.post.custom_fields || {}) as Record<string, unknown>,
     meta_title: props.post.meta_title || '',
     meta_description: props.post.meta_description || '',
+    show_author: props.post.show_author ?? true,
 });
 
 // Get current post type config - either from props or find it from postTypes
 const currentPostType = computed<PostTypeConfig | null>(() => {
-    // First check if passed from backend
-    if (props.currentPostType) {
+    // First check if passed from backend AND matches current selection
+    if (props.currentPostType && props.currentPostType.key === form.post_type) {
         return props.currentPostType;
     }
     // Otherwise find from postTypes list based on form's current selection
@@ -376,6 +392,7 @@ const currentPostType = computed<PostTypeConfig | null>(() => {
         return {
             key: found.value,
             label: found.label,
+            icon: (found as any).icon || null,
             fields: (found as any).fields || [],
         };
     }
@@ -473,6 +490,55 @@ function toggleFullscreen() {
     } else {
         showSidebar();
     }
+}
+
+// Preview mode
+const isPreviewMode = ref(false);
+const previewIframe = ref<HTMLIFrameElement | null>(null);
+const previewFormRef = ref<HTMLFormElement | null>(null);
+const previewLoading = ref(false);
+
+function togglePreviewMode() {
+    isPreviewMode.value = !isPreviewMode.value;
+}
+
+// Get current template config
+const currentTemplateConfig = computed(() => {
+    return props.templates.find(t => t.key === form.template) || props.templates[0];
+});
+
+// Update preview when entering preview mode or when relevant data changes
+function refreshPreview() {
+    if (!isPreviewMode.value || !previewFormRef.value) return;
+    previewLoading.value = true;
+    previewFormRef.value.submit();
+}
+
+// Watch for preview mode changes
+watch(isPreviewMode, (newVal) => {
+    if (newVal) {
+        nextTick(() => refreshPreview());
+    }
+});
+
+// Watch for content changes in preview mode (debounced)
+const previewDebounceTimer = ref<ReturnType<typeof setTimeout> | null>(null);
+watch(
+    () => [form.title, form.subtitle, form.content, form.template, form.show_author, form.category_id, form.tags, form.post_type, form.custom_fields, selectedFeaturedMedia.value?.url],
+    () => {
+        if (!isPreviewMode.value) return;
+        if (previewDebounceTimer.value) {
+            clearTimeout(previewDebounceTimer.value);
+        }
+        previewDebounceTimer.value = setTimeout(() => {
+            refreshPreview();
+        }, 500);
+    },
+    { deep: true }
+);
+
+function onPreviewLoad() {
+    previewLoading.value = false;
 }
 
 // Auto-save functionality
@@ -596,6 +662,30 @@ const flattenedCategories = computed(() => {
 const tagOptions = computed(() =>
     props.tags.map((tag) => ({ label: tag.name, value: tag.id }))
 );
+
+// Get selected category name for preview
+const selectedCategoryName = computed(() => {
+    if (!form.category_id) return '';
+    const findCategory = (cats: Category[]): string => {
+        for (const cat of cats) {
+            if (cat.id === form.category_id) return cat.name;
+            if (cat.children?.length) {
+                const found = findCategory(cat.children);
+                if (found) return found;
+            }
+        }
+        return '';
+    };
+    return findCategory(props.categories);
+});
+
+// Get selected tag names for preview
+const selectedTagNames = computed(() => {
+    if (!form.tags?.length) return [];
+    return props.tags
+        .filter(tag => form.tags.includes(tag.id))
+        .map(tag => tag.name);
+});
 
 function generateSlug() {
     form.slug = form.title
@@ -789,9 +879,10 @@ async function publishApprovedVersion() {
 }
 
 function openPreview() {
-    // Open preview in new tab
+    // Open preview in new tab using CMS preview route
     const langCode = props.language?.code || props.post.language_code || 'en';
-    window.open(`/${langCode}/preview/${props.post.uuid}?version=${currentVersionUuid.value}`, '_blank');
+    const versionParam = activeVersionUuid.value ? `?version=${activeVersionUuid.value}` : '';
+    window.open(`/cms/preview/${langCode}/${props.post.uuid}${versionParam}`, '_blank');
 }
 
 function openDiff() {
@@ -941,14 +1032,36 @@ function openDiff() {
                                 Publish
                             </UButton>
 
-                            <!-- Preview Button -->
-                             <UButton
+                            <!-- Edit/Preview Toggle -->
+                            <div class="flex items-center rounded-lg bg-elevated p-0.5">
+                                <UButton
+                                    :color="!isPreviewMode ? 'primary' : 'neutral'"
+                                    :variant="!isPreviewMode ? 'soft' : 'ghost'"
+                                    size="xs"
+                                    @click="isPreviewMode = false"
+                                >
+                                    <UIcon name="i-lucide-edit-3" class="size-3.5 mr-1" />
+                                    Edit
+                                </UButton>
+                                <UButton
+                                    :color="isPreviewMode ? 'primary' : 'neutral'"
+                                    :variant="isPreviewMode ? 'soft' : 'ghost'"
+                                    size="xs"
+                                    @click="isPreviewMode = true"
+                                >
+                                    <UIcon name="i-lucide-eye" class="size-3.5 mr-1" />
+                                    Preview
+                                </UButton>
+                            </div>
+
+                            <!-- Open in new tab preview -->
+                            <UButton
                                 color="neutral"
                                 variant="ghost"
-                                icon="i-lucide-eye"
+                                icon="i-lucide-external-link"
                                 size="sm"
                                 @click="openPreview"
-                                title="Preview"
+                                title="Open preview in new tab"
                             />
 
                             <!-- Diff Button (if not draft) -->
@@ -1028,7 +1141,54 @@ function openDiff() {
                             isFullscreen ? 'absolute inset-0 z-50 bg-[var(--ui-bg)]' : '',
                         ]"
                     >
-                        <div :class="['mx-auto px-6 py-12', isFullscreen ? 'max-w-screen-2xl' : 'max-w-2xl']">
+                        <!-- Preview Mode (Blade rendered via iframe) -->
+                        <div v-if="isPreviewMode" class="h-full relative">
+                            <!-- Loading overlay -->
+                            <div
+                                v-if="previewLoading"
+                                class="absolute inset-0 bg-[var(--ui-bg)]/80 flex items-center justify-center z-10"
+                            >
+                                <div class="flex items-center gap-2 text-muted">
+                                    <UIcon name="i-lucide-loader-2" class="size-5 animate-spin" />
+                                    <span class="text-sm">Rendering preview...</span>
+                                </div>
+                            </div>
+
+                            <!-- Hidden form for submitting preview data -->
+                            <form
+                                ref="previewFormRef"
+                                action="/cms/api/preview/post"
+                                method="POST"
+                                target="preview-iframe"
+                                class="hidden"
+                            >
+                                <input type="hidden" name="_token" :value="page.props.csrf_token" />
+                                <input type="hidden" name="title" :value="form.title || 'Untitled'" />
+                                <input type="hidden" name="subtitle" :value="form.subtitle || ''" />
+                                <input type="hidden" name="excerpt" :value="form.excerpt || ''" />
+                                <input type="hidden" name="content" :value="JSON.stringify(form.content || {})" />
+                                <input type="hidden" name="template" :value="form.template || 'default'" />
+                                <input type="hidden" name="language_code" :value="language?.code || 'en'" />
+                                <input type="hidden" name="featured_image_url" :value="selectedFeaturedMedia?.url || selectedFeaturedMedia?.thumbnail_url || ''" />
+                                <input type="hidden" name="author[name]" :value="post.author?.name || ''" />
+                                <input type="hidden" name="show_author" :value="form.show_author ? '1' : '0'" />
+                                <input type="hidden" name="category" :value="selectedCategoryName || ''" />
+                                <input type="hidden" name="tags" :value="(selectedTagNames || []).join(',')" />
+                                <input type="hidden" name="post_type" :value="form.post_type || 'article'" />
+                                <input type="hidden" name="custom_fields" :value="JSON.stringify(form.custom_fields || {})" />
+                            </form>
+
+                            <!-- Preview iframe -->
+                            <iframe
+                                ref="previewIframe"
+                                name="preview-iframe"
+                                class="w-full h-full border-0"
+                                @load="onPreviewLoad"
+                            ></iframe>
+                        </div>
+
+                        <!-- Edit Mode -->
+                        <div v-else :class="['mx-auto px-6 py-12', isFullscreen ? 'max-w-screen-2xl' : 'max-w-2xl']">
                             <!-- Read-only notice -->
                             <div v-if="isReadOnly" class="mb-6 p-4 rounded-lg bg-elevated border border-default">
                                 <div class="flex items-start gap-3">
@@ -1271,6 +1431,46 @@ function openDiff() {
 
                             <div class="h-px bg-default" />
 
+                            <!-- Template Selection -->
+                            <div>
+                                <div class="flex items-center gap-2 mb-3">
+                                    <UIcon name="i-lucide-layout-template" class="size-4 text-muted" />
+                                    <span class="text-xs font-medium text-muted uppercase tracking-wider">Template</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <button
+                                        v-for="template in templates"
+                                        :key="template.key"
+                                        type="button"
+                                        :class="[
+                                            'w-full text-left p-3 rounded-lg border transition-all',
+                                            form.template === template.key
+                                                ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                                                : 'border-default hover:border-muted hover:bg-elevated/50',
+                                            isReadOnly ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+                                        ]"
+                                        :disabled="isReadOnly"
+                                        @click="form.template = template.key"
+                                    >
+                                        <div class="flex items-start gap-2.5">
+                                            <UIcon :name="template.icon" :class="[
+                                                'size-4 mt-0.5 shrink-0',
+                                                form.template === template.key ? 'text-primary' : 'text-muted'
+                                            ]" />
+                                            <div class="min-w-0">
+                                                <p :class="[
+                                                    'text-sm font-medium',
+                                                    form.template === template.key ? 'text-primary' : ''
+                                                ]">{{ template.name }}</p>
+                                                <p class="text-xs text-muted mt-0.5 line-clamp-2">{{ template.description }}</p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="h-px bg-default" />
+
                             <!-- Settings -->
                             <div>
                                 <div class="flex items-center gap-2 mb-3">
@@ -1322,8 +1522,29 @@ function openDiff() {
                                             :disabled="isReadOnly"
                                         />
                                     </div>
+                                    <!-- Display Options -->
+                                    <div class="pt-3 border-t border-default mt-3">
+                                        <label class="text-xs text-muted mb-2 block">Display Options</label>
+                                        <label class="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                v-model="form.show_author"
+                                                class="rounded border-default text-primary focus:ring-primary"
+                                                :disabled="isReadOnly"
+                                            />
+                                            <span class="text-sm">Show author name</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- Dynamic Custom Fields based on Post Type -->
+                            <CustomFieldsPanel
+                                :post-type="currentPostType"
+                                :custom-fields="form.custom_fields"
+                                :disabled="isReadOnly"
+                                @update:custom-fields="form.custom_fields = $event"
+                            />
 
                             <div class="h-px bg-default" />
 

@@ -46,6 +46,7 @@ class Post extends Model implements HasMedia
         'excerpt',
         'content',
         'post_type',
+        'template',
         'status',
         'workflow_status',
         'published_at',
@@ -58,6 +59,7 @@ class Post extends Model implements HasMedia
         'meta_title',
         'meta_description',
         'allow_comments',
+        'show_author',
     ];
 
     protected $appends = [
@@ -73,6 +75,7 @@ class Post extends Model implements HasMedia
             'published_at' => 'datetime',
             'scheduled_at' => 'datetime',
             'allow_comments' => 'boolean',
+            'show_author' => 'boolean',
         ];
     }
 

@@ -12,6 +12,7 @@ use App\Models\PostEditLock;
 use App\Models\Setting;
 use App\Models\Tag;
 use App\Models\User;
+use App\Services\PostTemplateRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -400,6 +401,7 @@ class PostController extends Controller
                 'excerpt' => $useSnapshot ? ($versionSnapshot['excerpt'] ?? $post->excerpt) : $post->excerpt,
                 'content' => $useSnapshot ? ($versionSnapshot['content'] ?? $post->content) : $post->content,
                 'post_type' => $useSnapshot ? ($versionSnapshot['post_type'] ?? $post->post_type) : $post->post_type,
+                'template' => $useSnapshot ? ($versionSnapshot['template'] ?? $post->template) : $post->template,
                 'custom_fields' => $useSnapshot ? ($versionSnapshot['custom_fields'] ?? $post->custom_fields) : $post->custom_fields,
                 'meta_title' => $useSnapshot ? ($versionSnapshot['meta_title'] ?? $post->meta_title) : $post->meta_title,
                 'meta_description' => $useSnapshot ? ($versionSnapshot['meta_description'] ?? $post->meta_description) : $post->meta_description,
@@ -436,6 +438,7 @@ class PostController extends Controller
                     'id' => $post->author->id,
                     'name' => $post->author->name,
                 ] : null,
+                'show_author' => $useSnapshot ? ($versionSnapshot['show_author'] ?? $post->show_author) : $post->show_author,
                 'created_at' => $post->created_at,
                 'updated_at' => $post->updated_at,
                 'current_version_uuid' => $currentVersionUuid,
@@ -464,6 +467,7 @@ class PostController extends Controller
                 'isMine' => $lockInfo && $lockInfo['user_id'] === $user->id,
                 'heartbeatInterval' => PostEditLock::HEARTBEAT_INTERVAL_SECONDS * 1000, // in ms
             ],
+            'templates' => PostTemplateRegistry::forSelect(),
         ]);
     }
 
@@ -484,11 +488,13 @@ class PostController extends Controller
                 'subtitle' => $validated['subtitle'] ?? null,
                 'excerpt' => $validated['excerpt'] ?? null,
                 'content' => $validated['content'] ?? null,
+                'template' => $validated['template'] ?? $post->template,
                 'meta_title' => $validated['meta_title'] ?? null,
                 'meta_description' => $validated['meta_description'] ?? null,
                 'featured_media_id' => $validated['featured_media_id'] ?? null,
                 'custom_fields' => $validated['custom_fields'] ?? null,
                 'allow_comments' => $validated['allow_comments'] ?? true,
+                'show_author' => $validated['show_author'] ?? true,
                 'category_ids' => ! empty($validated['category_id']) ? [$validated['category_id']] : [],
                 'tag_ids' => $validated['tags'] ?? [],
             ];
@@ -508,11 +514,13 @@ class PostController extends Controller
             'excerpt' => $validated['excerpt'] ?? null,
             'content' => $validated['content'] ?? null,
             'post_type' => $validated['post_type'] ?? $post->post_type,
+            'template' => $validated['template'] ?? $post->template,
             'scheduled_at' => $validated['scheduled_at'] ?? null,
             'featured_media_id' => $validated['featured_media_id'] ?? null,
             'custom_fields' => $validated['custom_fields'] ?? null,
             'meta_title' => $validated['meta_title'] ?? null,
             'meta_description' => $validated['meta_description'] ?? null,
+            'show_author' => $validated['show_author'] ?? $post->show_author,
         ]);
 
         // Sync category and tags on the post model
