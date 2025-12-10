@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Language;
 use App\Models\MediaFolder;
 use App\Models\MediaItem;
+use App\Models\MediaItemCrop;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -370,7 +371,7 @@ class MediaController extends Controller
     public function picker(Request $request): JsonResponse
     {
         $query = MediaItem::query()
-            ->with(['media', 'creditUser'])
+            ->with(['media', 'creditUser', 'crops.media'])
             ->withoutTrashed();
 
         // Filter by type
@@ -410,6 +411,19 @@ class MediaController extends Controller
                 'credit_display' => $item->credit_display,
                 'is_image' => $item->is_image,
                 'is_video' => $item->is_video,
+                'has_crops' => $item->is_image && $item->crops->count() > 0,
+                'crops' => $item->is_image ? $item->crops->map(fn (MediaItemCrop $crop) => [
+                    'id' => $crop->id,
+                    'uuid' => $crop->uuid,
+                    'preset_name' => $crop->preset_name,
+                    'preset_label' => $crop->preset_label,
+                    'label' => $crop->label,
+                    'display_label' => $crop->display_label,
+                    'output_width' => $crop->output_width,
+                    'output_height' => $crop->output_height,
+                    'url' => $crop->url,
+                    'thumbnail_url' => $crop->thumbnail_url,
+                ])->values()->all() : [],
             ]);
 
         return response()->json($media);

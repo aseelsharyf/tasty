@@ -8,6 +8,7 @@ use App\Http\Controllers\Cms\DashboardController;
 use App\Http\Controllers\Cms\LanguageController;
 use App\Http\Controllers\Cms\MediaController;
 use App\Http\Controllers\Cms\MediaFolderController;
+use App\Http\Controllers\Cms\MediaItemCropController;
 use App\Http\Controllers\Cms\MenuController;
 use App\Http\Controllers\Cms\NotificationController;
 use App\Http\Controllers\Cms\PostController;
@@ -244,6 +245,12 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::middleware('permission:media.edit')->group(function () {
             Route::put('media/{media}', [MediaController::class, 'update'])->name('cms.media.update');
             Route::post('media/bulk', [MediaController::class, 'bulkAction'])->name('cms.media.bulk');
+
+            // Media Item Crops
+            Route::get('media/{media}/crops', [MediaItemCropController::class, 'index'])->name('cms.media.crops.index');
+            Route::post('media/{media}/crops', [MediaItemCropController::class, 'store'])->name('cms.media.crops.store');
+            Route::put('media/{media}/crops/{crop}', [MediaItemCropController::class, 'update'])->name('cms.media.crops.update');
+            Route::delete('media/{media}/crops/{crop}', [MediaItemCropController::class, 'destroy'])->name('cms.media.crops.destroy');
         });
 
         Route::middleware('permission:media.delete')->group(function () {

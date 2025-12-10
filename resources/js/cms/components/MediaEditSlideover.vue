@@ -4,6 +4,7 @@ import { router } from '@inertiajs/vue3';
 import { usePermission } from '../composables/usePermission';
 import { formatDistanceToNow } from 'date-fns';
 import DhivehiInput from './DhivehiInput.vue';
+import MediaCropCreator from './MediaCropCreator.vue';
 
 interface Tag {
     id: number;
@@ -113,11 +114,20 @@ const creditName = ref('');
 const creditUrl = ref('');
 const creditRole = ref('');
 
-// Tab items with slot property
-const tabItems = [
-    { label: 'Details', value: 'details', icon: 'i-lucide-info', slot: 'details' as const },
-    { label: 'Credits', value: 'credits', icon: 'i-lucide-user', slot: 'credits' as const },
-];
+// Tab items with slot property (computed to conditionally show Crops tab for images)
+const tabItems = computed(() => {
+    const items = [
+        { label: 'Details', value: 'details', icon: 'i-lucide-info', slot: 'details' as const },
+        { label: 'Credits', value: 'credits', icon: 'i-lucide-user', slot: 'credits' as const },
+    ];
+
+    // Only show Crops tab for images
+    if (props.media?.is_image) {
+        items.push({ label: 'Crops', value: 'crops', icon: 'i-lucide-crop', slot: 'crops' as const });
+    }
+
+    return items;
+});
 
 // Check if current language is RTL
 const isCurrentLangRtl = computed(() => {
@@ -507,6 +517,18 @@ function setCreditType(type: 'user' | 'external') {
                                         class="w-full"
                                     />
                                 </UFormField>
+                            </div>
+                        </template>
+
+                        <!-- Crops Tab (only for images) -->
+                        <template v-if="media?.is_image" #crops>
+                            <div class="pt-4">
+                                <MediaCropCreator
+                                    :media-uuid="media.uuid"
+                                    :image-url="media.url!"
+                                    :image-width="media.width!"
+                                    :image-height="media.height!"
+                                />
                             </div>
                         </template>
                     </UTabs>

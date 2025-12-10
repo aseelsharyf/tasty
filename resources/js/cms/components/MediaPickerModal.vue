@@ -2,6 +2,19 @@
 import { ref, computed, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 
+interface CropVersion {
+    id: number;
+    uuid: string;
+    preset_name: string;
+    preset_label: string;
+    label: string | null;
+    display_label: string;
+    output_width: number;
+    output_height: number;
+    url: string | null;
+    thumbnail_url: string | null;
+}
+
 interface MediaItem {
     id: number;
     uuid: string;
@@ -18,6 +31,17 @@ interface MediaItem {
     } | null;
     is_image: boolean;
     is_video: boolean;
+    has_crops?: boolean;
+    crops?: CropVersion[];
+    // Selected crop info (added when a crop version is selected)
+    crop_version?: {
+        id: number;
+        uuid: string;
+        preset_name: string;
+        preset_label: string;
+        label: string | null;
+        display_label: string;
+    } | null;
 }
 
 interface PaginatedResponse<T> {
@@ -270,6 +294,10 @@ function formatFileSize(bytes: number): string {
 // Track all selected items including from previous pages
 const allSelectedItems = ref<Map<string, MediaItem>>(new Map());
 
+// Crop version selection state
+const showCropSelector = ref(false);
+const cropSelectorItem = ref<MediaItem | null>(null);
+
 // Update all selected items when selection changes
 watch(selectedItems, (newSelected) => {
     // Add newly selected items from current page
@@ -289,8 +317,49 @@ watch(selectedItems, (newSelected) => {
 
 function confirmSelection() {
     const selected = Array.from(allSelectedItems.value.values());
+
+    // In single-select mode, check if the image has crops and show selector
+    if (!props.multiple && selected.length === 1) {
+        const item = selected[0];
+        if (item.has_crops && item.crops && item.crops.length > 0) {
+            // Show crop selector
+            cropSelectorItem.value = item;
+            showCropSelector.value = true;
+            return;
+        }
+    }
+
+    // For multi-select or items without crops, emit directly
     emit('select', selected);
     isOpen.value = false;
+}
+
+function selectWithCrop(item: MediaItem, crop: CropVersion | null) {
+    // Create a copy of the item with crop info
+    const selectedItem: MediaItem = {
+        ...item,
+        // Override URL if crop is selected
+        url: crop ? crop.url : item.url,
+        thumbnail_url: crop ? crop.thumbnail_url : item.thumbnail_url,
+        crop_version: crop ? {
+            id: crop.id,
+            uuid: crop.uuid,
+            preset_name: crop.preset_name,
+            preset_label: crop.preset_label,
+            label: crop.label,
+            display_label: crop.display_label,
+        } : null,
+    };
+
+    emit('select', [selectedItem]);
+    showCropSelector.value = false;
+    cropSelectorItem.value = null;
+    isOpen.value = false;
+}
+
+function cancelCropSelection() {
+    showCropSelector.value = false;
+    cropSelectorItem.value = null;
 }
 </script>
 
@@ -558,6 +627,91 @@ function confirmSelection() {
                             @click="confirmSelection"
                         >
                             {{ multiple ? `Select ${selectedCount} Item${selectedCount !== 1 ? 's' : ''}` : 'Select' }}
+                        </UButton>
+                    </div>
+                </div>
+
+                <!-- Crop Version Selector Overlay -->
+                <div
+                    v-if="showCropSelector && cropSelectorItem"
+                    class="absolute inset-0 bg-[var(--ui-bg)] flex flex-col rounded-lg"
+                >
+                    <!-- Header -->
+                    <div class="flex items-center justify-between gap-4 p-4 border-b border-default">
+                        <div>
+                            <h2 class="text-lg font-semibold text-highlighted">
+                                Select Image Version
+                            </h2>
+                            <p class="text-sm text-muted mt-0.5">
+                                Choose the original or a crop version
+                            </p>
+                        </div>
+                        <UButton
+                            icon="i-lucide-x"
+                            color="neutral"
+                            variant="ghost"
+                            @click="cancelCropSelection"
+                        />
+                    </div>
+
+                    <!-- Options -->
+                    <div class="flex-1 overflow-y-auto p-4">
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <!-- Original Option -->
+                            <button
+                                type="button"
+                                class="relative rounded-lg border-2 border-default bg-elevated/50 overflow-hidden hover:border-primary transition-colors text-left"
+                                @click="selectWithCrop(cropSelectorItem!, null)"
+                            >
+                                <div class="aspect-video bg-muted/30">
+                                    <img
+                                        v-if="cropSelectorItem.thumbnail_url"
+                                        :src="cropSelectorItem.thumbnail_url"
+                                        :alt="cropSelectorItem.title || 'Original'"
+                                        class="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div class="p-3">
+                                    <p class="text-sm font-medium text-highlighted">Original</p>
+                                    <p class="text-xs text-muted">Full size image</p>
+                                </div>
+                            </button>
+
+                            <!-- Crop Options -->
+                            <button
+                                v-for="crop in cropSelectorItem.crops"
+                                :key="crop.id"
+                                type="button"
+                                class="relative rounded-lg border-2 border-default bg-elevated/50 overflow-hidden hover:border-primary transition-colors text-left"
+                                @click="selectWithCrop(cropSelectorItem!, crop)"
+                            >
+                                <div class="aspect-video bg-muted/30">
+                                    <img
+                                        v-if="crop.thumbnail_url"
+                                        :src="crop.thumbnail_url"
+                                        :alt="crop.display_label"
+                                        class="w-full h-full object-cover"
+                                    />
+                                    <div v-else class="w-full h-full flex items-center justify-center">
+                                        <UIcon name="i-lucide-crop" class="size-8 text-muted" />
+                                    </div>
+                                </div>
+                                <div class="p-3">
+                                    <p class="text-sm font-medium text-highlighted">{{ crop.display_label }}</p>
+                                    <p class="text-xs text-muted">{{ crop.output_width }} x {{ crop.output_height }}</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="flex items-center justify-end gap-2 p-4 border-t border-default">
+                        <UButton
+                            color="neutral"
+                            variant="ghost"
+                            @click="cancelCropSelection"
+                        >
+                            Back
                         </UButton>
                     </div>
                 </div>

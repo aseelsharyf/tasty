@@ -24,6 +24,15 @@ export interface MediaBlockItem {
     } | null;
     is_image: boolean;
     is_video: boolean;
+    // Crop version info (when a cropped version is selected)
+    crop_version?: {
+        id: number;
+        uuid: string;
+        preset_name: string;
+        preset_label: string;
+        label: string | null;
+        display_label: string;
+    } | null;
 }
 
 interface MediaBlockConfig {

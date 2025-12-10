@@ -1,4 +1,5 @@
 import '../css/cms.css';
+import 'cropperjs/dist/cropper.css';
 import type { DefineComponent } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import ui from '@nuxt/ui/vue-plugin';
