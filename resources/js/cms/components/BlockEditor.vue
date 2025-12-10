@@ -85,6 +85,63 @@ const dhivehiPlaceholders = {
     code: 'ކޯޑު ނުވަތަ ރެސިޕީ ޓިޕްސް...', // Code or recipe tips...
 };
 
+// Normalize EditorJS data to handle version differences
+// List tool v2.x expects nested format: { content: string, items: [] }
+// Older data might have plain strings: ['item1', 'item2']
+// IMPORTANT: We use JSON.parse(JSON.stringify()) to deep clone and remove
+// Vue reactive proxies, which cause structuredClone errors in EditorJS
+function normalizeEditorData(data: any): any {
+    if (!data || !data.blocks) return data;
+
+    // Deep clone to remove reactive proxies that cause structuredClone errors
+    const plainData = JSON.parse(JSON.stringify(data));
+
+    return {
+        ...plainData,
+        blocks: plainData.blocks.map((block: any) => {
+            if (block.type === 'list' && Array.isArray(block.data?.items)) {
+                return {
+                    ...block,
+                    data: {
+                        style: block.data.style || 'unordered',
+                        meta: {},
+                        items: normalizeListItems(block.data.items)
+                    }
+                };
+            }
+            return block;
+        })
+    };
+}
+
+// Recursively normalize list items to ensure proper format for List v2.x
+function normalizeListItems(items: any[]): any[] {
+    return items.map((item: any) => {
+        // If item is a string, convert to nested format
+        if (typeof item === 'string') {
+            return {
+                content: item,
+                meta: {},
+                items: []
+            };
+        }
+        // If item is already an object
+        if (typeof item === 'object' && item !== null) {
+            return {
+                content: String(item.content || ''),
+                meta: {},
+                items: Array.isArray(item.items) ? normalizeListItems(item.items) : []
+            };
+        }
+        // Fallback for unexpected types
+        return {
+            content: '',
+            meta: {},
+            items: []
+        };
+    });
+}
+
 const initEditor = async () => {
     if (!editorRef.value || editor.value) return;
 
@@ -96,11 +153,14 @@ const initEditor = async () => {
     const quoteCaptionPlaceholder = isRtlMode ? dhivehiPlaceholders.quoteCaption : 'Quote author';
     const codePlaceholder = isRtlMode ? dhivehiPlaceholders.code : 'Enter code or recipe tips...';
 
+    // Normalize data to handle version differences (e.g., List tool v2.x format)
+    const normalizedData = props.modelValue ? normalizeEditorData(props.modelValue) : undefined;
+
     editor.value = new EditorJS({
         holder: editorRef.value,
         placeholder: defaultPlaceholder,
         readOnly: props.readOnly || false,
-        data: props.modelValue || undefined,
+        data: normalizedData,
         tools: {
             // Order: Text (default), Heading, Media, Quote, Link, List, Delimiter, Table, Code
             header: {
@@ -180,7 +240,9 @@ watch(
         if (isInternalChange.value) return;
 
         if (editor.value && isReady.value && newValue) {
-            await editor.value.render(newValue);
+            // Normalize data before rendering to handle version differences
+            const normalizedData = normalizeEditorData(newValue);
+            await editor.value.render(normalizedData);
         }
     },
     { deep: true }

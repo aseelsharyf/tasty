@@ -167,6 +167,7 @@ function formatFileSize(bytes: number): string {
 
 // Upload handling
 const isUploading = ref(false);
+const hasSuccessfulUploads = ref(false); // Track if any uploads succeeded during this session
 
 async function uploadAll() {
     if (uploadFiles.value.length === 0) return;
@@ -213,6 +214,7 @@ async function uploadAll() {
             if (response.ok) {
                 uploadFile.status = 'success';
                 uploadFile.progress = 100;
+                hasSuccessfulUploads.value = true;
             } else {
                 const data = await response.json();
                 uploadFile.status = 'error';
@@ -313,6 +315,15 @@ function resetForm() {
     creditName.value = '';
     creditUrl.value = '';
     creditRole.value = '';
+    hasSuccessfulUploads.value = false;
+}
+
+function closeSlideover() {
+    // If uploads succeeded during this session, refresh the page so the list shows new items
+    if (hasSuccessfulUploads.value) {
+        router.reload();
+    }
+    isOpen.value = false;
 }
 
 // Reset when closed
@@ -350,7 +361,7 @@ const errorCount = computed(() => uploadFiles.value.filter(f => f.status === 'er
                         icon="i-lucide-x"
                         color="neutral"
                         variant="ghost"
-                        @click="isOpen = false"
+                        @click="closeSlideover"
                     />
                 </div>
 
@@ -588,7 +599,7 @@ const errorCount = computed(() => uploadFiles.value.filter(f => f.status === 'er
                         type="button"
                         color="neutral"
                         variant="ghost"
-                        @click="isOpen = false"
+                        @click="closeSlideover"
                     >
                         Cancel
                     </UButton>

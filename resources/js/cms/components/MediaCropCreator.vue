@@ -2,6 +2,8 @@
 import { ref, computed, watch, onMounted, nextTick, onUnmounted } from 'vue';
 import Cropper from 'cropperjs';
 
+const toast = useToast();
+
 interface CropPreset {
     name: string;
     label: string;
@@ -50,6 +52,11 @@ const isModalOpen = ref(false);
 const selectedPreset = ref<CropPreset | null>(null);
 const editingCrop = ref<CropVersion | null>(null);
 const cropLabel = ref('');
+
+// Delete confirmation modal state
+const deleteModalOpen = ref(false);
+const cropToDelete = ref<CropVersion | null>(null);
+const isDeleting = ref(false);
 
 // Cropper refs
 const imageRef = ref<HTMLImageElement | null>(null);
@@ -217,6 +224,17 @@ async function saveCrop() {
 
         const data = await response.json();
 
+        // Handle error response
+        if (!response.ok || data.error) {
+            toast.add({
+                title: 'Crop Failed',
+                description: data.error || 'Failed to create crop. Please try again.',
+                color: 'error',
+            });
+            isSaving.value = false;
+            return;
+        }
+
         if (data.success && data.crop) {
             if (isUpdate) {
                 // Update in list
@@ -231,21 +249,46 @@ async function saveCrop() {
 
             emit('crop-created', data.crop);
 
+            toast.add({
+                title: 'Success',
+                description: isUpdate ? 'Crop updated successfully.' : 'Crop created successfully.',
+                color: 'success',
+            });
+
             // Close modal
             closeModal();
         }
     } catch (error) {
         console.error('Failed to save crop:', error);
+        toast.add({
+            title: 'Error',
+            description: 'An unexpected error occurred. Please try again.',
+            color: 'error',
+        });
     }
     isSaving.value = false;
 }
 
+// Open delete confirmation modal
+function confirmDeleteCrop(crop: CropVersion) {
+    cropToDelete.value = crop;
+    deleteModalOpen.value = true;
+}
+
+// Cancel delete
+function cancelDelete() {
+    deleteModalOpen.value = false;
+    cropToDelete.value = null;
+}
+
 // Delete crop
-async function deleteCrop(crop: CropVersion) {
-    if (!confirm('Delete this crop version?')) return;
+async function deleteCrop() {
+    if (!cropToDelete.value) return;
+
+    isDeleting.value = true;
 
     try {
-        const response = await fetch(`/cms/media/${props.mediaUuid}/crops/${crop.uuid}`, {
+        const response = await fetch(`/cms/media/${props.mediaUuid}/crops/${cropToDelete.value.uuid}`, {
             method: 'DELETE',
             headers: {
                 'X-XSRF-TOKEN': getCsrfToken(),
@@ -255,13 +298,37 @@ async function deleteCrop(crop: CropVersion) {
 
         const data = await response.json();
 
+        if (!response.ok || data.error) {
+            toast.add({
+                title: 'Delete Failed',
+                description: data.error || 'Failed to delete crop. Please try again.',
+                color: 'error',
+            });
+            isDeleting.value = false;
+            return;
+        }
+
         if (data.success) {
-            existingCrops.value = existingCrops.value.filter(c => c.id !== crop.id);
-            emit('crop-deleted', crop.id);
+            existingCrops.value = existingCrops.value.filter(c => c.id !== cropToDelete.value!.id);
+            emit('crop-deleted', cropToDelete.value!.id);
+            toast.add({
+                title: 'Deleted',
+                description: 'Crop version deleted.',
+                color: 'success',
+            });
+            deleteModalOpen.value = false;
+            cropToDelete.value = null;
         }
     } catch (error) {
         console.error('Failed to delete crop:', error);
+        toast.add({
+            title: 'Error',
+            description: 'An unexpected error occurred. Please try again.',
+            color: 'error',
+        });
     }
+
+    isDeleting.value = false;
 }
 
 // Count crops for a preset
@@ -380,7 +447,7 @@ watch(isModalOpen, (open) => {
                                 color="error"
                                 variant="solid"
                                 size="xs"
-                                @click="deleteCrop(crop)"
+                                @click="confirmDeleteCrop(crop)"
                             />
                         </div>
                     </div>
@@ -396,6 +463,46 @@ watch(isModalOpen, (open) => {
                 </div>
             </div>
         </template>
+
+        <!-- Delete Confirmation Modal -->
+        <UModal v-model:open="deleteModalOpen">
+            <template #content>
+                <UCard :ui="{ body: 'p-6' }">
+                    <div class="flex items-start gap-4">
+                        <div class="flex items-center justify-center size-12 rounded-full bg-error/10 shrink-0">
+                            <UIcon name="i-lucide-alert-triangle" class="size-6 text-error" />
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-highlighted">Delete Crop</h3>
+                            <p class="mt-2 text-sm text-muted">
+                                Are you sure you want to delete the crop <strong class="text-highlighted">{{ cropToDelete?.display_label }}</strong>?
+                            </p>
+                            <p class="mt-1 text-xs text-muted">
+                                This action cannot be undone.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-6">
+                        <UButton
+                            color="neutral"
+                            variant="ghost"
+                            :disabled="isDeleting"
+                            @click="cancelDelete"
+                        >
+                            Cancel
+                        </UButton>
+                        <UButton
+                            color="error"
+                            :loading="isDeleting"
+                            @click="deleteCrop"
+                        >
+                            Delete
+                        </UButton>
+                    </div>
+                </UCard>
+            </template>
+        </UModal>
 
         <!-- Crop Modal -->
         <UModal v-model:open="isModalOpen" :ui="{ width: 'max-w-4xl' }">

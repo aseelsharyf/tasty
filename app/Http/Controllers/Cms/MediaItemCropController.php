@@ -41,6 +41,12 @@ class MediaItemCropController extends Controller
             return response()->json(['error' => 'Crops can only be created for images.'], 422);
         }
 
+        // Check for unsupported image formats
+        $unsupportedError = $this->checkUnsupportedFormat($media);
+        if ($unsupportedError) {
+            return response()->json(['error' => $unsupportedError], 422);
+        }
+
         $validated = $request->validate([
             'preset_name' => ['required', 'string', 'max:50'],
             'label' => ['nullable', 'string', 'max:255'],
@@ -72,8 +78,17 @@ class MediaItemCropController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        // Generate the cropped image
-        $this->generateCroppedImage($media, $crop);
+        // Generate the cropped image - if this fails, delete the crop record
+        try {
+            $this->generateCroppedImage($media, $crop);
+        } catch (\Throwable $e) {
+            $crop->delete();
+            report($e); // Log the error for debugging
+
+            return response()->json([
+                'error' => 'Failed to generate cropped image. The image format may not be supported or the image may be corrupted.',
+            ], 422);
+        }
 
         return response()->json([
             'success' => true,
@@ -90,6 +105,12 @@ class MediaItemCropController extends Controller
             return response()->json(['error' => 'Crop does not belong to this media item.'], 403);
         }
 
+        // Check for unsupported image formats
+        $unsupportedError = $this->checkUnsupportedFormat($media);
+        if ($unsupportedError) {
+            return response()->json(['error' => $unsupportedError], 422);
+        }
+
         $validated = $request->validate([
             'label' => ['nullable', 'string', 'max:255'],
             'crop_x' => ['required', 'numeric', 'min:0', 'max:100'],
@@ -97,6 +118,14 @@ class MediaItemCropController extends Controller
             'crop_width' => ['required', 'numeric', 'min:1', 'max:100'],
             'crop_height' => ['required', 'numeric', 'min:1', 'max:100'],
         ]);
+
+        // Store old values in case we need to rollback
+        $oldValues = [
+            'crop_x' => $crop->crop_x,
+            'crop_y' => $crop->crop_y,
+            'crop_width' => $crop->crop_width,
+            'crop_height' => $crop->crop_height,
+        ];
 
         $crop->update([
             'label' => $validated['label'] ?? null,
@@ -106,8 +135,18 @@ class MediaItemCropController extends Controller
             'crop_height' => $validated['crop_height'],
         ]);
 
-        // Regenerate the cropped image
-        $this->generateCroppedImage($media, $crop);
+        // Regenerate the cropped image - if this fails, rollback the update
+        try {
+            $this->generateCroppedImage($media, $crop);
+        } catch (\Throwable $e) {
+            // Rollback crop values
+            $crop->update($oldValues);
+            report($e);
+
+            return response()->json([
+                'error' => 'Failed to regenerate cropped image. The image format may not be supported or the image may be corrupted.',
+            ], 422);
+        }
 
         return response()->json([
             'success' => true,
@@ -130,6 +169,46 @@ class MediaItemCropController extends Controller
     }
 
     /**
+     * Check if the image format is unsupported for cropping.
+     */
+    private function checkUnsupportedFormat(MediaItem $media): ?string
+    {
+        $originalMedia = $media->getFirstMedia('default');
+        if (! $originalMedia) {
+            return 'Original image not found.';
+        }
+
+        $extension = strtolower(pathinfo($originalMedia->getPath(), PATHINFO_EXTENSION));
+        $mimeType = strtolower($originalMedia->mime_type ?? '');
+
+        // Check GD support for various formats
+        $gdInfo = function_exists('gd_info') ? gd_info() : [];
+
+        $unsupportedFormats = [];
+
+        // AVIF - check if GD has AVIF support
+        if (in_array($extension, ['avif']) || str_contains($mimeType, 'avif')) {
+            if (empty($gdInfo['AVIF Support'])) {
+                return 'AVIF images cannot be cropped. The server does not support AVIF image processing. Please convert to JPEG or PNG first.';
+            }
+        }
+
+        // HEIC/HEIF - GD doesn't support these
+        if (in_array($extension, ['heic', 'heif']) || str_contains($mimeType, 'heic') || str_contains($mimeType, 'heif')) {
+            return 'HEIC/HEIF images cannot be cropped. Please convert to JPEG or PNG first.';
+        }
+
+        // WebP - check if GD has WebP support
+        if ($extension === 'webp' || str_contains($mimeType, 'webp')) {
+            if (empty($gdInfo['WebP Support'])) {
+                return 'WebP images cannot be cropped. The server does not support WebP image processing. Please convert to JPEG or PNG first.';
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Generate the actual cropped image file using Spatie Image.
      */
     private function generateCroppedImage(MediaItem $mediaItem, MediaItemCrop $crop): void
@@ -145,14 +224,14 @@ class MediaItemCropController extends Controller
         // Calculate pixel coordinates
         $pixels = $crop->getCropPixels($mediaItem->width, $mediaItem->height);
 
-        // Generate a temp path for the cropped image
-        $extension = pathinfo($originalPath, PATHINFO_EXTENSION) ?: 'jpg';
-        $tempPath = sys_get_temp_dir().'/'.uniqid('crop_').'.'.$extension;
+        // Generate a temp path for the cropped image (output as JPEG for best compatibility)
+        $tempPath = sys_get_temp_dir().'/'.uniqid('crop_').'.jpg';
 
-        // Use Spatie Image to crop and resize
+        // Use Spatie Image to crop, resize, and save as JPEG
         Image::load($originalPath)
             ->manualCrop($pixels['width'], $pixels['height'], $pixels['x'], $pixels['y'])
             ->fit(Fit::Contain, $crop->output_width, $crop->output_height)
+            ->quality(90)
             ->save($tempPath);
 
         // Clear existing media and add new cropped image

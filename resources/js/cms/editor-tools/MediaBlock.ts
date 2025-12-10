@@ -1,18 +1,36 @@
 import type { BlockTool, BlockToolConstructorOptions, API, BlockToolData } from '@editorjs/editorjs';
 
 /**
+ * Gap size options for media grid
+ */
+export type GapSize = 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
+/**
  * Media data structure for Editor.js block
  */
 export interface MediaBlockData {
     items: MediaBlockItem[];
     layout: 'single' | 'grid' | 'carousel';
-    gridColumns: 2 | 3 | 4;
+    gridColumns: number; // 1-12
+    gap: GapSize;
+}
+
+export interface CropVersion {
+    id: number;
+    uuid: string;
+    preset_name: string;
+    preset_label: string;
+    label: string | null;
+    display_label: string;
+    url: string;
+    thumbnail_url: string | null;
 }
 
 export interface MediaBlockItem {
     id: number;
     uuid: string;
     url: string;
+    original_url?: string; // Store original URL when crop is selected
     thumbnail_url: string | null;
     title: string | null;
     alt_text: string | null;
@@ -24,15 +42,10 @@ export interface MediaBlockItem {
     } | null;
     is_image: boolean;
     is_video: boolean;
-    // Crop version info (when a cropped version is selected)
-    crop_version?: {
-        id: number;
-        uuid: string;
-        preset_name: string;
-        preset_label: string;
-        label: string | null;
-        display_label: string;
-    } | null;
+    // Available crop versions from media library
+    crops?: CropVersion[];
+    // Currently selected crop version
+    crop_version?: CropVersion | null;
 }
 
 interface MediaBlockConfig {
@@ -73,6 +86,7 @@ export default class MediaBlock implements BlockTool {
             items: [],
             layout: 'single',
             gridColumns: 3,
+            gap: 'md',
         };
 
         if (data && typeof data === 'object') {
@@ -82,8 +96,18 @@ export default class MediaBlock implements BlockTool {
             if (data.layout && ['single', 'grid', 'carousel'].includes(data.layout)) {
                 normalized.layout = data.layout;
             }
-            if (data.gridColumns && [2, 3, 4].includes(data.gridColumns)) {
-                normalized.gridColumns = data.gridColumns;
+            // Support columns 1-12
+            if (data.gridColumns && typeof data.gridColumns === 'number') {
+                normalized.gridColumns = Math.max(1, Math.min(12, data.gridColumns));
+            } else if (typeof data.gridColumns === 'string') {
+                const cols = parseInt(data.gridColumns, 10);
+                if (!isNaN(cols)) {
+                    normalized.gridColumns = Math.max(1, Math.min(12, cols));
+                }
+            }
+            // Gap size
+            if (data.gap && ['none', 'xs', 'sm', 'md', 'lg', 'xl'].includes(data.gap)) {
+                normalized.gap = data.gap;
             }
         }
 
@@ -136,8 +160,11 @@ export default class MediaBlock implements BlockTool {
         const container = document.createElement('div');
         container.classList.add('ce-media-block__container');
         container.classList.add(`ce-media-block__container--${this.data.layout}`);
+        container.classList.add(`ce-media-block__container--gap-${this.data.gap}`);
+
+        // Apply grid columns via inline style for flexibility (1-12)
         if (this.data.layout === 'grid') {
-            container.classList.add(`ce-media-block__container--cols-${this.data.gridColumns}`);
+            container.style.setProperty('--grid-cols', String(this.data.gridColumns));
         }
 
         // Layout selector for multiple items
@@ -163,14 +190,14 @@ export default class MediaBlock implements BlockTool {
                 this.renderMedia();
             });
 
-            // Create carousel button
+            // Create carousel (horizontal scroll) button
             const carouselBtn = document.createElement('button');
             carouselBtn.type = 'button';
             carouselBtn.className = `ce-media-block__layout-btn ${this.data.layout === 'carousel' ? 'active' : ''}`;
-            carouselBtn.title = 'Carousel';
+            carouselBtn.title = 'Horizontal Scroll';
             carouselBtn.innerHTML = `
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/>
+                    <path d="M14 5l7 7m0 0l-7 7m7-7H3"/>
                 </svg>
             `;
             carouselBtn.addEventListener('mousedown', (e) => e.stopPropagation());
@@ -184,32 +211,72 @@ export default class MediaBlock implements BlockTool {
             layoutSelector.appendChild(gridBtn);
             layoutSelector.appendChild(carouselBtn);
 
-            // Grid columns selector (only show when grid layout is active)
-            if (this.data.layout === 'grid') {
+            // Grid/Carousel options
+            if (this.data.layout === 'grid' || this.data.layout === 'carousel') {
                 const separator = document.createElement('span');
                 separator.classList.add('ce-media-block__layout-separator');
                 layoutSelector.appendChild(separator);
 
+                // Columns selector (dropdown for 1-12)
                 const colsLabel = document.createElement('span');
                 colsLabel.classList.add('ce-media-block__cols-label');
                 colsLabel.textContent = 'Cols:';
                 layoutSelector.appendChild(colsLabel);
 
-                [2, 3, 4].forEach((cols) => {
-                    const colBtn = document.createElement('button');
-                    colBtn.type = 'button';
-                    colBtn.className = `ce-media-block__layout-btn ce-media-block__cols-btn ${this.data.gridColumns === cols ? 'active' : ''}`;
-                    colBtn.title = `${cols} columns`;
-                    colBtn.textContent = String(cols);
-                    colBtn.addEventListener('mousedown', (e) => e.stopPropagation());
-                    colBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        this.data.gridColumns = cols as 2 | 3 | 4;
-                        this.renderMedia();
-                    });
-                    layoutSelector.appendChild(colBtn);
+                const colsSelect = document.createElement('select');
+                colsSelect.className = 'ce-media-block__select';
+                colsSelect.addEventListener('mousedown', (e) => e.stopPropagation());
+                colsSelect.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    this.data.gridColumns = parseInt((e.target as HTMLSelectElement).value, 10);
+                    this.renderMedia();
                 });
+
+                for (let i = 1; i <= 12; i++) {
+                    const option = document.createElement('option');
+                    option.value = String(i);
+                    option.textContent = String(i);
+                    option.selected = this.data.gridColumns === i;
+                    colsSelect.appendChild(option);
+                }
+                layoutSelector.appendChild(colsSelect);
+
+                // Gap selector
+                const gapSeparator = document.createElement('span');
+                gapSeparator.classList.add('ce-media-block__layout-separator');
+                layoutSelector.appendChild(gapSeparator);
+
+                const gapLabel = document.createElement('span');
+                gapLabel.classList.add('ce-media-block__cols-label');
+                gapLabel.textContent = 'Gap:';
+                layoutSelector.appendChild(gapLabel);
+
+                const gapSelect = document.createElement('select');
+                gapSelect.className = 'ce-media-block__select';
+                gapSelect.addEventListener('mousedown', (e) => e.stopPropagation());
+                gapSelect.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    this.data.gap = (e.target as HTMLSelectElement).value as GapSize;
+                    this.renderMedia();
+                });
+
+                const gapOptions: { value: GapSize; label: string }[] = [
+                    { value: 'none', label: 'None' },
+                    { value: 'xs', label: 'XS' },
+                    { value: 'sm', label: 'SM' },
+                    { value: 'md', label: 'MD' },
+                    { value: 'lg', label: 'LG' },
+                    { value: 'xl', label: 'XL' },
+                ];
+
+                gapOptions.forEach(({ value, label }) => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = label;
+                    option.selected = this.data.gap === value;
+                    gapSelect.appendChild(option);
+                });
+                layoutSelector.appendChild(gapSelect);
             }
 
             this.wrapper.appendChild(layoutSelector);
@@ -273,6 +340,12 @@ export default class MediaBlock implements BlockTool {
 
         itemEl.appendChild(mediaContainer);
 
+        // Crop selector (only for images with available crops)
+        if (!isVideo && item.crops && item.crops.length > 0 && !this.readOnly) {
+            const cropSelector = this.renderCropSelector(item, index);
+            itemEl.appendChild(cropSelector);
+        }
+
         // Caption/Credit section
         const infoSection = document.createElement('div');
         infoSection.classList.add('ce-media-block__info');
@@ -330,6 +403,99 @@ export default class MediaBlock implements BlockTool {
         }
 
         return itemEl;
+    }
+
+    private renderCropSelector(item: MediaBlockItem, index: number): HTMLElement {
+        const selector = document.createElement('div');
+        selector.classList.add('ce-media-block__crop-selector');
+
+        const currentLabel = item.crop_version?.display_label || 'Original';
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.classList.add('ce-media-block__crop-btn');
+        btn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>
+            </svg>
+            <span>${currentLabel}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m6 9 6 6 6-6"/>
+            </svg>
+        `;
+
+        const dropdown = document.createElement('div');
+        dropdown.classList.add('ce-media-block__crop-dropdown');
+        dropdown.style.display = 'none';
+
+        // Original option
+        const originalOpt = document.createElement('button');
+        originalOpt.type = 'button';
+        originalOpt.classList.add('ce-media-block__crop-option');
+        if (!item.crop_version) {
+            originalOpt.classList.add('active');
+        }
+        originalOpt.textContent = 'Original';
+        originalOpt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.selectCrop(index, null);
+            dropdown.style.display = 'none';
+        });
+        dropdown.appendChild(originalOpt);
+
+        // Crop options
+        item.crops?.forEach((crop) => {
+            const opt = document.createElement('button');
+            opt.type = 'button';
+            opt.classList.add('ce-media-block__crop-option');
+            if (item.crop_version?.uuid === crop.uuid) {
+                opt.classList.add('active');
+            }
+            opt.textContent = crop.display_label;
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.selectCrop(index, crop);
+                dropdown.style.display = 'none';
+            });
+            dropdown.appendChild(opt);
+        });
+
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', () => {
+            dropdown.style.display = 'none';
+        }, { once: true });
+
+        selector.appendChild(btn);
+        selector.appendChild(dropdown);
+
+        return selector;
+    }
+
+    private selectCrop(index: number, crop: CropVersion | null): void {
+        const item = this.data.items[index];
+        if (!item) return;
+
+        // Store original URL if not already stored
+        if (!item.original_url) {
+            item.original_url = item.url;
+        }
+
+        if (crop) {
+            // Use crop URL
+            item.url = crop.url;
+            item.crop_version = crop;
+        } else {
+            // Revert to original
+            item.url = item.original_url;
+            item.crop_version = null;
+        }
+
+        this.renderMedia();
     }
 
     private async selectMedia(multiple: boolean): Promise<void> {

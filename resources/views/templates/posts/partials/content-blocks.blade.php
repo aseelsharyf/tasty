@@ -117,7 +117,22 @@
             @php
                 $items = $data['items'] ?? [];
                 $layout = $data['layout'] ?? 'single';
-                $gridColumns = $data['gridColumns'] ?? 3;
+                $gridColumns = min(12, max(1, (int)($data['gridColumns'] ?? 3)));
+                $gap = $data['gap'] ?? 'md';
+
+                // Gap classes
+                $gapClasses = [
+                    'none' => 'gap-0',
+                    'xs' => 'gap-1',
+                    'sm' => 'gap-2',
+                    'md' => 'gap-4',
+                    'lg' => 'gap-6',
+                    'xl' => 'gap-8',
+                ];
+                $gapClass = $gapClasses[$gap] ?? 'gap-4';
+
+                // For carousel, calculate item width percentage
+                $carouselItemWidth = 100 / $gridColumns;
             @endphp
 
             @if(count($items) === 1 || $layout === 'single')
@@ -167,23 +182,32 @@
                 @endif
 
             @elseif($layout === 'grid')
-                {{-- Grid layout --}}
-                @php
-                    $gridClass = match((int)$gridColumns) {
-                        2 => 'grid-cols-2',
-                        3 => 'grid-cols-3',
-                        4 => 'grid-cols-4',
-                        default => 'grid-cols-3',
-                    };
-                @endphp
-                <div class="my-8 grid gap-4 {{ $gridClass }}">
+                {{-- Grid layout (supports 1-12 columns) - uses inline style for reliable column support --}}
+                <div class="my-8 grid {{ $gapClass }}" style="grid-template-columns: repeat({{ $gridColumns }}, minmax(0, 1fr));">
                     @foreach($items as $item)
                         <figure class="m-0">
-                            <img
-                                src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
-                                alt="{{ $item['alt_text'] ?? '' }}"
-                                class="rounded-lg w-full h-full object-cover aspect-square"
-                            />
+                            @if($item['is_video'] ?? false)
+                                <div class="relative aspect-video bg-gray-900 rounded-lg overflow-hidden">
+                                    <img
+                                        src="{{ $item['thumbnail_url'] ?? '' }}"
+                                        alt="{{ $item['alt_text'] ?? 'Video' }}"
+                                        class="w-full h-full object-cover opacity-80"
+                                    />
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <div class="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-gray-900 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                                <polygon points="5 3 19 12 5 21 5 3"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            @else
+                                <img
+                                    src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
+                                    alt="{{ $item['alt_text'] ?? '' }}"
+                                    class="rounded-lg w-full h-full object-cover aspect-square"
+                                />
+                            @endif
                             @if($item['caption'] ?? null)
                                 <figcaption class="text-center text-xs text-gray-500 mt-1">{{ $item['caption'] }}</figcaption>
                             @endif
@@ -192,16 +216,33 @@
                 </div>
 
             @elseif($layout === 'carousel')
-                {{-- Carousel layout --}}
-                <div class="my-8 overflow-x-auto">
-                    <div class="flex gap-4 pb-4" style="width: max-content;">
+                {{-- Carousel layout (horizontal scroll) --}}
+                <div class="my-8 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+                    <div class="flex {{ $gapClass }} pb-4" style="width: max-content;">
                         @foreach($items as $item)
-                            <figure class="m-0 flex-shrink-0" style="width: 300px;">
-                                <img
-                                    src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
-                                    alt="{{ $item['alt_text'] ?? '' }}"
-                                    class="rounded-lg w-full h-48 object-cover"
-                                />
+                            <figure class="m-0 flex-shrink-0" style="width: calc({{ $carouselItemWidth }}vw - 2rem); min-width: 150px; max-width: 400px;">
+                                @if($item['is_video'] ?? false)
+                                    <div class="relative aspect-video bg-gray-900 rounded-lg overflow-hidden">
+                                        <img
+                                            src="{{ $item['thumbnail_url'] ?? '' }}"
+                                            alt="{{ $item['alt_text'] ?? 'Video' }}"
+                                            class="w-full h-full object-cover opacity-80"
+                                        />
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <div class="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-gray-900 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                                    <polygon points="5 3 19 12 5 21 5 3"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @else
+                                    <img
+                                        src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
+                                        alt="{{ $item['alt_text'] ?? '' }}"
+                                        class="rounded-lg w-full aspect-[4/3] object-cover"
+                                    />
+                                @endif
                                 @if($item['caption'] ?? null)
                                     <figcaption class="text-center text-xs text-gray-500 mt-1">{{ $item['caption'] }}</figcaption>
                                 @endif
@@ -212,7 +253,7 @@
 
             @else
                 {{-- Fallback: grid --}}
-                <div class="my-8 grid gap-4 grid-cols-3">
+                <div class="my-8 grid {{ $gapClass }}" style="grid-template-columns: repeat({{ $gridColumns }}, minmax(0, 1fr));">
                     @foreach($items as $item)
                         <figure class="m-0">
                             <img

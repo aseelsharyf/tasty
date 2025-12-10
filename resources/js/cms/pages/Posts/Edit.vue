@@ -14,6 +14,19 @@ import { useDhivehiKeyboard } from '../../composables/useDhivehiKeyboard';
 import { useWorkflow, type WorkflowConfig } from '../../composables/useWorkflow';
 import type { Category, Tag, PostTypeOption, Post } from '../../types';
 
+interface CropVersion {
+    id: number;
+    uuid: string;
+    preset_name: string;
+    preset_label: string;
+    label: string | null;
+    display_label: string;
+    output_width: number;
+    output_height: number;
+    url: string | null;
+    thumbnail_url: string | null;
+}
+
 interface MediaItem {
     id: number;
     uuid: string;
@@ -30,6 +43,8 @@ interface MediaItem {
     } | null;
     is_image: boolean;
     is_video: boolean;
+    crops?: CropVersion[];
+    crop_version?: CropVersion | null;
 }
 
 interface LanguageInfo {
@@ -455,6 +470,7 @@ function handleMediaSelect(items: MediaItem[]) {
             id: item.id,
             uuid: item.uuid,
             url: item.url || '',
+            original_url: item.url || '', // Store original URL for crop switching
             thumbnail_url: item.thumbnail_url,
             title: item.title,
             alt_text: item.alt_text,
@@ -462,6 +478,9 @@ function handleMediaSelect(items: MediaItem[]) {
             credit_display: item.credit_display || null,
             is_image: item.is_image === true,
             is_video: item.is_video === true,
+            // Include crop versions for in-editor crop selection
+            crops: item.crops || [],
+            crop_version: item.crop_version || null,
         }));
         editorMediaResolve(blockItems.length > 0 ? blockItems : null);
         editorMediaResolve = null;

@@ -104,6 +104,7 @@ watch(isOpen, (open) => {
         activeTab.value = 'browse';
         uploadFiles.value = [];
         uploadErrors.value = [];
+        hasUploadedMedia.value = false;
         loadMedia();
     }
 });
@@ -175,6 +176,7 @@ const isUploading = ref(false);
 const uploadProgress = ref<Record<string, number>>({});
 const uploadErrors = ref<string[]>([]);
 const fileInputRef = ref<HTMLInputElement | null>(null);
+const hasUploadedMedia = ref(false); // Track if any uploads succeeded during this session
 
 function handleDrop(e: DragEvent) {
     e.preventDefault();
@@ -253,6 +255,7 @@ async function uploadAll() {
                 // Auto-select uploaded item and add to allSelectedItems
                 selectedItems.value.add(result.media.uuid);
                 allSelectedItems.value.set(result.media.uuid, result.media);
+                hasUploadedMedia.value = true; // Track that we have successful uploads
             }
             uploadProgress.value[file.name] = 100;
         } catch (error: any) {
@@ -361,6 +364,15 @@ function cancelCropSelection() {
     showCropSelector.value = false;
     cropSelectorItem.value = null;
 }
+
+function closeModal() {
+    // If uploads succeeded during this session, refresh the page so parent sees new media
+    if (hasUploadedMedia.value) {
+        window.location.reload();
+        return;
+    }
+    isOpen.value = false;
+}
 </script>
 
 <template>
@@ -381,7 +393,7 @@ function cancelCropSelection() {
                         icon="i-lucide-x"
                         color="neutral"
                         variant="ghost"
-                        @click="isOpen = false"
+                        @click="closeModal"
                     />
                 </div>
 
@@ -617,7 +629,7 @@ function cancelCropSelection() {
                         <UButton
                             color="neutral"
                             variant="ghost"
-                            @click="isOpen = false"
+                            @click="closeModal"
                         >
                             Cancel
                         </UButton>
