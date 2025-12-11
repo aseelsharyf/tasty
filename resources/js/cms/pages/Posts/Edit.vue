@@ -918,7 +918,7 @@ function openDiff() {
             <template #header>
                 <UDashboardNavbar>
                     <template #leading>
-                        <div class="flex items-center gap-1.5 sm:gap-3 min-w-0 overflow-hidden">
+                        <div class="flex items-center gap-1.5 sm:gap-3 min-w-0 overflow-x-auto scrollbar-hide">
                             <UDashboardSidebarCollapse class="shrink-0" />
                             <UButton
                                 color="neutral"
@@ -1725,5 +1725,15 @@ function openDiff() {
 input::placeholder,
 textarea::placeholder {
     opacity: 1;
+}
+
+/* Hide scrollbar for nav bar horizontal scroll on mobile */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
 }
 </style>

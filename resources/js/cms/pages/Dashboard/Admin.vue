@@ -274,7 +274,7 @@ function getBarHeight(count: number): string {
                                 <div
                                     v-for="post in pendingReview"
                                     :key="post.id"
-                                    class="flex items-center gap-4 px-4 py-3 hover:bg-elevated/50 transition-colors cursor-pointer"
+                                    class="flex items-center gap-4 px-4 py-3 hover:bg-elevated/50 transition-colors cursor-pointer overflow-hidden"
                                     @click="editPost(post)"
                                 >
                                     <div class="flex-1 min-w-0">
@@ -396,7 +396,7 @@ function getBarHeight(count: number): string {
                             <div
                                 v-for="post in recentActivity"
                                 :key="post.id"
-                                class="flex items-center gap-4 px-4 py-3 hover:bg-elevated/50 transition-colors cursor-pointer"
+                                class="flex items-center gap-4 px-4 py-3 hover:bg-elevated/50 transition-colors cursor-pointer overflow-hidden"
                                 @click="editPost(post)"
                             >
                                 <div class="flex items-center justify-center size-8 rounded" :class="{

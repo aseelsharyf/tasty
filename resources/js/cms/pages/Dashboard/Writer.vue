@@ -320,7 +320,7 @@ function editPost(post: Post) {
                             <div
                                 v-for="post in needsAttention"
                                 :key="post.id"
-                                class="flex items-center gap-4 px-4 py-3 hover:bg-elevated/50 transition-colors cursor-pointer"
+                                class="flex items-center gap-4 px-4 py-3 hover:bg-elevated/50 transition-colors cursor-pointer overflow-hidden"
                                 @click="editPost(post)"
                             >
                                 <div class="flex items-center justify-center size-8 rounded-full" :class="{
@@ -376,7 +376,7 @@ function editPost(post: Post) {
                             <div
                                 v-for="post in recentPosts"
                                 :key="post.id"
-                                class="flex items-center gap-4 px-4 py-3 hover:bg-elevated/50 transition-colors cursor-pointer"
+                                class="flex items-center gap-4 px-4 py-3 hover:bg-elevated/50 transition-colors cursor-pointer overflow-hidden"
                                 @click="editPost(post)"
                             >
                                 <div class="flex items-center justify-center size-8 rounded bg-muted/20">

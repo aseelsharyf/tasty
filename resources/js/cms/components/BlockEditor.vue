@@ -780,4 +780,52 @@ defineExpose({
 .codex-editor--narrow .link-tool__image {
     display: block !important;
 }
+
+/* Mobile: Constrain block picker popover to viewport */
+@media (max-width: 640px) {
+    .ce-popover {
+        position: fixed !important;
+        left: 1rem !important;
+        right: 1rem !important;
+        bottom: 1rem !important;
+        top: auto !important;
+        max-height: 60vh !important;
+        width: auto !important;
+        transform: none !important;
+    }
+
+    .ce-popover__container {
+        max-height: 100%;
+        overflow-y: auto;
+    }
+
+    .ce-popover__items {
+        max-height: calc(60vh - 60px);
+    }
+
+    /* Inline toolbar positioning on mobile */
+    .ce-inline-toolbar {
+        left: 0.5rem !important;
+        right: 0.5rem !important;
+        width: auto !important;
+    }
+
+    /* Settings popover on mobile */
+    .ce-settings {
+        position: fixed !important;
+        left: 1rem !important;
+        right: 1rem !important;
+        bottom: 1rem !important;
+        top: auto !important;
+        max-height: 50vh !important;
+        width: auto !important;
+    }
+
+    /* Conversion toolbar on mobile */
+    .ce-conversion-toolbar {
+        left: 1rem !important;
+        right: 1rem !important;
+        width: auto !important;
+    }
+}
 </style>

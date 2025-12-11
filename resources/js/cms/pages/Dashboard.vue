@@ -271,7 +271,7 @@ function formatDate(dateString: string): string {
                                 v-for="post in recentPosts"
                                 :key="post.id"
                                 :href="`/cms/posts/${post.uuid}/edit`"
-                                class="flex items-center gap-3 px-4 py-3 hover:bg-elevated/50 transition-colors"
+                                class="flex items-center gap-3 px-4 py-3 hover:bg-elevated/50 transition-colors overflow-hidden"
                             >
                                 <div class="flex items-center justify-center size-8 rounded bg-muted/50 shrink-0">
                                     <UIcon
