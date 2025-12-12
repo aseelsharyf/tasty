@@ -31,6 +31,14 @@ class Language extends Model
         ];
     }
 
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'code';
+    }
+
     // Relationships
 
     public function posts(): HasMany

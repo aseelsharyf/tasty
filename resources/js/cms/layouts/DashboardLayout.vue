@@ -144,16 +144,6 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => {
         });
     }
 
-    if (can('pages.view')) {
-        items.push({
-            label: 'Pages',
-            icon: 'i-lucide-file',
-            to: '/cms/pages',
-            active: isActive('/cms/pages'),
-            onSelect: () => { sidebarOpen.value = false; },
-        });
-    }
-
     if (can('media.view')) {
         const mediaChildren: NavigationMenuItem[] = [
             {
@@ -225,13 +215,43 @@ const taxonomyNavItems = computed<NavigationMenuItem[]>(() => {
 
 const layoutNavItems = computed<NavigationMenuItem[]>(() => {
     const items: NavigationMenuItem[] = [];
+    const hasLayoutAccess = can('menus.view') || can('pages.view');
 
-    if (can('menus.view')) {
+    if (hasLayoutAccess) {
         items.push({
             label: 'Layout',
             type: 'label',
         });
+    }
 
+    if (can('pages.view')) {
+        // Generate language-specific page navigation
+        const pageChildren: NavigationMenuItem[] = languages.value.map((lang) => ({
+            label: lang.name,
+            to: `/cms/pages/${lang.code}`,
+            icon: lang.direction === 'rtl' ? 'i-lucide-align-right' : 'i-lucide-align-left',
+            active: isActivePrefix(`/cms/pages/${lang.code}`),
+        }));
+
+        // Fallback if languages haven't loaded yet
+        if (pageChildren.length === 0) {
+            pageChildren.push(
+                { label: 'English', to: '/cms/pages/en', icon: 'i-lucide-align-left', active: isActivePrefix('/cms/pages/en') },
+                { label: 'Dhivehi', to: '/cms/pages/dv', icon: 'i-lucide-align-right', active: isActivePrefix('/cms/pages/dv') },
+            );
+        }
+
+        items.push({
+            label: 'Pages',
+            icon: 'i-lucide-file-text',
+            to: `/cms/pages/${languages.value.find(l => l.is_default)?.code || 'en'}`,
+            active: isActivePrefix('/cms/pages'),
+            open: isActivePrefix('/cms/pages'),
+            children: pageChildren,
+        });
+    }
+
+    if (can('menus.view')) {
         items.push({
             label: 'Menus',
             icon: 'i-lucide-menu',

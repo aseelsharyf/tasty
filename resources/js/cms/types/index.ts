@@ -207,3 +207,42 @@ export interface CategoryOption {
     name: string;
     slug: string;
 }
+
+export interface Page {
+    id: number;
+    uuid: string;
+    language_code: string;
+    language?: {
+        code: string;
+        name: string;
+        native_name: string;
+        direction?: 'ltr' | 'rtl';
+    } | null;
+    title: string;
+    slug: string;
+    content?: string | null;
+    layout: 'default' | 'full-width' | 'sidebar';
+    status: 'draft' | 'published';
+    is_blade: boolean;
+    author_id?: number | null;
+    author?: Author | null;
+    meta_title?: string | null;
+    meta_description?: string | null;
+    published_at?: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PageFilters {
+    search?: string;
+    status?: string;
+    language?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
+
+export interface PageCounts {
+    total: number;
+    published: number;
+    draft: number;
+}

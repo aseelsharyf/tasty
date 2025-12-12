@@ -2,6 +2,7 @@
 
 namespace App\View\Components\Layout;
 
+use App\Services\MenuService;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
@@ -31,44 +32,14 @@ class Footer extends Component
         ?string $location = null,
         ?int $year = null,
     ) {
-        $this->menu = $menu ?? [
-            ['label' => 'The Spread', 'url' => '#'],
-            ['label' => 'On the Menu', 'url' => '#'],
-            ['label' => 'Everyday Cooking', 'url' => '#'],
-            ['label' => 'Food Destinations', 'url' => '#'],
-            ['label' => 'Fresh This Week', 'url' => '#'],
-            ['label' => 'Add to Cart', 'url' => '#'],
-        ];
+        $menuService = app(MenuService::class);
 
-        $this->topics = $topics ?? [
-            ['label' => 'At the Table', 'url' => '#'],
-            ['label' => 'Chef Stories', 'url' => '#'],
-            ['label' => 'Island Profiles', 'url' => '#'],
-            ['label' => 'Ingredient Files', 'url' => '#'],
-            ['label' => 'Travel & Taste', 'url' => '#'],
-            ['label' => 'Weekly Updates', 'url' => '#'],
-        ];
-
-        $this->office = $office ?? [
-            ['label' => 'About', 'url' => '/about'],
-            ['label' => 'Contact', 'url' => '/contact'],
-            ['label' => 'Editorial Policy', 'url' => '/editorial-policy'],
-            ['label' => 'Work With Us', 'url' => '/work-with-us'],
-            ['label' => 'Submit a Story', 'url' => '/submit-story'],
-            ['label' => 'Archive', 'url' => '#'],
-        ];
-
-        $this->social = $social ?? [
-            ['label' => 'Instagram', 'url' => '#'],
-            ['label' => 'TikTok', 'url' => '#'],
-            ['label' => 'YouTube', 'url' => '#'],
-            ['label' => 'Threads', 'url' => '#'],
-            ['label' => 'X.com', 'url' => '#'],
-            ['label' => 'Newsletter', 'url' => '#'],
-        ];
-
-        $this->company = $company ?? 'Tasty Publishing Ltd.';
-        $this->location = $location ?? 'Made in the Maldives.';
+        $this->menu = $menu ?? $menuService->getFooterMenu();
+        $this->topics = $topics ?? $menuService->getFooterTopics();
+        $this->office = $office ?? $menuService->getFooterOffice();
+        $this->social = $social ?? $menuService->getFooterSocial();
+        $this->company = $company ?? $menuService->getCompanyName();
+        $this->location = $location ?? $menuService->getCompanyLocation();
         $this->year = $year ?? (int) date('Y');
     }
 

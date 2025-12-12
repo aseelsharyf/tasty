@@ -12,6 +12,7 @@ use App\Http\Controllers\Cms\MediaFolderController;
 use App\Http\Controllers\Cms\MediaItemCropController;
 use App\Http\Controllers\Cms\MenuController;
 use App\Http\Controllers\Cms\NotificationController;
+use App\Http\Controllers\Cms\PageController;
 use App\Http\Controllers\Cms\PostController;
 use App\Http\Controllers\Cms\PostEditLockController;
 use App\Http\Controllers\Cms\PostPreviewController;
@@ -229,6 +230,31 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::put('menus/{menu}/items/{item}', [MenuController::class, 'updateItem'])->name('cms.menus.items.update');
         Route::delete('menus/{menu}/items/{item}', [MenuController::class, 'destroyItem'])->name('cms.menus.items.destroy');
         Route::post('menus/{menu}/items/reorder', [MenuController::class, 'reorderItems'])->name('cms.menus.items.reorder');
+    });
+
+    // Pages Management
+    Route::middleware('permission:pages.view')->group(function () {
+        Route::get('pages/{language}', [PageController::class, 'index'])
+            ->name('cms.pages.index')
+            ->where('language', '[a-z]{2}');
+        Route::get('pages/{language}/create', [PageController::class, 'create'])
+            ->name('cms.pages.create')
+            ->where('language', '[a-z]{2}');
+        Route::post('pages/{language}', [PageController::class, 'store'])
+            ->name('cms.pages.store')
+            ->where('language', '[a-z]{2}');
+        Route::get('pages/{language}/{page}/edit', [PageController::class, 'edit'])
+            ->name('cms.pages.edit')
+            ->where('language', '[a-z]{2}');
+        Route::put('pages/{language}/{page}', [PageController::class, 'update'])
+            ->name('cms.pages.update')
+            ->where('language', '[a-z]{2}');
+        Route::delete('pages/{language}/{page}', [PageController::class, 'destroy'])
+            ->name('cms.pages.destroy')
+            ->where('language', '[a-z]{2}');
+        Route::delete('pages/{language}/bulk', [PageController::class, 'bulkDestroy'])
+            ->name('cms.pages.bulk-destroy')
+            ->where('language', '[a-z]{2}');
     });
 
     // Comments Management

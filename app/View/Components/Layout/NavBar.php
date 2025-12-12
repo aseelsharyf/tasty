@@ -2,6 +2,7 @@
 
 namespace App\View\Components\Layout;
 
+use App\Services\MenuService;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
@@ -19,24 +20,11 @@ class NavBar extends Component
         ?array $secondaryLinks = null,
         ?array $mobileActions = null,
     ) {
-        $this->primaryLinks = $primaryLinks ?? [
-            ['label' => 'Update', 'href' => '#', 'class' => 'text-blue-black'],
-            ['label' => 'Feature', 'href' => '#', 'class' => 'text-black'],
-            ['label' => 'People', 'href' => '#', 'class' => 'text-black'],
-            ['label' => 'Review', 'href' => '#', 'class' => 'text-blue-black'],
-            ['label' => 'Recipe', 'href' => '#', 'class' => 'text-blue-black'],
-            ['label' => 'Pantry', 'href' => '#', 'class' => 'text-blue-black'],
-        ];
+        $menuService = app(MenuService::class);
 
-        $this->secondaryLinks = $secondaryLinks ?? [
-            ['label' => 'About', 'href' => '/about', 'class' => 'text-blue-black'],
-            ['label' => 'Advertise', 'href' => '/advertise', 'class' => 'text-black'],
-        ];
-
-        $this->mobileActions = $mobileActions ?? [
-            ['label' => 'Subscribe', 'href' => '#', 'variant' => 'primary'],
-            ['label' => 'Search', 'href' => '#', 'variant' => 'outline'],
-        ];
+        $this->primaryLinks = $primaryLinks ?? $menuService->getHeaderPrimaryLinks();
+        $this->secondaryLinks = $secondaryLinks ?? $menuService->getHeaderSecondaryLinks();
+        $this->mobileActions = $mobileActions ?? $menuService->getMobileActions();
     }
 
     public function render(): View|Closure|string
