@@ -37,6 +37,11 @@ class DatabaseSeeder extends Seeder
         $this->createSampleUsers();
 
         $this->command->info('Production database seeded successfully!');
+
+        // Seed development data in local environment
+        if (app()->environment('local')) {
+            $this->call(DevelopmentSeeder::class);
+        }
     }
 
     /**

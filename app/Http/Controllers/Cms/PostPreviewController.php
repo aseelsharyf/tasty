@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Cms;
 
 use App\Http\Controllers\Controller;
+use App\Models\ContentVersion;
 use App\Models\Language;
 use App\Models\Post;
-use App\Models\PostVersion;
 use App\Models\Setting;
 use App\Services\PostTemplateRegistry;
 use Illuminate\Http\Request;
@@ -168,8 +168,9 @@ class PostPreviewController extends Controller
         $template = $post->template ?? 'default';
 
         if ($versionUuid) {
-            $version = PostVersion::where('uuid', $versionUuid)
-                ->where('post_id', $post->id)
+            $version = ContentVersion::where('uuid', $versionUuid)
+                ->where('versionable_type', Post::class)
+                ->where('versionable_id', $post->id)
                 ->first();
 
             if ($version && $version->content_snapshot) {

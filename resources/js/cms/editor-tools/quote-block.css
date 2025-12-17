@@ -1,0 +1,169 @@
+/* Quote Block Styles */
+.ce-quote-block {
+    padding: 1rem 0;
+}
+
+.ce-quote-block__text {
+    font-size: 1.25rem;
+    font-style: italic;
+    line-height: 1.75;
+    color: var(--ui-text);
+    border-left: 4px solid var(--ui-primary);
+    padding-left: 1.25rem;
+    margin: 0 0 1rem 0;
+    min-height: 1.5em;
+}
+
+.ce-quote-block__text:empty::before {
+    content: attr(data-placeholder);
+    color: var(--ui-text-dimmed);
+    font-style: italic;
+}
+
+.ce-quote-block__text:focus {
+    outline: none;
+}
+
+/* Center aligned quote */
+.ce-quote-block--center {
+    text-align: center;
+}
+
+.ce-quote-block--center .ce-quote-block__text {
+    border-left: none;
+    padding-left: 0;
+    border-top: 2px solid var(--ui-primary);
+    border-bottom: 2px solid var(--ui-primary);
+    padding: 1rem 0;
+}
+
+.ce-quote-block--center .ce-quote-block__author {
+    justify-content: center;
+}
+
+/* Author section */
+.ce-quote-block__author {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.ce-quote-block__photo-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.ce-quote-block__photo {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.ce-quote-block__photo-add {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px dashed var(--ui-border);
+    background: var(--ui-bg-muted);
+    color: var(--ui-text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.ce-quote-block__photo-add:hover {
+    border-color: var(--ui-primary);
+    color: var(--ui-primary);
+    background: var(--ui-bg-elevated);
+}
+
+.ce-quote-block__photo-remove {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    color: var(--ui-text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.ce-quote-block__photo-wrapper:hover .ce-quote-block__photo-remove {
+    opacity: 1;
+}
+
+.ce-quote-block__photo-remove:hover {
+    background: var(--ui-error);
+    border-color: var(--ui-error);
+    color: white;
+}
+
+/* Author info */
+.ce-quote-block__author-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.ce-quote-block__caption {
+    font-style: normal;
+    font-weight: 600;
+    color: var(--ui-text-highlighted);
+    font-size: 0.9375rem;
+    min-height: 1.25em;
+}
+
+.ce-quote-block__caption:empty::before {
+    content: attr(data-placeholder);
+    color: var(--ui-text-dimmed);
+    font-weight: normal;
+}
+
+.ce-quote-block__caption:focus {
+    outline: none;
+}
+
+.ce-quote-block__author-title {
+    font-size: 0.8125rem;
+    color: var(--ui-text-muted);
+    min-height: 1.25em;
+}
+
+.ce-quote-block__author-title:empty::before {
+    content: attr(data-placeholder);
+    color: var(--ui-text-dimmed);
+}
+
+.ce-quote-block__author-title:focus {
+    outline: none;
+}
+
+/* Settings */
+.ce-quote-block__settings {
+    display: flex;
+    gap: 0.25rem;
+}
+
+/* RTL Support */
+.block-editor--rtl .ce-quote-block__text {
+    border-left: none;
+    border-right: 4px solid var(--ui-primary);
+    padding-left: 0;
+    padding-right: 1.25rem;
+}
+
+.block-editor--rtl .ce-quote-block--center .ce-quote-block__text {
+    border-right: none;
+    padding-right: 0;
+}

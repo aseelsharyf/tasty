@@ -3,13 +3,14 @@ import { ref, watch, onMounted, onBeforeUnmount, shallowRef, computed } from 'vu
 import EditorJS, { type OutputData } from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
-import Quote from '@editorjs/quote';
 import Delimiter from '@editorjs/delimiter';
 import Table from '@editorjs/table';
 import Code from '@editorjs/code';
 import LinkTool from '@editorjs/link';
 import MediaBlock, { type MediaBlockItem } from '../editor-tools/MediaBlock';
+import QuoteBlock from '../editor-tools/QuoteBlock';
 import '../editor-tools/media-block.css';
+import '../editor-tools/quote-block.css';
 import type { DhivehiLayout } from '../composables/useDhivehiKeyboard';
 
 // Media selection callback type
@@ -179,11 +180,13 @@ const initEditor = async () => {
                 },
             },
             quote: {
-                class: Quote,
+                class: QuoteBlock,
                 inlineToolbar: true,
                 config: {
                     quotePlaceholder: quotePlaceholder,
                     captionPlaceholder: quoteCaptionPlaceholder,
+                    authorTitlePlaceholder: isRtlMode ? 'މަގާމު ނުވަތަ ޓައިޓަލް' : 'Title or role',
+                    onSelectMedia: props.onSelectMedia,
                 },
             },
             linkTool: {
@@ -347,16 +350,6 @@ defineExpose({
     color: var(--ui-text-highlighted);
 }
 
-.cdx-quote__text {
-    color: var(--ui-text);
-    border-left: 4px solid var(--ui-primary);
-    padding-left: 1rem;
-}
-
-.cdx-quote__caption {
-    color: var(--ui-text-muted);
-    font-size: 0.875rem;
-}
 
 .ce-code__textarea {
     background-color: var(--ui-bg-elevated);
@@ -744,9 +737,7 @@ defineExpose({
 /* RTL Support */
 .block-editor--rtl .ce-paragraph,
 .block-editor--rtl .ce-header,
-.block-editor--rtl .cdx-list__item,
-.block-editor--rtl .cdx-quote__text,
-.block-editor--rtl .cdx-quote__caption {
+.block-editor--rtl .cdx-list__item {
     text-align: right;
     direction: rtl;
     font-family: 'MV Typewriter', 'MV Faseyha', 'Faruma', sans-serif;
@@ -757,13 +748,6 @@ defineExpose({
 .block-editor--rtl .ce-header {
     font-size: 1.75rem;
     font-weight: 700;
-}
-
-.block-editor--rtl .cdx-quote__text {
-    border-left: none;
-    border-right: 4px solid var(--ui-primary);
-    padding-left: 0;
-    padding-right: 1rem;
 }
 
 .block-editor--rtl .ce-toolbar {
