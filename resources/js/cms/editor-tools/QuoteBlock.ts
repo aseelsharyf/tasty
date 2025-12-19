@@ -1,3 +1,4 @@
+console.log('[QuoteBlock] Module loaded');
 import type { BlockTool, BlockToolConstructorOptions, API } from '@editorjs/editorjs';
 import type { MediaBlockItem } from './MediaBlock';
 
@@ -52,10 +53,12 @@ export default class QuoteBlock implements BlockTool {
     }
 
     constructor({ data, config, api, readOnly }: BlockToolConstructorOptions<QuoteBlockData, QuoteBlockConfig>) {
+        console.log('[QuoteBlock] Constructor called with data:', data);
         this.api = api;
         this.config = config || {};
         this.readOnly = readOnly || false;
         this.data = this.normalizeData(data);
+        console.log('[QuoteBlock] Normalized data:', this.data);
     }
 
     private normalizeData(data: any): QuoteBlockData {
@@ -68,6 +71,7 @@ export default class QuoteBlock implements BlockTool {
     }
 
     render(): HTMLElement {
+        console.log('[QuoteBlock] Render called, data:', this.data);
         this.wrapper = document.createElement('div');
         this.wrapper.classList.add('ce-quote-block');
         this.wrapper.classList.add(`ce-quote-block--${this.data.alignment}`);
