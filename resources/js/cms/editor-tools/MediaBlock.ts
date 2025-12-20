@@ -6,6 +6,11 @@ import type { BlockTool, BlockToolConstructorOptions, API, BlockToolData } from 
 export type GapSize = 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 /**
+ * Display width options for media block
+ */
+export type DisplayWidth = 'default' | 'fullScreen';
+
+/**
  * Media data structure for Editor.js block
  */
 export interface MediaBlockData {
@@ -13,6 +18,7 @@ export interface MediaBlockData {
     layout: 'single' | 'grid' | 'carousel';
     gridColumns: number; // 1-12
     gap: GapSize;
+    displayWidth: DisplayWidth; // default (content width) or fullScreen (edge to edge)
 }
 
 export interface CropVersion {
@@ -87,6 +93,7 @@ export default class MediaBlock implements BlockTool {
             layout: 'single',
             gridColumns: 3,
             gap: 'md',
+            displayWidth: 'default',
         };
 
         if (data && typeof data === 'object') {
@@ -108,6 +115,10 @@ export default class MediaBlock implements BlockTool {
             // Gap size
             if (data.gap && ['none', 'xs', 'sm', 'md', 'lg', 'xl'].includes(data.gap)) {
                 normalized.gap = data.gap;
+            }
+            // Display width
+            if (data.displayWidth && ['default', 'fullScreen'].includes(data.displayWidth)) {
+                normalized.displayWidth = data.displayWidth;
             }
         }
 
@@ -550,5 +561,44 @@ export default class MediaBlock implements BlockTool {
     validate(savedData: MediaBlockData): boolean {
         // A valid block must have at least one media item
         return savedData.items && savedData.items.length > 0;
+    }
+
+    renderSettings(): HTMLElement {
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('ce-media-block__settings');
+
+        // Display width settings
+        const displayWidthOptions: Array<{ value: DisplayWidth; icon: string; label: string }> = [
+            {
+                value: 'default',
+                label: 'Content Width',
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="16" rx="2"/></svg>',
+            },
+            {
+                value: 'fullScreen',
+                label: 'Full Screen Width',
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/></svg>',
+            },
+        ];
+
+        displayWidthOptions.forEach(({ value, icon, label }) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.classList.add('cdx-settings-button');
+            button.classList.toggle('cdx-settings-button--active', this.data.displayWidth === value);
+            button.innerHTML = icon;
+            button.title = label;
+            button.addEventListener('click', () => {
+                this.data.displayWidth = value;
+                // Update active state
+                wrapper.querySelectorAll('.cdx-settings-button').forEach((btn) => {
+                    btn.classList.remove('cdx-settings-button--active');
+                });
+                button.classList.add('cdx-settings-button--active');
+            });
+            wrapper.appendChild(button);
+        });
+
+        return wrapper;
     }
 }

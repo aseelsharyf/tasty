@@ -1,5 +1,5 @@
-<section class="w-full bg-tasty-light-gray pt-16 pb-32 px-4 text-center">
-    <div class="mx-auto max-w-7xl">
+<section class="container bg-tasty-light-gray pt-16 pb-32 px-4 text-center">
+    <div class="container">
         <x-ui.heading
             level="h2"
             text="Come hungry, leave inspired. Sign up for tasty updates."

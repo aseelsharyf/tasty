@@ -1,4 +1,3 @@
-console.log('[QuoteBlock] Module loaded');
 import type { BlockTool, BlockToolConstructorOptions, API } from '@editorjs/editorjs';
 import type { MediaBlockItem } from './MediaBlock';
 
@@ -9,6 +8,7 @@ export interface QuoteBlockData {
     text: string;
     caption: string;
     alignment: 'left' | 'center';
+    displayType: 'default' | 'large' | 'small';
     author?: {
         name: string;
         title?: string;
@@ -53,12 +53,10 @@ export default class QuoteBlock implements BlockTool {
     }
 
     constructor({ data, config, api, readOnly }: BlockToolConstructorOptions<QuoteBlockData, QuoteBlockConfig>) {
-        console.log('[QuoteBlock] Constructor called with data:', data);
         this.api = api;
         this.config = config || {};
         this.readOnly = readOnly || false;
         this.data = this.normalizeData(data);
-        console.log('[QuoteBlock] Normalized data:', this.data);
     }
 
     private normalizeData(data: any): QuoteBlockData {
@@ -66,12 +64,12 @@ export default class QuoteBlock implements BlockTool {
             text: data?.text || '',
             caption: data?.caption || '',
             alignment: data?.alignment || 'left',
+            displayType: data?.displayType || 'default',
             author: data?.author || undefined,
         };
     }
 
     render(): HTMLElement {
-        console.log('[QuoteBlock] Render called, data:', this.data);
         this.wrapper = document.createElement('div');
         this.wrapper.classList.add('ce-quote-block');
         this.wrapper.classList.add(`ce-quote-block--${this.data.alignment}`);
@@ -233,6 +231,57 @@ export default class QuoteBlock implements BlockTool {
         const wrapper = document.createElement('div');
         wrapper.classList.add('ce-quote-block__settings');
 
+        // Display type settings (Default, Large, Small)
+        const displayTypes: Array<{ value: 'default' | 'large' | 'small'; icon: string; label: string }> = [
+            {
+                value: 'default',
+                label: 'Default (text only)',
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21c0 1 0 1 1 1z"/></svg>',
+            },
+            {
+                value: 'large',
+                label: 'Large (with big photo)',
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>',
+            },
+            {
+                value: 'small',
+                label: 'Small (with thumbnail)',
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><path d="M14 4h7M14 9h7M3 14h18M3 19h18"/></svg>',
+            },
+        ];
+
+        // Display type buttons
+        const displayTypeGroup = document.createElement('div');
+        displayTypeGroup.classList.add('ce-quote-block__settings-group');
+
+        displayTypes.forEach(({ value, icon, label }) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.classList.add('cdx-settings-button');
+            button.classList.toggle('cdx-settings-button--active', this.data.displayType === value);
+            button.innerHTML = icon;
+            button.title = label;
+            button.addEventListener('click', () => {
+                this.data.displayType = value;
+                // Update active state
+                displayTypeGroup.querySelectorAll('.cdx-settings-button').forEach((btn) => {
+                    btn.classList.remove('cdx-settings-button--active');
+                });
+                button.classList.add('cdx-settings-button--active');
+            });
+            displayTypeGroup.appendChild(button);
+        });
+
+        wrapper.appendChild(displayTypeGroup);
+
+        // Separator
+        const separator = document.createElement('div');
+        separator.style.width = '1px';
+        separator.style.height = '24px';
+        separator.style.backgroundColor = '#e8e8eb';
+        separator.style.margin = '0 4px';
+        wrapper.appendChild(separator);
+
         // Alignment settings
         const alignments: Array<{ value: 'left' | 'center'; icon: string; label: string }> = [
             {
@@ -246,6 +295,9 @@ export default class QuoteBlock implements BlockTool {
                 icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" x2="3" y1="6" y2="6"/><line x1="18" x2="6" y1="12" y2="12"/><line x1="21" x2="3" y1="18" y2="18"/></svg>',
             },
         ];
+
+        const alignmentGroup = document.createElement('div');
+        alignmentGroup.classList.add('ce-quote-block__settings-group');
 
         alignments.forEach(({ value, icon, label }) => {
             const button = document.createElement('button');
@@ -261,13 +313,15 @@ export default class QuoteBlock implements BlockTool {
                     this.wrapper.classList.add(`ce-quote-block--${value}`);
                 }
                 // Update active state
-                wrapper.querySelectorAll('.cdx-settings-button').forEach((btn) => {
+                alignmentGroup.querySelectorAll('.cdx-settings-button').forEach((btn) => {
                     btn.classList.remove('cdx-settings-button--active');
                 });
                 button.classList.add('cdx-settings-button--active');
             });
-            wrapper.appendChild(button);
+            alignmentGroup.appendChild(button);
         });
+
+        wrapper.appendChild(alignmentGroup);
 
         return wrapper;
     }

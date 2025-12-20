@@ -93,7 +93,7 @@
 @endphp
 
 {{-- Featured Person Section --}}
-<div class="w-full pt-16 overflow-x-hidden">
+<div class="w-full pt-16 overflow-x-hidden bg-gray-100">
 
     {{-- Profile Image with Gradient Overlay --}}
     {{-- Using aspect ratio for consistent scaling: ~3:4 mobile, ~2:3 desktop --}}
@@ -118,7 +118,7 @@
 
     {{-- Profile Info Section --}}
     <div class="w-full {{ $classColor }} py-8 md:py-12 -mt-1" @if($styleAttr) style="{{ $styleAttr }}" @endif>
-        <div class="max-w-7xl mx-auto px-4">
+        <div class="container px-4">
             <div class="flex flex-col space-y-8 md:space-y-10">
                 <!-- Header Section -->
                 <div class="flex flex-col space-y-4">

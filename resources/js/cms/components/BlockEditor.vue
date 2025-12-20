@@ -156,8 +156,6 @@ const initEditor = async () => {
 
     // Normalize data to handle version differences (e.g., List tool v2.x format)
     const normalizedData = props.modelValue ? normalizeEditorData(props.modelValue) : undefined;
-    console.log('[BlockEditor] Initializing with data:', normalizedData);
-    console.log('[BlockEditor] QuoteBlock class:', QuoteBlock);
 
     editor.value = new EditorJS({
         holder: editorRef.value,

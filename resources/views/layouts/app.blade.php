@@ -23,8 +23,8 @@
         @else
         @endif
     </head>
-    <body class="antialiased bg-gray-100">
-        <div class="w-full 2xl:max-w-[1920px] mx-auto bg-white">
+    <body class="antialiased">
+        <div class="w-full bg-white">
             <x-layout.nav-bar></x-layout.nav-bar>
 
             <main>

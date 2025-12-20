@@ -33,7 +33,7 @@
         : 'justify-center';
 @endphp
 
-<section class="flex flex-col md:flex-row w-full min-h-screen md:min-h-0 md:max-h-[854px]">
+<section class="container flex flex-col md:flex-row w-full min-h-screen md:min-h-0 md:max-h-[854px]">
 
     <div class="w-full h-[60vh] md:h-[854px] md:w-1/2 overflow-hidden relative">
         {{-- <div class="absolute inset-0 hover:opacity-80 transition-opacity duration-200">

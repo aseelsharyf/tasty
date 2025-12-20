@@ -1,6 +1,6 @@
 {{-- resources/views/components/footer.blade.php --}}
-<footer class="bg-tasty-blue-black text-tasty-light-gray font-mono" x-data="{ activeAccordion: null }" aria-label="Tasty">
-    <div class="max-w-[1440px] mx-auto px-6 pt-20 pb-12">
+<footer class="mx-auto container bg-tasty-blue-black text-tasty-light-gray font-mono" x-data="{ activeAccordion: null }" aria-label="Tasty">
+    <div class="container px-6 pt-20 pb-12">
 
         {{-- LOGO --}}
         <div class="flex justify-center mb-16 text-tasty-light-gray">

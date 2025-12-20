@@ -189,10 +189,10 @@ class PostSeeder extends Seeder
             ],
         ];
 
-        // Add a media block if available
+        // Add a media block if available (full screen width)
         if ($mediaItems->isNotEmpty()) {
             $image1 = $mediaItems->random();
-            $blocks[] = $this->createMediaBlock($image1, 'Traditional Maldivian cuisine showcases the bounty of the Indian Ocean');
+            $blocks[] = $this->createMediaBlock($image1, 'Traditional Maldivian cuisine showcases the bounty of the Indian Ocean', 'fullScreen');
         }
 
         $blocks[] = [
@@ -212,13 +212,15 @@ class PostSeeder extends Seeder
             ],
         ];
 
-        // Add a quote block with author photo (if media available)
-        $quoteAuthorPhoto = $mediaItems->isNotEmpty() ? $mediaItems->random() : null;
+        // Quote 1: LARGE display type (side-by-side with big photo)
+        $quoteAuthorPhoto1 = $mediaItems->isNotEmpty() ? $mediaItems->random() : null;
         $blocks[] = $this->createQuoteBlock(
             'Food is our common ground, a universal experience that connects us all—especially here in the Maldives, where every meal tells a story of the sea.',
             'Chef Ibrahim Mohamed',
             'Executive Chef, Ocean Restaurant',
-            $quoteAuthorPhoto
+            $quoteAuthorPhoto1,
+            'left',
+            'large'
         );
 
         $blocks[] = [
@@ -229,12 +231,12 @@ class PostSeeder extends Seeder
             ],
         ];
 
-        // Add a multi-image grid block if enough images available
+        // Add a multi-image grid block if enough images available (full screen width)
         if ($mediaItems->count() >= 3) {
-            $blocks[] = $this->createMediaGridBlock($mediaItems, rand(2, 3));
+            $blocks[] = $this->createMediaGridBlock($mediaItems, rand(2, 3), 'fullScreen');
         } elseif ($mediaItems->count() > 1) {
             $image2 = $mediaItems->random();
-            $blocks[] = $this->createMediaBlock($image2, 'Fresh ingredients are the cornerstone of island cooking');
+            $blocks[] = $this->createMediaBlock($image2, 'Fresh ingredients are the cornerstone of island cooking', 'default');
         }
 
         $blocks[] = [
@@ -254,11 +256,15 @@ class PostSeeder extends Seeder
             ],
         ];
 
-        // Add another quote (without photo to show both variants)
+        // Quote 2: SMALL display type (thumbnail photo on left)
+        $quoteAuthorPhoto2 = $mediaItems->isNotEmpty() ? $mediaItems->random() : null;
         $blocks[] = $this->createQuoteBlock(
             'The secret to great Maldivian cooking is simple: respect the ingredients. Let the fish speak for itself, and the spices will follow.',
             'Chef Aminath Hassan',
-            'Culinary Director'
+            'Culinary Director',
+            $quoteAuthorPhoto2,
+            'left',
+            'small'
         );
 
         $blocks[] = [
@@ -268,6 +274,16 @@ class PostSeeder extends Seeder
                 'text' => 'Whether you\'re sampling street food in Hulhumalé or enjoying a multi-course tasting menu overlooking the lagoon, the essence of Maldivian hospitality shines through. Food here is more than sustenance—it\'s an expression of community, tradition, and the islands\' deep connection to the surrounding waters.',
             ],
         ];
+
+        // Quote 3: DEFAULT display type (text only, centered)
+        $blocks[] = $this->createQuoteBlock(
+            'In the Maldives, we don\'t just eat—we celebrate. Every meal is an opportunity to share stories, to connect with family, and to honor the traditions that have sustained us for generations.',
+            'Fatima Ali',
+            'Food Historian',
+            null,
+            'center',
+            'default'
+        );
 
         return [
             'time' => now()->timestamp * 1000,
@@ -279,7 +295,7 @@ class PostSeeder extends Seeder
     /**
      * Create a media block for EditorJS (single image).
      */
-    private function createMediaBlock(MediaItem $media, ?string $caption = null): array
+    private function createMediaBlock(MediaItem $media, ?string $caption = null, string $displayWidth = 'default'): array
     {
         return [
             'id' => $this->generateBlockId(),
@@ -291,6 +307,7 @@ class PostSeeder extends Seeder
                 'layout' => 'single',
                 'gridColumns' => 3,
                 'gap' => 'md',
+                'displayWidth' => $displayWidth,
             ],
         ];
     }
@@ -300,7 +317,7 @@ class PostSeeder extends Seeder
      *
      * @param  \Illuminate\Support\Collection<int, MediaItem>  $mediaItems
      */
-    private function createMediaGridBlock($mediaItems, int $count = 2): array
+    private function createMediaGridBlock($mediaItems, int $count = 2, string $displayWidth = 'default'): array
     {
         $items = $mediaItems->random(min($count, $mediaItems->count()))
             ->map(fn ($media) => $this->createMediaItem($media))
@@ -314,6 +331,7 @@ class PostSeeder extends Seeder
                 'layout' => 'grid',
                 'gridColumns' => count($items),
                 'gap' => 'md',
+                'displayWidth' => $displayWidth,
             ],
         ];
     }
@@ -339,18 +357,22 @@ class PostSeeder extends Seeder
 
     /**
      * Create a quote block for EditorJS with optional author photo.
+     *
+     * @param  string  $displayType  'default' (text only), 'large' (big photo), 'small' (thumbnail)
      */
     private function createQuoteBlock(
         string $text,
         string $authorName,
         ?string $authorTitle = null,
         ?MediaItem $authorPhoto = null,
-        string $alignment = 'left'
+        string $alignment = 'left',
+        string $displayType = 'default'
     ): array {
         $data = [
             'text' => $text,
             'caption' => $authorName,
             'alignment' => $alignment,
+            'displayType' => $displayType,
             'author' => [
                 'name' => $authorName,
                 'title' => $authorTitle,
@@ -471,13 +493,15 @@ class PostSeeder extends Seeder
             ],
         ];
 
-        // Add a quote tip (with author photo if available)
+        // Add a quote tip (with author photo, using small display)
         $tipAuthorPhoto = $mediaItems->isNotEmpty() ? $mediaItems->random() : null;
         $blocks[] = $this->createQuoteBlock(
             'The key is to never let the coconut milk boil—a gentle simmer keeps the fish tender and the sauce silky smooth.',
             'Dhaitha',
             'Grandmother\'s Wisdom',
-            $tipAuthorPhoto
+            $tipAuthorPhoto,
+            'left',
+            'small'
         );
 
         $blocks[] = [

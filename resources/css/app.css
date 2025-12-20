@@ -142,12 +142,25 @@
 .text-body-lg {
     font-family: var(--font-sans);
     font-size: 20px;
-    line-height: 26px;
+    line-height: 30px;
 }
 @media (min-width: 1024px) {
     .text-body-lg {
         font-size: 24px;
-        line-height: 26px;
+        line-height: 36px;
+    }
+}
+
+/* Caption text for media blocks */
+.text-caption {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    line-height: 26px;
+}
+@media (min-width: 1024px) {
+    .text-caption {
+        font-size: 20px;
+        line-height: 28px;
     }
 }
 
@@ -161,13 +174,13 @@
 /* Custom Utilities - Hide Scrollbar */
 .scrollbar-hide,
 .scrollbar-hide * {
-    -ms-overflow-style: none !important;  /* IE and Edge */
-    scrollbar-width: none !important;  /* Firefox */
+    -ms-overflow-style: none !important; /* IE and Edge */
+    scrollbar-width: none !important; /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar,
 .scrollbar-hide *::-webkit-scrollbar {
-    display: none !important;  /* Chrome, Safari, Opera */
+    display: none !important; /* Chrome, Safari, Opera */
     width: 0 !important;
     height: 0 !important;
     background: transparent !important;
@@ -188,4 +201,458 @@
     display: none !important;
     width: 0 !important;
     height: 0 !important;
+}
+
+/* Container Utility - Max 1440px */
+@utility container {
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
+}
+
+@theme {
+    --color-blue-black: #0a0924;
+    --color-light-gray: #f2f2f2;
+    --color-yellow: #ffe762;
+    --color-off-white: #f7f7f7;
+
+    --font-heading: "new-spirit", Georgia, serif;
+    --font-body: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        font-family: var(--font-body);
+        color: var(--color-blue-black);
+        background-color: var(--color-off-white);
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--font-heading);
+        font-weight: 400;
+        font-feature-settings: "dlig" on;
+    }
+}
+
+/* Custom Utilities */
+.container-main {
+    max-width: 1440px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 100px;
+    font-family: var(--font-body);
+    font-size: 20px;
+    line-height: 26px;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-white {
+    background-color: white;
+    color: var(--color-blue-black);
+}
+
+.btn-yellow {
+    background-color: var(--color-yellow);
+    color: var(--color-blue-black);
+}
+
+.tag {
+    display: inline-block;
+    background-color: var(--color-light-gray);
+    color: var(--color-blue-black);
+    font-size: 12px;
+    line-height: 12px;
+    padding: 8px 12px;
+    border-radius: 48px;
+    text-transform: uppercase;
+    font-weight: 400;
+}
+
+.tag-white {
+    background-color: white;
+}
+
+/* Scroll container */
+.scroll-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+/*
+ * Typography System - From Figma Design
+ * Mobile-first approach with lg: breakpoint for desktop
+ * Using New Spirit Condensed (Adobe Typekit) - weight 400
+ *
+ * HEADINGS (font-display / New Spirit Condensed):
+ * - h1-hero: Mobile 80px/70px, Desktop 200px/160px, tracking -8px, uppercase
+ * - h1: Mobile 48px/42px, Desktop 100px/86px, tracking -4px, uppercase
+ * - h2: Mobile 36px/40px, Desktop 64px/66px, tracking -2.56px
+ * - h3: Mobile 28px/32px, Desktop 48px/48px, tracking -1.92px
+ * - h4: Mobile 24px/28px, Desktop 32px/38px, tracking -1.28px
+ *
+ * BODY TEXT (font-sans / Favorit):
+ * - body-sm: 14px/12px uppercase (tags, metadata)
+ * - body-md: Mobile 18px/26px, Desktop 20px/28px
+ * - body-lg: Mobile 20px/28px, Desktop 24px/26px
+ *
+ * NAVIGATION (font-mono / Favorit Mono):
+ * - nav: 18px/26px uppercase
+ */
+
+/* Hero H1 - Extra large for hero sections */
+.text-h1-hero {
+    font-family: var(--font-heading);
+    font-size: 80px;
+    line-height: 70px;
+    letter-spacing: -3.2px;
+    text-transform: uppercase;
+    font-feature-settings: "dlig" on;
+}
+
+@media (min-width: 1024px) {
+    .text-h1-hero {
+        font-size: 200px;
+        line-height: 160px;
+        letter-spacing: -8px;
+    }
+}
+
+/* H1 - Primary headings */
+.text-h1 {
+    font-family: var(--font-heading);
+    font-size: 48px;
+    line-height: 42px;
+    letter-spacing: -1.92px;
+    text-transform: uppercase;
+    font-feature-settings: "dlig" on;
+}
+
+@media (min-width: 1024px) {
+    .text-h1 {
+        font-size: 100px;
+        line-height: 86px;
+        letter-spacing: -4px;
+    }
+}
+
+/* H2 - Secondary headings */
+.text-h2 {
+    font-family: var(--font-heading);
+    font-size: 36px;
+    line-height: 40px;
+    letter-spacing: -1.44px;
+    font-feature-settings: "dlig" on;
+}
+
+@media (min-width: 1024px) {
+    .text-h2 {
+        font-size: 64px;
+        line-height: 66px;
+        letter-spacing: -2.56px;
+    }
+}
+
+/* H3 - Tertiary headings */
+.text-h3 {
+    font-family: var(--font-heading);
+    font-size: 28px;
+    line-height: 32px;
+    letter-spacing: -1.12px;
+    font-feature-settings: "dlig" on;
+}
+
+@media (min-width: 1024px) {
+    .text-h3 {
+        font-size: 48px;
+        line-height: 48px;
+        letter-spacing: -1.92px;
+    }
+}
+
+/* H4 - Quaternary headings */
+.text-h4 {
+    font-family: var(--font-heading);
+    font-size: 24px;
+    line-height: 28px;
+    letter-spacing: -0.96px;
+    font-feature-settings: "dlig" on;
+}
+
+@media (min-width: 1024px) {
+    .text-h4 {
+        font-size: 32px;
+        line-height: 38px;
+        letter-spacing: -1.28px;
+    }
+}
+
+/* H5 - Small headings */
+.text-h5 {
+    font-family: var(--font-heading);
+    font-size: 20px;
+    line-height: 24px;
+    letter-spacing: -0.8px;
+    font-feature-settings: "dlig" on;
+}
+
+@media (min-width: 1024px) {
+    .text-h5 {
+        font-size: 24px;
+        line-height: 24px;
+        letter-spacing: -0.96px;
+    }
+}
+
+/* Body Large */
+.text-body-large {
+    font-size: 20px;
+    line-height: 28px;
+}
+
+@media (min-width: 1024px) {
+    .text-body-large {
+        font-size: 24px;
+        line-height: 26px;
+    }
+}
+
+/* Body Medium */
+.text-body-medium {
+    font-size: 18px;
+    line-height: 26px;
+}
+
+@media (min-width: 1024px) {
+    .text-body-medium {
+        font-size: 20px;
+        line-height: 28px;
+    }
+}
+
+/* Body Small - Tags, metadata */
+.text-body-small {
+    font-size: 14px;
+    line-height: 12px;
+    text-transform: uppercase;
+}
+
+/* Navigation */
+.text-nav {
+    font-size: 18px;
+    line-height: 26px;
+    text-transform: uppercase;
+}
+
+/* Caption */
+.text-caption {
+    font-size: 14px;
+    line-height: 12px;
+}
+
+/* Tag */
+.text-tag {
+    font-size: 12px;
+    line-height: 12px;
+    text-transform: uppercase;
+}
+
+/* Article Typography */
+.article-text {
+    font-size: 24px;
+    line-height: 36px;
+    color: rgba(0, 0, 0, 0.9);
+    max-width: 894px;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .article-text {
+        font-size: 18px;
+        line-height: 28px;
+    }
+}
+
+/* Responsive Card Layout - Horizontal */
+.card-horizontal {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 24px;
+    container-type: inline-size;
+}
+
+.card-horizontal-image {
+    width: clamp(120px, 25%, 200px);
+    aspect-ratio: 1;
+    flex-shrink: 0;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Smart meta row - bullet only shows when content fits on one line */
+.meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 4px 8px;
+}
+
+.card-horizontal .meta-row {
+    justify-content: flex-start;
+}
+
+/* Hide bullet when card is narrow enough that text likely wraps */
+@container (max-width: 550px) {
+    .card-horizontal .meta-separator {
+        display: none;
+    }
+
+    .card-horizontal .meta-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+
+/* Author/date spread - vertical on mobile, horizontal with dot on desktop */
+.author-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.author-date .meta-separator {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .author-date {
+        flex-direction: row;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .author-date .meta-separator {
+        display: inline;
+    }
+}
+
+/* Left-aligned variant for The Spread section */
+.author-date-left {
+    align-items: flex-start;
+}
+
+@media (min-width: 768px) {
+    .author-date-left {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 600px) {
+    .card-horizontal {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .card-horizontal-image {
+        width: 100%;
+        aspect-ratio: 16/9;
+    }
+}
+
+/* Responsive Card Layout - Vertical */
+.card-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.card-vertical-image {
+    aspect-ratio: 310/362;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Responsive Review Card Grid */
+.review-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+/* Section Containers - for container queries */
+.profile-section-container {
+    container-type: inline-size;
+    width: 100%;
+}
+
+.ceylon-section-container {
+    container-type: inline-size;
+    width: 100%;
+}
+
+/* Ceylon Section Height */
+.ceylon-section {
+    /* Min-height scales with container width:
+   * At 1440px width → 614px min-height
+   * At 1800px width → 1237px min-height
+   * Formula: min-height = 1.7313 * width - 1879.26
+   * Using min-height so content can grow if needed
+   */
+    min-height: calc(173.13cqi - 1879.26px);
+}
+
+@media (max-width: 768px) {
+    .ceylon-section {
+        min-height: 800px; /* Fixed min-height on mobile */
+    }
+}
+
+/* Profile Image Container */
+.profile-image-container {
+    border-radius: 5000px 5000px 0 0;
+    /* Maintain aspect ratio based on original design: 1440x1126 ≈ 1.28:1
+   * This ensures proper height at all screen sizes
+   */
+    aspect-ratio: 1440 / 1126;
+}
+
+@media (max-width: 768px) {
+    .profile-image-container {
+        border-radius: 2000px 2000px 0 0;
+        /* Mobile aspect ratio based on 432x294 */
+        aspect-ratio: 432 / 294;
+    }
 }

@@ -71,12 +71,12 @@ class MenuService
     public function getHeaderPrimaryLinks(): array
     {
         return $this->getMenuByLocation('header-primary', [
-            ['label' => 'Update', 'href' => '#', 'class' => 'text-blue-black'],
-            ['label' => 'Feature', 'href' => '#', 'class' => 'text-black'],
-            ['label' => 'People', 'href' => '#', 'class' => 'text-black'],
-            ['label' => 'Review', 'href' => '#', 'class' => 'text-blue-black'],
-            ['label' => 'Recipe', 'href' => '#', 'class' => 'text-blue-black'],
-            ['label' => 'Pantry', 'href' => '#', 'class' => 'text-blue-black'],
+            ['label' => 'Update', 'href' => '/category/update', 'class' => 'text-blue-black'],
+            ['label' => 'Feature', 'href' => '/category/feature', 'class' => 'text-black'],
+            ['label' => 'People', 'href' => '/category/people', 'class' => 'text-black'],
+            ['label' => 'Review', 'href' => '/category/review', 'class' => 'text-blue-black'],
+            ['label' => 'Recipe', 'href' => '/category/recipe', 'class' => 'text-blue-black'],
+            ['label' => 'Pantry', 'href' => '/category/pantry', 'class' => 'text-blue-black'],
         ]);
     }
 
