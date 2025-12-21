@@ -30,10 +30,25 @@
 @endif
 
 <article class="w-full max-w-[1880px] mx-auto">
-    {{-- Article Header - To be implemented separately --}}
+    {{-- Article Header - Based on template type --}}
+    @switch($template)
+        @case('feature')
+            {{-- Feature header includes sponsor/share inline --}}
+            <x-post.headers.feature :post="$post" />
+            @break
 
-    {{-- Article Meta: Sponsor, Author/Date, Share Icons --}}
-    <x-post.article-meta :post="$post" />
+        @case('minimal')
+            {{-- Minimal header includes author/date/share inline --}}
+            <x-post.headers.minimal :post="$post" />
+            {{-- Sponsor only (share is in header) --}}
+            <x-post.article-meta :post="$post" :showShare="false" />
+            @break
+
+        @default
+            <x-post.headers.default :post="$post" />
+            {{-- Article Meta (sponsor/share) for default template --}}
+            <x-post.article-meta :post="$post" />
+    @endswitch
 
     {{-- Article Content --}}
     @if(!empty($contentBlocks))

@@ -2,14 +2,16 @@
 @props([
     'url' => '',
     'title' => '',
+    'align' => 'center', // center or left
 ])
 
 @php
     $encodedUrl = urlencode($url);
     $encodedTitle = urlencode($title);
+    $justifyClass = $align === 'left' ? 'justify-start' : 'justify-center';
 @endphp
 
-<div class="flex items-center justify-center gap-6">
+<div class="flex items-center {{ $justifyClass }} gap-6">
     <span class="font-sans text-[14px] leading-[12px] uppercase text-tasty-blue-black">Share</span>
 
     {{-- Copy Link (first per Figma) --}}

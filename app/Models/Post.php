@@ -213,6 +213,11 @@ class Post extends Model implements HasMedia
 
     public function getFeaturedImageUrlAttribute(): ?string
     {
+        // Check for preview override (unsaved data)
+        if ($override = $this->getAttribute('featured_image_url_override')) {
+            return $override;
+        }
+
         // Prefer MediaItem over Spatie media collection
         if ($this->featuredMedia) {
             return $this->featuredMedia->url;

@@ -24,7 +24,7 @@
         @endif
     </head>
     <body class="antialiased">
-        <div class="w-full {{ request()->routeIs('post.show') ? 'bg-off-white' : 'bg-gray-100' }}">
+        <div class="w-full {{ request()->routeIs('post.show', 'cms.posts.preview', 'cms.api.preview.post') ? 'bg-off-white' : 'bg-gray-100' }}">
             <x-layout.nav-bar></x-layout.nav-bar>
 
             {{-- Add spacer for pages without hero sections (category/tag pages) --}}

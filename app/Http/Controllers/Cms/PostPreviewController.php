@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Cms;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\ContentVersion;
 use App\Models\Language;
 use App\Models\Post;
 use App\Models\Setting;
+use App\Models\Tag;
+use App\Models\User;
 use App\Services\PostTemplateRegistry;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -80,24 +83,60 @@ class PostPreviewController extends Controller
         $postTypeConfig = collect($postTypes)->firstWhere('slug', $postTypeSlug);
         $customFields = $validated['custom_fields'] ?? [];
 
-        // Build post data array
-        $post = [
+        // Build a temporary Post model instance (without saving)
+        $post = new Post([
             'title' => $validated['title'],
             'subtitle' => $validated['subtitle'] ?? null,
             'excerpt' => $validated['excerpt'] ?? null,
-            'featured_image_url' => $validated['featured_image_url'] ?? null,
             'language_code' => $languageCode,
-            'author' => $validated['author'] ?? null,
             'show_author' => $showAuthor,
-            'category' => $validated['category'] ?? null,
-            'tags' => $tags,
             'post_type' => $postTypeSlug,
             'custom_fields' => $customFields,
-        ];
+            'content' => $content,
+            'template' => $template,
+        ]);
+
+        // Override featured_image_url accessor by setting the attribute directly
+        if ($validated['featured_image_url'] ?? null) {
+            $post->setAttribute('featured_image_url_override', $validated['featured_image_url']);
+        }
+
+        // Set up author relationship if provided
+        $authorData = $validated['author'] ?? null;
+        if ($authorData && isset($authorData['id'])) {
+            $post->setRelation('author', User::find($authorData['id']));
+        } else {
+            $post->setRelation('author', null);
+        }
+
+        // Set up categories relationship
+        $categorySlug = $validated['category'] ?? null;
+        if ($categorySlug) {
+            $category = Category::where('slug', $categorySlug)->first();
+            $post->setRelation('categories', $category ? collect([$category]) : collect());
+        } else {
+            $post->setRelation('categories', collect());
+        }
+
+        // Set up tags relationship from comma-separated string
+        if (! empty($tags)) {
+            $tagModels = Tag::whereIn('name', $tags)->orWhereIn('slug', $tags)->get();
+            // Create temporary tag objects for tags that don't exist yet
+            foreach ($tags as $tagName) {
+                if (! $tagModels->contains('name', $tagName) && ! $tagModels->contains('slug', $tagName)) {
+                    $tagModels->push(new Tag(['name' => $tagName, 'slug' => \Illuminate\Support\Str::slug($tagName)]));
+                }
+            }
+            $post->setRelation('tags', $tagModels);
+        } else {
+            $post->setRelation('tags', collect());
+        }
+
+        // Set featuredMedia relationship to null (no media item for preview of unsaved data)
+        $post->setRelation('featuredMedia', null);
 
         return view('templates.posts.preview', [
             'post' => $post,
-            'content' => $content,
             'template' => $template,
             'templateConfig' => $templateConfig,
             'isRtl' => $isRtl,
@@ -105,6 +144,7 @@ class PostPreviewController extends Controller
             'wordCount' => $wordCount,
             'showAuthor' => $showAuthor,
             'postTypeConfig' => $postTypeConfig,
+            'isPreview' => true,
         ]);
     }
 
