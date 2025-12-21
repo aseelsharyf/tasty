@@ -39,17 +39,17 @@
 
             {{-- Divider (Desktop only in scroll mode) --}}
             @if($showDividers && $mobileLayout === 'scroll')
-                <div class="w-px {{ $dividerColor }} mx-10 shrink-0 max-md:hidden"></div>
+                <div class="w-px h-[889px] {{ $dividerColor }} mx-10 shrink-0 max-md:hidden"></div>
             @endif
 
             {{-- Cards --}}
             @foreach($posts as $index => $post)
                 {{-- Divider between cards --}}
                 @if($showDividers && $index > 0 && $mobileLayout === 'scroll')
-                    <div class="w-px {{ $dividerColor }} mx-10 shrink-0 max-md:hidden"></div>
+                    <div class="w-px h-[889px] {{ $dividerColor }} mx-10 shrink-0 max-md:hidden"></div>
                 @endif
 
-                <div class="{{ $mobileLayout === 'grid' ? 'max-md:w-full' : '' }}">
+                <div class="{{ $mobileLayout === 'grid' ? 'max-md:w-full' : '' }} {{ $loop->last && $mobileLayout === 'scroll' ? 'pr-10 max-md:pr-5' : '' }}">
                     <x-cards.spread
                         :post="$post"
                         :reversed="$loop->even"

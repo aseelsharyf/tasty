@@ -47,6 +47,10 @@ class PostSeeder extends Seeder
             $this->command->warn('No media items found. Run MediaSeeder first for images.');
         }
 
+        if ($categories->isEmpty()) {
+            $this->command->warn('No categories found. Published posts will not have categories assigned.');
+        }
+
         foreach ($languages as $language) {
             // Create 10 published articles per language
             Post::factory()
@@ -63,12 +67,13 @@ class PostSeeder extends Seeder
                     // Create initial version
                     $version = $post->createVersion(null, 'Initial version');
 
-                    // Attach categories and tags
+                    // Attach categories (required for published posts)
                     if ($categories->isNotEmpty()) {
                         $post->categories()->attach(
                             $categories->random(min(rand(1, 3), $categories->count()))->pluck('id')
                         );
                     }
+                    // Attach tags
                     if ($tags->isNotEmpty()) {
                         $post->tags()->attach(
                             $tags->random(min(rand(2, 5), $tags->count()))->pluck('id')
@@ -149,8 +154,21 @@ class PostSeeder extends Seeder
                     'content' => $this->getRecipeContent($mediaItems),
                     'featured_media_id' => fn () => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
                 ])
-                ->each(function ($post) {
+                ->each(function ($post) use ($categories, $tags) {
                     $version = $post->createVersion(null, 'Initial version');
+
+                    // Attach categories (required for published posts)
+                    if ($categories->isNotEmpty()) {
+                        $post->categories()->attach(
+                            $categories->random(min(rand(1, 2), $categories->count()))->pluck('id')
+                        );
+                    }
+                    // Attach tags
+                    if ($tags->isNotEmpty()) {
+                        $post->tags()->attach(
+                            $tags->random(min(rand(2, 4), $tags->count()))->pluck('id')
+                        );
+                    }
 
                     $version->transitionTo('review', 'Ready for review', $post->author_id);
                     $version->transitionTo('approved', 'Approved', $post->author_id);

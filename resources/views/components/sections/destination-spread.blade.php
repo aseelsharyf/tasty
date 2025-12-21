@@ -5,7 +5,7 @@
             @foreach($posts as $index => $post)
                 {{-- Divider between cards --}}
                 @if($showDividers && $index > 0)
-                    <div class="w-px {{ $dividerColor }} mx-10 shrink-0"></div>
+                    <div class="w-px h-[889px] {{ $dividerColor }} mx-10 shrink-0"></div>
                 @endif
 
                 <div class="{{ $loop->last ? 'pr-10 max-md:pr-5' : '' }}">
