@@ -24,8 +24,13 @@
         @endif
     </head>
     <body class="antialiased">
-        <div class="w-full bg-white">
+        <div class="w-full {{ request()->routeIs('post.show') ? 'bg-off-white' : 'bg-gray-100' }}">
             <x-layout.nav-bar></x-layout.nav-bar>
+
+            {{-- Add spacer for pages without hero sections (category/tag pages) --}}
+            @if(request()->routeIs('category.*') || request()->routeIs('tag.*'))
+                <div class="h-[96px] md:h-[112px]"></div>
+            @endif
 
             <main>
                 @yield('content')

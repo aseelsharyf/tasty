@@ -17,43 +17,55 @@ class NavigationSeeder extends Seeder
         $headerPrimary = Menu::updateOrCreate(
             ['location' => 'header-primary'],
             [
-                'name' => ['en' => 'Header Primary', 'dv' => 'ހެޑަރ ޕްރައިމަރީ'],
-                'description' => ['en' => 'Main navigation links in the header', 'dv' => 'ހެޑަރގައި ހުންނަ މައިގަނޑު ލިންކުތައް'],
+                'name' => [
+                    'en' => 'Header Primary',
+                    'dv' => 'ހެޑަރ ޕްރައިމަރީ',
+                ],
+                'description' => [
+                    'en' => 'Main navigation links in the header',
+                    'dv' => 'ހެޑަރގައި ހުންނަ މައިގަނޑު ލިންކުތައް',
+                ],
                 'is_active' => true,
-            ]
+            ],
         );
 
         $this->createMenuItems($headerPrimary, [
             [
                 'label' => ['en' => 'Recipes', 'dv' => 'ރެސިޕީތައް'],
                 'type' => MenuItem::TYPE_CUSTOM,
-                'url' => '/recipes',
+                'url' => '/category/recipes',
             ],
             [
                 'label' => ['en' => 'Restaurants', 'dv' => 'ރެސްޓޯރެންޓްތައް'],
                 'type' => MenuItem::TYPE_CUSTOM,
-                'url' => '/restaurants',
+                'url' => '/category/restaurants',
             ],
             [
                 'label' => ['en' => 'Videos', 'dv' => 'ވީޑިއޯ'],
                 'type' => MenuItem::TYPE_CUSTOM,
-                'url' => '/videos',
+                'url' => '/category/videos',
             ],
-            [
-                'label' => ['en' => 'Blog', 'dv' => 'ބްލޮގް'],
-                'type' => MenuItem::TYPE_CUSTOM,
-                'url' => '/blog',
-            ],
+            // [
+            //     'label' => ['en' => 'Blog', 'dv' => 'ބްލޮގް'],
+            //     'type' => MenuItem::TYPE_CUSTOM,
+            //     'url' => '/blog',
+            // ],
         ]);
 
         // Header Secondary Navigation
         $headerSecondary = Menu::updateOrCreate(
             ['location' => 'header-secondary'],
             [
-                'name' => ['en' => 'Header Secondary', 'dv' => 'ހެޑަރ ސެކެންޑަރީ'],
-                'description' => ['en' => 'Secondary navigation links in the header', 'dv' => 'ހެޑަރގައި ހުންނަ ދެވަނަ ލިންކުތައް'],
+                'name' => [
+                    'en' => 'Header Secondary',
+                    'dv' => 'ހެޑަރ ސެކެންޑަރީ',
+                ],
+                'description' => [
+                    'en' => 'Secondary navigation links in the header',
+                    'dv' => 'ހެޑަރގައި ހުންނަ ދެވަނަ ލިންކުތައް',
+                ],
                 'is_active' => true,
-            ]
+            ],
         );
 
         $this->createMenuItems($headerSecondary, [
@@ -73,10 +85,16 @@ class NavigationSeeder extends Seeder
         $mobileActions = Menu::updateOrCreate(
             ['location' => 'mobile-actions'],
             [
-                'name' => ['en' => 'Mobile Actions', 'dv' => 'މޮބައިލް އެކްޝަންތައް'],
-                'description' => ['en' => 'CTA buttons shown on mobile menu', 'dv' => 'މޮބައިލް މެނޫގައި ދައްކާ ބަޓަންތައް'],
+                'name' => [
+                    'en' => 'Mobile Actions',
+                    'dv' => 'މޮބައިލް އެކްޝަންތައް',
+                ],
+                'description' => [
+                    'en' => 'CTA buttons shown on mobile menu',
+                    'dv' => 'މޮބައިލް މެނޫގައި ދައްކާ ބަޓަންތައް',
+                ],
                 'is_active' => true,
-            ]
+            ],
         );
 
         $this->createMenuItems($mobileActions, [
@@ -99,9 +117,12 @@ class NavigationSeeder extends Seeder
             ['location' => 'footer-menu'],
             [
                 'name' => ['en' => 'Footer Menu', 'dv' => 'ފޫޓަރ މެނޫ'],
-                'description' => ['en' => 'Main menu links in the footer', 'dv' => 'ފޫޓަރގައި ހުންނަ މައިގަނޑު ލިންކުތައް'],
+                'description' => [
+                    'en' => 'Main menu links in the footer',
+                    'dv' => 'ފޫޓަރގައި ހުންނަ މައިގަނޑު ލިންކުތައް',
+                ],
                 'is_active' => true,
-            ]
+            ],
         );
 
         $this->createMenuItems($footerMenu, [
@@ -142,9 +163,12 @@ class NavigationSeeder extends Seeder
             ['location' => 'footer-topics'],
             [
                 'name' => ['en' => 'Footer Topics', 'dv' => 'ފޫޓަރ ޓޮޕިކްސް'],
-                'description' => ['en' => 'Topic/category links in the footer', 'dv' => 'ފޫޓަރގައި ހުންނަ ޓޮޕިކް ލިންކުތައް'],
+                'description' => [
+                    'en' => 'Topic/category links in the footer',
+                    'dv' => 'ފޫޓަރގައި ހުންނަ ޓޮޕިކް ލިންކުތައް',
+                ],
                 'is_active' => true,
-            ]
+            ],
         );
 
         $this->createMenuItems($footerTopics, [
@@ -169,7 +193,10 @@ class NavigationSeeder extends Seeder
                 'url' => '/category/desserts',
             ],
             [
-                'label' => ['en' => 'Quick & Easy', 'dv' => 'އަވަސް އަދި ފަސޭހަ'],
+                'label' => [
+                    'en' => 'Quick & Easy',
+                    'dv' => 'އަވަސް އަދި ފަސޭހަ',
+                ],
                 'type' => MenuItem::TYPE_CUSTOM,
                 'url' => '/category/quick-easy',
             ],
@@ -185,36 +212,53 @@ class NavigationSeeder extends Seeder
             ['location' => 'footer-office'],
             [
                 'name' => ['en' => 'Footer Office', 'dv' => 'ފޫޓަރ އޮފީސް'],
-                'description' => ['en' => 'Office/contact information in the footer', 'dv' => 'ފޫޓަރގައި ހުންނަ އޮފީސް މައުލޫމާތު'],
+                'description' => [
+                    'en' => 'Office/contact information in the footer',
+                    'dv' => 'ފޫޓަރގައި ހުންނަ އޮފީސް މައުލޫމާތު',
+                ],
                 'is_active' => true,
-            ]
+            ],
         );
 
         $this->createMenuItems($footerOffice, [
             [
-                'label' => ['en' => 'Contact Us', 'dv' => 'ގުޅާލާ'],
+                'label' => ['en' => 'About', 'dv' => 'އެބައުޓް'],
+                'type' => MenuItem::TYPE_CUSTOM,
+                'url' => '/about',
+            ],
+            [
+                'label' => ['en' => 'Contact', 'dv' => 'ގުޅާލާ'],
                 'type' => MenuItem::TYPE_CUSTOM,
                 'url' => '/contact',
             ],
             [
-                'label' => ['en' => 'Advertise', 'dv' => 'އިޝްތިހާރު'],
+                'label' => [
+                    'en' => 'Editorial Policy',
+                    'dv' => 'އެޑިޓޯރިއަލް ޕޮލިސީ',
+                ],
                 'type' => MenuItem::TYPE_CUSTOM,
-                'url' => '/advertise',
+                'url' => '/editorial-policy',
             ],
             [
-                'label' => ['en' => 'Careers', 'dv' => 'ވަޒީފާ'],
+                'label' => [
+                    'en' => 'Work With Us',
+                    'dv' => 'އަޅުގަނޑުމެންނާ ގުޅޭ',
+                ],
                 'type' => MenuItem::TYPE_CUSTOM,
-                'url' => '/careers',
+                'url' => '/work-with-us',
             ],
             [
-                'label' => ['en' => 'Privacy Policy', 'dv' => 'ޕްރައިވެސީ ޕޮލިސީ'],
+                'label' => [
+                    'en' => 'Submit a Story',
+                    'dv' => 'ވާހަކައެއް ހުށަހަޅާ',
+                ],
                 'type' => MenuItem::TYPE_CUSTOM,
-                'url' => '/privacy',
+                'url' => '/submit-story',
             ],
             [
-                'label' => ['en' => 'Terms of Service', 'dv' => 'ޓާރމްސް އޮފް ސާރވިސް'],
+                'label' => ['en' => 'Archive', 'dv' => 'އާކައިވް'],
                 'type' => MenuItem::TYPE_CUSTOM,
-                'url' => '/terms',
+                'url' => '/archive',
             ],
         ]);
 
@@ -223,9 +267,12 @@ class NavigationSeeder extends Seeder
             ['location' => 'footer-social'],
             [
                 'name' => ['en' => 'Footer Social', 'dv' => 'ފޫޓަރ ސޯޝަލް'],
-                'description' => ['en' => 'Social media links in the footer', 'dv' => 'ފޫޓަރގައި ހުންނަ ސޯޝަލް މީޑިއާ ލިންކުތައް'],
+                'description' => [
+                    'en' => 'Social media links in the footer',
+                    'dv' => 'ފޫޓަރގައި ހުންނަ ސޯޝަލް މީޑިއާ ލިންކުތައް',
+                ],
                 'is_active' => true,
-            ]
+            ],
         );
 
         $this->createMenuItems($footerSocial, [

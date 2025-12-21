@@ -41,7 +41,7 @@
                     />
                 @endif
                 @if($media['caption'] ?? null)
-                    <figcaption class="text-caption text-tasty-blue-black/50 mt-8 {{ $isRtl ? 'text-right' : '' }}">
+                    <figcaption class="text-caption text-tasty-blue-black/50 mt-8 text-center">
                         {{ $media['caption'] }}
                     </figcaption>
                 @endif

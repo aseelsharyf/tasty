@@ -46,6 +46,7 @@ class User extends Authenticatable implements HasMedia
      */
     protected $appends = [
         'avatar_url',
+        'url',
     ];
 
     protected static function booted(): void
@@ -106,6 +107,15 @@ class User extends Authenticatable implements HasMedia
     public function getAvatarUrlAttribute(): ?string
     {
         return $this->getFirstMediaUrl('avatar', 'thumb') ?: null;
+    }
+
+    public function getUrlAttribute(): ?string
+    {
+        if (empty($this->username)) {
+            return null;
+        }
+
+        return route('author.show', $this->username);
     }
 
     /**

@@ -41,7 +41,7 @@
                         />
                     </div>
                     @if($authorPhoto['caption'] ?? $caption)
-                        <p class="text-caption text-black/50">
+                        <p class="text-caption text-black/50 text-center">
                             {{ $authorPhoto['caption'] ?? $caption }}
                         </p>
                     @endif

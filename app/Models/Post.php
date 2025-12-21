@@ -65,6 +65,7 @@ class Post extends Model implements HasMedia
     protected $appends = [
         'featured_image_url',
         'featured_image_thumb',
+        'url',
     ];
 
     protected function casts(): array
@@ -228,6 +229,13 @@ class Post extends Model implements HasMedia
         }
 
         return $this->getFirstMediaUrl('featured', 'thumb') ?: null;
+    }
+
+    public function getUrlAttribute(): string
+    {
+        $categorySlug = $this->categories->first()?->slug ?? 'uncategorized';
+
+        return route('post.show', ['category' => $categorySlug, 'post' => $this->slug]);
     }
 
     // Helpers

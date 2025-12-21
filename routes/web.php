@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PostController;
@@ -23,10 +24,13 @@ Route::get('/category/{category:slug}', [CategoryController::class, 'show'])->na
 // Tag routes
 Route::get('/tag/{tag:slug}', [TagController::class, 'show'])->name('tag.show');
 
+// Author routes
+Route::get('/author/{author:username}', [AuthorController::class, 'show'])->name('author.show');
+
 // Post routes (category/post pattern for SEO)
 Route::get('/{category}/{post}', [PostController::class, 'show'])
     ->name('post.show')
-    ->where('category', '^(?!cms|template|storage|category|tag).*$');
+    ->where('category', '^(?!cms|template|storage|category|tag|api).*$');
 
 // Catch-all page route (must be last)
 Route::get('/{slug}', [PageController::class, 'show'])->name('page.show')

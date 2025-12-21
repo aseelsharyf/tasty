@@ -1,67 +1,44 @@
-{{-- resources/views/components/restaurant/card.blade.php --}}
+@php
+    // Variant-specific classes
+    $wrapperClass = match($variant) {
+        'mobile' => 'w-[310px] h-[531px] flex flex-col gap-8 shrink-0',
+        'grid' => 'flex-1 flex flex-col gap-6',
+        default => 'flex flex-col gap-6',
+    };
 
-@props([
-    'image',
-    'imageAlt' => '',
-    'name' => '',
-    'subtitle' => '',
-    'description' => '',
-    'rating' => 5, // Star rating out of 5
-    'articleUrl' => '#',
-])
+    $imageClass = match($variant) {
+        'mobile' => 'h-[362px] rounded-xl overflow-hidden relative',
+        default => 'h-[460px] rounded-xl overflow-hidden relative',
+    };
+@endphp
 
-<a href="{{ $articleUrl }}" class="group w-full max-w-[310px] md:max-w-[400px] flex flex-col justify-start items-center gap-8">
-    {{-- Image Section with Badge --}}
-    <div class="w-full h-[362px] md:h-[482.5px] rounded-xl overflow-hidden relative">
-        <div
-            class="absolute inset-0 bg-cover bg-center group-hover:opacity-80 transition-opacity duration-200"
-            style="background-image: url('{{ $image }}');"
-        ></div>
-        <div class="relative z-10 w-full h-full p-6 flex flex-col justify-end items-center gap-2.5">
-            {{-- Review Badge with Stars --}}
-            <div class="inline-flex justify-start items-start gap-5">
-                <div class="p-3 bg-white rounded-full flex justify-center items-center gap-2.5">
-                    <span class="text-slate-950 text-sm font-normal uppercase leading-3">review</span>
-                    <span class="text-slate-950 text-sm font-normal uppercase leading-3">•</span>
-
-                    {{-- Star Rating --}}
-                    <div class="flex justify-start items-center gap-1">
-                        @for($i = 1; $i <= 5; $i++)
-                            @if($i <= $rating)
-                                <i class="fa-solid fa-star text-orange-500 text-xs"></i>
-                            @else
-                                <i class="fa-regular fa-star text-gray-300 text-xs"></i>
-                            @endif
-                        @endfor
-                    </div>
-                </div>
+<article class="{{ $wrapperClass }}">
+    {{-- Image with rating tag --}}
+    <div class="{{ $imageClass }}">
+        <img
+            src="{{ $image }}"
+            alt="{{ $imageAlt }}"
+            class="absolute inset-0 w-full h-full object-cover"
+        >
+        <div class="absolute inset-0 flex items-end justify-center p-6">
+            <div class="tag tag-white flex items-center gap-2.5">
+                <span>REVIEW</span>
+                <span>•</span>
+                <span>{{ $ratingStars() }}</span>
             </div>
         </div>
     </div>
 
-    {{-- Content Section --}}
-    <div class="w-full flex flex-col justify-start items-center gap-5">
-        {{-- Title and Subtitle --}}
-        <div class="w-full flex flex-col justify-start items-center">
-            <x-ui.heading
-                level="h3"
-                :text="$name"
-                align="center"
-                :uppercase="true"
-            />
-
-            <x-ui.heading
-                level="h4"
-                :text="$subtitle"
-                align="center"
-            />
+    {{-- Content --}}
+    <div class="flex flex-col gap-5 text-center text-blue-black">
+        <div class="flex flex-col">
+            <h3 class="text-h3 uppercase">{{ $name }}</h3>
+            @if($tagline)
+                <p class="text-h4">{{ $tagline }}</p>
+            @endif
         </div>
-
-        {{-- Description --}}
-        <x-content.description
-            :description="$description"
-            size="xl"
-            align="center"
-        />
+        @if($description)
+            <p class="text-body-medium line-clamp-3">{{ $description }}</p>
+        @endif
     </div>
-</a>
+</article>

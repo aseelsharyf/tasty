@@ -263,21 +263,14 @@ function searchNav() {
         ],
 
         init() {
-            console.log('Nav scroll behavior initialized');
             window.addEventListener('scroll', () => this.handleScroll());
         },
 
         handleScroll() {
-            // Only apply scroll behavior on mobile (below md breakpoint: 768px)
-            if (window.innerWidth >= 768) {
-                this.navVisible = true;
-                return;
-            }
-
             this.scrollY = window.scrollY;
 
-            // Don't hide nav if we're at the top of the page
-            if (this.scrollY < 100) {
+            // Always show nav at the top of the page
+            if (this.scrollY < 50) {
                 this.navVisible = true;
                 this.lastScrollY = this.scrollY;
                 return;
@@ -289,11 +282,9 @@ function searchNav() {
             if (Math.abs(scrollDiff) > this.scrollThreshold) {
                 if (scrollDiff > 0) {
                     // Scrolling down - hide nav
-                    console.log('Hiding nav');
                     this.navVisible = false;
                 } else {
                     // Scrolling up - show nav
-                    console.log('Showing nav');
                     this.navVisible = true;
                 }
 

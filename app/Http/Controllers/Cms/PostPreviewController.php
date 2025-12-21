@@ -162,10 +162,11 @@ class PostPreviewController extends Controller
      */
     public function show(Request $request, string $language, Post $post): View
     {
-        // Optionally load a specific version
+        // Load relationships
+        $post->load(['author', 'categories', 'tags', 'featuredMedia']);
+
+        // Optionally load a specific version and apply snapshot to model
         $versionUuid = $request->query('version');
-        $content = $post->content ?? [];
-        $template = $post->template ?? 'default';
 
         if ($versionUuid) {
             $version = ContentVersion::where('uuid', $versionUuid)
@@ -175,10 +176,14 @@ class PostPreviewController extends Controller
 
             if ($version && $version->content_snapshot) {
                 $snapshot = $version->content_snapshot;
-                $content = $snapshot['content'] ?? $content;
-                $template = $snapshot['template'] ?? $template;
+                // Apply version snapshot to the model (without saving)
+                $post->content = $snapshot['content'] ?? $post->content;
+                $post->template = $snapshot['template'] ?? $post->template;
+                $post->show_author = $snapshot['show_author'] ?? $post->show_author;
             }
         }
+
+        $template = $post->template ?? 'default';
 
         // Validate template exists
         if (! PostTemplateRegistry::exists($template)) {
@@ -192,47 +197,25 @@ class PostPreviewController extends Controller
         $isRtl = $languageModel?->isRtl() ?? false;
 
         // Calculate reading time
+        $content = $post->content ?? [];
         $wordCount = $this->countWords($content);
         $readingTime = $this->calculateReadingTime($wordCount);
-
-        // Get show_author from version snapshot or post
-        $showAuthor = $versionUuid && isset($snapshot['show_author'])
-            ? $snapshot['show_author']
-            : ($post->show_author ?? true);
-
-        // Load categories and tags
-        $post->load(['categories', 'tags']);
 
         // Get post type config
         $postTypeSlug = $post->post_type ?? 'article';
         $postTypes = Setting::getPostTypes();
         $postTypeConfig = collect($postTypes)->firstWhere('slug', $postTypeSlug);
 
-        // Build post data array
-        $postData = [
-            'title' => $post->title,
-            'subtitle' => $post->subtitle,
-            'excerpt' => $post->excerpt,
-            'featured_image_url' => $post->featured_image_url,
-            'language_code' => $post->language_code,
-            'author' => $post->author ? ['name' => $post->author->name] : null,
-            'show_author' => $showAuthor,
-            'category' => $post->categories->first()?->name,
-            'tags' => $post->tags->pluck('name')->toArray(),
-            'post_type' => $postTypeSlug,
-            'custom_fields' => $post->custom_fields ?? [],
-        ];
-
         return view('templates.posts.preview', [
-            'post' => $postData,
-            'content' => $content,
+            'post' => $post,
             'template' => $template,
             'templateConfig' => $templateConfig,
             'isRtl' => $isRtl,
             'readingTime' => $readingTime,
             'wordCount' => $wordCount,
-            'showAuthor' => $showAuthor,
+            'showAuthor' => $post->show_author ?? true,
             'postTypeConfig' => $postTypeConfig,
+            'isPreview' => true,
         ]);
     }
 }
