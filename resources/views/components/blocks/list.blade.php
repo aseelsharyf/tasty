@@ -11,25 +11,31 @@
     $alignClass = $isRtl ? 'text-right' : '';
 
     // Helper to extract content from list item (handles both string and nested format)
-    function getListItemContent($item) {
-        if (is_string($item)) {
-            return $item;
+    if (!function_exists('getListItemContent')) {
+        function getListItemContent($item) {
+            if (is_string($item)) {
+                return $item;
+            }
+            return $item['content'] ?? '';
         }
-        return $item['content'] ?? '';
     }
 
-    function getListItemChildren($item) {
-        if (is_array($item) && isset($item['items'])) {
-            return $item['items'];
+    if (!function_exists('getListItemChildren')) {
+        function getListItemChildren($item) {
+            if (is_array($item) && isset($item['items'])) {
+                return $item['items'];
+            }
+            return [];
         }
-        return [];
     }
 
-    function isItemChecked($item) {
-        if (is_array($item)) {
-            return $item['meta']['checked'] ?? $item['checked'] ?? false;
+    if (!function_exists('isItemChecked')) {
+        function isItemChecked($item) {
+            if (is_array($item)) {
+                return $item['meta']['checked'] ?? $item['checked'] ?? false;
+            }
+            return false;
         }
-        return false;
     }
 @endphp
 
