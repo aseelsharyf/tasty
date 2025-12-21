@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TagController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +27,10 @@ Route::get('/tag/{tag:slug}', [TagController::class, 'show'])->name('tag.show');
 
 // Author routes
 Route::get('/author/{author:username}', [AuthorController::class, 'show'])->name('author.show');
+
+// Search routes
+Route::get('/search', [SearchController::class, 'index'])->name('search');
+Route::get('/api/search', [SearchController::class, 'suggestions'])->name('search.suggestions');
 
 // Post routes (category/post pattern for SEO)
 Route::get('/{category}/{post}', [PostController::class, 'show'])

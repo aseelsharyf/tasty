@@ -28,7 +28,7 @@
         <x-sections.featured-person
             :postId="6"
             bgColor="yellow"
-            topBgColor="red-500"
+            topBgColor="bg-gray-100"
             overlayColor="yellow"
             tag1="TASTY FEATURE"
             buttonText="Read More"

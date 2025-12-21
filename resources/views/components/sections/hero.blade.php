@@ -10,9 +10,9 @@
 @endphp
 {{-- Pull hero up behind the navbar --}}
 <section class="w-full max-w-[1880px] mx-auto flex justify-center relative z-0 -mt-[96px] md:-mt-[112px]">
-    <div class="flex max-md:flex-col md:max-h-[854px] w-full max-w-[1880px]">
+    <div class="flex max-md:flex-col w-full max-w-[1880px] md:h-[854px]">
         {{-- Hero Image - Left 50% --}}
-        <a href="{{ $post->url }}" class="block relative w-1/2 h-[854px] max-md:w-full max-md:h-[400px] overflow-hidden group">
+        <a href="{{ $post->url }}" class="block relative w-1/2 md:h-full max-md:w-full max-md:h-[400px] overflow-hidden group">
             <img
                 src="{{ $post->featured_image_url }}"
                 alt="{{ $post->title }}"
@@ -20,7 +20,7 @@
             >
         </a>
         {{-- Hero Content - Right 50% --}}
-        <div class="w-1/2 {{ $bgColorClass }} px-10 py-16 flex flex-col {{ $alignmentClasses }} gap-8 max-md:w-full max-md:px-5 max-md:py-10 relative" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+        <div class="w-1/2 md:h-full {{ $bgColorClass }} px-10 py-16 flex flex-col {{ $alignmentClasses }} gap-8 max-md:w-full max-md:px-5 max-md:py-10 relative" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
             <div class="flex flex-wrap items-center gap-2.5 text-tag uppercase text-blue-black {{ $alignment === 'bottom' ? 'justify-start max-md:justify-center' : 'justify-center' }}">
                 @if($category)
                     <a href="{{ route('category.show', $category->slug) }}" class="hover:underline">{{ $category->name }}</a>

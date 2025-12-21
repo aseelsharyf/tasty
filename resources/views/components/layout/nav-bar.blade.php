@@ -199,6 +199,17 @@
                                 </div>
                             </a>
                         </template>
+
+                        <!-- View All Results Link -->
+                        <div class="mt-4 pt-4 border-t border-stone-200">
+                            <a
+                                :href="`/search?q=${encodeURIComponent(query)}`"
+                                class="flex items-center justify-center gap-2 p-3 text-sm font-mono text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 rounded-lg transition"
+                            >
+                                <span>View all results</span>
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
                     </div>
                 </template>
 
@@ -323,13 +334,16 @@ function searchNav() {
             this.selectedIndex = -1;
 
             try {
-                // Replace with your actual search endpoint
-                // const response = await fetch(`/api/search?q=${encodeURIComponent(this.query)}`);
-                // this.results = await response.json();
-
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 500));
-                this.results = this.getMockResults(this.query);
+                const response = await fetch(`/api/search?q=${encodeURIComponent(this.query)}`);
+                const data = await response.json();
+                this.results = data.results.map(result => ({
+                    title: result.title,
+                    description: result.subtitle,
+                    type: result.type,
+                    url: result.url,
+                    image: result.image,
+                    icon: this.getIconForType(result.type)
+                }));
             } catch (error) {
                 console.error('Search error:', error);
                 this.results = [];
@@ -338,19 +352,14 @@ function searchNav() {
             }
         },
 
-        getMockResults(query) {
-            const mockData = [
-                { title: 'Classic Spaghetti Carbonara', description: 'Creamy, authentic Italian pasta with eggs, cheese, and crispy pancetta. Ready in 20 minutes!', type: 'Recipe', readTime: '20 min', url: '/recipes/carbonara', icon: 'fa-bowl-food' },
-                { title: 'Perfect Chocolate Chip Cookies', description: 'Soft, chewy cookies with melted chocolate in every bite. The ultimate comfort food.', type: 'Recipe', readTime: '30 min', url: '/recipes/cookies', icon: 'fa-cookie' },
-                { title: '10 Quick Weeknight Dinners', description: 'Time-saving recipes that don\'t compromise on flavor. Perfect for busy families.', type: 'Article', readTime: '5 min read', url: '/articles/quick-dinners', icon: 'fa-newspaper' },
-                { title: 'Garlic Herb Roasted Chicken', description: 'Juicy, flavorful roast chicken with crispy skin. A Sunday dinner favorite.', type: 'Recipe', readTime: '1 hr 15 min', url: '/recipes/roast-chicken', icon: 'fa-drumstick-bite' },
-                { title: 'Fresh Summer Salads Collection', description: 'Light, refreshing salads packed with seasonal vegetables and bright dressings.', type: 'Collection', readTime: null, url: '/collections/summer-salads', icon: 'fa-bowl-rice' }
-            ];
-
-            return mockData.filter(item =>
-                item.title.toLowerCase().includes(query.toLowerCase()) ||
-                item.description.toLowerCase().includes(query.toLowerCase())
-            );
+        getIconForType(type) {
+            const icons = {
+                'post': 'fa-newspaper',
+                'category': 'fa-folder',
+                'tag': 'fa-tag',
+                'author': 'fa-user'
+            };
+            return icons[type] || 'fa-file';
         },
 
         selectSuggestion(term) {
