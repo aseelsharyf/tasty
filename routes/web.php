@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 // Static template page (old home design)
 Route::get("/template", function () {
-    return view("home");
+    return view("template");
 })->name("template");
 
 // CMS Routes

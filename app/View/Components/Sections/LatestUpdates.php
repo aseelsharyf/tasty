@@ -24,9 +24,10 @@ class LatestUpdates extends Component
 
     public string $description;
 
-    public ?Post $featuredPost;
+    /** @var Post|array<string, mixed>|null */
+    public Post|array|null $featuredPost;
 
-    /** @var Collection<int, Post> */
+    /** @var Collection<int, Post|array<string, mixed>> */
     public Collection $posts;
 
     public string $buttonText;
@@ -38,6 +39,8 @@ class LatestUpdates extends Component
 
     /** @var array<int, int> */
     public array $excludeIds;
+
+    public bool $showLoadMore;
 
     /** @var array<string, class-string> */
     protected array $actions = [
@@ -52,6 +55,8 @@ class LatestUpdates extends Component
      *
      * @param  int|null  $featuredPostId  ID to fetch a featured post
      * @param  array<int, int>  $postIds  IDs to fetch posts
+     * @param  array<string, mixed>|null  $staticFeatured  Static data for featured post
+     * @param  array<int, array<string, mixed>>  $staticPosts  Static data for posts
      * @param  array<string, mixed>  $loadParams
      */
     public function __construct(
@@ -62,12 +67,15 @@ class LatestUpdates extends Component
         string $description = '',
         ?int $featuredPostId = null,
         array $postIds = [],
+        ?array $staticFeatured = null,
+        array $staticPosts = [],
         string $buttonText = 'More Updates',
         string $loadAction = 'recent',
         array $loadParams = [],
         bool $autoFetch = false,
         int $featuredCount = 1,
         int $postsCount = 4,
+        bool $showLoadMore = true,
     ) {
         $this->introImage = $introImage;
         $this->introImageAlt = $introImageAlt;
@@ -77,6 +85,16 @@ class LatestUpdates extends Component
         $this->buttonText = $buttonText;
         $this->loadAction = $loadAction;
         $this->loadParams = $loadParams;
+        $this->showLoadMore = $showLoadMore;
+
+        // Static mode: use provided static data arrays
+        if ($staticFeatured !== null || count($staticPosts) > 0) {
+            $this->featuredPost = $staticFeatured;
+            $this->posts = collect($staticPosts);
+            $this->excludeIds = [];
+
+            return;
+        }
 
         // Auto-fetch posts using action class
         if ($autoFetch || ($featuredPostId === null && count($postIds) === 0)) {

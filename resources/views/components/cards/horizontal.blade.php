@@ -1,34 +1,61 @@
-<article class="card-horizontal bg-white rounded-xl overflow-hidden h-full">
-    {{-- Image --}}
-    <a href="{{ $url }}" class="card-horizontal-image group">
-        <img
-            src="{{ $image }}"
-            alt="{{ $imageAlt }}"
-            class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        >
-    </a>
+{{-- Horizontal Card --}}
+{{-- Desktop: flex-1 to share grid space --}}
+{{-- Tablet/Mobile: vertical layout, p-4, gap-4, image h-[206px] with tag overlay --}}
+<article class="bg-white rounded-xl overflow-hidden p-10 flex gap-10 items-end w-full
+    max-lg:flex-col max-lg:px-4 max-lg:pt-4 max-lg:pb-8 max-lg:gap-4 max-lg:items-start">
+    {{-- Image - Desktop: 200px wide, Tablet/Mobile: full width h-[206px] with tag overlay --}}
+    <div class="w-[200px] self-stretch rounded overflow-hidden flex-shrink-0 relative flex items-end justify-center p-6
+        max-lg:w-full max-lg:h-[206px] max-lg:self-auto max-lg:p-4">
+        <a href="{{ $url }}" class="absolute inset-0">
+            <img
+                src="{{ $image }}"
+                alt="{{ $imageAlt }}"
+                class="w-full h-full object-cover rounded"
+            >
+        </a>
+        {{-- Tag overlay - only visible on tablet/mobile --}}
+        @if($category || $tag)
+            <div class="hidden max-lg:block relative z-10">
+                <x-post.meta-tags
+                    :category="$category"
+                    :category-url="$categoryUrl"
+                    :tag="$tag"
+                    :tag-url="$tagUrl"
+                />
+            </div>
+        @endif
+    </div>
 
     {{-- Content --}}
-    <div class="flex flex-col flex-1 min-w-0">
+    <div class="flex flex-col flex-1 gap-6 justify-center min-w-0
+        max-lg:gap-5 max-lg:w-full">
+        {{-- Tag - only visible on desktop --}}
         @if($category || $tag)
-            <x-post.meta-tags
-                :category="$category"
-                :category-url="$categoryUrl"
-                :tag="$tag"
-                :tag-url="$tagUrl"
-            />
+            <div class="max-lg:hidden">
+                <x-post.meta-tags
+                    :category="$category"
+                    :category-url="$categoryUrl"
+                    :tag="$tag"
+                    :tag-url="$tagUrl"
+                />
+            </div>
         @endif
-        <a href="{{ $url }}" class="hover:text-tasty-yellow transition-colors mt-3">
-            <h3 class="text-h5 text-blue-black line-clamp-2">{{ $title }}</h3>
+
+        <a href="{{ $url }}" class="hover:opacity-80 transition-opacity">
+            <h3 class="font-display text-[32px] leading-[38px] tracking-[-1.28px] text-blue-black
+                max-lg:text-[24px] max-lg:leading-[24px] max-lg:tracking-[-0.96px]">{{ $title }}</h3>
         </a>
 
-        {{-- Meta row - pushed to bottom --}}
-        <div class="mt-auto pt-3">
-            <x-post.author-date
-                :author="$author"
-                :author-url="$authorUrl"
-                :date="$date"
-            />
+        {{-- Meta - Desktop: inline row, Tablet/Mobile: stacked vertically --}}
+        <div class="flex flex-wrap items-center gap-5 text-[14px] leading-[12px] uppercase text-blue-black
+            max-lg:flex-col max-lg:items-start max-lg:gap-4 max-lg:text-[12px]">
+            @if($author)
+                <a href="{{ $authorUrl }}" class="underline underline-offset-4 hover:opacity-80 transition-opacity">BY {{ strtoupper($author) }}</a>
+                <span class="max-lg:hidden">•</span>
+            @endif
+            @if($date)
+                <span>{{ strtoupper($date) }}</span>
+            @endif
         </div>
     </div>
 </article>

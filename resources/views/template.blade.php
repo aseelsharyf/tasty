@@ -5,13 +5,6 @@
 <main class="flex flex-col flex-1">
         {{-- Hero Section --}}
         <x-sections.hero
-            alignment="center"
-            action="recent"
-            bgColor="yellow"
-            buttonText="Read More"
-        />
-
-        <x-sections.hero
               :manual="true"
               kicker="Bite Club"
               title="The ghost kitchen feeding Malé after dark"
@@ -63,7 +56,7 @@
                     'url' => '#',
                 ],
                 [
-                    'image' => Vite::asset('resources/images/image-05.png'),
+                    'image' => Vite::asset('resources/images/image-08.png'),
                     'imageAlt' => 'FHAM 2025 Culinary Challenge',
                     'category' => 'Latest',
                     'tag' => 'People',
@@ -86,16 +79,6 @@
             :showLoadMore="false"
         />
 
-        {{-- Latest Updates Section (Dynamic/Automatic) --}}
-        <x-sections.latest-updates
-            introImage="{{ Vite::asset('resources/images/latest-updates-transparent.png') }}"
-            introImageAlt="Latest Updates"
-            titleSmall="Latest"
-            titleLarge="Updates"
-            description="The flavors, characters, and tiny island obsessions that makes the Maldivian food culture."
-            buttonText="More Updates"
-            loadAction="recent"
-        />
 
         <!-- Newsletter Section -->
         <div class="w-full bg-gray-100">
