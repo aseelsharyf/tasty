@@ -21,8 +21,8 @@ class DevelopmentSeeder extends Seeder
             TaxonomySeeder::class,
             PageSeeder::class,
             MediaSeeder::class,
-            PostSeeder::class,
-            CommentSeeder::class,
+            // PostSeeder::class,
+            // CommentSeeder::class,
         ]);
 
         $this->command->info('Development data seeded successfully!');
