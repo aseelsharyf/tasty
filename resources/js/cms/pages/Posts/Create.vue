@@ -51,12 +51,18 @@ interface LanguageInfo {
     is_rtl: boolean;
 }
 
+interface Sponsor {
+    id: number;
+    name: string;
+}
+
 // Sidebar control
 const { hide: hideSidebar, show: showSidebar } = useSidebar();
 
 const props = defineProps<{
     categories: Category[];
     tags: Tag[];
+    sponsors: Sponsor[];
     postTypes: PostTypeWithFields[];
     language: LanguageInfo;
 }>();
@@ -99,6 +105,8 @@ const form = useForm({
     status: 'draft',
     scheduled_at: '',
     category_id: null as number | null,
+    featured_tag_id: null as number | null,
+    sponsor_id: null as number | null,
     tags: [] as number[],
     featured_media_id: null as number | null,
     custom_fields: {} as Record<string, unknown>,
@@ -328,6 +336,10 @@ const flattenedCategories = computed(() => {
 
 const tagOptions = computed(() =>
     props.tags.map((tag) => ({ label: tag.name, value: tag.id }))
+);
+
+const sponsorOptions = computed(() =>
+    props.sponsors?.map((sponsor) => ({ label: sponsor.name, value: sponsor.id })) || []
 );
 
 function removeFeaturedMedia() {
@@ -715,7 +727,7 @@ function goBack() {
                                 </div>
                                 <div class="space-y-3">
                                     <div>
-                                        <label class="text-xs text-muted mb-1 block">Category</label>
+                                        <label class="text-xs text-muted mb-1 block">Category <span class="text-error">*</span></label>
                                         <USelectMenu
                                             v-model="form.category_id"
                                             :items="flattenedCategories"
@@ -724,6 +736,20 @@ function goBack() {
                                             size="sm"
                                             class="w-full"
                                         />
+                                        <p v-if="form.errors.category_id" class="text-error text-xs mt-1">{{ form.errors.category_id }}</p>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-muted mb-1 block">Featured Tag <span class="text-error">*</span></label>
+                                        <USelectMenu
+                                            v-model="form.featured_tag_id"
+                                            :items="tagOptions"
+                                            value-key="value"
+                                            placeholder="Select featured tag..."
+                                            searchable
+                                            size="sm"
+                                            class="w-full"
+                                        />
+                                        <p v-if="form.errors.featured_tag_id" class="text-error text-xs mt-1">{{ form.errors.featured_tag_id }}</p>
                                     </div>
                                     <div>
                                         <label class="text-xs text-muted mb-1 block">Tags</label>
@@ -749,6 +775,28 @@ function goBack() {
                                             />
                                             <span class="text-sm">Show author name</span>
                                         </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sponsorship -->
+                            <div v-if="sponsorOptions.length > 0">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <UIcon name="i-lucide-handshake" class="size-4 text-muted" />
+                                    <span class="text-xs font-medium text-muted uppercase tracking-wider">Sponsorship</span>
+                                </div>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="text-xs text-muted mb-1 block">Sponsor</label>
+                                        <USelectMenu
+                                            v-model="form.sponsor_id"
+                                            :items="sponsorOptions"
+                                            value-key="value"
+                                            placeholder="Select sponsor (optional)..."
+                                            searchable
+                                            size="sm"
+                                            class="w-full"
+                                        />
                                     </div>
                                 </div>
                             </div>

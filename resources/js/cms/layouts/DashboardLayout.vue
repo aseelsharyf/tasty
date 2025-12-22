@@ -181,7 +181,7 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => {
 
 const taxonomyNavItems = computed<NavigationMenuItem[]>(() => {
     const items: NavigationMenuItem[] = [];
-    const hasTaxonomyAccess = can('categories.view') || can('tags.view');
+    const hasTaxonomyAccess = can('categories.view') || can('tags.view') || can('sponsors.view');
 
     if (hasTaxonomyAccess) {
         items.push({
@@ -206,6 +206,16 @@ const taxonomyNavItems = computed<NavigationMenuItem[]>(() => {
             icon: 'i-lucide-tags',
             to: '/cms/tags',
             active: isActive('/cms/tags'),
+            onSelect: () => { sidebarOpen.value = false; },
+        });
+    }
+
+    if (can('sponsors.view')) {
+        items.push({
+            label: 'Sponsors',
+            icon: 'i-lucide-handshake',
+            to: '/cms/sponsors',
+            active: isActive('/cms/sponsors'),
             onSelect: () => { sidebarOpen.value = false; },
         });
     }

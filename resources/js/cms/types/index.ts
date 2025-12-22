@@ -246,3 +246,98 @@ export interface PageCounts {
     published: number;
     draft: number;
 }
+
+// Page Layout Builder Types
+export interface PageLayout {
+    id: number;
+    uuid: string;
+    name: string;
+    type: string;
+    layoutable_type: string | null;
+    layoutable_id: number | null;
+    layoutable_name: string | null;
+    is_default: boolean;
+    is_active: boolean;
+    is_published: boolean;
+    sections_count?: number;
+    sections?: PageSection[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PageSection {
+    id: number;
+    uuid: string;
+    type: string;
+    type_label: string;
+    config: PageSectionConfig;
+    order: number;
+    is_active: boolean;
+    recommended_card: string;
+    items?: PageSectionItem[];
+}
+
+export interface PageSectionConfig {
+    card_type?: string;
+    autoFetch?: boolean;
+    loadAction?: 'recent' | 'trending' | 'byCategory' | 'byTag';
+    loadParams?: Record<string, unknown>;
+    featuredCount?: number;
+    postsCount?: number;
+    bg_color?: string;
+    bg_color_class?: string;
+    text_color?: string;
+    accent_color?: string;
+    divider_color?: string;
+    title_small?: string;
+    title_large?: string;
+    description?: string;
+    button_text?: string;
+    button_url?: string;
+    intro_image?: string;
+    intro_image_alt?: string;
+    background_image?: string;
+    show_dividers?: boolean;
+    pull_up?: boolean;
+    alignment?: 'left' | 'center' | 'right';
+}
+
+export interface PageSectionItem {
+    id: number;
+    post_id: number | null;
+    post: {
+        id: number;
+        uuid: string;
+        title: string;
+        slug: string;
+    } | null;
+    item_type: 'post' | 'product' | 'custom';
+    item_data: Record<string, unknown> | null;
+    order: number;
+    is_featured: boolean;
+}
+
+export interface SectionType {
+    value: string;
+    label: string;
+    recommended_card: string;
+}
+
+export interface CardType {
+    value: string;
+    label: string;
+}
+
+export interface LayoutCounts {
+    total: number;
+    published: number;
+    draft: number;
+    homepage: number;
+    category: number;
+    tag: number;
+}
+
+export interface LayoutFilters {
+    type?: 'homepage' | 'category' | 'tag';
+    status?: 'published' | 'draft';
+}

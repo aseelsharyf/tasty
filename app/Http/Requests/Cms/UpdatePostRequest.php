@@ -44,7 +44,9 @@ class UpdatePostRequest extends FormRequest
                 Post::STATUS_SCHEDULED,
             ])],
             'scheduled_at' => ['nullable', 'date', 'after:now'],
-            'category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'category_id' => ['required', 'integer', 'exists:categories,id'],
+            'featured_tag_id' => ['required', 'integer', 'exists:tags,id'],
+            'sponsor_id' => ['nullable', 'integer', 'exists:sponsors,id'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['integer', 'exists:tags,id'],
             'featured_image' => ['nullable', 'image', 'max:5120'],
@@ -70,6 +72,8 @@ class UpdatePostRequest extends FormRequest
             'featured_image.max' => 'Featured image must be less than 5MB.',
             'meta_title.max' => 'SEO title should be less than 255 characters.',
             'meta_description.max' => 'SEO description should be less than 500 characters.',
+            'category_id.required' => 'Please select a category.',
+            'featured_tag_id.required' => 'Please select a featured tag.',
         ];
     }
 }

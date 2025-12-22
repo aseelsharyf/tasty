@@ -80,6 +80,11 @@ interface Tag {
     name: string;
 }
 
+interface Sponsor {
+    id: number;
+    name: string;
+}
+
 interface PostTypeField {
     name: string;
     label: string;
@@ -118,10 +123,13 @@ const props = defineProps<{
     versionsList?: VersionListItem[];
     categories: Category[];
     tags: Tag[];
+    sponsors: Sponsor[];
     postTypes: { value: string; label: string }[];
     currentPostType?: PostTypeConfig | null;
     // Form bindings for settings tab
     categoryId: number | null;
+    featuredTagId: number | null;
+    sponsorId: number | null;
     selectedTags: number[];
     postType: string;
     slug: string;
@@ -140,6 +148,8 @@ const emit = defineEmits<{
     (e: 'refresh'): void;
     (e: 'version-switch', versionUuid: string): void;
     (e: 'update:categoryId', value: number | null): void;
+    (e: 'update:featuredTagId', value: number | null): void;
+    (e: 'update:sponsorId', value: number | null): void;
     (e: 'update:selectedTags', value: number[]): void;
     (e: 'update:postType', value: string): void;
     (e: 'update:slug', value: string): void;
@@ -230,6 +240,10 @@ const flattenedCategories = computed(() => {
 
 const tagOptions = computed(() =>
     props.tags.map((tag) => ({ label: tag.name, value: tag.id }))
+);
+
+const sponsorOptions = computed(() =>
+    props.sponsors?.map((sponsor) => ({ label: sponsor.name, value: sponsor.id })) || []
 );
 
 // === Methods ===
@@ -934,15 +948,27 @@ const commentTypeOptions = [
                                 <UIcon name="i-lucide-folder" class="size-4 text-muted" />
                                 <span class="text-xs font-medium text-muted uppercase tracking-wider">Organize</span>
                             </div>
-                            <UFormField label="Category">
+                            <UFormField label="Category" required>
                                 <USelectMenu
                                     :model-value="categoryId"
                                     :items="flattenedCategories"
                                     value-key="value"
-                                    placeholder="Select..."
+                                    placeholder="Select category..."
                                     :disabled="isReadOnly"
                                     class="w-full"
                                     @update:model-value="emit('update:categoryId', $event)"
+                                />
+                            </UFormField>
+                            <UFormField label="Featured Tag" required>
+                                <USelectMenu
+                                    :model-value="featuredTagId"
+                                    :items="tagOptions"
+                                    value-key="value"
+                                    searchable
+                                    placeholder="Select featured tag..."
+                                    :disabled="isReadOnly"
+                                    class="w-full"
+                                    @update:model-value="emit('update:featuredTagId', $event)"
                                 />
                             </UFormField>
                             <UFormField label="Tags">
@@ -952,10 +978,30 @@ const commentTypeOptions = [
                                     value-key="value"
                                     multiple
                                     searchable
-                                    placeholder="Select..."
+                                    placeholder="Select tags..."
                                     :disabled="isReadOnly"
                                     class="w-full"
                                     @update:model-value="emit('update:selectedTags', $event)"
+                                />
+                            </UFormField>
+                        </div>
+
+                        <!-- Sponsorship -->
+                        <div v-if="sponsorOptions.length > 0" class="space-y-3">
+                            <div class="flex items-center gap-2 mb-2">
+                                <UIcon name="i-lucide-handshake" class="size-4 text-muted" />
+                                <span class="text-xs font-medium text-muted uppercase tracking-wider">Sponsorship</span>
+                            </div>
+                            <UFormField label="Sponsor">
+                                <USelectMenu
+                                    :model-value="sponsorId"
+                                    :items="sponsorOptions"
+                                    value-key="value"
+                                    searchable
+                                    placeholder="Select sponsor (optional)..."
+                                    :disabled="isReadOnly"
+                                    class="w-full"
+                                    @update:model-value="emit('update:sponsorId', $event)"
                                 />
                             </UFormField>
                         </div>

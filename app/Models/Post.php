@@ -53,6 +53,8 @@ class Post extends Model implements HasMedia
         'scheduled_at',
         'featured_image_id',
         'featured_media_id',
+        'featured_tag_id',
+        'sponsor_id',
         'active_version_id',
         'draft_version_id',
         'custom_fields',
@@ -133,6 +135,21 @@ class Post extends Model implements HasMedia
     public function featuredMedia(): BelongsTo
     {
         return $this->belongsTo(MediaItem::class, 'featured_media_id');
+    }
+
+    public function sponsors(): BelongsToMany
+    {
+        return $this->belongsToMany(Sponsor::class);
+    }
+
+    public function sponsor(): BelongsTo
+    {
+        return $this->belongsTo(Sponsor::class);
+    }
+
+    public function featuredTag(): BelongsTo
+    {
+        return $this->belongsTo(Tag::class, 'featured_tag_id');
     }
 
     public function approvedComments(): HasMany

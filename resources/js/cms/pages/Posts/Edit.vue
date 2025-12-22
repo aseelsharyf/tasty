@@ -126,9 +126,16 @@ interface TemplateOption {
 // Get page props for CSRF token
 const page = usePage();
 
+interface Sponsor {
+    id: number;
+    name: string;
+}
+
 const props = defineProps<{
     post: Post & {
         category_id: number | null;
+        featured_tag_id: number | null;
+        sponsor_id: number | null;
         tags: number[];
         language_code: string;
         featured_media?: MediaItem | null;
@@ -140,6 +147,7 @@ const props = defineProps<{
     };
     categories: Category[];
     tags: Tag[];
+    sponsors: Sponsor[];
     postTypes: PostTypeOption[];
     currentPostType?: PostTypeConfig | null;
     language: LanguageInfo | null;
@@ -228,6 +236,28 @@ async function takeOverEditing() {
 // Workflow state
 const workflowStatus = ref(props.post.workflow_status || 'draft');
 const currentVersionUuid = ref(props.post.current_version_uuid || null);
+
+// Watch for props changes after Inertia partial reload to sync refs
+watch(
+    () => props.versionsList,
+    (newVersionsList) => {
+        // After reload, sync the workflow status from the current version
+        const currentVersion = newVersionsList?.find(v => v.uuid === currentVersionUuid.value);
+        if (currentVersion) {
+            workflowStatus.value = currentVersion.workflow_status;
+        }
+    },
+    { deep: true }
+);
+
+watch(
+    () => props.post.workflow_status,
+    (newStatus) => {
+        if (newStatus) {
+            workflowStatus.value = newStatus;
+        }
+    }
+);
 
 // Check if the post itself is published (for UI indicators)
 const isPublished = computed(() => props.post.status === 'published');
@@ -387,6 +417,8 @@ const form = useForm({
     template: props.post.template || 'default',
     scheduled_at: props.post.scheduled_at || '',
     category_id: props.post.category_id ?? null,
+    featured_tag_id: props.post.featured_tag_id ?? null,
+    sponsor_id: props.post.sponsor_id ?? null,
     tags: props.post.tags || [],
     featured_media_id: props.post.featured_media_id ?? null,
     custom_fields: (props.post.custom_fields || {}) as Record<string, unknown>,
@@ -680,6 +712,10 @@ const flattenedCategories = computed(() => {
 
 const tagOptions = computed(() =>
     props.tags.map((tag) => ({ label: tag.name, value: tag.id }))
+);
+
+const sponsorOptions = computed(() =>
+    props.sponsors.map((sponsor) => ({ label: sponsor.name, value: sponsor.id }))
 );
 
 // Get selected category name for preview
@@ -1224,6 +1260,7 @@ function openDiff() {
                                                 This version is currently in the workflow ({{ currentVersionInfo?.workflow_status }}). Only draft versions can be edited.
                                             </template>
                                         </p>
+                                        <!-- Actions for published version -->
                                         <div v-if="isCurrentVersionActive" class="flex flex-wrap gap-2 mt-3">
                                             <!-- Show "Edit Draft" if draft exists, otherwise "Create New Draft" -->
                                             <UButton
@@ -1253,6 +1290,34 @@ function openDiff() {
                                                 @click="openUnpublishModal"
                                             >
                                                 Unpublish
+                                            </UButton>
+                                        </div>
+                                        <!-- Actions for version in workflow (review, copydesk, approved, etc.) -->
+                                        <div v-else class="flex flex-wrap gap-2 mt-3">
+                                            <!-- Show available workflow transitions -->
+                                            <UButton
+                                                v-for="transition in availableTransitions"
+                                                :key="`${transition.from}-${transition.to}`"
+                                                size="sm"
+                                                :color="workflow.getStateColor(transition.to)"
+                                                variant="soft"
+                                                :loading="transitionLoading"
+                                                @click="performQuickTransition(transition)"
+                                            >
+                                                <template #leading>
+                                                    <UIcon name="i-lucide-arrow-right" class="size-4" />
+                                                </template>
+                                                {{ transition.label }}
+                                            </UButton>
+                                            <!-- If there's a draft version, offer to switch to it -->
+                                            <UButton
+                                                v-if="existingDraftVersion"
+                                                size="sm"
+                                                color="primary"
+                                                icon="i-lucide-edit"
+                                                @click="switchToVersion(existingDraftVersion.uuid)"
+                                            >
+                                                Edit Draft (v{{ existingDraftVersion.version_number }})
                                             </UButton>
                                         </div>
                                     </div>
@@ -1348,7 +1413,7 @@ function openDiff() {
                         <div class="p-4 space-y-5">
 
                             <!-- Workflow Quick Actions -->
-                            <div v-if="availableTransitions.length > 0 && !isReadOnly">
+                            <div v-if="availableTransitions.length > 0">
                                 <div class="flex items-center gap-2 mb-3">
                                     <UIcon :name="currentWorkflowState.icon" class="size-4 text-muted" />
                                     <span class="text-xs font-medium text-muted uppercase tracking-wider">Workflow</span>
@@ -1375,13 +1440,26 @@ function openDiff() {
                                 </div>
                             </div>
 
-                            <!-- Current Status (when no actions available) -->
-                            <div v-else-if="isReadOnly" class="p-3 rounded-lg bg-success/10 border border-success/20">
-                                <div class="flex items-center gap-2">
-                                    <UIcon name="i-lucide-check-circle" class="size-5 text-success" />
-                                    <div>
-                                        <p class="text-sm font-medium text-success">Published</p>
-                                        <p class="text-xs text-muted">This post is live</p>
+                            <!-- Current Status (when in read-only mode) -->
+                            <div v-else-if="isReadOnly">
+                                <!-- Published/Active version -->
+                                <div v-if="isCurrentVersionActive" class="p-3 rounded-lg bg-success/10 border border-success/20">
+                                    <div class="flex items-center gap-2">
+                                        <UIcon name="i-lucide-check-circle" class="size-5 text-success" />
+                                        <div>
+                                            <p class="text-sm font-medium text-success">Published</p>
+                                            <p class="text-xs text-muted">This post is live</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Version in workflow (review, approved, etc.) -->
+                                <div v-else class="p-3 rounded-lg border" :class="`bg-${workflow.getStateColor(workflowStatus)}/10 border-${workflow.getStateColor(workflowStatus)}/20`">
+                                    <div class="flex items-center gap-2">
+                                        <UIcon :name="currentWorkflowState.icon" class="size-5" :class="`text-${workflow.getStateColor(workflowStatus)}`" />
+                                        <div>
+                                            <p class="text-sm font-medium" :class="`text-${workflow.getStateColor(workflowStatus)}`">{{ currentWorkflowState.label }}</p>
+                                            <p class="text-xs text-muted">This version is in the workflow</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1516,7 +1594,7 @@ function openDiff() {
                                         </div>
                                     </div>
                                     <div>
-                                        <label class="text-xs text-muted mb-1 block">Category</label>
+                                        <label class="text-xs text-muted mb-1 block">Category <span class="text-error">*</span></label>
                                         <USelectMenu
                                             v-model="form.category_id"
                                             :items="flattenedCategories"
@@ -1525,6 +1603,34 @@ function openDiff() {
                                             size="sm"
                                             class="w-full"
                                             :disabled="isReadOnly"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-muted mb-1 block">Featured Tag <span class="text-error">*</span></label>
+                                        <USelectMenu
+                                            v-model="form.featured_tag_id"
+                                            :items="tagOptions"
+                                            value-key="value"
+                                            placeholder="Select..."
+                                            searchable
+                                            size="sm"
+                                            class="w-full"
+                                            :disabled="isReadOnly"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-muted mb-1 block">Sponsor</label>
+                                        <USelectMenu
+                                            v-model="form.sponsor_id"
+                                            :items="sponsorOptions"
+                                            value-key="value"
+                                            placeholder="None"
+                                            searchable
+                                            size="sm"
+                                            class="w-full"
+                                            :disabled="isReadOnly"
+                                            :ui="{ clear: 'flex' }"
+                                            clearable
                                         />
                                     </div>
                                     <div>
@@ -1621,9 +1727,12 @@ function openDiff() {
             :versions-list="versionsList"
             :categories="categories"
             :tags="tags"
+            :sponsors="sponsors"
             :post-types="postTypes"
             :current-post-type="currentPostType"
             :category-id="form.category_id"
+            :featured-tag-id="form.featured_tag_id"
+            :sponsor-id="form.sponsor_id"
             :selected-tags="form.tags"
             :post-type="form.post_type"
             :slug="form.slug"
@@ -1638,6 +1747,8 @@ function openDiff() {
             @create-draft="refreshPage"
             @version-switch="switchToVersion"
             @update:category-id="form.category_id = $event"
+            @update:featured-tag-id="form.featured_tag_id = $event"
+            @update:sponsor-id="form.sponsor_id = $event"
             @update:selected-tags="form.tags = $event"
             @update:post-type="form.post_type = $event"
             @update:slug="form.slug = $event"

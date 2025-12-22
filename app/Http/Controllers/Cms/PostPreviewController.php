@@ -120,10 +120,21 @@ class PostPreviewController extends Controller
 
         // Set up tags relationship from comma-separated string
         if (! empty($tags)) {
-            $tagModels = Tag::whereIn('name', $tags)->orWhereIn('slug', $tags)->get();
+            // Tag name is a translatable JSON field, so we need to search within the JSON
+            // or fall back to slug matching
+            $tagModels = Tag::where(function ($query) use ($tags) {
+                $query->whereIn('slug', $tags);
+                // Also search in name JSON field (search all locales)
+                foreach ($tags as $tag) {
+                    $query->orWhereRaw('name::text ILIKE ?', ['%"'.addslashes($tag).'"%']);
+                }
+            })->get();
             // Create temporary tag objects for tags that don't exist yet
             foreach ($tags as $tagName) {
-                if (! $tagModels->contains('name', $tagName) && ! $tagModels->contains('slug', $tagName)) {
+                $found = $tagModels->first(function ($t) use ($tagName) {
+                    return $t->slug === $tagName || $t->getTranslation('name', 'en', false) === $tagName;
+                });
+                if (! $found) {
                     $tagModels->push(new Tag(['name' => $tagName, 'slug' => \Illuminate\Support\Str::slug($tagName)]));
                 }
             }

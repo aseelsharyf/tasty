@@ -10,6 +10,7 @@ use App\Models\Language;
 use App\Models\Post;
 use App\Models\PostEditLock;
 use App\Models\Setting;
+use App\Models\Sponsor;
 use App\Models\Tag;
 use App\Models\User;
 use App\Services\PostTemplateRegistry;
@@ -214,6 +215,11 @@ class PostController extends Controller
 
         $tags = Tag::orderByTranslatedName($language)->get()->map(fn ($tag) => $this->formatTagForSelect($tag));
 
+        $sponsors = Sponsor::active()->ordered()->get()->map(fn ($sponsor) => [
+            'id' => $sponsor->id,
+            'name' => $sponsor->name,
+        ]);
+
         // Get post types from settings
         $postTypes = collect(Setting::getPostTypes())->map(fn ($type) => [
             'value' => $type['slug'],
@@ -225,6 +231,7 @@ class PostController extends Controller
         return Inertia::render('Posts/Create', [
             'categories' => $categories,
             'tags' => $tags,
+            'sponsors' => $sponsors,
             'postTypes' => $postTypes,
             'language' => [
                 'code' => $lang->code,
@@ -260,6 +267,8 @@ class PostController extends Controller
             'workflow_status' => 'draft',
             'scheduled_at' => $validated['scheduled_at'] ?? null,
             'featured_media_id' => $validated['featured_media_id'] ?? null,
+            'featured_tag_id' => $validated['featured_tag_id'] ?? null,
+            'sponsor_id' => $validated['sponsor_id'] ?? null,
             'custom_fields' => $validated['custom_fields'] ?? null,
             'meta_title' => $validated['meta_title'] ?? null,
             'meta_description' => $validated['meta_description'] ?? null,
@@ -298,7 +307,7 @@ class PostController extends Controller
     public function edit(Request $request, string $language, Post $post): Response
     {
         $language = strtolower($language);
-        $post->load(['categories', 'tags', 'author', 'language', 'featuredMedia', 'draftVersion', 'activeVersion', 'versions.createdBy']);
+        $post->load(['categories', 'tags', 'author', 'language', 'featuredMedia', 'featuredTag', 'sponsor', 'draftVersion', 'activeVersion', 'versions.createdBy']);
 
         // Set locale for translatable models
         app()->setLocale($language);
@@ -316,6 +325,11 @@ class PostController extends Controller
             ->map(fn ($cat) => $this->formatCategoryForSelect($cat));
 
         $tags = Tag::orderByTranslatedName($language)->get()->map(fn ($tag) => $this->formatTagForSelect($tag));
+
+        $sponsors = Sponsor::active()->ordered()->get()->map(fn ($sponsor) => [
+            'id' => $sponsor->id,
+            'name' => $sponsor->name,
+        ]);
 
         $lang = $post->language ?? Language::getDefault();
 
@@ -430,6 +444,12 @@ class PostController extends Controller
                 'category_id' => $useSnapshot
                     ? ($versionSnapshot['category_ids'][0] ?? $post->categories->first()?->id)
                     : $post->categories->first()?->id,
+                'featured_tag_id' => $useSnapshot
+                    ? ($versionSnapshot['featured_tag_id'] ?? $post->featured_tag_id)
+                    : $post->featured_tag_id,
+                'sponsor_id' => $useSnapshot
+                    ? ($versionSnapshot['sponsor_id'] ?? $post->sponsor_id)
+                    : $post->sponsor_id,
                 'tags' => $useSnapshot
                     ? ($versionSnapshot['tag_ids'] ?? $post->tags->pluck('id'))
                     : $post->tags->pluck('id'),
@@ -445,6 +465,7 @@ class PostController extends Controller
             ],
             'categories' => $categories,
             'tags' => $tags,
+            'sponsors' => $sponsors,
             'postTypes' => $postTypes,
             'currentPostType' => $currentPostTypeConfig ? [
                 'key' => $currentPostTypeConfig['slug'],
@@ -492,6 +513,8 @@ class PostController extends Controller
                 'meta_title' => $validated['meta_title'] ?? null,
                 'meta_description' => $validated['meta_description'] ?? null,
                 'featured_media_id' => $validated['featured_media_id'] ?? null,
+                'featured_tag_id' => $validated['featured_tag_id'] ?? null,
+                'sponsor_id' => $validated['sponsor_id'] ?? null,
                 'custom_fields' => $validated['custom_fields'] ?? null,
                 'allow_comments' => $validated['allow_comments'] ?? true,
                 'show_author' => $validated['show_author'] ?? true,
@@ -517,6 +540,8 @@ class PostController extends Controller
             'template' => $validated['template'] ?? $post->template,
             'scheduled_at' => $validated['scheduled_at'] ?? null,
             'featured_media_id' => $validated['featured_media_id'] ?? null,
+            'featured_tag_id' => $validated['featured_tag_id'] ?? null,
+            'sponsor_id' => $validated['sponsor_id'] ?? null,
             'custom_fields' => $validated['custom_fields'] ?? null,
             'meta_title' => $validated['meta_title'] ?? null,
             'meta_description' => $validated['meta_description'] ?? null,

@@ -19,6 +19,7 @@ use App\Http\Controllers\Cms\PostPreviewController;
 use App\Http\Controllers\Cms\ProfileController;
 use App\Http\Controllers\Cms\RoleController;
 use App\Http\Controllers\Cms\SettingsController;
+use App\Http\Controllers\Cms\SponsorController;
 use App\Http\Controllers\Cms\TagController;
 use App\Http\Controllers\Cms\UserController;
 use App\Http\Controllers\Cms\UserTargetController;
@@ -212,6 +213,19 @@ Route::middleware(['auth', 'cms'])->group(function () {
             'destroy' => 'cms.tags.destroy',
         ]);
         Route::delete('tags/bulk', [TagController::class, 'bulkDestroy'])->name('cms.tags.bulk-destroy');
+    });
+
+    // Sponsors Management
+    Route::middleware('permission:sponsors.view')->group(function () {
+        Route::resource('sponsors', SponsorController::class)->except(['show'])->names([
+            'index' => 'cms.sponsors.index',
+            'create' => 'cms.sponsors.create',
+            'store' => 'cms.sponsors.store',
+            'edit' => 'cms.sponsors.edit',
+            'update' => 'cms.sponsors.update',
+            'destroy' => 'cms.sponsors.destroy',
+        ]);
+        Route::delete('sponsors/bulk', [SponsorController::class, 'bulkDestroy'])->name('cms.sponsors.bulk-destroy');
     });
 
     // Menus Management

@@ -27,7 +27,7 @@
             <h3 class="text-h4 text-blue-black line-clamp-3">{{ $title }}</h3>
         </a>
         @if($description)
-            <p class="text-body-md text-blue-black line-clamp-2">{{ $description }}</p>
+            <p class="text-body-md text-blue-black line-clamp-3">{{ $description }}</p>
         @endif
 
         {{-- Author/date --}}

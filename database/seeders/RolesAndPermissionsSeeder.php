@@ -65,6 +65,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'tags.edit',
             'tags.delete',
 
+            // Sponsors
+            'sponsors.view',
+            'sponsors.create',
+            'sponsors.edit',
+            'sponsors.delete',
+
             // Menus
             'menus.view',
             'menus.create',
@@ -131,6 +137,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'tags.create',
             'tags.edit',
             'tags.delete',
+            'sponsors.view',
+            'sponsors.create',
+            'sponsors.edit',
+            'sponsors.delete',
             'menus.view',
             'menus.create',
             'menus.edit',
@@ -170,6 +180,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'tags.view',
             'tags.create',
             'tags.edit',
+            'sponsors.view',
+            'sponsors.create',
+            'sponsors.edit',
             'comments.view',
             'comments.moderate',
             'comments.edit',

@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Language;
 use App\Models\MediaItem;
 use App\Models\Post;
+use App\Models\Sponsor;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -41,144 +42,294 @@ class PostSeeder extends Seeder
         $categories = Category::all();
         $tags = Tag::all();
 
+        if ($categories->isEmpty()) {
+            $this->command->warn('No categories found. Skipping PostSeeder.');
+
+            return;
+        }
+
+        if ($tags->isEmpty()) {
+            $this->command->warn('No tags found. Skipping PostSeeder.');
+
+            return;
+        }
+
+        // Create sponsors if they don't exist
+        $sponsors = $this->createSponsors();
+
         // Get media items for featured images and content
         $mediaItems = MediaItem::images()->get();
         if ($mediaItems->isEmpty()) {
             $this->command->warn('No media items found. Run MediaSeeder first for images.');
         }
 
-        if ($categories->isEmpty()) {
-            $this->command->warn('No categories found. Published posts will not have categories assigned.');
-        }
-
         foreach ($languages as $language) {
             // Create 10 published articles per language
-            Post::factory()
-                ->count(10)
+            $this->createPublishedArticles($language, $authors, $categories, $tags, $sponsors, $mediaItems, 10);
+
+            // Create 3 draft posts per language
+            $this->createDraftPosts($language, $authors, $categories, $tags, $mediaItems, 3);
+
+            // Create 2 posts in review per language
+            $this->createPostsInReview($language, $authors, $categories, $tags, $mediaItems, 2);
+
+            // Create 2 approved posts per language (waiting to be published)
+            $this->createApprovedPosts($language, $authors, $categories, $tags, $mediaItems, 2);
+
+            // Create 2 published recipes per language
+            $this->createPublishedRecipes($language, $authors, $categories, $tags, $sponsors, $mediaItems, 2);
+
+            $this->command->info("Created posts for language: {$language->name}");
+        }
+    }
+
+    /**
+     * Create sponsors for posts.
+     *
+     * @return \Illuminate\Support\Collection<int, Sponsor>
+     */
+    private function createSponsors()
+    {
+        $sponsorData = [
+            [
+                'name' => ['en' => 'Dhiraagu', 'dv' => 'ދިރާގު'],
+                'url' => ['en' => 'https://www.dhiraagu.com.mv', 'dv' => 'https://www.dhiraagu.com.mv'],
+                'slug' => 'dhiraagu',
+            ],
+            [
+                'name' => ['en' => 'Bank of Maldives', 'dv' => 'ބޭންކް އޮފް މޯލްޑިވްސް'],
+                'url' => ['en' => 'https://www.bankofmaldives.com.mv', 'dv' => 'https://www.bankofmaldives.com.mv'],
+                'slug' => 'bank-of-maldives',
+            ],
+            [
+                'name' => ['en' => 'Ooredoo Maldives', 'dv' => 'އޫރިދޫ މޯލްޑިވްސް'],
+                'url' => ['en' => 'https://www.ooredoo.mv', 'dv' => 'https://www.ooredoo.mv'],
+                'slug' => 'ooredoo-maldives',
+            ],
+            [
+                'name' => ['en' => 'MIFCO', 'dv' => 'މިފްކޯ'],
+                'url' => ['en' => 'https://www.mifco.com.mv', 'dv' => 'https://www.mifco.com.mv'],
+                'slug' => 'mifco',
+            ],
+        ];
+
+        foreach ($sponsorData as $data) {
+            Sponsor::firstOrCreate(
+                ['slug' => $data['slug']],
+                [
+                    'name' => $data['name'],
+                    'url' => $data['url'],
+                    'is_active' => true,
+                ]
+            );
+        }
+
+        return Sponsor::all();
+    }
+
+    /**
+     * Create published articles with proper workflow.
+     */
+    private function createPublishedArticles($language, $authors, $categories, $tags, $sponsors, $mediaItems, int $count): void
+    {
+        for ($i = 0; $i < $count; $i++) {
+            $author = $authors->random();
+            $category = $categories->random();
+            $featuredTag = $tags->random();
+            // 30% chance of being sponsored
+            $sponsor = fake()->boolean(30) ? $sponsors->random() : null;
+
+            $post = Post::factory()
                 ->article()
                 ->withLanguage($language->code)
                 ->create([
-                    'author_id' => fn () => $authors->random()->id,
+                    'author_id' => $author->id,
+                    'featured_tag_id' => $featuredTag->id,
+                    'sponsor_id' => $sponsor?->id,
                     'workflow_status' => 'draft',
+                    'status' => Post::STATUS_DRAFT,
                     'content' => $this->getArticleContent($mediaItems),
-                    'featured_media_id' => fn () => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
-                ])
-                ->each(function ($post) use ($categories, $tags) {
-                    // Create initial version
-                    $version = $post->createVersion(null, 'Initial version');
+                    'featured_media_id' => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
+                ]);
 
-                    // Attach categories (required for published posts)
-                    if ($categories->isNotEmpty()) {
-                        $post->categories()->attach(
-                            $categories->random(min(rand(1, 3), $categories->count()))->pluck('id')
-                        );
-                    }
-                    // Attach tags
-                    if ($tags->isNotEmpty()) {
-                        $post->tags()->attach(
-                            $tags->random(min(rand(2, 5), $tags->count()))->pluck('id')
-                        );
-                    }
+            // Attach to category pivot table
+            $post->categories()->attach($category->id);
 
-                    // Transition to Published
-                    $version->transitionTo('review', 'Ready for review', $post->author_id);
-                    $version->transitionTo('approved', 'Approved for publication', $post->author_id);
-                    $version->transitionTo('published', 'Published', $post->author_id);
+            // Attach additional tags
+            $additionalTags = $tags->except($featuredTag->id)->random(min(rand(2, 4), $tags->count() - 1));
+            $post->tags()->attach($additionalTags->pluck('id'));
+            $post->tags()->attach($featuredTag->id);
 
-                    // Activate the version
-                    $version->activate();
-                    $post->publish();
-                });
+            // Create version and go through full workflow
+            $version = $post->createVersion(null, 'Initial version', $author->id);
 
-            // Create 3 draft posts per language
-            Post::factory()
-                ->count(3)
+            // Workflow: draft → review → copydesk → approved → published
+            $version->transitionTo('review', 'Submitted for editorial review', $author->id);
+            $version->transitionTo('copydesk', 'Sent to copy desk for final review', $author->id);
+            $version->transitionTo('approved', 'Approved for publication', $author->id);
+            $version->transitionTo('published', 'Published', $author->id);
+
+            // Activate the version and publish the post
+            $version->activate();
+            $post->publish();
+        }
+    }
+
+    /**
+     * Create draft posts.
+     */
+    private function createDraftPosts($language, $authors, $categories, $tags, $mediaItems, int $count): void
+    {
+        for ($i = 0; $i < $count; $i++) {
+            $author = $authors->random();
+            $category = $categories->random();
+            $featuredTag = $tags->random();
+
+            $post = Post::factory()
                 ->draft()
                 ->article()
                 ->withLanguage($language->code)
                 ->create([
-                    'author_id' => fn () => $authors->random()->id,
+                    'author_id' => $author->id,
+                    'featured_tag_id' => $featuredTag->id,
                     'workflow_status' => 'draft',
+                    'status' => Post::STATUS_DRAFT,
                     'content' => $this->getArticleContent($mediaItems),
-                    'featured_media_id' => fn () => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
-                ])
-                ->each(function ($post) {
-                    $post->createVersion(null, 'Initial draft');
-                });
+                    'featured_media_id' => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
+                ]);
 
-            // Create 2 pending review posts per language
-            Post::factory()
-                ->count(2)
+            // Attach to category pivot table
+            $post->categories()->attach($category->id);
+
+            // Attach tags
+            $post->tags()->attach($featuredTag->id);
+            $additionalTags = $tags->except($featuredTag->id)->random(min(rand(1, 3), $tags->count() - 1));
+            $post->tags()->attach($additionalTags->pluck('id'));
+
+            // Create initial draft version
+            $post->createVersion(null, 'Work in progress', $author->id);
+        }
+    }
+
+    /**
+     * Create posts that are in editorial review.
+     */
+    private function createPostsInReview($language, $authors, $categories, $tags, $mediaItems, int $count): void
+    {
+        for ($i = 0; $i < $count; $i++) {
+            $author = $authors->random();
+            $category = $categories->random();
+            $featuredTag = $tags->random();
+
+            $post = Post::factory()
                 ->pending()
                 ->article()
                 ->withLanguage($language->code)
                 ->create([
-                    'author_id' => fn () => $authors->random()->id,
-                    'workflow_status' => 'draft',
+                    'author_id' => $author->id,
+                    'featured_tag_id' => $featuredTag->id,
+                    'workflow_status' => 'review',
+                    'status' => Post::STATUS_PENDING,
                     'content' => $this->getArticleContent($mediaItems),
-                    'featured_media_id' => fn () => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
-                ])
-                ->each(function ($post) {
-                    $version = $post->createVersion(null, 'Submitted for review');
-                    $version->transitionTo('review', 'Submitted for review', $post->author_id);
-                    $post->submitForReview();
-                });
+                    'featured_media_id' => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
+                ]);
 
-            // Create 2 approved posts per language
-            Post::factory()
-                ->count(2)
+            // Attach to category pivot table
+            $post->categories()->attach($category->id);
+
+            // Attach tags
+            $post->tags()->attach($featuredTag->id);
+            $additionalTags = $tags->except($featuredTag->id)->random(min(rand(1, 3), $tags->count() - 1));
+            $post->tags()->attach($additionalTags->pluck('id'));
+
+            // Create version and transition to review
+            $version = $post->createVersion(null, 'Ready for review', $author->id);
+            $version->transitionTo('review', 'Submitted for editorial review', $author->id);
+        }
+    }
+
+    /**
+     * Create posts that are approved and waiting to be published.
+     */
+    private function createApprovedPosts($language, $authors, $categories, $tags, $mediaItems, int $count): void
+    {
+        for ($i = 0; $i < $count; $i++) {
+            $author = $authors->random();
+            $category = $categories->random();
+            $featuredTag = $tags->random();
+
+            $post = Post::factory()
                 ->pending()
                 ->article()
                 ->withLanguage($language->code)
                 ->create([
-                    'author_id' => fn () => $authors->random()->id,
-                    'workflow_status' => 'draft',
+                    'author_id' => $author->id,
+                    'featured_tag_id' => $featuredTag->id,
+                    'workflow_status' => 'approved',
+                    'status' => Post::STATUS_PENDING,
                     'content' => $this->getArticleContent($mediaItems),
-                    'featured_media_id' => fn () => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
-                ])
-                ->each(function ($post) {
-                    $version = $post->createVersion(null, 'Initial version');
-                    $version->transitionTo('review', 'Ready for review', $post->author_id);
-                    $version->transitionTo('approved', 'Approved for publication', $post->author_id);
-                    $post->update(['workflow_status' => 'approved']);
-                });
+                    'featured_media_id' => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
+                ]);
 
-            // Create 2 published recipes per language
-            Post::factory()
-                ->count(2)
+            // Attach to category pivot table
+            $post->categories()->attach($category->id);
+
+            // Attach tags
+            $post->tags()->attach($featuredTag->id);
+            $additionalTags = $tags->except($featuredTag->id)->random(min(rand(1, 3), $tags->count() - 1));
+            $post->tags()->attach($additionalTags->pluck('id'));
+
+            // Create version and go through workflow up to approved
+            $version = $post->createVersion(null, 'Initial version', $author->id);
+            $version->transitionTo('review', 'Submitted for review', $author->id);
+            $version->transitionTo('copydesk', 'Sent to copy desk', $author->id);
+            $version->transitionTo('approved', 'Approved - ready to publish', $author->id);
+        }
+    }
+
+    /**
+     * Create published recipes with proper workflow.
+     */
+    private function createPublishedRecipes($language, $authors, $categories, $tags, $sponsors, $mediaItems, int $count): void
+    {
+        for ($i = 0; $i < $count; $i++) {
+            $author = $authors->random();
+            $category = $categories->random();
+            $featuredTag = $tags->random();
+            // 20% chance of being sponsored
+            $sponsor = fake()->boolean(20) ? $sponsors->random() : null;
+
+            $post = Post::factory()
                 ->recipe()
                 ->withLanguage($language->code)
                 ->create([
-                    'author_id' => fn () => $authors->random()->id,
+                    'author_id' => $author->id,
+                    'featured_tag_id' => $featuredTag->id,
+                    'sponsor_id' => $sponsor?->id,
                     'workflow_status' => 'draft',
+                    'status' => Post::STATUS_DRAFT,
                     'content' => $this->getRecipeContent($mediaItems),
-                    'featured_media_id' => fn () => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
-                ])
-                ->each(function ($post) use ($categories, $tags) {
-                    $version = $post->createVersion(null, 'Initial version');
+                    'featured_media_id' => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
+                ]);
 
-                    // Attach categories (required for published posts)
-                    if ($categories->isNotEmpty()) {
-                        $post->categories()->attach(
-                            $categories->random(min(rand(1, 2), $categories->count()))->pluck('id')
-                        );
-                    }
-                    // Attach tags
-                    if ($tags->isNotEmpty()) {
-                        $post->tags()->attach(
-                            $tags->random(min(rand(2, 4), $tags->count()))->pluck('id')
-                        );
-                    }
+            // Attach to category pivot table
+            $post->categories()->attach($category->id);
 
-                    $version->transitionTo('review', 'Ready for review', $post->author_id);
-                    $version->transitionTo('approved', 'Approved', $post->author_id);
-                    $version->transitionTo('published', 'Published', $post->author_id);
+            // Attach tags
+            $post->tags()->attach($featuredTag->id);
+            $additionalTags = $tags->except($featuredTag->id)->random(min(rand(1, 3), $tags->count() - 1));
+            $post->tags()->attach($additionalTags->pluck('id'));
 
-                    $version->activate();
-                    $post->publish();
-                });
+            // Create version and go through full workflow
+            $version = $post->createVersion(null, 'Initial recipe version', $author->id);
+            $version->transitionTo('review', 'Submitted for review', $author->id);
+            $version->transitionTo('copydesk', 'Sent to copy desk', $author->id);
+            $version->transitionTo('approved', 'Recipe approved', $author->id);
+            $version->transitionTo('published', 'Published', $author->id);
 
-            $this->command->info("Created posts for language: {$language->name}");
+            // Activate the version and publish the post
+            $version->activate();
+            $post->publish();
         }
     }
 

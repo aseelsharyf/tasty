@@ -20,7 +20,7 @@ class PostController extends Controller
         // Find the post by slug
         $post = Post::where('slug', $postSlug)
             ->published()
-            ->with(['author', 'categories', 'tags', 'featuredMedia'])
+            ->with(['author', 'categories', 'tags', 'featuredMedia', 'sponsor.featuredMedia'])
             ->first();
 
         if (! $post) {
