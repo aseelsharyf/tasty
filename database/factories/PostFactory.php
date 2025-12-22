@@ -14,12 +14,30 @@ class PostFactory extends Factory
 {
     public function definition(): array
     {
-        $title = fake()->sentence(rand(4, 8));
+        // Keep titles short (3-6 words)
+        $title = fake()->sentence(rand(3, 6), false);
+
+        // Kickers are short uppercase labels
+        $kickers = [
+            'TASTY FEATURE',
+            'FOOD REVIEW',
+            'CHEF PROFILE',
+            'ISLAND CUISINE',
+            'RECIPE',
+            'DINING OUT',
+            'KITCHEN TIPS',
+            'LOCAL FLAVORS',
+            'SEAFOOD',
+            'STREET FOOD',
+            null, // Sometimes no kicker
+            null,
+        ];
 
         return [
             'author_id' => User::factory(),
             'language_code' => fn () => Language::first()?->code ?? 'en',
             'title' => $title,
+            'kicker' => fake()->randomElement($kickers),
             'subtitle' => fake()->optional(0.5)->sentence(),
             'slug' => \Illuminate\Support\Str::slug($title).'-'.fake()->unique()->randomNumber(5),
             'excerpt' => fake()->paragraph(2),

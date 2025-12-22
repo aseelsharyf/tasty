@@ -20,6 +20,7 @@ class StorePostRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
+            'kicker' => ['nullable', 'string', 'max:100'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:posts,slug'],
             'excerpt' => ['nullable', 'string', 'max:500'],

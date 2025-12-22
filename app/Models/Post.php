@@ -41,6 +41,7 @@ class Post extends Model implements HasMedia
         'author_id',
         'language_code',
         'title',
+        'kicker',
         'subtitle',
         'slug',
         'excerpt',
@@ -335,6 +336,7 @@ class Post extends Model implements HasMedia
     {
         return [
             'title',
+            'kicker',
             'subtitle',
             'excerpt',
             'content',

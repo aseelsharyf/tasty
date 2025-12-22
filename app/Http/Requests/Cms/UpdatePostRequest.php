@@ -21,6 +21,7 @@ class UpdatePostRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
+            'kicker' => ['nullable', 'string', 'max:100'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'slug' => [
                 'nullable',

@@ -77,6 +77,66 @@ function handleEditorKeyDown(e: KeyboardEvent): void {
     document.execCommand('insertText', false, translated);
 }
 
+// Handle paste to strip most formatting but keep bold and italic
+function handlePaste(e: ClipboardEvent): void {
+    const html = e.clipboardData?.getData('text/html');
+    const text = e.clipboardData?.getData('text/plain') || '';
+
+    // If no HTML, let Editor.js handle plain text paste normally
+    if (!html) {
+        return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    // Parse HTML and strip everything except bold/italic
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // Function to clean HTML recursively, keeping only b, strong, i, em tags
+    function cleanNode(node: Node): string {
+        if (node.nodeType === Node.TEXT_NODE) {
+            return node.textContent || '';
+        }
+
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            const el = node as Element;
+            const tagName = el.tagName.toLowerCase();
+            const children = Array.from(el.childNodes).map(cleanNode).join('');
+
+            // Keep bold and italic tags
+            if (tagName === 'b' || tagName === 'strong') {
+                return `<b>${children}</b>`;
+            }
+            if (tagName === 'i' || tagName === 'em') {
+                return `<i>${children}</i>`;
+            }
+
+            // For block elements, add line breaks
+            if (['p', 'div', 'br', 'li'].includes(tagName)) {
+                return children + '\n';
+            }
+
+            // Strip all other tags but keep content
+            return children;
+        }
+
+        return '';
+    }
+
+    const cleanedHtml = cleanNode(doc.body).trim();
+
+    if (cleanedHtml) {
+        // Insert as HTML to preserve bold/italic
+        document.execCommand('insertHTML', false, cleanedHtml);
+    } else if (text) {
+        // Fallback to plain text
+        document.execCommand('insertText', false, text);
+    }
+}
+
 // Dhivehi translations for placeholders
 const dhivehiPlaceholders = {
     default: 'ލިޔަން ފަށާ...', // Start writing...
@@ -236,16 +296,27 @@ const initEditor = async () => {
 };
 
 // Only re-render if change came from outside (e.g., loading saved data)
+// We use a simple flag approach - once the editor is ready and has content,
+// we don't re-render from external changes unless it's a complete data replacement
+const hasInitialContent = ref(false);
+
 watch(
     () => props.modelValue,
-    async (newValue) => {
+    async (newValue, oldValue) => {
         // Skip if this change originated from the editor itself
         if (isInternalChange.value) return;
+
+        // Skip if editor already has content (user is editing)
+        // Only allow re-render if going from no content to content (initial load)
+        if (hasInitialContent.value && editor.value && isReady.value) {
+            return;
+        }
 
         if (editor.value && isReady.value && newValue) {
             // Normalize data before rendering to handle version differences
             const normalizedData = normalizeEditorData(newValue);
             await editor.value.render(normalizedData);
+            hasInitialContent.value = true;
         }
     },
     { deep: true }
@@ -254,15 +325,18 @@ watch(
 onMounted(() => {
     initEditor();
     // Add keydown listener for Dhivehi keyboard support
+    // Add paste listener to strip formatting (capture phase to intercept before Editor.js)
     if (editorRef.value) {
         editorRef.value.addEventListener('keydown', handleEditorKeyDown);
+        editorRef.value.addEventListener('paste', handlePaste, true);
     }
 });
 
 onBeforeUnmount(() => {
-    // Remove keydown listener
+    // Remove event listeners
     if (editorRef.value) {
         editorRef.value.removeEventListener('keydown', handleEditorKeyDown);
+        editorRef.value.removeEventListener('paste', handlePaste, true);
     }
     if (editor.value) {
         editor.value.destroy();

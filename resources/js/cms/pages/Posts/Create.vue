@@ -83,10 +83,38 @@ const textAlign = computed(() => isRtl.value ? 'text-right' : 'text-left');
 
 // Dhivehi placeholders
 const placeholders = computed(() => ({
+    kicker: isRtl.value ? 'ކިކާ (މިސާލު: ފީޗާ)' : 'KICKER (e.g., TASTY FEATURE)',
     title: isRtl.value ? 'ސުރުޚީ' : 'Title',
     subtitle: isRtl.value ? 'ސަބް ސުރުޚީ...' : 'Add a subtitle...',
-    excerpt: isRtl.value ? 'ކުރު ޚުލާސާއެއް ލިޔޭ...' : 'Write a brief excerpt or summary...',
+    excerpt: isRtl.value ? 'ޚުލާސާ / ޑެކް ލިޔޭ...' : 'Write a deck or summary...',
 }));
+
+// Textarea refs for auto-resize
+const titleTextarea = ref<HTMLTextAreaElement | null>(null);
+const subtitleTextarea = ref<HTMLTextAreaElement | null>(null);
+const excerptTextarea = ref<HTMLTextAreaElement | null>(null);
+
+// Auto-resize functions
+function autoResizeTitle() {
+    if (titleTextarea.value) {
+        titleTextarea.value.style.height = 'auto';
+        titleTextarea.value.style.height = titleTextarea.value.scrollHeight + 'px';
+    }
+}
+
+function autoResizeSubtitle() {
+    if (subtitleTextarea.value) {
+        subtitleTextarea.value.style.height = 'auto';
+        subtitleTextarea.value.style.height = subtitleTextarea.value.scrollHeight + 'px';
+    }
+}
+
+function autoResizeExcerpt() {
+    if (excerptTextarea.value) {
+        excerptTextarea.value.style.height = 'auto';
+        excerptTextarea.value.style.height = excerptTextarea.value.scrollHeight + 'px';
+    }
+}
 
 // Handle keydown for Dhivehi input fields
 function onDhivehiKeyDown(e: KeyboardEvent) {
@@ -97,6 +125,7 @@ function onDhivehiKeyDown(e: KeyboardEvent) {
 
 const form = useForm({
     title: '',
+    kicker: '',
     subtitle: '',
     slug: '',
     excerpt: '',
@@ -535,48 +564,74 @@ function goBack() {
                         ]"
                     >
                         <div :class="['mx-auto px-6 py-12', isFullscreen ? 'max-w-screen-2xl' : 'max-w-2xl']">
-                            <!-- Title -->
+                            <!-- Kicker -->
                             <input
-                                v-model="form.title"
+                                v-model="form.kicker"
                                 type="text"
-                                :placeholder="placeholders.title"
+                                :placeholder="placeholders.kicker"
                                 :dir="textDirection"
                                 :class="[
-                                    'w-full font-bold bg-transparent border-0 outline-none placeholder:text-muted/40 mb-2',
+                                    'w-full bg-transparent border-0 outline-none placeholder:text-muted/30 mb-3 uppercase tracking-wider',
+                                    textAlign,
+                                    isRtl ? 'font-dhivehi text-dhivehi-sm placeholder:font-dhivehi' : 'text-sm font-medium',
+                                ]"
+                                @keydown="onDhivehiKeyDown"
+                            />
+
+                            <!-- Title -->
+                            <textarea
+                                ref="titleTextarea"
+                                v-model="form.title"
+                                :placeholder="placeholders.title"
+                                :dir="textDirection"
+                                rows="1"
+                                :class="[
+                                    'w-full font-bold bg-transparent border-0 outline-none placeholder:text-muted/40 mb-3 resize-none overflow-hidden',
                                     textAlign,
                                     isRtl ? 'font-dhivehi text-dhivehi-4xl leading-relaxed placeholder:font-dhivehi' : 'text-4xl leading-tight',
                                 ]"
+                                @input="autoResizeTitle"
                                 @keydown="onDhivehiKeyDown"
                             />
                             <p v-if="form.errors.title" class="text-error text-sm mb-2">{{ form.errors.title }}</p>
 
+                            <!-- Separator between headline and description -->
+                            <div class="h-px bg-gray-200 dark:bg-gray-700 my-6" />
+
                             <!-- Subtitle -->
-                            <input
+                            <textarea
+                                ref="subtitleTextarea"
                                 v-model="form.subtitle"
-                                type="text"
                                 :placeholder="placeholders.subtitle"
                                 :dir="textDirection"
+                                rows="1"
                                 :class="[
-                                    'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 mb-4',
+                                    'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 mb-4 resize-none overflow-hidden',
                                     textAlign,
                                     isRtl ? 'font-dhivehi text-dhivehi-xl leading-relaxed placeholder:font-dhivehi' : 'text-xl',
                                 ]"
+                                @input="autoResizeSubtitle"
                                 @keydown="onDhivehiKeyDown"
                             />
 
-                            <!-- Excerpt -->
+                            <!-- Excerpt / Deck -->
                             <textarea
+                                ref="excerptTextarea"
                                 v-model="form.excerpt"
                                 :placeholder="placeholders.excerpt"
-                                rows="2"
+                                rows="1"
                                 :dir="textDirection"
                                 :class="[
-                                    'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 resize-none',
+                                    'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 resize-none overflow-hidden',
                                     textAlign,
                                     isRtl ? 'font-dhivehi text-dhivehi-base leading-relaxed placeholder:font-dhivehi' : 'text-base',
                                 ]"
+                                @input="autoResizeExcerpt"
                                 @keydown="onDhivehiKeyDown"
                             />
+
+                            <!-- Separator between header and content -->
+                            <div class="h-px bg-gray-200 dark:bg-gray-700 my-8" />
 
                             <!-- Content Editor -->
                             <BlockEditor

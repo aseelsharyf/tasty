@@ -258,6 +258,7 @@ class PostController extends Controller
             'author_id' => Auth::id(),
             'language_code' => $language,
             'title' => $validated['title'],
+            'kicker' => $validated['kicker'] ?? null,
             'subtitle' => $validated['subtitle'] ?? null,
             'slug' => $validated['slug'] ?? null,
             'excerpt' => $validated['excerpt'] ?? null,
@@ -410,6 +411,7 @@ class PostController extends Controller
                 'uuid' => $post->uuid,
                 // Content fields - use snapshot if available
                 'title' => $useSnapshot ? ($versionSnapshot['title'] ?? $post->title) : $post->title,
+                'kicker' => $useSnapshot ? ($versionSnapshot['kicker'] ?? $post->kicker) : $post->kicker,
                 'subtitle' => $useSnapshot ? ($versionSnapshot['subtitle'] ?? $post->subtitle) : $post->subtitle,
                 'slug' => $useSnapshot ? ($versionSnapshot['slug'] ?? $post->slug) : $post->slug,
                 'excerpt' => $useSnapshot ? ($versionSnapshot['excerpt'] ?? $post->excerpt) : $post->excerpt,
@@ -506,6 +508,7 @@ class PostController extends Controller
             // Build content snapshot from the validated data (not from post model)
             $contentSnapshot = [
                 'title' => $validated['title'],
+                'kicker' => $validated['kicker'] ?? null,
                 'subtitle' => $validated['subtitle'] ?? null,
                 'excerpt' => $validated['excerpt'] ?? null,
                 'content' => $validated['content'] ?? null,
@@ -532,6 +535,7 @@ class PostController extends Controller
         // Post is not published - update the post model directly
         $post->update([
             'title' => $validated['title'],
+            'kicker' => $validated['kicker'] ?? null,
             'subtitle' => $validated['subtitle'] ?? null,
             'slug' => $validated['slug'] ?? $post->slug,
             'excerpt' => $validated['excerpt'] ?? null,

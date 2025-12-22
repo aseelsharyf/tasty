@@ -395,9 +395,10 @@ const textAlign = computed(() => isRtl.value ? 'text-right' : 'text-left');
 
 // Dhivehi placeholders
 const placeholders = computed(() => ({
+    kicker: isRtl.value ? 'ކިކާ (މިސާލު: ފީޗާ)' : 'KICKER (e.g., TASTY FEATURE)',
     title: isRtl.value ? 'ސުރުޚީ' : 'Title',
     subtitle: isRtl.value ? 'ސަބް ސުރުޚީ...' : 'Add a subtitle...',
-    excerpt: isRtl.value ? 'ކުރު ޚުލާސާއެއް ލިޔޭ...' : 'Write a brief excerpt or summary...',
+    excerpt: isRtl.value ? 'ޚުލާސާ / ޑެކް ލިޔޭ...' : 'Write a deck or summary...',
 }));
 
 // Handle keydown for Dhivehi input fields
@@ -409,6 +410,7 @@ function onDhivehiKeyDown(e: KeyboardEvent) {
 
 const form = useForm({
     title: props.post.title,
+    kicker: props.post.kicker || '',
     subtitle: props.post.subtitle || '',
     slug: props.post.slug,
     excerpt: props.post.excerpt || '',
@@ -446,12 +448,30 @@ const currentPostType = computed<PostTypeConfig | null>(() => {
     return null;
 });
 
-// Title textarea ref for auto-resize
+// Textarea refs for auto-resize
 const titleTextarea = ref<HTMLTextAreaElement | null>(null);
+const subtitleTextarea = ref<HTMLTextAreaElement | null>(null);
+const excerptTextarea = ref<HTMLTextAreaElement | null>(null);
 
-// Auto-resize title textarea to fit content
+// Auto-resize textarea to fit content
 function autoResizeTitle() {
     const textarea = titleTextarea.value;
+    if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+}
+
+function autoResizeSubtitle() {
+    const textarea = subtitleTextarea.value;
+    if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+}
+
+function autoResizeExcerpt() {
+    const textarea = excerptTextarea.value;
     if (textarea) {
         textarea.style.height = 'auto';
         textarea.style.height = textarea.scrollHeight + 'px';
@@ -660,8 +680,12 @@ function handleKeydown(e: KeyboardEvent) {
 
 onMounted(() => {
     document.addEventListener('keydown', handleKeydown);
-    // Auto-resize title on mount if there's existing content
-    nextTick(() => autoResizeTitle());
+    // Auto-resize textareas on mount if there's existing content
+    nextTick(() => {
+        autoResizeTitle();
+        autoResizeSubtitle();
+        autoResizeExcerpt();
+    });
     // Start heartbeat if we have the lock
     if (lockStatus.value.isMine) {
         startHeartbeat();
@@ -1324,6 +1348,22 @@ function openDiff() {
                                 </div>
                             </div>
 
+                            <!-- Kicker -->
+                            <input
+                                v-model="form.kicker"
+                                type="text"
+                                :placeholder="placeholders.kicker"
+                                :dir="textDirection"
+                                :readonly="isReadOnly"
+                                :class="[
+                                    'w-full bg-transparent border-0 outline-none placeholder:text-muted/30 mb-3 uppercase tracking-wider',
+                                    textAlign,
+                                    isRtl ? 'font-dhivehi text-dhivehi-sm placeholder:font-dhivehi' : 'text-sm font-medium',
+                                    isReadOnly ? 'cursor-not-allowed opacity-70' : '',
+                                ]"
+                                @keydown="onDhivehiKeyDown"
+                            />
+
                             <!-- Title -->
                             <textarea
                                 ref="titleTextarea"
@@ -1333,7 +1373,7 @@ function openDiff() {
                                 :readonly="isReadOnly"
                                 rows="1"
                                 :class="[
-                                    'w-full font-bold bg-transparent border-0 outline-none placeholder:text-muted/40 mb-2 resize-none overflow-hidden',
+                                    'w-full font-bold bg-transparent border-0 outline-none placeholder:text-muted/40 mb-3 resize-none overflow-hidden',
                                     textAlign,
                                     isRtl ? 'font-dhivehi text-dhivehi-4xl leading-relaxed placeholder:font-dhivehi' : 'text-4xl leading-tight',
                                     isReadOnly ? 'cursor-not-allowed opacity-70' : '',
@@ -1343,37 +1383,47 @@ function openDiff() {
                             />
                             <p v-if="form.errors.title" class="text-error text-sm mb-2">{{ form.errors.title }}</p>
 
+                            <!-- Separator between headline and description -->
+                            <div class="h-px bg-gray-200 dark:bg-gray-700 my-6" />
+
                             <!-- Subtitle -->
-                            <input
+                            <textarea
+                                ref="subtitleTextarea"
                                 v-model="form.subtitle"
-                                type="text"
                                 :placeholder="placeholders.subtitle"
                                 :dir="textDirection"
                                 :readonly="isReadOnly"
+                                rows="1"
                                 :class="[
-                                    'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 mb-4',
+                                    'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 mb-4 resize-none overflow-hidden',
                                     textAlign,
                                     isRtl ? 'font-dhivehi text-dhivehi-xl leading-relaxed placeholder:font-dhivehi' : 'text-xl',
                                     isReadOnly ? 'cursor-not-allowed opacity-70' : '',
                                 ]"
+                                @input="autoResizeSubtitle"
                                 @keydown="onDhivehiKeyDown"
                             />
 
-                            <!-- Excerpt -->
+                            <!-- Excerpt / Deck -->
                             <textarea
+                                ref="excerptTextarea"
                                 v-model="form.excerpt"
                                 :placeholder="placeholders.excerpt"
-                                rows="2"
+                                rows="1"
                                 :dir="textDirection"
                                 :readonly="isReadOnly"
                                 :class="[
-                                    'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 resize-none',
+                                    'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 resize-none overflow-hidden',
                                     textAlign,
                                     isRtl ? 'font-dhivehi text-dhivehi-base leading-relaxed placeholder:font-dhivehi' : 'text-base',
                                     isReadOnly ? 'cursor-not-allowed opacity-70' : '',
                                 ]"
+                                @input="autoResizeExcerpt"
                                 @keydown="onDhivehiKeyDown"
                             />
+
+                            <!-- Separator between header and content -->
+                            <div class="h-px bg-gray-200 dark:bg-gray-700 my-8" />
 
                             <!-- Content Editor -->
                             <BlockEditor
