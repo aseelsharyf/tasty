@@ -50,124 +50,124 @@
 }
 
 /*
- * Typography System - From Figma Design
+ * Typography System - Refined for better readability
  * Mobile-first approach with lg: breakpoint for desktop
  *
  * HEADINGS (font-display):
- * - h1-hero: Mobile 80px/70px, Desktop 200px/160px, tracking -8px, uppercase
- * - h1: Mobile 48px/42px, Desktop 100px/86px, tracking -4px, uppercase
- * - h2: Mobile 36px/40px, Desktop 64px/66px, tracking -2.56px
- * - h3: Mobile 28px/32px, Desktop 48px/48px, tracking -1.92px
- * - h4: Mobile 24px/28px, Desktop 32px/38px, tracking -1.28px
- * - h5: Mobile 20px/24px, Desktop 24px/24px, tracking -0.96px
+ * - h1-hero: Mobile 48px/52px, Desktop 72px/76px
+ * - h1: Mobile 36px/40px, Desktop 56px/60px
+ * - h2: Mobile 28px/32px, Desktop 42px/48px
+ * - h3: Mobile 22px/28px, Desktop 32px/40px
+ * - h4: Mobile 18px/24px, Desktop 24px/32px
+ * - h5: Mobile 16px/22px, Desktop 20px/28px
  *
  * BODY TEXT (font-sans):
- * - body-lg: Mobile 20px/30px, Desktop 24px/36px
- * - body-md: Mobile 18px/26px, Desktop 20px/28px
- * - body-sm: 14px/12px uppercase (tags, metadata)
- * - caption: 14px/12px
- * - tag: 12px/12px uppercase
+ * - body-lg: Mobile 18px/28px, Desktop 20px/32px
+ * - body-md: Mobile 16px/24px, Desktop 18px/28px
+ * - body-sm: 13px/18px
+ * - caption: 13px/18px
+ * - tag: 11px/14px uppercase
  *
  * NAVIGATION (font-mono):
- * - nav: 18px/26px uppercase
+ * - nav: 14px/20px uppercase
  */
 
 /* Heading Utilities */
 .text-h1-hero {
     font-family: var(--font-display);
-    font-size: 80px;
-    line-height: 70px;
-    letter-spacing: -3.2px;
+    font-size: 48px;
+    line-height: 52px;
+    letter-spacing: -1.5px;
     text-transform: uppercase;
     font-feature-settings: "dlig" on;
 }
 
 @media (min-width: 1024px) {
     .text-h1-hero {
-        font-size: 200px;
-        line-height: 160px;
-        letter-spacing: -8px;
+        font-size: 72px;
+        line-height: 76px;
+        letter-spacing: -2px;
     }
 }
 
 .text-h1 {
     font-family: var(--font-display);
-    font-size: 48px;
-    line-height: 42px;
-    letter-spacing: -1.92px;
+    font-size: 36px;
+    line-height: 40px;
+    letter-spacing: -1px;
     text-transform: uppercase;
     font-feature-settings: "dlig" on;
 }
 
 @media (min-width: 1024px) {
     .text-h1 {
-        font-size: 100px;
-        line-height: 86px;
-        letter-spacing: -4px;
+        font-size: 56px;
+        line-height: 60px;
+        letter-spacing: -1.5px;
     }
 }
 
 .text-h2 {
     font-family: var(--font-display);
-    font-size: 36px;
-    line-height: 40px;
-    letter-spacing: -1.44px;
+    font-size: 28px;
+    line-height: 32px;
+    letter-spacing: -0.75px;
     font-feature-settings: "dlig" on;
 }
 
 @media (min-width: 1024px) {
     .text-h2 {
-        font-size: 64px;
-        line-height: 66px;
-        letter-spacing: -2.56px;
+        font-size: 42px;
+        line-height: 48px;
+        letter-spacing: -1px;
     }
 }
 
 .text-h3 {
     font-family: var(--font-display);
-    font-size: 28px;
-    line-height: 32px;
-    letter-spacing: -1.12px;
+    font-size: 22px;
+    line-height: 28px;
+    letter-spacing: -0.5px;
     font-feature-settings: "dlig" on;
 }
 
 @media (min-width: 1024px) {
     .text-h3 {
-        font-size: 48px;
-        line-height: 48px;
-        letter-spacing: -1.92px;
+        font-size: 32px;
+        line-height: 40px;
+        letter-spacing: -0.75px;
     }
 }
 
 .text-h4 {
     font-family: var(--font-display);
-    font-size: 24px;
-    line-height: 28px;
-    letter-spacing: -0.96px;
+    font-size: 18px;
+    line-height: 24px;
+    letter-spacing: -0.25px;
     font-feature-settings: "dlig" on;
 }
 
 @media (min-width: 1024px) {
     .text-h4 {
-        font-size: 32px;
-        line-height: 38px;
-        letter-spacing: -1.28px;
+        font-size: 24px;
+        line-height: 32px;
+        letter-spacing: -0.5px;
     }
 }
 
 .text-h5 {
     font-family: var(--font-display);
-    font-size: 20px;
-    line-height: 24px;
-    letter-spacing: -0.8px;
+    font-size: 16px;
+    line-height: 22px;
+    letter-spacing: -0.2px;
     font-feature-settings: "dlig" on;
 }
 
 @media (min-width: 1024px) {
     .text-h5 {
-        font-size: 24px;
-        line-height: 24px;
-        letter-spacing: -0.96px;
+        font-size: 20px;
+        line-height: 28px;
+        letter-spacing: -0.25px;
     }
 }
 
@@ -175,29 +175,29 @@
 .text-body-lg,
 .text-body-large {
     font-family: var(--font-sans);
-    font-size: 20px;
-    line-height: 30px;
+    font-size: 18px;
+    line-height: 28px;
 }
 
 @media (min-width: 1024px) {
     .text-body-lg,
     .text-body-large {
-        font-size: 24px;
-        line-height: 36px;
+        font-size: 20px;
+        line-height: 32px;
     }
 }
 
 .text-body-md,
 .text-body-medium {
     font-family: var(--font-sans);
-    font-size: 18px;
-    line-height: 26px;
+    font-size: 16px;
+    line-height: 24px;
 }
 
 @media (min-width: 1024px) {
     .text-body-md,
     .text-body-medium {
-        font-size: 20px;
+        font-size: 18px;
         line-height: 28px;
     }
 }
@@ -205,28 +205,28 @@
 .text-body-sm,
 .text-body-small {
     font-family: var(--font-sans);
-    font-size: 14px;
-    line-height: 12px;
+    font-size: 13px;
+    line-height: 18px;
     text-transform: uppercase;
 }
 
 .text-caption {
     font-family: var(--font-sans);
-    font-size: 14px;
-    line-height: 12px;
+    font-size: 13px;
+    line-height: 18px;
 }
 
 .text-tag {
     font-family: var(--font-sans);
-    font-size: 12px;
-    line-height: 12px;
+    font-size: 11px;
+    line-height: 14px;
     text-transform: uppercase;
 }
 
 .text-nav {
     font-family: var(--font-mono);
-    font-size: 18px;
-    line-height: 26px;
+    font-size: 14px;
+    line-height: 20px;
     text-transform: uppercase;
 }
 
@@ -291,18 +291,19 @@
 .btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 20px;
+    gap: 6px;
+    padding: 10px 18px;
     border-radius: 100px;
     font-family: var(--font-sans);
-    font-size: 20px;
-    line-height: 26px;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
     transition: all 0.2s ease;
 }
 
 .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .btn-white {
@@ -320,12 +321,13 @@
     display: inline-block;
     background-color: var(--color-light-gray);
     color: var(--color-blue-black);
-    font-size: 12px;
-    line-height: 12px;
-    padding: 8px 12px;
+    font-size: 11px;
+    line-height: 14px;
+    padding: 6px 10px;
     border-radius: 48px;
     text-transform: uppercase;
-    font-weight: 400;
+    font-weight: 500;
+    letter-spacing: 0.3px;
 }
 
 .tag-white {
@@ -336,16 +338,16 @@
 .card-horizontal {
     display: flex;
     align-items: center;
-    gap: 24px;
-    padding: 24px;
+    gap: 16px;
+    padding: 16px;
     container-type: inline-size;
 }
 
 .card-horizontal-image {
-    width: clamp(120px, 25%, 200px);
+    width: clamp(100px, 25%, 160px);
     aspect-ratio: 1;
     flex-shrink: 0;
-    border-radius: 4px;
+    border-radius: 8px;
     overflow: hidden;
     position: relative;
 }
@@ -375,7 +377,7 @@
     justify-content: flex-start;
 }
 
-@container (max-width: 550px) {
+@container (max-width: 350px) {
     .card-horizontal .meta-separator {
         display: none;
     }
@@ -383,7 +385,7 @@
     .card-horizontal .meta-row {
         flex-direction: column;
         align-items: flex-start;
-        gap: 10px;
+        gap: 4px;
     }
 }
 
@@ -426,12 +428,12 @@
 .card-vertical {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
 }
 
 .card-vertical-image {
-    aspect-ratio: 310/362;
-    border-radius: 12px;
+    aspect-ratio: 4/5;
+    border-radius: 10px;
     overflow: hidden;
     position: relative;
 }

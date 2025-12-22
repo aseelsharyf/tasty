@@ -10,18 +10,18 @@
 >
     <div class="container-main flex flex-col gap-10">
         {{-- Top Row: Title Column + Large Article --}}
-        <div class="grid grid-cols-2 gap-10 items-center max-lg:grid-cols-1">
+        <div class="grid grid-cols-2 gap-6 items-center max-lg:grid-cols-1">
             {{-- Title Column --}}
-            <div class="flex flex-col gap-5 items-center justify-center max-lg:w-full">
-                <div class="w-full h-[450px] max-lg:h-[280px]">
-                    <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain" style="mix-blend-mode: darken;">
+            <div class="flex flex-col gap-5 items-start max-lg:items-center max-lg:w-full">
+                <div class="w-full max-w-[380px] max-lg:max-w-[320px] mx-auto lg:mx-0">
+                    <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-auto object-contain" style="mix-blend-mode: darken;">
                 </div>
-                <div class="flex flex-col items-center text-center text-blue-black gap-5">
-                    <div class="flex flex-col items-center">
-                        <span class="text-h2">{{ $titleSmall }}</span>
-                        <h2 class="text-h1 uppercase">{{ $titleLarge }}</h2>
+                <div class="flex flex-col items-start max-lg:items-center max-lg:text-center text-blue-black gap-4">
+                    <div class="flex flex-col items-start max-lg:items-center">
+                        <span class="text-h3">{{ $titleSmall }}</span>
+                        <h2 class="text-h2 uppercase">{{ $titleLarge }}</h2>
                     </div>
-                    <p class="text-body-large">{{ $description }}</p>
+                    <p class="text-body-md max-w-md">{{ $description }}</p>
                 </div>
             </div>
             {{-- Large Featured Article --}}

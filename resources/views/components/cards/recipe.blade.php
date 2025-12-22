@@ -1,24 +1,24 @@
 @php
     // Variant-specific classes based on template
     $wrapperClass = match($variant) {
-        'featured' => 'w-full bg-off-white rounded-xl overflow-hidden flex flex-col items-center gap-8 pb-10',
-        'grid' => 'h-[626px] flex flex-col items-center gap-8 pb-10 bg-off-white rounded-xl overflow-hidden',
-        'mobile' => 'w-[310px] h-[411px] flex flex-col items-center gap-8 pb-8 bg-off-white rounded-xl overflow-hidden shrink-0',
-        default => 'flex flex-col items-center gap-8 pb-10 bg-off-white rounded-xl overflow-hidden',
+        'featured' => 'w-full bg-off-white rounded-xl overflow-hidden flex flex-col items-center gap-6 pb-8',
+        'grid' => 'h-[480px] flex flex-col items-center gap-6 pb-8 bg-off-white rounded-xl overflow-hidden',
+        'mobile' => 'w-[280px] h-[360px] flex flex-col items-center gap-6 pb-6 bg-off-white rounded-xl overflow-hidden shrink-0',
+        default => 'flex flex-col items-center gap-6 pb-8 bg-off-white rounded-xl overflow-hidden',
     };
 
     $imageWrapperClass = match($variant) {
-        'featured' => 'block relative w-full flex-1 min-h-[300px] lg:min-h-[500px] p-6 flex flex-col justify-end items-center',
-        'grid' => 'block relative w-full flex-1 p-6 flex flex-col justify-end items-center',
-        'mobile' => 'block relative w-full flex-1 p-6 flex flex-col justify-end items-center',
-        default => 'block relative w-full flex-1 p-6 flex flex-col justify-end items-center',
+        'featured' => 'block relative w-full flex-1 min-h-[240px] lg:min-h-[360px] p-5 flex flex-col justify-end items-center',
+        'grid' => 'block relative w-full flex-1 p-5 flex flex-col justify-end items-center',
+        'mobile' => 'block relative w-full flex-1 p-4 flex flex-col justify-end items-center',
+        default => 'block relative w-full flex-1 p-5 flex flex-col justify-end items-center',
     };
 
     $contentClass = match($variant) {
-        'featured' => 'w-full px-6 lg:px-10 flex flex-col items-center gap-6',
-        'grid' => 'flex flex-col items-center gap-6 px-8 text-center text-blue-black',
-        'mobile' => 'flex flex-col items-center gap-4 px-5 text-center text-blue-black',
-        default => 'flex flex-col items-center gap-5 px-6 text-center text-blue-black',
+        'featured' => 'w-full px-5 lg:px-8 flex flex-col items-center gap-4',
+        'grid' => 'flex flex-col items-center gap-4 px-6 text-center text-blue-black',
+        'mobile' => 'flex flex-col items-center gap-3 px-4 text-center text-blue-black',
+        default => 'flex flex-col items-center gap-4 px-5 text-center text-blue-black',
     };
 
     $isFeatured = $variant === 'featured';
@@ -41,10 +41,10 @@
 
     {{-- Content --}}
     <div class="{{ $contentClass }}">
-        <h3 class="{{ $isFeatured ? 'text-h3' : 'text-h4' }} text-blue-black text-center line-clamp-2">{{ $title }}</h3>
+        <h3 class="{{ $isFeatured ? 'text-h4' : 'text-h5' }} text-blue-black text-center line-clamp-2">{{ $title }}</h3>
 
         @if($isFeatured && $description)
-            <p class="text-body-medium text-blue-black text-center">{{ $description }}</p>
+            <p class="text-body-md text-blue-black text-center">{{ $description }}</p>
         @endif
 
         {{-- Author/date --}}

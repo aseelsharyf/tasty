@@ -1,6 +1,6 @@
-<article class="flex {{ $reversed ? 'flex-col-reverse' : 'flex-col' }} gap-8 w-[480px] max-md:w-[310px] shrink-0">
+<article class="flex {{ $reversed ? 'flex-col-reverse' : 'flex-col' }} gap-6 w-[300px] max-md:w-[260px] shrink-0">
     {{-- Image --}}
-    <div class="relative h-[580px] max-md:h-[362px] rounded-xl overflow-hidden">
+    <div class="relative aspect-[3/4] rounded-xl overflow-hidden">
         <a href="{{ $url }}" class="absolute inset-0 z-0 group">
             <img
                 src="{{ $image }}"
@@ -22,12 +22,12 @@
     </div>
 
     {{-- Content --}}
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-4">
         <a href="{{ $url }}" class="hover:opacity-80 transition-opacity">
-            <h3 class="text-h3 text-blue-black line-clamp-3">{{ $title }}</h3>
+            <h3 class="text-h4 text-blue-black line-clamp-3">{{ $title }}</h3>
         </a>
         @if($description)
-            <p class="text-body-md text-blue-black line-clamp-3">{{ $description }}</p>
+            <p class="text-body-md text-blue-black line-clamp-2">{{ $description }}</p>
         @endif
 
         {{-- Author/date --}}

@@ -1,4 +1,4 @@
-<article class="card-horizontal bg-white rounded-xl overflow-hidden">
+<article class="card-horizontal bg-white rounded-xl overflow-hidden h-full">
     {{-- Image --}}
     <a href="{{ $url }}" class="card-horizontal-image group">
         <img
@@ -9,7 +9,7 @@
     </a>
 
     {{-- Content --}}
-    <div class="flex flex-col gap-4 flex-1 min-w-0">
+    <div class="flex flex-col flex-1 min-w-0">
         @if($category || $tag)
             <x-post.meta-tags
                 :category="$category"
@@ -18,15 +18,17 @@
                 :tag-url="$tagUrl"
             />
         @endif
-        <a href="{{ $url }}" class="hover:text-tasty-yellow transition-colors">
-            <h3 class="text-h4 text-blue-black line-clamp-2">{{ $title }}</h3>
+        <a href="{{ $url }}" class="hover:text-tasty-yellow transition-colors mt-3">
+            <h3 class="text-h5 text-blue-black line-clamp-2">{{ $title }}</h3>
         </a>
 
-        {{-- Meta row --}}
-        <x-post.author-date
-            :author="$author"
-            :author-url="$authorUrl"
-            :date="$date"
-        />
+        {{-- Meta row - pushed to bottom --}}
+        <div class="mt-auto pt-3">
+            <x-post.author-date
+                :author="$author"
+                :author-url="$authorUrl"
+                :date="$date"
+            />
+        </div>
     </div>
 </article>

@@ -1,6 +1,6 @@
-<article class="flex flex-col gap-8 bg-white rounded-xl overflow-hidden p-6">
+<article class="flex flex-col gap-5 bg-white rounded-xl overflow-hidden p-5">
     {{-- Image with overlay tag --}}
-    <div class="relative aspect-[4/3] rounded overflow-hidden">
+    <div class="relative aspect-[4/3] rounded-lg overflow-hidden">
         <a href="{{ $url }}" class="absolute inset-0 z-0 group">
             <img
                 src="{{ $image }}"
@@ -20,12 +20,12 @@
     </div>
 
     {{-- Content --}}
-    <div class="flex flex-col gap-6 text-center">
+    <div class="flex flex-col gap-4 text-center">
         <a href="{{ $url }}" class="hover:text-tasty-yellow transition-colors">
-            <h3 class="text-h3 text-blue-black">{{ $title }}</h3>
+            <h3 class="text-h4 text-blue-black">{{ $title }}</h3>
         </a>
         @if($description)
-            <p class="text-body-md text-blue-black">{{ $description }}</p>
+            <p class="text-body-md text-blue-black line-clamp-2">{{ $description }}</p>
         @endif
 
         {{-- Meta row --}}
