@@ -1,5 +1,4 @@
 {{-- Article Meta Section - Sponsor Badge & Share Icons --}}
-{{-- Based on Figma node 2048-800 --}}
 @props([
     'post',
     'showSponsor' => true,

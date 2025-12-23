@@ -1,4 +1,4 @@
-{{-- Share Icons - Based on Figma node 2048-810 --}}
+{{-- Share Icons --}}
 @props([
     'url' => '',
     'title' => '',
@@ -14,7 +14,7 @@
 <div class="flex items-center {{ $justifyClass }} gap-6">
     <span class="font-sans text-[14px] leading-[12px] uppercase text-tasty-blue-black">Share</span>
 
-    {{-- Copy Link (first per Figma) --}}
+    {{-- Copy Link --}}
     <button
         type="button"
         x-data="{ copied: false }"

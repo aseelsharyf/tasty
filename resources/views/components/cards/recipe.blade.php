@@ -5,9 +5,6 @@
     $textAlign = $isLeftAligned ? 'text-left' : 'text-center';
     $justifyMeta = $isLeftAligned ? 'justify-start' : 'justify-center';
 
-    // Variant-specific classes based on Figma specs
-    // Featured: Large card with description
-    // Grid/Default: Standard card without description
     $wrapperClass = match($variant) {
         'featured' => "w-full bg-[#F7F7F7] rounded-[12px] overflow-hidden flex flex-col {$alignItems} gap-8 pb-10",
         'grid' => 'w-full bg-[#F7F7F7] rounded-[12px] overflow-hidden flex flex-col items-center gap-8 pb-10',
@@ -49,7 +46,7 @@
 
     {{-- Content --}}
     <div class="{{ $contentClass }}">
-        {{-- Title - 48px per Figma (text-h3) --}}
+        {{-- Title --}}
         <a href="{{ $url }}" class="hover:opacity-80 transition-opacity">
             <h3 class="text-h3 text-blue-black {{ $isFeatured ? $textAlign : 'text-center' }} line-clamp-3">{{ $title }}</h3>
         </a>
@@ -59,7 +56,7 @@
             <p class="text-body-md text-blue-black {{ $textAlign }} line-clamp-4">{{ $description }}</p>
         @endif
 
-        {{-- Author/date - 14px uppercase --}}
+        {{-- Author/date --}}
         <div class="flex flex-wrap items-center {{ $isFeatured ? $justifyMeta : 'justify-center' }} gap-5 text-[14px] leading-[12px] uppercase text-blue-black">
             @if($author)
                 <a href="#" class="underline underline-offset-4 hover:opacity-80 transition-opacity">BY {{ strtoupper($author) }}</a>

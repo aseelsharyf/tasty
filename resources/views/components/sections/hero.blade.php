@@ -1,4 +1,4 @@
-{{-- Hero Section - Split layout with image left, content right --}}
+{{-- Hero Section --}}
 @php
     // Determine if we have content to display (either from post or manual mode)
     $hasContent = $manual || $post;
@@ -30,13 +30,10 @@
     $metaAlignment = $alignment === 'bottom' ? 'justify-start' : 'justify-center';
 @endphp
 
-{{-- Pull hero up behind the navbar (desktop only, tablet/mobile has no overlap) --}}
 <section class="w-full flex justify-center relative z-0 -mt-[96px] md:-mt-[112px] max-lg:mt-0">
-    {{-- Hero container - max-width 1880px, height 968px at 1440px width (scales proportionally) --}}
-    {{-- Mobile: flex-col with explicit dvh heights for predictable rendering on physical devices --}}
     <div class="flex w-full max-w-[1880px] h-[clamp(500px,67.22vw,1265px)]
         max-lg:flex-col max-lg:h-dvh">
-        {{-- Hero Image - Left 50% / Mobile: 60dvh fixed height --}}
+        {{-- Hero Image --}}
         @if($manual)
             <div class="block relative w-1/2 h-full overflow-hidden
                 max-lg:w-full max-lg:h-[60dvh] max-lg:shrink-0">
@@ -57,7 +54,7 @@
             </a>
         @endif
 
-        {{-- Hero Content - Right 50% / Mobile: 40dvh fixed height --}}
+        {{-- Hero Content --}}
         <div class="w-1/2 h-full {{ $bgColorClass }} px-16 py-24 flex flex-col {{ $contentAlignment }} gap-10
             max-lg:w-full max-lg:h-[40dvh] max-lg:shrink-0 max-lg:overflow-hidden max-lg:px-5 max-lg:py-6 max-lg:items-center max-lg:justify-center max-lg:text-center max-lg:gap-4" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
             {{-- Meta: Category • Author • Date --}}
@@ -83,8 +80,7 @@
                 @endif
             </div>
 
-            {{-- Kicker (large) & Title (small) --}}
-            {{-- Mobile: scaled to fit 43% viewport height --}}
+            {{-- Kicker & Title --}}
             <div class="flex flex-col gap-4 w-full max-lg:gap-2">
                 @if($manual)
                     @if($heroKicker)

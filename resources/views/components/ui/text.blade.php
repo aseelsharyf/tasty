@@ -1,4 +1,4 @@
-{{-- resources/views/components/ui/text.blade.php --}}
+{{-- UI Text Component --}}
 
 @props([
     'text' => '',
@@ -11,15 +11,6 @@
 ])
 
 @php
-    /**
-     * Typography classes from app.css (based on Figma)
-     * These use responsive CSS with media queries built-in:
-     *
-     * text-body-sm: 12px/12px → 14px/12px
-     * text-body-md: 18px/24px → 20px/28px
-     * text-body-lg: 20px/26px → 24px/26px
-     * text-nav: 18px/26px (monospace)
-     */
     $typographyClasses = [
         'sm' => 'text-body-sm',
         'md' => 'text-body-md',

@@ -1,5 +1,4 @@
 {{-- Featured Article Header - Full-width hero with gradient to yellow --}}
-{{-- Based on Figma node 2048-788 --}}
 @props([
     'post',  // Post model
 ])

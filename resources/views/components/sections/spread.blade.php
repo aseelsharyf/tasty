@@ -23,7 +23,7 @@
         {{-- Desktop: Horizontal Scroll --}}
         <div class="scroll-container pb-8 container-main max-lg:hidden">
             <div class="flex pl-10 min-w-max">
-                {{-- Intro Card (Desktop only) - 424px per Figma --}}
+                {{-- Intro Card (Desktop only) --}}
                 @if($showIntro)
                     <div class="flex items-center shrink-0">
                         <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10">
@@ -77,7 +77,7 @@
         {{-- Scroll Layout (Default) --}}
         <div class="scroll-container pb-8 max-lg:pb-6 container-main">
             <div class="flex pl-10 min-w-max max-lg:pl-5 max-lg:gap-8">
-                {{-- Intro Card (Desktop only) - 424px per Figma --}}
+                {{-- Intro Card (Desktop only) --}}
                 @if($showIntro)
                     <div class="flex items-center shrink-0 max-lg:hidden">
                         <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10">

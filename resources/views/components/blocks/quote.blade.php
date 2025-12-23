@@ -1,6 +1,4 @@
-{{-- resources/views/components/blocks/quote.blade.php --}}
-{{-- EditorJS Quote Block - Three display types based on Figma design --}}
-{{-- displayType: 'default' (centered), 'large' (side-by-side big photo), 'small' (thumbnail photo) --}}
+{{-- EditorJS Quote Block --}}
 
 @props([
     'text' => '',
@@ -26,8 +24,7 @@
 @endphp
 
 @if($displayType === 'large' && $hasPhoto)
-    {{-- Large: Side-by-side with big photo - Figma node 2048-893 --}}
-    {{-- Container: max-w-[1440px], padding 40px, gap 40px --}}
+    {{-- Large: Side-by-side with big photo --}}
     <div class="bg-tasty-off-white w-full">
         <div class="max-w-[1440px] mx-auto">
             <div class="flex flex-col lg:flex-row gap-10 items-center justify-center px-4 lg:px-10 py-12 lg:py-16">
@@ -61,8 +58,7 @@
     </div>
 
 @elseif($displayType === 'small' && $hasPhoto)
-    {{-- Small: Thumbnail photo with yellow accent - Figma node 2048-899 --}}
-    {{-- Outer container uses site max-width, inner content constrained to 1440px --}}
+    {{-- Small: Thumbnail photo with yellow accent --}}
     <div class="bg-tasty-off-white w-full py-12 lg:py-16">
         <div class="max-w-[1440px] mx-auto px-4 lg:px-10 xl:px-[147px]">
             <div class="flex flex-col sm:flex-row gap-10 items-start">

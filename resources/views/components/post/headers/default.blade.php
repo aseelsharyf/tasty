@@ -1,5 +1,4 @@
 {{-- Default Article Header - Split layout with image left, text right --}}
-{{-- Based on Figma node 2048-903 --}}
 @props([
     'post',  // Post model
 ])

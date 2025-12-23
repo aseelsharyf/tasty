@@ -1,4 +1,3 @@
-{{-- resources/views/components/blocks/header.blade.php --}}
 {{-- EditorJS Header Block --}}
 
 @props([
@@ -10,7 +9,7 @@
 @php
     $level = min(6, max(1, (int) $level));
 
-    // Map heading levels to typography classes (from Figma)
+    // Map heading levels to typography classes
     $headingClasses = [
         1 => 'text-h1',
         2 => 'text-h2',

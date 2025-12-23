@@ -1,4 +1,4 @@
-{{-- Spread Card - 480px per Figma specs, full-width when mobile grid --}}
+{{-- Spread Card --}}
 <article class="flex {{ $reversed ? 'flex-col-reverse' : 'flex-col' }} gap-6 {{ $mobile ? 'w-full' : 'w-[480px] px-10 max-lg:w-[300px] max-lg:px-0' }} shrink-0">
     {{-- Image --}}
     <div class="relative aspect-[3/4] rounded-xl overflow-hidden">

@@ -1,5 +1,4 @@
 {{-- Minimal Article Header - Side-by-side with rounded image, includes meta --}}
-{{-- Based on Figma node 2048-938 --}}
 @props([
     'post',  // Post model
     'includeMeta' => true,  // Whether to include author/date/share (since it's built into this header)
