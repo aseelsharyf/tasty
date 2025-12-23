@@ -99,12 +99,15 @@ class Spread extends Component
         $this->showDividers = $showDividers;
         $this->dividerColor = str_starts_with($dividerColor, 'bg-') ? $dividerColor : ($dividerColor === 'white' ? 'bg-white' : 'bg-gray-300');
 
-        // Static mode: use provided static data
-        if (count($staticPosts) > 0) {
+        // Static posts can be mixed with dynamic posts
+        $staticCollection = collect($staticPosts);
+
+        // If only static posts provided (no action specified or count is 0 after static)
+        if (count($staticPosts) > 0 && $count === 0) {
             $this->titleSmall = $titleSmall;
             $this->titleLarge = $titleLarge;
             $this->description = $description;
-            $this->posts = collect($staticPosts);
+            $this->posts = $staticCollection;
 
             return;
         }
@@ -117,28 +120,32 @@ class Spread extends Component
                 $this->titleSmall = 'Tagged';
                 $this->titleLarge = strtoupper($tag->name);
                 $this->description = $description ?: "Explore our latest posts tagged with {$tag->name}.";
-                $this->posts = $this->fetchPostsViaAction('byTag', ['slug' => $tag->slug], $count);
+                $dynamicPosts = $this->fetchPostsViaAction('byTag', ['slug' => $tag->slug], $count);
+                $this->posts = $staticCollection->merge($dynamicPosts);
             } else {
                 // Fallback if no tags with posts exist
                 $this->titleSmall = $titleSmall;
                 $this->titleLarge = $titleLarge;
                 $this->description = $description;
-                $this->posts = $this->fetchPostsViaAction('recent', [], $count);
+                $dynamicPosts = $this->fetchPostsViaAction('recent', [], $count);
+                $this->posts = $staticCollection->merge($dynamicPosts);
             }
         } elseif (count($postIds) > 0) {
             $this->titleSmall = $titleSmall;
             $this->titleLarge = $titleLarge;
             $this->description = $description;
-            $this->posts = Post::with(['author', 'categories', 'tags'])
+            $dynamicPosts = Post::with(['author', 'categories', 'tags'])
                 ->whereIn('id', $postIds)
                 ->get()
                 ->sortBy(fn ($post) => array_search($post->id, $postIds))
                 ->values();
+            $this->posts = $staticCollection->merge($dynamicPosts);
         } else {
             $this->titleSmall = $titleSmall;
             $this->titleLarge = $titleLarge;
             $this->description = $description;
-            $this->posts = $this->fetchPostsViaAction($action, $params, $count);
+            $dynamicPosts = $this->fetchPostsViaAction($action, $params, $count);
+            $this->posts = $staticCollection->merge($dynamicPosts);
         }
     }
 

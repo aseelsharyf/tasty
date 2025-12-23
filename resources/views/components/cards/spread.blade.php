@@ -6,7 +6,7 @@
             <img
                 src="{{ $image }}"
                 alt="{{ $imageAlt }}"
-                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                class="w-full h-full object-cover"
             >
         </a>
         @if($category || $tag)

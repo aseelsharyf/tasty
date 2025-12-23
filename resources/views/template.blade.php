@@ -244,6 +244,49 @@
             bgColor="yellow"
         />
 
+        {{-- Ceylon Spread Section (Static) --}}
+        <x-sections.spread
+            :showIntro="false"
+            bgColor="yellow"
+            :showDividers="true"
+            dividerColor="white"
+            mobileLayout="scroll"
+            :staticPosts="[
+                [
+                    'title' => 'Where Ceylon Begins: Walking the Endless Green of Lanka\'s Tea Hills',
+                    'excerpt' => 'Walking through misty rows of emerald green, meeting the pickers and stories behind Sri Lanka\'s most iconic leaf.',
+                    'image' => Vite::asset('resources/images/image-21.png'),
+                    'url' => '#',
+                    'author' => 'Aminath Ahmed',
+                    'date' => 'February 14, 2025',
+                    'tag1' => 'THE SPREAD',
+                    'tag2' => 'ON INGREDIENTS',
+                ],
+                [
+                    'title' => 'A Morning at Colombo\'s Heritage Café, Where Time Moves Softer',
+                    'excerpt' => 'Quiet columns, slow mornings, and a café that pours history with every cup. A taste of Sri Lanka\'s timeless charm.',
+                    'image' => Vite::asset('resources/images/image-22.png'),
+                    'url' => '#',
+                    'author' => 'Mohamed Ashraf',
+                    'date' => 'January 8, 2025',
+                    'tag1' => 'SECTION',
+                    'tag2' => 'TAG',
+                ],
+                [
+                    'title' => 'Heat, Hustle & Street Gold',
+                    'excerpt' => 'From spicy short eats to crispy on-the-fly, Sri Lanka\'s street vendors turn open-air kitchens. Loud, fast, and absolutely delicious.',
+                    'image' => Vite::asset('resources/images/image-23.png'),
+                    'url' => '#',
+                    'author' => 'Hanan Saeed',
+                    'date' => 'September 22, 2025',
+                    'tag1' => 'THE SPREAD',
+                    'tag2' => 'ON INGREDIENTS',
+                ],
+            ]"
+            :count="0"
+        />
+
+
         <!-- Newsletter Section -->
         <div class="w-full bg-gray-100">
             <section class="container-main py-16 px-10 max-md:px-5 max-md:py-8">

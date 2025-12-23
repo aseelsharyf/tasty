@@ -76,7 +76,7 @@
                     <a href="{{ $postUrl }}" class="flex flex-col gap-8 flex-1 min-w-[280px] group">
                         {{-- Card Image with Tag --}}
                         <div class="relative w-full flex-1 min-h-[400px] rounded-xl overflow-hidden">
-                            <img src="{{ $postImage }}" alt="{{ $postTitle }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                            <img src="{{ $postImage }}" alt="{{ $postTitle }}" class="absolute inset-0 w-full h-full object-cover">
                             <div class="absolute bottom-6 left-0 right-0 flex justify-center">
                                 <div class="inline-flex items-center gap-2.5 bg-white rounded-[48px] px-3 py-2 text-[12px] leading-[12px] uppercase whitespace-nowrap">
                                     <span>{{ strtoupper($postCategory ?? 'REVIEW') }}</span>
@@ -122,7 +122,7 @@
 
                         <a href="{{ $postUrl }}" class="flex flex-col gap-8 flex-1 min-w-[280px] group">
                             <div class="relative w-full h-[460px] rounded-xl overflow-hidden">
-                                <img src="{{ $postImage }}" alt="{{ $postTitle }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                                <img src="{{ $postImage }}" alt="{{ $postTitle }}" class="absolute inset-0 w-full h-full object-cover">
                                 <div class="absolute bottom-6 left-0 right-0 flex justify-center">
                                     <div class="inline-flex items-center gap-2.5 bg-white rounded-[48px] px-3 py-2 text-[12px] leading-[12px] uppercase whitespace-nowrap">
                                         <span>{{ strtoupper($postCategory ?? 'REVIEW') }}</span>
@@ -191,7 +191,7 @@
 
                     <a href="{{ $postUrl }}" class="{{ $cardClass }}">
                         <div class="relative w-full h-[320px] rounded-xl overflow-hidden">
-                            <img src="{{ $postImage }}" alt="{{ $postTitle }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                            <img src="{{ $postImage }}" alt="{{ $postTitle }}" class="absolute inset-0 w-full h-full object-cover">
                             <div class="absolute bottom-6 left-0 right-0 flex justify-center">
                                 <div class="inline-flex items-center gap-2.5 bg-white rounded-[48px] px-3 py-2 text-[12px] leading-[12px] uppercase whitespace-nowrap">
                                     <span>{{ strtoupper($postCategory ?? 'REVIEW') }}</span>
@@ -224,7 +224,7 @@
             <template x-for="post in loadedPosts" :key="post.id">
                 <a :href="post.url" class="flex flex-col gap-8 group">
                     <div class="relative w-full h-[460px] rounded-xl overflow-hidden">
-                        <img :src="post.image" :alt="post.title" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                        <img :src="post.image" :alt="post.title" class="absolute inset-0 w-full h-full object-cover">
                         <div class="absolute bottom-6 left-0 right-0 flex justify-center">
                             <div class="inline-flex items-center gap-2.5 bg-white rounded-[48px] px-3 py-2 text-[12px] leading-[12px] uppercase whitespace-nowrap">
                                 <span x-text="post.category ? post.category.toUpperCase() : 'REVIEW'"></span>

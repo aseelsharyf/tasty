@@ -78,6 +78,18 @@
             bgColor="yellow"
         />
 
+
+        {{-- Dynamic Spread Section --}}
+        <x-sections.spread
+            :showIntro="false"
+            bgColor="yellow"
+            :showDividers="true"
+            dividerColor="white"
+            mobileLayout="scroll"
+            action="recent"
+            :count="5"
+        />
+
         {{-- Newsletter Section --}}
         <x-sections.newsletter />
     </main>
