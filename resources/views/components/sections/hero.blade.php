@@ -32,11 +32,11 @@
 
 <section class="w-full flex justify-center relative z-0 -mt-[96px] md:-mt-[112px] max-lg:mt-0">
     <div class="flex w-full max-w-[1880px] h-[clamp(500px,67.22vw,1265px)]
-        max-lg:flex-col max-lg:h-dvh">
+        max-lg:flex-col max-lg:h-screen">
         {{-- Hero Image --}}
         @if($manual)
             <div class="block relative w-1/2 h-full overflow-hidden
-                max-lg:w-full max-lg:h-[60dvh] max-lg:shrink-0">
+                max-lg:w-full max-lg:flex-[6] max-lg:min-h-0">
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"
@@ -45,7 +45,7 @@
             </div>
         @else
             <a href="{{ $heroUrl }}" class="block relative w-1/2 h-full overflow-hidden
-                max-lg:w-full max-lg:h-[60dvh] max-lg:shrink-0">
+                max-lg:w-full max-lg:flex-[6] max-lg:min-h-0">
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"
@@ -56,7 +56,7 @@
 
         {{-- Hero Content --}}
         <div class="w-1/2 h-full {{ $bgColorClass }} px-16 py-24 flex flex-col {{ $contentAlignment }} gap-10
-            max-lg:w-full max-lg:h-[40dvh] max-lg:shrink-0 max-lg:overflow-hidden max-lg:px-5 max-lg:py-6 max-lg:items-center max-lg:justify-center max-lg:text-center max-lg:gap-4" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+            max-lg:w-full max-lg:flex-[4] max-lg:min-h-0 max-lg:overflow-hidden max-lg:px-5 max-lg:py-6 max-lg:items-center max-lg:justify-center max-lg:text-center max-lg:gap-4" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
             {{-- Meta: Category • Author • Date --}}
             <div class="flex flex-wrap items-center gap-5 text-body-sm uppercase text-blue-black {{ $metaAlignment }} max-lg:justify-center">
                 @if($heroCategory)
