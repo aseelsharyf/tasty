@@ -105,6 +105,39 @@
             :count="3"
         />
 
+        {{-- Add to Cart Section --}}
+        <x-sections.add-to-cart
+            title="ADD TO CART"
+            description="Ingredients, tools, and staples we actually use."
+            bgColor="white"
+            :products="[
+                [
+                    'title' => 'Vitamix Ascent X2',
+                    'description' => 'Powerful, precise, and fast — a blender that handles anything you throw at it.',
+                    'image' => 'https://www.figma.com/api/mcp/asset/38c405a2-69ad-46db-939c-6c849d224840',
+                    'imageAlt' => 'Vitamix Ascent X2 Blender',
+                    'tags' => ['PANTRY', 'APPLIANCE'],
+                    'url' => '#',
+                ],
+                [
+                    'title' => 'Gozney Arc XL',
+                    'description' => 'A compact oven with real flame power — crisp, blistered pizza every time.',
+                    'image' => 'https://www.figma.com/api/mcp/asset/1dc5a2f7-b226-4f7f-adbd-c514e676ac93',
+                    'imageAlt' => 'Gozney Arc XL Pizza Oven',
+                    'tags' => ['PANTRY', 'APPLIANCE'],
+                    'url' => '#',
+                ],
+                [
+                    'title' => 'Ratio Eight Series 2 Coffee Maker',
+                    'description' => 'Beautiful design, foolproof brewing, and café-level coffee at home.',
+                    'image' => 'https://www.figma.com/api/mcp/asset/0c3d053a-3cce-472d-8d89-d315c64a4603',
+                    'imageAlt' => 'Ratio Eight Series 2 Coffee Maker',
+                    'tags' => ['PANTRY', 'APPLIANCE'],
+                    'url' => '#',
+                ],
+            ]"
+        />
+
         {{-- Newsletter Section --}}
         <x-sections.newsletter />
     </main>

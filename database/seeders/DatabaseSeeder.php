@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             LanguageSeeder::class,
             WorkflowSeeder::class,
-            NavigationSeeder::class,
+            MenuSeeder::class,
         ]);
 
         // Seed default post types

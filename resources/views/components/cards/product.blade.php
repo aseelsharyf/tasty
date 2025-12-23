@@ -1,6 +1,6 @@
-<a href="{{ $url }}" class="card-vertical bg-off-white rounded-xl overflow-hidden p-1 pb-10">
-    {{-- Image container: square, white bg, contain --}}
-    <div class="relative aspect-square bg-white rounded-lg flex items-end justify-center p-6 mb-8">
+<a href="{{ $url }}" class="flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-10 h-full max-lg:h-auto">
+    {{-- Image container: flexible height, white bg, contain --}}
+    <div class="relative flex-1 min-h-[300px] max-lg:min-h-[250px] bg-white rounded-lg flex items-end justify-center p-6 mb-8">
         <img
             src="{{ $image }}"
             alt="{{ $imageAlt }}"
@@ -12,7 +12,7 @@
     </div>
 
     {{-- Content --}}
-    <div class="flex flex-col items-center gap-6 px-8 text-center">
+    <div class="flex flex-col items-center gap-6 px-10 max-lg:px-6 text-center">
         <h3 class="text-h4 text-blue-black line-clamp-2">{{ $title }}</h3>
         @if($description)
             <p class="text-body-md text-blue-black line-clamp-3">{{ $description }}</p>
