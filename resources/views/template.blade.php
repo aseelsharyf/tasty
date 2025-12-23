@@ -79,6 +79,20 @@
             :showLoadMore="false"
         />
 
+        {{-- Featured Person Section (Static) --}}
+        <x-sections.featured-person
+            :staticData="[
+                'title' => 'Aminath Hameed',
+                'subtitle' => 'Chef and Owner of Maldivian Patisserie.',
+                'description' => 'Two weeks in Lanka, documenting dishes and cooks who give the island its food identity.',
+                'image' => Vite::asset('resources/images/image-06.png'),
+                'url' => '#',
+            ]"
+            tag1="TASTY FEATURE"
+            tag2="PEOPLE"
+            buttonText="Read More"
+            bgColor="yellow"
+        />
 
         <!-- Newsletter Section -->
         <div class="w-full bg-gray-100">

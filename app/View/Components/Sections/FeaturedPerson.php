@@ -16,27 +16,18 @@ class FeaturedPerson extends Component
 {
     use ResolvesColors;
 
-    public ?Post $post;
+    /** @var Post|array<string, mixed>|null */
+    public Post|array|null $post;
 
     public string $bgColorClass;
 
     public string $bgColorStyle;
-
-    public string $topBgColorClass;
-
-    public string $topBgColorStyle;
-
-    public string $overlayColor;
-
-    public string $bgHexColor;
 
     public string $buttonText;
 
     public string $tag1;
 
     public string $tag2;
-
-    public string $overlayGradient;
 
     /** @var array<string, class-string> */
     protected array $actions = [
@@ -50,42 +41,44 @@ class FeaturedPerson extends Component
      * Create a new component instance.
      *
      * @param  int|null  $postId  Specific post ID to display
+     * @param  array<string, mixed>|null  $staticData  Static data for the person
      * @param  string  $action  Action to fetch post (recent, trending, byTag, byCategory)
      * @param  array<string, mixed>  $params  Parameters for the action
      * @param  string  $bgColor  Background color for content area (named, Tailwind class, hex, or rgba)
-     * @param  string  $topBgColor  Background color for top area (named, Tailwind class, hex, or rgba)
-     * @param  string  $overlayColor  Overlay gradient color (named, hex, or rgba)
      * @param  string  $buttonText  Button text
      * @param  string  $tag1  First tag text
      * @param  string  $tag2  Second tag text (or uses category)
      */
     public function __construct(
         ?int $postId = null,
+        ?array $staticData = null,
         string $action = 'byTag',
         array $params = ['tag' => 'featured'],
         string $bgColor = 'yellow',
-        string $topBgColor = 'off-white',
-        string $overlayColor = 'yellow',
         string $buttonText = 'Read More',
         string $tag1 = 'TASTY FEATURE',
         string $tag2 = '',
     ) {
-        // Resolve background colors
+        // Resolve background color
         $bgResolved = $this->resolveBgColor($bgColor);
         $this->bgColorClass = $bgResolved['class'];
         $this->bgColorStyle = $bgResolved['style'];
-        $this->bgHexColor = $this->resolveHexColor($bgColor);
-
-        $topBgResolved = $this->resolveBgColor($topBgColor);
-        $this->topBgColorClass = $topBgResolved['class'];
-        $this->topBgColorStyle = $topBgResolved['style'];
-
-        // Resolve overlay color (always rgba for gradient)
-        $this->overlayColor = $this->resolveRgbaColor($overlayColor);
 
         $this->buttonText = $buttonText;
         $this->tag1 = $tag1;
         $this->tag2 = $tag2;
+
+        // Static mode: use provided static data
+        if ($staticData !== null) {
+            $this->post = $staticData;
+
+            // Use tag2 from static data if not provided
+            if (empty($this->tag2) && isset($staticData['category'])) {
+                $this->tag2 = $staticData['category'];
+            }
+
+            return;
+        }
 
         // Fetch post by ID or via action
         if ($postId !== null) {
@@ -95,20 +88,9 @@ class FeaturedPerson extends Component
         }
 
         // Use category name as tag2 if not provided
-        if (empty($this->tag2) && $this->post) {
+        if (empty($this->tag2) && $this->post instanceof Post) {
             $this->tag2 = $this->post->categories->first()?->name ?? 'PEOPLE';
         }
-
-        // Compute overlay gradient
-        $this->overlayGradient = $this->computeOverlayGradient();
-    }
-
-    /**
-     * Compute the overlay gradient style.
-     */
-    protected function computeOverlayGradient(): string
-    {
-        return "background: linear-gradient(to bottom, transparent 50%, {$this->overlayColor} 75%, {$this->bgHexColor} 100%);";
     }
 
     /**

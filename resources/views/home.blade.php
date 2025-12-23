@@ -97,6 +97,15 @@
             loadAction="recent"
         />
 
+
+        {{-- Featured Person Section (Dynamic) --}}
+        <x-sections.featured-person
+            :postId="1"
+            tag1="TASTY FEATURE"
+            buttonText="Read More"
+            bgColor="yellow"
+        />
+
         <!-- Newsletter Section -->
         <div class="w-full bg-gray-100">
             <section class="container-main py-16 px-10 max-md:px-5 max-md:py-8">

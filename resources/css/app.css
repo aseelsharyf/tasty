@@ -486,4 +486,61 @@
             aspect-ratio: 432 / 294;
         }
     }
+
+    /* Featured Person Image Section */
+    .featured-person-image-wrapper {
+        width: 100%;
+        max-width: 1880px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        overflow: hidden;
+        background-color: var(--color-off-white);
+    }
+
+    .featured-person-image-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        flex-shrink: 0;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+        /* Mobile: scaled proportionally from desktop */
+        width: 432px;
+        height: 322px;
+        border-radius: 1500px 1500px 0 0;
+
+        /* Image as background */
+        background:
+            linear-gradient(180deg, rgba(255, 231, 98, 0.00) 60%, rgba(255, 231, 98, 0.50) 80%, var(--color-tasty-yellow) 100%),
+            var(--featured-person-image) lightgray 50% / cover no-repeat;
+    }
+
+    @media (min-width: 1024px) {
+        .featured-person-image-container {
+            /*
+             * Figma specs: 1510px x 1126px
+             * 1510px is ~104.86% of 1440px container
+             * This creates the nice curve overhang effect
+             */
+            width: 1510px;
+            height: 1126px;
+            border-radius: 5000px 5000px 0 0;
+        }
+    }
+
+    /* Scale up on larger viewports while maintaining proportions */
+    @media (min-width: 1600px) {
+        .featured-person-image-container {
+            /* Scale proportionally: 1510/1440 = 1.0486 ratio */
+            width: calc(100vw * 1.0486);
+            height: calc(100vw * 1.0486 * 1126 / 1510);
+            max-width: 1970px; /* 1880 * 1.0486 */
+            max-height: 1470px;
+        }
+    }
 }
