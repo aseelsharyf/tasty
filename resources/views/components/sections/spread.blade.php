@@ -1,8 +1,8 @@
 {{-- The Spread Section --}}
-<section class="w-full max-w-[1880px] mx-auto {{ $bgColorClass }} py-16 max-md:py-8" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
-    {{-- Mobile Title - Shows only on mobile when layout is scroll --}}
-    @if($mobileLayout === 'scroll' && ($introImage || $titleSmall || $titleLarge))
-        <div class="hidden max-md:flex flex-col items-center justify-center gap-5 px-5 pb-8">
+<section class="w-full max-w-[1880px] mx-auto {{ $bgColorClass }} py-16 max-lg:py-8" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+    {{-- Mobile Intro - Shows on mobile when intro is enabled --}}
+    @if($showIntro)
+        <div class="hidden max-lg:flex flex-col items-center justify-center gap-5 px-5 pb-8">
             @if($introImage)
                 <div class="w-full h-[250px]">
                     <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain" style="mix-blend-mode: darken;">
@@ -13,60 +13,106 @@
                 <h2 class="text-h1 uppercase">{{ $titleLarge }}</h2>
             </div>
             @if($description)
-                <p class="text-body-large text-blue-black text-center">{{ $description }}</p>
+                <p class="text-body-lg text-blue-black text-center">{{ $description }}</p>
             @endif
         </div>
     @endif
 
-    {{-- Horizontal Scroll --}}
-    <div class="scroll-container pb-8 max-md:pb-6 container-main">
-        @php
-            $hasIntro = $introImage || $titleSmall || $titleLarge;
-        @endphp
-        <div class="flex pl-10 min-w-max max-md:pl-5 max-md:gap-8">
-            {{-- Title Column (Desktop only) --}}
-            @if($hasIntro)
-                <div class="flex items-center shrink-0 max-md:hidden">
-                    <div class="flex flex-col items-center justify-center gap-4 w-[320px]">
-                        @if($introImage)
-                            <div class="w-full max-w-[280px]">
-                                <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-auto object-contain" style="mix-blend-mode: darken;">
+    @if($mobileLayout === 'grid')
+        {{-- Grid Layout for Mobile, Scroll for Desktop --}}
+        {{-- Desktop: Horizontal Scroll --}}
+        <div class="scroll-container pb-8 container-main max-lg:hidden">
+            <div class="flex pl-10 min-w-max">
+                {{-- Intro Card (Desktop only) - 424px per Figma --}}
+                @if($showIntro)
+                    <div class="flex items-center shrink-0">
+                        <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10">
+                            @if($introImage)
+                                <div class="w-full max-w-[320px]">
+                                    <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-auto object-contain" style="mix-blend-mode: darken;">
+                                </div>
+                            @endif
+                            <div class="flex flex-col items-center text-center text-blue-black">
+                                <span class="text-h3">{{ $titleSmall }}</span>
+                                <h2 class="text-h2 uppercase">{{ $titleLarge }}</h2>
                             </div>
-                        @endif
-                        <div class="flex flex-col items-center text-center text-blue-black">
-                            <span class="text-h3">{{ $titleSmall }}</span>
-                            <h2 class="text-h2 uppercase">{{ $titleLarge }}</h2>
+                            @if($description)
+                                <p class="text-body-md text-blue-black text-center max-w-[300px]">{{ $description }}</p>
+                            @endif
                         </div>
-                        @if($description)
-                            <p class="text-body-md text-blue-black text-center">{{ $description }}</p>
+                        @if($showDividers)
+                            <div class="w-px self-stretch {{ $dividerColor }} shrink-0"></div>
                         @endif
                     </div>
-                    {{-- Divider after title --}}
-                    @if($showDividers)
-                        <div class="w-px self-stretch {{ $dividerColor }} shrink-0 mx-10"></div>
-                    @else
-                        <div class="shrink-0 w-16"></div>
-                    @endif
-                </div>
-            @endif
+                @endif
 
-            {{-- Cards with dividers --}}
-            @foreach($posts as $index => $post)
-                <div class="flex items-center shrink-0 {{ $loop->last ? 'pr-10 max-md:pr-5' : '' }}">
+                {{-- Cards with dividers --}}
+                @foreach($posts as $index => $post)
+                    <div class="flex items-center shrink-0 {{ $loop->last ? 'pr-10' : '' }}">
+                        <x-cards.spread
+                            :post="$post"
+                            :reversed="$loop->even"
+                        />
+                        @if(!$loop->last && $showDividers)
+                            <div class="w-px self-stretch {{ $dividerColor }} shrink-0"></div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Mobile: Grid Layout --}}
+        <div class="hidden max-lg:block px-5 pb-6">
+            <div class="grid grid-cols-2 gap-5">
+                @foreach($posts as $index => $post)
                     <x-cards.spread
                         :post="$post"
-                        :reversed="$loop->even"
+                        :reversed="false"
+                        mobile
                     />
-                    {{-- Divider after card (except last) --}}
-                    @if(!$loop->last)
-                        @if($showDividers)
-                            <div class="w-px self-stretch {{ $dividerColor }} shrink-0 max-md:hidden mx-10"></div>
-                        @else
-                            <div class="shrink-0 max-md:hidden w-12"></div>
-                        @endif
-                    @endif
-                </div>
-            @endforeach
+                @endforeach
+            </div>
         </div>
-    </div>
+    @else
+        {{-- Scroll Layout (Default) --}}
+        <div class="scroll-container pb-8 max-lg:pb-6 container-main">
+            <div class="flex pl-10 min-w-max max-lg:pl-5 max-lg:gap-8">
+                {{-- Intro Card (Desktop only) - 424px per Figma --}}
+                @if($showIntro)
+                    <div class="flex items-center shrink-0 max-lg:hidden">
+                        <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10">
+                            @if($introImage)
+                                <div class="w-full max-w-[320px]">
+                                    <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-auto object-contain" style="mix-blend-mode: darken;">
+                                </div>
+                            @endif
+                            <div class="flex flex-col items-center text-center text-blue-black">
+                                <span class="text-h3">{{ $titleSmall }}</span>
+                                <h2 class="text-h2 uppercase">{{ $titleLarge }}</h2>
+                            </div>
+                            @if($description)
+                                <p class="text-body-md text-blue-black text-center max-w-[300px]">{{ $description }}</p>
+                            @endif
+                        </div>
+                        @if($showDividers)
+                            <div class="w-px self-stretch {{ $dividerColor }} shrink-0"></div>
+                        @endif
+                    </div>
+                @endif
+
+                {{-- Cards with dividers --}}
+                @foreach($posts as $index => $post)
+                    <div class="flex items-center shrink-0 {{ $loop->last ? 'pr-10 max-lg:pr-5' : '' }}">
+                        <x-cards.spread
+                            :post="$post"
+                            :reversed="$loop->even"
+                        />
+                        @if(!$loop->last && $showDividers)
+                            <div class="w-px self-stretch {{ $dividerColor }} shrink-0 max-lg:hidden"></div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 </section>

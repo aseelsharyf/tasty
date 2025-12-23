@@ -11,80 +11,6 @@
             buttonText="Read More"
         />
 
-        <x-sections.hero
-              :manual="true"
-              kicker="Bite Club"
-              title="The ghost kitchen feeding Malé after dark"
-              image="{{ Vite::asset('resources/images/image-01.png') }}"
-              category="On Culture"
-              author="Mohamed Ashraf"
-              date="November 12, 2025"
-              buttonText="Read More"
-              buttonUrl="#"
-          />
-
-        {{-- Latest Updates Section (Static) --}}
-        <x-sections.latest-updates
-            introImage="{{ Vite::asset('resources/images/latest-updates-transparent.png') }}"
-            introImageAlt="Latest Updates"
-            titleSmall="Latest"
-            titleLarge="Updates"
-            description="The flavors, characters, and tiny island obsessions that makes the Maldivian food culture."
-            :staticFeatured="[
-                'image' => Vite::asset('resources/images/image-02.png'),
-                'imageAlt' => 'Mexican Fiesta at Bianco',
-                'category' => 'Latest',
-                'tag' => 'Food',
-                'title' => 'Mexican Fiesta at Bianco',
-                'description' => 'Bianco rolls out a short-run menu featuring quesadillas, nachos, rice bowls and pulled-beef tacos — available for a limited time only.',
-                'author' => 'Author Name',
-                'date' => 'November 12, 2025',
-                'url' => '#',
-            ]"
-            :staticPosts="[
-                [
-                    'image' => Vite::asset('resources/images/image-03.png'),
-                    'imageAlt' => 'Gig alert in Jazz Cafe',
-                    'category' => 'Latest',
-                    'tag' => 'Event',
-                    'title' => 'Gig alert in Jazz Cafe! Haveeree Hingun Jazz Chronicles: Vol. 4 - Rumba in C on Sat, Dec 14th.',
-                    'author' => 'Author Name',
-                    'date' => 'December 20, 2024',
-                    'url' => '#',
-                ],
-                [
-                    'image' => Vite::asset('resources/images/image-04.png'),
-                    'imageAlt' => 'Celebrate Diwali and Culinary Excellence',
-                    'category' => 'Latest',
-                    'tag' => 'Seasonal',
-                    'title' => 'Celebrate Diwali and Culinary Excellence at Sun Siyam Olhuveli',
-                    'author' => 'Author Name',
-                    'date' => 'December 20, 2024',
-                    'url' => '#',
-                ],
-                [
-                    'image' => Vite::asset('resources/images/image-05.png'),
-                    'imageAlt' => 'FHAM 2025 Culinary Challenge',
-                    'category' => 'Latest',
-                    'tag' => 'People',
-                    'title' => 'FHAM 2025 Culinary Challenge began with the Young Chef competition.',
-                    'author' => 'Author Name',
-                    'date' => 'December 20, 2024',
-                    'url' => '#',
-                ],
-                [
-                    'image' => Vite::asset('resources/images/image-06.png'),
-                    'imageAlt' => 'Food Carnival 2025',
-                    'category' => 'Latest',
-                    'tag' => 'Event',
-                    'title' => 'Food Carnival 2025 coming on Jan 21st, Hulhumale. A weekend of pop-ups and street flavors!',
-                    'author' => 'Author Name',
-                    'date' => 'December 20, 2024',
-                    'url' => '#',
-                ],
-            ]"
-            :showLoadMore="false"
-        />
 
         {{-- Latest Updates Section (Dynamic/Automatic) --}}
         <x-sections.latest-updates
@@ -97,7 +23,6 @@
             loadAction="recent"
         />
 
-
         {{-- Featured Person Section (Dynamic) --}}
         <x-sections.featured-person
             :postId="1"
@@ -105,6 +30,24 @@
             buttonText="Read More"
             bgColor="yellow"
         />
+
+        {{-- The Spread Section (Dynamic) --}}
+        <x-sections.spread
+            introImage="{{ Vite::asset('resources/images/latest-updates-transparent.png') }}"
+            introImageAlt="The Spread"
+            titleSmall="The"
+            titleLarge="SPREAD"
+            description="Explore the latest from our kitchen to yours."
+            bgColor="yellow"
+            :showIntro="true"
+            :showDividers="true"
+            dividerColor="white"
+            mobileLayout="grid"
+            action="recent"
+            :count="4"
+        />
+
+
 
         <!-- Newsletter Section -->
         <div class="w-full bg-gray-100">

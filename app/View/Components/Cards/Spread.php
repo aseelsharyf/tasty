@@ -37,6 +37,8 @@ class Spread extends Component
 
     public bool $isLast;
 
+    public bool $mobile;
+
     /**
      * Create a new component instance.
      *
@@ -58,9 +60,11 @@ class Spread extends Component
         ?string $url = null,
         bool $reversed = false,
         bool $isLast = false,
+        bool $mobile = false,
     ) {
         $this->reversed = $reversed;
         $this->isLast = $isLast;
+        $this->mobile = $mobile;
 
         if ($post instanceof Post) {
             $categoryModel = $post->categories->first();

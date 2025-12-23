@@ -509,9 +509,9 @@
         overflow: hidden;
         transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 
-        /* Mobile: scaled proportionally from desktop */
-        width: 432px;
-        height: 322px;
+        /* Mobile: 100% width with aspect ratio */
+        width: 100%;
+        aspect-ratio: 432 / 322;
         border-radius: 1500px 1500px 0 0;
 
         /* Image as background */
@@ -529,6 +529,7 @@
              */
             width: 1510px;
             height: 1126px;
+            aspect-ratio: auto;
             border-radius: 5000px 5000px 0 0;
         }
     }

@@ -18,6 +18,8 @@ class Spread extends Component
 {
     use ResolvesColors;
 
+    public bool $showIntro;
+
     public string $introImage;
 
     public string $introImageAlt;
@@ -38,7 +40,7 @@ class Spread extends Component
 
     public string $dividerColor;
 
-    /** @var Collection<int, Post> */
+    /** @var Collection<int, Post|array<string, mixed>> */
     public Collection $posts;
 
     /** @var array<string, class-string> */
@@ -52,6 +54,7 @@ class Spread extends Component
     /**
      * Create a new component instance.
      *
+     * @param  bool  $showIntro  Whether to show the intro card
      * @param  string  $introImage  Intro section image
      * @param  string  $introImageAlt  Intro image alt text
      * @param  string  $titleSmall  Small title text
@@ -61,6 +64,7 @@ class Spread extends Component
      * @param  string  $mobileLayout  Mobile layout mode (scroll, grid)
      * @param  bool  $showDividers  Show dividers between cards
      * @param  string  $dividerColor  Divider color (white, gray, or Tailwind class)
+     * @param  array<int, array<string, mixed>>  $staticPosts  Static post data for page builder
      * @param  array<int, int>  $postIds  Specific post IDs to display
      * @param  string  $action  Action to fetch posts
      * @param  array<string, mixed>  $params  Parameters for the action
@@ -68,6 +72,7 @@ class Spread extends Component
      * @param  bool  $randomTag  Pick a random tag and load posts from it
      */
     public function __construct(
+        bool $showIntro = true,
         string $introImage = '',
         string $introImageAlt = '',
         string $titleSmall = 'The',
@@ -77,12 +82,14 @@ class Spread extends Component
         string $mobileLayout = 'scroll',
         bool $showDividers = true,
         string $dividerColor = 'white',
+        array $staticPosts = [],
         array $postIds = [],
         string $action = 'recent',
         array $params = [],
         int $count = 4,
         bool $randomTag = false,
     ) {
+        $this->showIntro = $showIntro;
         $this->introImage = $introImage;
         $this->introImageAlt = $introImageAlt;
         $bgResolved = $this->resolveBgColor($bgColor);
@@ -91,6 +98,16 @@ class Spread extends Component
         $this->mobileLayout = $mobileLayout;
         $this->showDividers = $showDividers;
         $this->dividerColor = str_starts_with($dividerColor, 'bg-') ? $dividerColor : ($dividerColor === 'white' ? 'bg-white' : 'bg-gray-300');
+
+        // Static mode: use provided static data
+        if (count($staticPosts) > 0) {
+            $this->titleSmall = $titleSmall;
+            $this->titleLarge = $titleLarge;
+            $this->description = $description;
+            $this->posts = collect($staticPosts);
+
+            return;
+        }
 
         // Handle random tag mode
         if ($randomTag) {

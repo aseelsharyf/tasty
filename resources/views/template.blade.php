@@ -94,6 +94,62 @@
             bgColor="yellow"
         />
 
+        {{-- The Spread Section (Static) --}}
+        <x-sections.spread
+            introImage="{{ Vite::asset('resources/images/image-07.png') }}"
+            introImageAlt="The Spread"
+            titleSmall="The"
+            titleLarge="SPREAD"
+            description="Explore the latest from our kitchen to yours."
+            bgColor="yellow"
+            :showIntro="true"
+            :showDividers="true"
+            dividerColor="white"
+            mobileLayout="scroll"
+            :staticPosts="[
+                [
+                    'title' => 'The Art of Maldivian Breakfast',
+                    'description' => 'A deep dive into the traditional morning meals that fuel island life.',
+                    'image' => Vite::asset('resources/images/image-08.png'),
+                    'url' => '#',
+                    'author' => 'Writer User',
+                    'authorUrl' => '#',
+                    'date' => 'December 22, 2025',
+                    'category' => 'Food',
+                ],
+                [
+                    'title' => 'Street Food Adventures in Male',
+                    'description' => 'Discovering hidden gems and local favorites in the capital city.',
+                    'image' => Vite::asset('resources/images/image-09.png'),
+                    'url' => '#',
+                    'author' => 'Writer User',
+                    'authorUrl' => '#',
+                    'date' => 'December 21, 2025',
+                    'category' => 'Travel',
+                ],
+                [
+                    'title' => 'Cooking with Coconut',
+                    'description' => 'Essential techniques for using coconut in traditional recipes.',
+                    'image' => Vite::asset('resources/images/image-10.png'),
+                    'url' => '#',
+                    'author' => 'Writer User',
+                    'authorUrl' => '#',
+                    'date' => 'December 20, 2025',
+                    'category' => 'Recipes',
+                ],
+                [
+                    'title' => 'Island Spice Markets',
+                    'description' => 'A guide to the vibrant spice trade across the Maldivian atolls.',
+                    'image' => Vite::asset('resources/images/image-11.png'),
+                    'url' => '#',
+                    'author' => 'Writer User',
+                    'authorUrl' => '#',
+                    'date' => 'December 19, 2025',
+                    'category' => 'Culture',
+                ],
+            ]"
+        />
+
         <!-- Newsletter Section -->
         <div class="w-full bg-gray-100">
             <section class="container-main py-16 px-10 max-md:px-5 max-md:py-8">

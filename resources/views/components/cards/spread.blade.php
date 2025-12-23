@@ -1,4 +1,5 @@
-<article class="flex {{ $reversed ? 'flex-col-reverse' : 'flex-col' }} gap-6 w-[300px] max-md:w-[260px] shrink-0">
+{{-- Spread Card - 480px per Figma specs, full-width when mobile grid --}}
+<article class="flex {{ $reversed ? 'flex-col-reverse' : 'flex-col' }} gap-6 {{ $mobile ? 'w-full' : 'w-[480px] px-10 max-lg:w-[300px] max-lg:px-0' }} shrink-0">
     {{-- Image --}}
     <div class="relative aspect-[3/4] rounded-xl overflow-hidden">
         <a href="{{ $url }}" class="absolute inset-0 z-0 group">
@@ -30,11 +31,16 @@
             <p class="text-body-md text-blue-black line-clamp-3">{{ $description }}</p>
         @endif
 
-        {{-- Author/date --}}
-        <x-post.author-date
-            :author="$author"
-            :author-url="$authorUrl"
-            :date="$date"
-        />
+        {{-- Author/date - Same pattern as horizontal card --}}
+        <div class="flex flex-wrap items-center gap-5 text-[14px] leading-[12px] uppercase text-blue-black
+            max-lg:flex-col max-lg:items-start max-lg:gap-4 max-lg:text-[12px]">
+            @if($author)
+                <a href="{{ $authorUrl }}" class="underline underline-offset-4 hover:opacity-80 transition-opacity">BY {{ strtoupper($author) }}</a>
+                <span class="max-lg:hidden">•</span>
+            @endif
+            @if($date)
+                <span>{{ strtoupper($date) }}</span>
+            @endif
+        </div>
     </div>
 </article>
