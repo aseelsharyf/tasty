@@ -168,6 +168,67 @@
             overlayColor="#FFE762"
         />
 
+        {{-- Review Section (Static) --}}
+        <x-sections.review
+            :showIntro="true"
+            introImage="{{ Vite::asset('resources/images/on-the-menu.png') }}"
+            introImageAlt="On the Menu"
+            titleSmall="On the"
+            titleLarge="Menu"
+            description="Restaurant reviews, chef crushes, and the dishes we can't stop talking about."
+            :showDividers="true"
+            dividerColor="white"
+            mobileLayout="scroll"
+            :showLoadMore="false"
+            :staticPosts="[
+                [
+                    'image' => Vite::asset('resources/images/home-hero-3.png'),
+                    'title' => 'SUSHI MASTERCLASS',
+                    'subtitle' => 'At Nobu Maldives',
+                    'description' => 'A journey through traditional Japanese cuisine with a modern twist.',
+                    'url' => '#',
+                    'category' => 'REVIEW',
+                    'rating' => 4,
+                ],
+                [
+                    'image' => Vite::asset('resources/images/home-hero-3.png'),
+                    'title' => 'ITALIAN NIGHTS',
+                    'subtitle' => 'At Olive Garden',
+                    'description' => 'Authentic pasta and wood-fired pizzas under the stars.',
+                    'url' => '#',
+                    'category' => 'REVIEW',
+                    'rating' => 5,
+                ],
+                [
+                    'image' => Vite::asset('resources/images/home-hero-3.png'),
+                    'title' => 'SEAFOOD FEAST',
+                    'subtitle' => 'At The Ocean Grill',
+                    'description' => 'Fresh catches prepared with local spices and herbs.',
+                    'url' => '#',
+                    'category' => 'REVIEW',
+                    'rating' => 3,
+                ],
+                [
+                    'image' => Vite::asset('resources/images/home-hero-3.png'),
+                    'title' => 'BREAKFAST BLISS',
+                    'subtitle' => 'At Morning Glory',
+                    'description' => 'Start your day with the perfect island breakfast spread.',
+                    'url' => '#',
+                    'category' => 'REVIEW',
+                    'rating' => 4,
+                ],
+                [
+                    'image' => Vite::asset('resources/images/home-hero-3.png'),
+                    'title' => 'FINE DINING',
+                    'subtitle' => 'At The Lighthouse',
+                    'description' => 'An elevated culinary experience with breathtaking views.',
+                    'url' => '#',
+                    'category' => 'REVIEW',
+                    'rating' => 5,
+                ],
+            ]"
+        />
+
         <!-- Newsletter Section -->
         <div class="w-full bg-gray-100">
             <section class="container-main py-16 px-10 max-md:px-5 max-md:py-8">

@@ -42,7 +42,7 @@
             :showIntro="true"
             :showDividers="true"
             dividerColor="white"
-            mobileLayout="grid"
+            mobileLayout="scroll"
             action="recent"
             :count="4"
         />
@@ -54,7 +54,22 @@
             overlayColor="#FFE762"
         />
 
-
+        {{-- Review Section (Dynamic with Load More) --}}
+        <x-sections.review
+            :showIntro="true"
+            introImage="{{ Vite::asset('resources/images/on-the-menu.png') }}"
+            introImageAlt="On the Menu"
+            titleSmall="On the"
+            titleLarge="Menu"
+            description="Restaurant reviews, chef crushes, and the dishes we can't stop talking about."
+            :showDividers="true"
+            dividerColor="white"
+            mobileLayout="scroll"
+            buttonText="More Reviews"
+            :showLoadMore="true"
+            action="recent"
+            :count="5"
+        />
 
         <!-- Newsletter Section -->
         <div class="w-full bg-gray-100">
