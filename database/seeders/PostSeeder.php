@@ -63,9 +63,18 @@ class PostSeeder extends Seeder
             $this->command->warn('No media items found. Run MediaSeeder first for images.');
         }
 
+        // Main navigation categories that must have posts
+        $mainCategorySlugs = ['update', 'feature', 'people', 'review', 'recipe', 'pantry'];
+        $mainCategories = Category::whereIn('slug', $mainCategorySlugs)->get();
+
         foreach ($languages as $language) {
-            // Create 10 published articles per language
-            $this->createPublishedArticles($language, $authors, $categories, $tags, $sponsors, $mediaItems, 10);
+            // Create at least one published article for each main category
+            foreach ($mainCategories as $mainCategory) {
+                $this->createPublishedArticleForCategory($language, $authors, $mainCategory, $tags, $sponsors, $mediaItems);
+            }
+
+            // Create additional random published articles (4 more per language)
+            $this->createPublishedArticles($language, $authors, $categories, $tags, $sponsors, $mediaItems, 4);
 
             // Create 3 draft posts per language
             $this->createDraftPosts($language, $authors, $categories, $tags, $mediaItems, 3);
@@ -125,6 +134,48 @@ class PostSeeder extends Seeder
         }
 
         return Sponsor::all();
+    }
+
+    /**
+     * Create a published article for a specific category.
+     */
+    private function createPublishedArticleForCategory($language, $authors, Category $category, $tags, $sponsors, $mediaItems): void
+    {
+        $author = $authors->random();
+        $featuredTag = $tags->random();
+        $sponsor = fake()->boolean(30) ? $sponsors->random() : null;
+
+        $post = Post::factory()
+            ->article()
+            ->withLanguage($language->code)
+            ->create([
+                'author_id' => $author->id,
+                'featured_tag_id' => $featuredTag->id,
+                'sponsor_id' => $sponsor?->id,
+                'workflow_status' => 'draft',
+                'status' => Post::STATUS_DRAFT,
+                'content' => $this->getArticleContent($mediaItems),
+                'featured_media_id' => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
+            ]);
+
+        // Attach to the specific category
+        $post->categories()->attach($category->id);
+
+        // Attach tags
+        $additionalTags = $tags->except($featuredTag->id)->random(min(rand(2, 4), $tags->count() - 1));
+        $post->tags()->attach($additionalTags->pluck('id'));
+        $post->tags()->attach($featuredTag->id);
+
+        // Create version and go through full workflow
+        $version = $post->createVersion(null, 'Initial version', $author->id);
+        $version->transitionTo('review', 'Submitted for editorial review', $author->id);
+        $version->transitionTo('copydesk', 'Sent to copy desk for final review', $author->id);
+        $version->transitionTo('approved', 'Approved for publication', $author->id);
+        $version->transitionTo('published', 'Published', $author->id);
+
+        // Activate the version and publish the post
+        $version->activate();
+        $post->publish();
     }
 
     /**
