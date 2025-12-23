@@ -33,9 +33,14 @@
 {{-- Pull hero up behind the navbar (desktop only, tablet/mobile has no overlap) --}}
 <section class="w-full flex justify-center relative z-0 -mt-[96px] md:-mt-[112px] max-lg:mt-0">
     {{-- Hero container - max-width 1880px, height 968px at 1440px width (scales proportionally) --}}
-    {{-- Mobile: 100svh with overflow hidden to prevent content pushing --}}
+    {{-- Mobile: uses CSS variable for viewport height with JS fallback --}}
     <div class="flex w-full max-w-[1880px] h-[clamp(500px,67.22vw,1265px)]
-        max-lg:flex-col max-lg:h-[100svh] max-lg:overflow-hidden">
+        max-lg:flex-col max-lg:h-[calc(var(--vh,1vh)*100)] max-lg:overflow-hidden"
+        x-data x-init="
+            const setVh = () => document.documentElement.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
+            setVh();
+            window.addEventListener('resize', setVh);
+        ">
         {{-- Hero Image - Left 50% / Mobile: fills top portion --}}
         @if($manual)
             <div class="block relative w-1/2 h-full overflow-hidden flex-shrink-0
