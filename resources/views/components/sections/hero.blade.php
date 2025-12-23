@@ -31,15 +31,15 @@
 @endphp
 
 {{-- Pull hero up behind the navbar (desktop only, tablet/mobile has no overlap) --}}
-<section class="w-full flex justify-center relative z-0 -mt-[96px] md:-mt-[112px] max-lg:mt-0">
+<section class="w-full flex justify-center relative z-0 -mt-[96px] md:-mt-[112px] max-lg:mt-0 max-lg:block max-lg:h-dvh">
     {{-- Hero container - max-width 1880px, height 968px at 1440px width (scales proportionally) --}}
-    {{-- Mobile: 100dvh (dynamic viewport height) for real device viewport --}}
+    {{-- Mobile: 100dvh split 57/43 --}}
     <div class="flex w-full max-w-[1880px] h-[clamp(500px,67.22vw,1265px)]
-        max-lg:flex-col max-lg:h-dvh">
-        {{-- Hero Image - Left 50% / Mobile: 57% of viewport --}}
+        max-lg:flex-col max-lg:h-full">
+        {{-- Hero Image - Left 50% / Mobile: 57% height --}}
         @if($manual)
-            <div class="block relative w-1/2 h-full overflow-hidden flex-shrink-0
-                max-lg:w-full max-lg:h-[57dvh]">
+            <div class="block relative w-1/2 h-full overflow-hidden
+                max-lg:w-full max-lg:h-[57%]">
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"
@@ -47,8 +47,8 @@
                 >
             </div>
         @else
-            <a href="{{ $heroUrl }}" class="block relative w-1/2 h-full overflow-hidden flex-shrink-0
-                max-lg:w-full max-lg:h-[57dvh]">
+            <a href="{{ $heroUrl }}" class="block relative w-1/2 h-full overflow-hidden
+                max-lg:w-full max-lg:h-[57%]">
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"
@@ -57,10 +57,10 @@
             </a>
         @endif
 
-        {{-- Hero Content - Right 50% / Mobile: 43% of viewport --}}
+        {{-- Hero Content - Right 50% / Mobile: 43% height --}}
         {{-- Mobile CSS (Figma): padding 32px 20px 64px 20px, gap 24px, centered --}}
         <div class="w-1/2 h-full {{ $bgColorClass }} px-16 py-24 flex flex-col {{ $contentAlignment }} gap-10
-            max-lg:w-full max-lg:h-[43dvh] max-lg:px-5 max-lg:pt-8 max-lg:pb-16 max-lg:items-center max-lg:justify-center max-lg:text-center max-lg:gap-6" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+            max-lg:w-full max-lg:h-[43%] max-lg:px-5 max-lg:pt-8 max-lg:pb-16 max-lg:items-center max-lg:justify-center max-lg:text-center max-lg:gap-6" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
             {{-- Meta: Category • Author • Date --}}
             <div class="flex flex-wrap items-center gap-5 text-body-sm uppercase text-blue-black {{ $metaAlignment }} max-lg:justify-center">
                 @if($heroCategory)
