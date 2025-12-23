@@ -169,7 +169,6 @@
         />
 
         {{-- Review Section (Static) --}}
-        {{-- Review Section (Static) --}}
         <x-sections.review
             :showIntro="true"
             introImage="{{ Vite::asset('resources/images/on-the-menu.png') }}"
@@ -228,6 +227,21 @@
                     'rating' => 5,
                 ],
             ]"
+        />
+
+        {{-- Featured Location Section (Static) --}}
+        <x-sections.featured-location
+            :post="[
+                'kicker' => 'CEYLON',
+                'title' => 'Where the air smells like spice, surf, and something softly familiar.',
+                'tag1' => 'TASTY FEATURE',
+                'tag2' => 'FOOD DESTINATIONS',
+                'description' => 'Two weeks in Lanka, documenting dishes and cooks who give the island its food identity.',
+                'image' => Vite::asset('resources/images/image-20.png'),
+                'buttonText' => 'Read More',
+                'buttonUrl' => '#',
+            ]"
+            bgColor="yellow"
         />
 
         <!-- Newsletter Section -->

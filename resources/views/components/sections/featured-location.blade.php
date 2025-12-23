@@ -1,42 +1,59 @@
-<div class="w-full max-w-[1880px] mx-auto location-section-container">
-    <section class="location-section w-full relative flex flex-col justify-end">
-        {{-- Background image --}}
-        <img
-            src="{{ $image }}"
-            alt="{{ $imageAlt }}"
-            class="absolute inset-0 w-full h-full object-cover"
-        >
-
-        {{-- Content box with top radius - configurable bg color --}}
-        <div class="relative z-10 {{ $bgColorClass }} rounded-t-[5000px] pt-28 pb-0 max-md:pt-24" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
-            <div class="container-main px-10 max-md:px-5 text-center flex flex-col items-center gap-10">
-                {{-- Title and tagline grouped --}}
-                <div class="flex flex-col items-center gap-4">
-                    <h2 class="text-h1 text-{{ $textColor }}">{{ $name }}</h2>
-                    @if($tagline)
-                        <p class="text-h2 text-{{ $textColor }} max-w-[800px] max-md:text-h4">{{ $tagline }}</p>
+{{-- Featured Location Section --}}
+{{-- Full-bleed background image with curved yellow content overlay --}}
+@if($image && ($kicker || $title))
+<section class="featured-location-wrapper">
+    <div
+        class="featured-location-container"
+        style="--featured-location-image: url('{{ $image }}');"
+    >
+        {{-- Yellow curved content area --}}
+        <div class="featured-location-content {{ $bgColorClass }}" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+            <div class="flex flex-col items-center text-center gap-10 max-lg:gap-6 w-full">
+                {{-- Kicker (large) & Title (below) --}}
+                <div class="flex flex-col gap-4 items-center w-full">
+                    @if($kicker)
+                        <p class="text-[200px] leading-[160px] tracking-[-8px] uppercase font-display text-{{ $textColor }} max-lg:text-[60px] max-lg:leading-[50px] max-lg:tracking-[-2.4px]">
+                            {{ $kicker }}
+                        </p>
+                    @endif
+                    @if($title)
+                        <h2 class="text-h2 text-{{ $textColor }} max-w-[800px] max-lg:text-[32px] max-lg:leading-[32px] max-lg:tracking-[-1.28px]">
+                            {{ $title }}
+                        </h2>
                     @endif
                 </div>
+
                 {{-- Tags --}}
-                <div class="flex items-center gap-5 text-caption uppercase text-{{ $textColor }}">
-                    <span>{{ $tag1 }}</span>
+                <div class="flex items-center gap-5 text-body-sm uppercase text-{{ $textColor }} max-lg:text-[12px] max-lg:leading-[12px]">
+                    @if($tag1Slug)
+                        <a href="{{ route('tag.show', $tag1Slug) }}" class="hover:underline">{{ $tag1 }}</a>
+                    @else
+                        <span>{{ $tag1 }}</span>
+                    @endif
                     <span>•</span>
-                    <span>{{ $tag2 }}</span>
+                    @if($tag2Slug)
+                        <a href="{{ route('category.show', $tag2Slug) }}" class="hover:underline">{{ $tag2 }}</a>
+                    @else
+                        <span>{{ $tag2 }}</span>
+                    @endif
                 </div>
+
                 {{-- Description --}}
                 @if($description)
-                    <p class="text-body-lg text-{{ $textColor }} max-w-[600px]">{{ $description }}</p>
+                    <p class="text-body-lg text-{{ $textColor }} max-w-[600px] text-center max-lg:text-[20px] max-lg:leading-[26px]">
+                        {{ $description }}
+                    </p>
                 @endif
+
                 {{-- Button (optional) --}}
                 @if($buttonText && $buttonUrl && $buttonUrl !== '#')
                     <a href="{{ $buttonUrl }}" class="btn btn-{{ $buttonVariant }}">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+                        <x-ui.icons.arrow-right />
                         <span>{{ $buttonText }}</span>
                     </a>
                 @endif
             </div>
         </div>
-    </section>
-</div>
+    </div>
+</section>
+@endif

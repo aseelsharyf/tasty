@@ -35,12 +35,16 @@
             {{-- Tags --}}
             <div class="flex items-center gap-5 text-body-sm uppercase text-blue-black">
                 @if($tag1)
-                    <span>{{ $tag1 }}</span>
+                    @if($tag1Slug)
+                        <a href="{{ route('tag.show', $tag1Slug) }}" class="hover:underline">{{ $tag1 }}</a>
+                    @else
+                        <span>{{ $tag1 }}</span>
+                    @endif
                     <span>•</span>
                 @endif
                 @if($tag2)
-                    @if($category)
-                        <a href="{{ route('category.show', $category->slug) }}" class="hover:underline">{{ strtoupper($tag2) }}</a>
+                    @if($tag2Slug)
+                        <a href="{{ route('category.show', $tag2Slug) }}" class="hover:underline">{{ strtoupper($tag2) }}</a>
                     @else
                         <span>{{ strtoupper($tag2) }}</span>
                     @endif

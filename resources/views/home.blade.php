@@ -71,6 +71,13 @@
             :count="5"
         />
 
+        {{-- Featured Location Section (Dynamic) --}}
+        <x-sections.featured-location
+            :postId="1"
+            tag1="TASTY FEATURE"
+            bgColor="yellow"
+        />
+
         {{-- Newsletter Section --}}
         <x-sections.newsletter />
     </main>

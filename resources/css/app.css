@@ -456,25 +456,67 @@
         width: 100%;
     }
 
-    /* Location Section Container */
-    .location-section-container {
-        container-type: inline-size;
+    /* Featured Location Section */
+    .featured-location-wrapper {
         width: 100%;
+        max-width: 1880px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        overflow: hidden;
     }
 
-    /* Location Section Height - matches template exactly */
-    .location-section {
-        /* Min-height scales with container width:
-         * At 1440px width → 614px min-height
-         * At 1800px width → 1237px min-height
-         * Formula: min-height = 1.7313 * width - 1879.26
-         * Using max() to ensure minimum height never goes below 600px
-         * (formula produces small/negative values below ~1085px width)
-         */
-        min-height: max(600px, calc(173.13cqi - 1879.26px));
+    .featured-location-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        flex-shrink: 0;
+        overflow: hidden;
 
-        @media (max-width: 768px) {
-            min-height: 800px; /* Fixed min-height on mobile */
+        /* Mobile: full width, 750px height */
+        width: 100%;
+        height: 750px;
+
+        /* Background image */
+        background: var(--featured-location-image) lightgray 50% / cover no-repeat;
+    }
+
+    @media (min-width: 1024px) {
+        .featured-location-container {
+            /* Desktop: 1510px x 1058px as per Figma */
+            width: 1510px;
+            height: 1058px;
+        }
+    }
+
+    /* Scale up on larger viewports */
+    @media (min-width: 1600px) {
+        .featured-location-container {
+            width: calc(100vw * 1.0486);
+            height: calc(100vw * 1.0486 * 1058 / 1510);
+            max-width: 1970px;
+            max-height: 1380px;
+        }
+    }
+
+    .featured-location-content {
+        position: relative;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 5000px 5000px 0 0;
+
+        /* Mobile: padding-based sizing */
+        padding: 96px 40px 64px 40px;
+
+        @media (min-width: 1024px) {
+            /* Desktop: fixed height 735px, centered content */
+            height: 735px;
+            padding: 110px 362px 0 362px;
         }
     }
 

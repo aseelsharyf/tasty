@@ -27,7 +27,11 @@ class FeaturedPerson extends Component
 
     public string $tag1;
 
+    public ?string $tag1Slug;
+
     public string $tag2;
+
+    public ?string $tag2Slug;
 
     /** @var array<string, class-string> */
     protected array $actions = [
@@ -66,7 +70,9 @@ class FeaturedPerson extends Component
 
         $this->buttonText = $buttonText;
         $this->tag1 = $tag1;
+        $this->tag1Slug = 'featured';
         $this->tag2 = $tag2;
+        $this->tag2Slug = null;
 
         // Static mode: use provided static data
         if ($staticData !== null) {
@@ -75,6 +81,9 @@ class FeaturedPerson extends Component
             // Use tag2 from static data if not provided
             if (empty($this->tag2) && isset($staticData['category'])) {
                 $this->tag2 = $staticData['category'];
+            }
+            if (isset($staticData['categorySlug'])) {
+                $this->tag2Slug = $staticData['categorySlug'];
             }
 
             return;
@@ -87,9 +96,13 @@ class FeaturedPerson extends Component
             $this->post = $this->fetchPostViaAction($action, $params);
         }
 
-        // Use category name as tag2 if not provided
-        if (empty($this->tag2) && $this->post instanceof Post) {
-            $this->tag2 = $this->post->categories->first()?->name ?? 'PEOPLE';
+        // Use category name and slug as tag2 if not provided
+        if ($this->post instanceof Post) {
+            $category = $this->post->categories->first();
+            if (empty($this->tag2)) {
+                $this->tag2 = $category?->name ?? 'PEOPLE';
+            }
+            $this->tag2Slug = $category?->slug;
         }
     }
 
