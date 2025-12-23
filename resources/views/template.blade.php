@@ -150,6 +150,24 @@
             ]"
         />
 
+        {{-- Featured Video Section (Static) --}}
+        <x-sections.featured-video
+            :staticData="[
+                'title' => 'Nami at Reveli',
+                'subtitle' => 'Sushi and steak by the sea',
+                'description' => 'Nami\'s Japanese-inspired plates land big flavors in a sleek dining room. Come for the sushi; stay because you forgot you were in Malé for a second.',
+                'image' => Vite::asset('resources/images/image-13.png'),
+                'url' => '#',
+                'videoUrl' => '#',
+                'category' => 'On The Menu',
+                'tag' => 'Review',
+                'author' => 'Mohamed Ashraf',
+                'date' => 'January 8, 2025',
+            ]"
+            buttonText="Watch"
+            overlayColor="#FFE762"
+        />
+
         <!-- Newsletter Section -->
         <div class="w-full bg-gray-100">
             <section class="container-main py-16 px-10 max-md:px-5 max-md:py-8">

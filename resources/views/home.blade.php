@@ -47,6 +47,13 @@
             :count="4"
         />
 
+        {{-- Featured Video Section (Dynamic) --}}
+        <x-sections.featured-video
+            :postId="1"
+            buttonText="Watch"
+            overlayColor="#FFE762"
+        />
+
 
 
         <!-- Newsletter Section -->
