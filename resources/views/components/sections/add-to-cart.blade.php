@@ -7,12 +7,7 @@
 ])
 
 @php
-    $bgClass = match($bgColor) {
-        'white' => 'bg-white',
-        'yellow' => 'bg-tasty-yellow',
-        'off-white' => 'bg-off-white',
-        default => 'bg-white',
-    };
+    $bgClass = \App\View\Colors::bg($bgColor, 'white');
 @endphp
 
 <section class="w-full {{ $bgClass }}">
