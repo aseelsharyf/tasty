@@ -276,12 +276,16 @@ const layoutNavItems = computed<NavigationMenuItem[]>(() => {
 
 const engagementNavItems = computed<NavigationMenuItem[]>(() => {
     const items: NavigationMenuItem[] = [];
+    const hasEngagementAccess = can('comments.view') || can('subscribers.view');
 
-    if (can('comments.view')) {
+    if (hasEngagementAccess) {
         items.push({
             label: 'Engagement',
             type: 'label',
         });
+    }
+
+    if (can('comments.view')) {
         items.push({
             label: 'Comments',
             icon: 'i-lucide-message-square',
@@ -314,6 +318,16 @@ const engagementNavItems = computed<NavigationMenuItem[]>(() => {
                     active: page.url.includes('status=spam'),
                 },
             ],
+        });
+    }
+
+    if (can('subscribers.view')) {
+        items.push({
+            label: 'Subscribers',
+            icon: 'i-lucide-mail',
+            to: '/cms/subscribers',
+            active: isActivePrefix('/cms/subscribers'),
+            onSelect: () => { sidebarOpen.value = false; },
         });
     }
 

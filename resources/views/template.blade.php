@@ -169,6 +169,7 @@
         />
 
         {{-- Review Section (Static) --}}
+        {{-- Review Section (Static) --}}
         <x-sections.review
             :showIntro="true"
             introImage="{{ Vite::asset('resources/images/on-the-menu.png') }}"
@@ -182,7 +183,7 @@
             :showLoadMore="false"
             :staticPosts="[
                 [
-                    'image' => Vite::asset('resources/images/home-hero-3.png'),
+                    'image' => Vite::asset('resources/images/image-14.png'),
                     'title' => 'SUSHI MASTERCLASS',
                     'subtitle' => 'At Nobu Maldives',
                     'description' => 'A journey through traditional Japanese cuisine with a modern twist.',
@@ -191,7 +192,7 @@
                     'rating' => 4,
                 ],
                 [
-                    'image' => Vite::asset('resources/images/home-hero-3.png'),
+                    'image' => Vite::asset('resources/images/image-15.png'),
                     'title' => 'ITALIAN NIGHTS',
                     'subtitle' => 'At Olive Garden',
                     'description' => 'Authentic pasta and wood-fired pizzas under the stars.',
@@ -200,7 +201,7 @@
                     'rating' => 5,
                 ],
                 [
-                    'image' => Vite::asset('resources/images/home-hero-3.png'),
+                    'image' => Vite::asset('resources/images/image-16.png'),
                     'title' => 'SEAFOOD FEAST',
                     'subtitle' => 'At The Ocean Grill',
                     'description' => 'Fresh catches prepared with local spices and herbs.',
@@ -209,7 +210,7 @@
                     'rating' => 3,
                 ],
                 [
-                    'image' => Vite::asset('resources/images/home-hero-3.png'),
+                    'image' => Vite::asset('resources/images/image-17.png'),
                     'title' => 'BREAKFAST BLISS',
                     'subtitle' => 'At Morning Glory',
                     'description' => 'Start your day with the perfect island breakfast spread.',
@@ -218,7 +219,7 @@
                     'rating' => 4,
                 ],
                 [
-                    'image' => Vite::asset('resources/images/home-hero-3.png'),
+                    'image' => Vite::asset('resources/images/image-18.png'),
                     'title' => 'FINE DINING',
                     'subtitle' => 'At The Lighthouse',
                     'description' => 'An elevated culinary experience with breathtaking views.',

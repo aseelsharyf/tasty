@@ -20,6 +20,7 @@ use App\Http\Controllers\Cms\ProfileController;
 use App\Http\Controllers\Cms\RoleController;
 use App\Http\Controllers\Cms\SettingsController;
 use App\Http\Controllers\Cms\SponsorController;
+use App\Http\Controllers\Cms\SubscriberController;
 use App\Http\Controllers\Cms\TagController;
 use App\Http\Controllers\Cms\UserController;
 use App\Http\Controllers\Cms\UserTargetController;
@@ -226,6 +227,16 @@ Route::middleware(['auth', 'cms'])->group(function () {
             'destroy' => 'cms.sponsors.destroy',
         ]);
         Route::delete('sponsors/bulk', [SponsorController::class, 'bulkDestroy'])->name('cms.sponsors.bulk-destroy');
+    });
+
+    // Subscribers Management
+    Route::middleware('permission:subscribers.view')->group(function () {
+        Route::get('subscribers', [SubscriberController::class, 'index'])->name('cms.subscribers.index');
+        Route::get('subscribers/export', [SubscriberController::class, 'export'])->name('cms.subscribers.export');
+        Route::post('subscribers/{subscriber}/toggle-status', [SubscriberController::class, 'toggleStatus'])->name('cms.subscribers.toggle-status');
+        Route::post('subscribers/bulk-status', [SubscriberController::class, 'bulkToggleStatus'])->name('cms.subscribers.bulk-status');
+        Route::delete('subscribers/{subscriber}', [SubscriberController::class, 'destroy'])->name('cms.subscribers.destroy');
+        Route::delete('subscribers/bulk', [SubscriberController::class, 'bulkDestroy'])->name('cms.subscribers.bulk-destroy');
     });
 
     // Menus Management

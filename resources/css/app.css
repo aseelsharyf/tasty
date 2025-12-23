@@ -301,6 +301,11 @@
     transition: all 0.2s ease;
 }
 
+/* Arrow icon hover effect - moves right on button hover */
+.btn:hover .icon-arrow {
+    transform: translateX(4px);
+}
+
 .btn:hover {
     opacity: 0.85;
 }

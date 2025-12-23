@@ -1,71 +1,67 @@
-{{-- resources/views/components/ui/button.blade.php --}}
-
+{{-- Shared Button Component --}}
 @props([
-    'url' => '#',
-    'text' => '',
-    'icon' => 'plus', // Options: 'plus', 'play', 'arrow-right', or null for no icon
-    'iconPosition' => 'left', // Options: 'left', 'right'
-    'bgColor' => 'bg-tasty-yellow',
-    'textColor' => 'text-stone-900',
-    'hoverBg' => 'hover:bg-stone-50',
-    'paddingSize' => 'md', // Options: 'sm', 'md', 'lg' - Controls button padding
-    'textSize' => null, // Optional: Override text size (e.g., 'text-xs', 'text-2xl')
-    'iconSize' => null, // Optional: Override icon size (e.g., 'text-lg', 'text-xl')
-    'textStyle' => 'bold', // Options: 'bold' (uppercase, tracking-widest), 'normal'
-    'iconRotate' => false, // Enable rotation on hover
+    'tag' => 'button',
+    'href' => null,
+    'type' => 'button',
+    'variant' => 'yellow',
+    'icon' => null,
+    'iconPosition' => 'right',
+    'loading' => false,
+    'disabled' => false,
+    'class' => '',
 ])
 
 @php
-    // Padding size classes with consistent aspect ratio
-    $paddingClasses = match($paddingSize) {
-        'sm' => 'px-6 py-2',           // Small button
-        'md' => 'px-8 py-3',           // Medium button (More Updates)
-        'lg' => 'pl-4 pr-5 py-3',      // Large button (Watch) - matches design spec
-        default => 'px-8 py-3',
+    // Determine the tag to use
+    $tag = $href ? 'a' : ($tag ?? 'button');
+
+    // Variant classes
+    $variantClass = match($variant) {
+        'yellow' => 'btn-yellow',
+        'white' => 'btn-white',
+        default => 'btn-yellow',
     };
 
-    // Gap size - use custom or default based on padding size
-    $gapClass = match($paddingSize) {
-        'sm' => 'gap-2',
-        'md' => 'gap-2 md:gap-3',
-        'lg' => 'gap-2',
-        default => 'gap-2 md:gap-3',
-    };
+    // Icon SVG paths
+    $icons = [
+        'arrow-right' => '<path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+        'plus' => '<path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+        'play' => '<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M10 8.5L16 12L10 15.5V8.5Z" fill="currentColor"/>',
+        'check' => '<path d="M5 12L10 17L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+    ];
 
-    // Text size - use custom or default based on padding size
-    $textSizeClass = $textSize ?? match($paddingSize) {
-        'sm' => 'text-xs md:text-sm',
-        'md' => 'text-xs md:text-sm',
-        'lg' => 'text-xl',
-        default => 'text-xs md:text-sm',
-    };
+    $iconSvg = $icon && isset($icons[$icon]) ? $icons[$icon] : null;
 
-    // Icon size - use custom or default based on padding size (w-6 h-6 for lg)
-    $iconSizeClass = $iconSize ?? match($paddingSize) {
-        'sm' => 'text-base',
-        'md' => 'text-lg',
-        'lg' => 'w-6 h-6',
-        default => 'text-lg',
-    };
+    // Loading spinner SVG
+    $loadingSpinner = '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>';
 
-    // Text style classes
-    $textStyleClasses = $textStyle === 'bold'
-        ? 'font-bold uppercase tracking-widest'
-        : 'font-normal';
-
-    // Icon animation
-    $iconAnimation = $iconRotate
-        ? 'group-hover:rotate-90 transition-transform duration-300'
-        : 'transition-transform duration-300';
+    // Build class string
+    $classes = "btn {$variantClass} {$class}";
 @endphp
 
-<a
-    href="{{ $url }}"
-    {{ $attributes->merge(['class' => "group {$bgColor} {$paddingClasses} rounded-full inline-flex items-center justify-center " . ($iconPosition === 'left' ? $gapClass : $gapClass . ' flex-row-reverse') . " shadow-sm hover:shadow-md {$hoverBg} transition-all duration-300"]) }}
+<{{ $tag }}
+    @if($tag === 'a')
+        href="{{ $href }}"
+    @else
+        type="{{ $type }}"
+    @endif
+    {{ $attributes->merge(['class' => $classes]) }}
+    @if($disabled || $loading)
+        @if($tag === 'button') disabled @endif
+        aria-disabled="true"
+    @endif
 >
-    @if($icon)
-        <i class="fa-solid fa-{{ $icon }} {{ $iconSizeClass }} {{ $textColor }} {{ $iconAnimation }}"></i>
+    @if($iconPosition === 'left' && $iconSvg && !$loading)
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">{!! $iconSvg !!}</svg>
     @endif
 
-    <span class="{{ $textStyleClasses }} {{ $textSizeClass }} {{ $textColor }}">{{ $text }}</span>
-</a>
+    @if($loading)
+        <svg class="animate-spin" width="24" height="24" viewBox="0 0 24 24" fill="none">{!! $loadingSpinner !!}</svg>
+    @endif
+
+    <span>{{ $slot }}</span>
+
+    @if($iconPosition === 'right' && $iconSvg && !$loading)
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">{!! $iconSvg !!}</svg>
+    @endif
+</{{ $tag }}>

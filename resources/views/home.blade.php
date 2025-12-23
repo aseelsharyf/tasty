@@ -71,23 +71,8 @@
             :count="5"
         />
 
-        <!-- Newsletter Section -->
-        <div class="w-full bg-gray-100">
-            <section class="container-main py-16 px-10 max-md:px-5 max-md:py-8">
-                <div class="flex flex-col items-center gap-10">
-                    <h2 class="text-h2 text-blue-black text-center max-w-[900px] max-md:text-h4">COME HUNGRY, LEAVE INSPIRED. SIGN UP FOR TASTY UPDATES.</h2>
-                    <div class="flex items-center gap-0 bg-white rounded-[100px] p-3 w-full max-w-[500px] max-md:flex-col max-md:bg-transparent max-md:gap-2.5">
-                        <input type="email" placeholder="Enter your Email" class="flex-1 bg-transparent px-5 py-0 text-body-large text-blue-black placeholder:text-blue-black/50 outline-none max-md:bg-white max-md:rounded-[100px] max-md:py-3 max-md:text-body-small">
-                        <button class="btn btn-yellow max-md:w-full max-md:justify-center">
-                            <span>SUBSCRIBE</span>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="#0A0924" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </section>
-        </div>
+        {{-- Newsletter Section --}}
+        <x-sections.newsletter />
     </main>
 
 @endsection

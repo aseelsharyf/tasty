@@ -97,6 +97,12 @@ class RolesAndPermissionsSeeder extends Seeder
 
             // Analytics
             'analytics.view',
+
+            // Subscribers
+            'subscribers.view',
+            'subscribers.edit',
+            'subscribers.delete',
+            'subscribers.export',
         ];
 
         // Create permissions
@@ -158,6 +164,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'settings.view',
             'settings.edit',
             'analytics.view',
+            'subscribers.view',
+            'subscribers.edit',
+            'subscribers.delete',
+            'subscribers.export',
         ]);
 
         // Create Editor role
