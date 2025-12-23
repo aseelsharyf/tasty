@@ -33,18 +33,13 @@
 {{-- Pull hero up behind the navbar (desktop only, tablet/mobile has no overlap) --}}
 <section class="w-full flex justify-center relative z-0 -mt-[96px] md:-mt-[112px] max-lg:mt-0">
     {{-- Hero container - max-width 1880px, height 968px at 1440px width (scales proportionally) --}}
-    {{-- Mobile: uses CSS variable for viewport height with JS fallback --}}
+    {{-- Mobile: 100dvh (dynamic viewport height) for real device viewport --}}
     <div class="flex w-full max-w-[1880px] h-[clamp(500px,67.22vw,1265px)]
-        max-lg:flex-col max-lg:h-[calc(var(--vh,1vh)*100)] max-lg:overflow-hidden"
-        x-data x-init="
-            const setVh = () => document.documentElement.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
-            setVh();
-            window.addEventListener('resize', setVh);
-        ">
-        {{-- Hero Image - Left 50% / Mobile: fills top portion --}}
+        max-lg:flex-col max-lg:h-dvh">
+        {{-- Hero Image - Left 50% / Mobile: 57% of viewport --}}
         @if($manual)
             <div class="block relative w-1/2 h-full overflow-hidden flex-shrink-0
-                max-lg:w-full max-lg:flex-1 max-lg:h-0">
+                max-lg:w-full max-lg:h-[57dvh]">
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"
@@ -53,7 +48,7 @@
             </div>
         @else
             <a href="{{ $heroUrl }}" class="block relative w-1/2 h-full overflow-hidden flex-shrink-0
-                max-lg:w-full max-lg:flex-1 max-lg:h-0">
+                max-lg:w-full max-lg:h-[57dvh]">
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"
@@ -62,10 +57,10 @@
             </a>
         @endif
 
-        {{-- Hero Content - Right 50% / Mobile: fixed height based on content --}}
+        {{-- Hero Content - Right 50% / Mobile: 43% of viewport --}}
         {{-- Mobile CSS (Figma): padding 32px 20px 64px 20px, gap 24px, centered --}}
         <div class="w-1/2 h-full {{ $bgColorClass }} px-16 py-24 flex flex-col {{ $contentAlignment }} gap-10
-            max-lg:w-full max-lg:h-auto max-lg:flex-shrink-0 max-lg:px-5 max-lg:pt-8 max-lg:pb-16 max-lg:items-center max-lg:justify-center max-lg:text-center max-lg:gap-6" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+            max-lg:w-full max-lg:h-[43dvh] max-lg:px-5 max-lg:pt-8 max-lg:pb-16 max-lg:items-center max-lg:justify-center max-lg:text-center max-lg:gap-6" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
             {{-- Meta: Category • Author • Date --}}
             <div class="flex flex-wrap items-center gap-5 text-body-sm uppercase text-blue-black {{ $metaAlignment }} max-lg:justify-center">
                 @if($heroCategory)
