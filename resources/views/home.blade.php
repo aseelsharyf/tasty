@@ -90,6 +90,21 @@
             :count="5"
         />
 
+        {{-- Recipe Section (Dynamic) --}}
+        <x-sections.recipe
+            :showIntro="true"
+            introImage="{{ Vite::asset('resources/images/on-the-menu.png') }}"
+            introImageAlt="Everyday Cooking"
+            titleSmall="Everyday"
+            titleLarge="COOKING"
+            description="The flavors, characters, and tiny island obsessions that makes the Maldivian food culture."
+            bgColor="yellow"
+            gradient="top"
+            mobileLayout="grid"
+            action="recent"
+            :count="3"
+        />
+
         {{-- Newsletter Section --}}
         <x-sections.newsletter />
     </main>

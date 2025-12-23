@@ -28,6 +28,8 @@ class Recipe extends Component
 
     public string $variant;
 
+    public string $alignment;
+
     /**
      * Create a new component instance.
      *
@@ -45,8 +47,10 @@ class Recipe extends Component
         ?string $date = null,
         ?string $url = null,
         string $variant = 'default',
+        string $alignment = 'center',
     ) {
         $this->variant = $variant;
+        $this->alignment = $alignment;
 
         if ($post instanceof Post) {
             $this->image = $post->featured_image_url ?? '';
