@@ -33,31 +33,31 @@
 {{-- Pull hero up behind the navbar (desktop only, tablet/mobile has no overlap) --}}
 <section class="w-full flex justify-center relative z-0 -mt-[96px] md:-mt-[112px] max-lg:mt-0">
     {{-- Hero container - max-width 1880px, height 968px at 1440px width (scales proportionally) --}}
-    {{-- Mobile (Figma 393x854): Image flex-1 / Content auto height --}}
+    {{-- Mobile: 100svh with overflow hidden to prevent content pushing --}}
     <div class="flex w-full max-w-[1880px] h-[clamp(500px,67.22vw,1265px)]
-        max-lg:flex-col max-lg:h-auto max-lg:min-h-svh">
-        {{-- Hero Image - Left 50% / Mobile: flexible, fills remaining space --}}
+        max-lg:flex-col max-lg:h-[100svh] max-lg:overflow-hidden">
+        {{-- Hero Image - Left 50% / Mobile: fills top portion --}}
         @if($manual)
-            <div class="block relative w-1/2 h-full overflow-hidden
-                max-lg:w-full max-lg:h-auto max-lg:flex-1 max-lg:min-h-[300px]">
+            <div class="block relative w-1/2 h-full overflow-hidden flex-shrink-0
+                max-lg:w-full max-lg:flex-1 max-lg:h-0">
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"
-                    class="w-full h-full object-cover object-center max-lg:absolute max-lg:inset-0"
+                    class="w-full h-full object-cover object-center"
                 >
             </div>
         @else
-            <a href="{{ $heroUrl }}" class="block relative w-1/2 h-full overflow-hidden
-                max-lg:w-full max-lg:h-auto max-lg:flex-1 max-lg:min-h-[300px]">
+            <a href="{{ $heroUrl }}" class="block relative w-1/2 h-full overflow-hidden flex-shrink-0
+                max-lg:w-full max-lg:flex-1 max-lg:h-0">
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"
-                    class="w-full h-full object-cover object-center max-lg:absolute max-lg:inset-0"
+                    class="w-full h-full object-cover object-center"
                 >
             </a>
         @endif
 
-        {{-- Hero Content - Right 50% / Mobile: auto height, content-based --}}
+        {{-- Hero Content - Right 50% / Mobile: fixed height based on content --}}
         {{-- Mobile CSS (Figma): padding 32px 20px 64px 20px, gap 24px, centered --}}
         <div class="w-1/2 h-full {{ $bgColorClass }} px-16 py-24 flex flex-col {{ $contentAlignment }} gap-10
             max-lg:w-full max-lg:h-auto max-lg:flex-shrink-0 max-lg:px-5 max-lg:pt-8 max-lg:pb-16 max-lg:items-center max-lg:justify-center max-lg:text-center max-lg:gap-6" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
