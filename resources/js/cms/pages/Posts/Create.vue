@@ -4,7 +4,6 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import BlockEditor, { type MediaSelectCallback } from '../../components/BlockEditor.vue';
 import MediaPickerModal from '../../components/MediaPickerModal.vue';
-import CustomFieldsPanel from '../../components/CustomFieldsPanel.vue';
 import type { MediaBlockItem } from '../../editor-tools/MediaBlock';
 import { useSidebar } from '../../composables/useSidebar';
 import { useDhivehiKeyboard } from '../../composables/useDhivehiKeyboard';
@@ -339,6 +338,23 @@ const currentPostType = computed(() => {
     };
 });
 
+// Toast for post type changes
+const toast = useToast();
+const previousPostType = ref(form.post_type);
+
+watch(() => form.post_type, (newType) => {
+    const type = props.postTypes.find(t => t.value === newType);
+    if (type?.fields && type.fields.length > 0 && newType !== previousPostType.value) {
+        toast.add({
+            title: `${type.label} Fields Available`,
+            description: 'Additional fields are now available below the content editor.',
+            icon: type.icon || 'i-lucide-info',
+            color: 'info',
+        });
+    }
+    previousPostType.value = newType;
+});
+
 const showScheduleField = computed(() => form.status === 'scheduled');
 
 const statusOptions = [
@@ -642,6 +658,141 @@ function goBack() {
                                 :dhivehi-layout="dhivehiLayout"
                                 :on-select-media="handleEditorSelectMedia"
                             />
+
+                            <!-- Custom Fields Section (for post types with additional fields) -->
+                            <div v-if="currentPostType?.fields?.length" class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center gap-3 mb-5">
+                                    <div class="flex items-center justify-center size-9 rounded-full bg-primary/10">
+                                        <UIcon :name="currentPostType.icon || 'i-lucide-file-text'" class="size-4 text-primary" />
+                                    </div>
+                                    <div>
+                                        <h3 class="text-base font-semibold text-highlighted">{{ currentPostType.label }} Details</h3>
+                                        <p class="text-xs text-muted">Additional information specific to this content type</p>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <template v-for="field in currentPostType.fields" :key="field.name">
+                                        <!-- Text Field -->
+                                        <div v-if="field.type === 'text'">
+                                            <label class="text-sm font-medium mb-1.5 block">{{ field.label }}</label>
+                                            <UInput
+                                                :model-value="(form.custom_fields?.[field.name] as string) ?? ''"
+                                                class="w-full"
+                                                @update:model-value="form.custom_fields = { ...form.custom_fields, [field.name]: $event }"
+                                            />
+                                        </div>
+
+                                        <!-- Number Field -->
+                                        <div v-else-if="field.type === 'number'">
+                                            <label class="text-sm font-medium mb-1.5 block">
+                                                {{ field.label }}
+                                                <span v-if="field.suffix" class="text-muted font-normal">({{ field.suffix }})</span>
+                                            </label>
+                                            <UInput
+                                                :model-value="(form.custom_fields?.[field.name] as number | null) ?? null"
+                                                type="number"
+                                                min="0"
+                                                class="w-full"
+                                                @update:model-value="form.custom_fields = { ...form.custom_fields, [field.name]: $event }"
+                                            />
+                                        </div>
+
+                                        <!-- Textarea Field -->
+                                        <div v-else-if="field.type === 'textarea'">
+                                            <label class="text-sm font-medium mb-1.5 block">{{ field.label }}</label>
+                                            <UTextarea
+                                                :model-value="(form.custom_fields?.[field.name] as string) ?? ''"
+                                                :rows="4"
+                                                class="w-full"
+                                                @update:model-value="form.custom_fields = { ...form.custom_fields, [field.name]: $event }"
+                                            />
+                                        </div>
+
+                                        <!-- Select Field -->
+                                        <div v-else-if="field.type === 'select'">
+                                            <label class="text-sm font-medium mb-1.5 block">{{ field.label }}</label>
+                                            <USelectMenu
+                                                :model-value="(form.custom_fields?.[field.name] as string) ?? ''"
+                                                :items="(field.options ?? []).map(opt => ({ label: opt, value: opt }))"
+                                                value-key="value"
+                                                class="w-full"
+                                                @update:model-value="form.custom_fields = { ...form.custom_fields, [field.name]: $event }"
+                                            />
+                                        </div>
+
+                                        <!-- Toggle Field -->
+                                        <div v-else-if="field.type === 'toggle'" class="flex items-center justify-between p-3 rounded-lg bg-elevated/50 border border-default">
+                                            <label class="text-sm font-medium">{{ field.label }}</label>
+                                            <USwitch
+                                                :model-value="(form.custom_fields?.[field.name] as boolean) ?? false"
+                                                @update:model-value="form.custom_fields = { ...form.custom_fields, [field.name]: $event }"
+                                            />
+                                        </div>
+
+                                        <!-- Repeater Field -->
+                                        <div v-else-if="field.type === 'repeater'">
+                                            <label class="text-sm font-medium mb-1.5 block">{{ field.label }}</label>
+                                            <div class="space-y-2">
+                                                <div
+                                                    v-for="(item, index) in ((form.custom_fields?.[field.name] as string[]) ?? [])"
+                                                    :key="index"
+                                                    class="flex gap-2"
+                                                >
+                                                    <UInput
+                                                        :model-value="item"
+                                                        class="flex-1"
+                                                        @update:model-value="form.custom_fields = {
+                                                            ...form.custom_fields,
+                                                            [field.name]: ((form.custom_fields?.[field.name] as string[]) ?? []).map((v, i) => i === index ? $event : v)
+                                                        }"
+                                                    />
+                                                    <UButton
+                                                        color="neutral"
+                                                        variant="ghost"
+                                                        icon="i-lucide-x"
+                                                        @click="form.custom_fields = {
+                                                            ...form.custom_fields,
+                                                            [field.name]: ((form.custom_fields?.[field.name] as string[]) ?? []).filter((_, i) => i !== index)
+                                                        }"
+                                                    />
+                                                </div>
+                                                <div class="flex gap-2">
+                                                    <UInput
+                                                        :id="`custom-repeater-${field.name}`"
+                                                        placeholder="Add new item..."
+                                                        class="flex-1"
+                                                        @keyup.enter.prevent="(e: KeyboardEvent) => {
+                                                            const input = e.target as HTMLInputElement;
+                                                            if (input.value.trim()) {
+                                                                form.custom_fields = {
+                                                                    ...form.custom_fields,
+                                                                    [field.name]: [...((form.custom_fields?.[field.name] as string[]) ?? []), input.value.trim()]
+                                                                };
+                                                                input.value = '';
+                                                            }
+                                                        }"
+                                                    />
+                                                    <UButton
+                                                        color="neutral"
+                                                        variant="soft"
+                                                        icon="i-lucide-plus"
+                                                        @click="() => {
+                                                            const input = document.getElementById(`custom-repeater-${field.name}`) as HTMLInputElement;
+                                                            if (input?.value.trim()) {
+                                                                form.custom_fields = {
+                                                                    ...form.custom_fields,
+                                                                    [field.name]: [...((form.custom_fields?.[field.name] as string[]) ?? []), input.value.trim()]
+                                                                };
+                                                                input.value = '';
+                                                            }
+                                                        }"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -855,15 +1006,6 @@ function goBack() {
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Dynamic Custom Fields based on Post Type -->
-                            <CustomFieldsPanel
-                                :post-type="currentPostType"
-                                :custom-fields="form.custom_fields"
-                                @update:custom-fields="form.custom_fields = $event"
-                            />
-
-                            <div class="h-px bg-default" />
 
                             <!-- SEO -->
                             <div>

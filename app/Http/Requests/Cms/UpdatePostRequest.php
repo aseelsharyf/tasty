@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Cms;
 
 use App\Models\Post;
+use App\Models\Setting;
 use App\Services\PostTemplateRegistry;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -19,6 +20,10 @@ class UpdatePostRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Get valid post type slugs from settings
+        $postTypes = Setting::getPostTypes();
+        $validPostTypes = array_column($postTypes, 'slug');
+
         return [
             'title' => ['required', 'string', 'max:255'],
             'kicker' => ['nullable', 'string', 'max:100'],
@@ -31,7 +36,7 @@ class UpdatePostRequest extends FormRequest
             ],
             'excerpt' => ['nullable', 'string', 'max:500'],
             'content' => ['nullable', 'array'],
-            'post_type' => ['nullable', Rule::in([Post::TYPE_ARTICLE, Post::TYPE_RECIPE])],
+            'post_type' => ['nullable', Rule::in($validPostTypes)],
             'template' => ['nullable', 'string', 'max:50', function ($attribute, $value, $fail) {
                 if ($value && ! PostTemplateRegistry::exists($value)) {
                     $fail('The selected template is invalid.');

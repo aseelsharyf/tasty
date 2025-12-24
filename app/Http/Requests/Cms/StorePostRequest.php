@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Cms;
 
 use App\Models\Post;
+use App\Models\Setting;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,6 +19,10 @@ class StorePostRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Get valid post type slugs from settings
+        $postTypes = Setting::getPostTypes();
+        $validPostTypes = array_column($postTypes, 'slug');
+
         return [
             'title' => ['required', 'string', 'max:255'],
             'kicker' => ['nullable', 'string', 'max:100'],
@@ -25,7 +30,7 @@ class StorePostRequest extends FormRequest
             'slug' => ['nullable', 'string', 'max:255', 'unique:posts,slug'],
             'excerpt' => ['nullable', 'string', 'max:500'],
             'content' => ['nullable', 'array'],
-            'post_type' => ['required', Rule::in([Post::TYPE_ARTICLE, Post::TYPE_RECIPE])],
+            'post_type' => ['required', Rule::in($validPostTypes)],
             'status' => ['required', Rule::in([
                 Post::STATUS_DRAFT,
                 Post::STATUS_PENDING,

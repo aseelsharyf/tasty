@@ -221,6 +221,7 @@ const initEditor = async () => {
         holder: editorRef.value,
         placeholder: defaultPlaceholder,
         readOnly: props.readOnly || false,
+        minHeight: 0,
         data: normalizedData,
         tools: {
             // Order: Text (default), Heading, Media, Quote, Link, List, Delimiter, Table, Code
@@ -393,7 +394,7 @@ defineExpose({
 /* Uses Nuxt UI design system variables for consistency */
 
 .codex-editor__redactor {
-    padding-bottom: 6rem;
+    padding-bottom: 2rem !important;
 }
 
 .ce-block__content,
