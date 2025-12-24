@@ -34,11 +34,11 @@
                     <article class="flex flex-col gap-5 flex-1 min-w-[280px]">
                         {{-- Intro Image --}}
                         @if($introImage)
-                            <div class="w-full aspect-[400/430] overflow-hidden">
+                            <div class="w-full h-[429.5px] overflow-hidden">
                                 <img
                                     src="{{ $introImage }}"
                                     alt="{{ $introImageAlt }}"
-                                    class="w-full h-full object-cover mix-blend-darken"
+                                    class="w-full h-full object-contain mix-blend-darken"
                                 >
                             </div>
                         @endif
@@ -160,8 +160,8 @@
             @if($showIntro)
                 <article class="flex flex-col gap-5">
                     @if($introImage)
-                        <div class="w-full aspect-[400/430] overflow-hidden">
-                            <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-cover mix-blend-darken">
+                        <div class="w-full h-[182px] overflow-hidden">
+                            <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain mix-blend-darken">
                         </div>
                     @endif
                     <div class="flex flex-col gap-5 text-center text-blue-black">

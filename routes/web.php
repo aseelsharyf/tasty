@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\SearchController;
@@ -16,12 +17,8 @@ Route::get('/template', function () {
 // CMS Routes
 Route::prefix('cms')->group(base_path('routes/cms.php'));
 
-// Dynamic Page Routes from database
-// Route::get('/', [PageController::class, 'home'])->name('home');
-
-Route::get('/', function () {
-    return view('home');
-})->name('home');
+// Homepage - uses configurable layout
+Route::get('/', HomeController::class)->name('home');
 
 // Category routes
 Route::get('/category/{category:slug}', [

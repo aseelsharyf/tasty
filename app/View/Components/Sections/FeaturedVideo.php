@@ -71,6 +71,7 @@ class FeaturedVideo extends Component
      * @param  bool  $showSectionGradient  Whether to show the section background gradient
      * @param  string  $sectionGradientDirection  Section gradient direction (top or bottom)
      * @param  string|null  $sectionBgColor  Fixed background color (overrides gradient if set)
+     * @param  array<string, mixed>|null  $staticContent  Static content from CMS
      */
     public function __construct(
         ?int $postId = null,
@@ -82,12 +83,33 @@ class FeaturedVideo extends Component
         bool $showSectionGradient = true,
         string $sectionGradientDirection = 'top',
         ?string $sectionBgColor = null,
+        ?array $staticContent = null,
     ) {
         $this->buttonText = $buttonText;
         $this->overlayColor = $overlayColor;
         $this->showSectionGradient = $showSectionGradient;
         $this->sectionGradientDirection = $sectionGradientDirection;
         $this->sectionBgColor = $sectionBgColor;
+
+        // Static content from CMS (same as staticData)
+        if ($staticContent !== null) {
+            $this->image = $staticContent['image'] ?? '';
+            $this->imageAlt = $staticContent['imageAlt'] ?? $staticContent['title'] ?? '';
+            $this->title = $staticContent['title'] ?? '';
+            $this->subtitle = $staticContent['subtitle'] ?? '';
+            $this->description = $staticContent['description'] ?? '';
+            $this->url = $staticContent['url'] ?? '#';
+            $this->videoUrl = $staticContent['videoUrl'] ?? $staticContent['url'] ?? '#';
+            $this->category = $staticContent['category'] ?? null;
+            $this->categoryUrl = $staticContent['categoryUrl'] ?? null;
+            $this->tag = $staticContent['tag'] ?? null;
+            $this->tagUrl = $staticContent['tagUrl'] ?? null;
+            $this->author = $staticContent['author'] ?? 'Unknown';
+            $this->authorUrl = $staticContent['authorUrl'] ?? '#';
+            $this->date = $staticContent['date'] ?? '';
+
+            return;
+        }
 
         // Static mode: use provided static data
         if ($staticData !== null) {

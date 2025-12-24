@@ -4,7 +4,7 @@
     @if($showIntro)
         <div class="hidden max-lg:flex flex-col items-center justify-center gap-5 px-5 pb-8">
             @if($introImage)
-                <div class="w-full h-[250px]">
+                <div class="w-full h-[182px]">
                     <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain" style="mix-blend-mode: darken;">
                 </div>
             @endif
@@ -27,8 +27,8 @@
                     <div class="flex items-start shrink-0 max-lg:hidden">
                         <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10 pt-8">
                             @if($introImage)
-                                <div class="w-full max-w-[320px]">
-                                    <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-auto object-contain" style="mix-blend-mode: darken;">
+                                <div class="w-full max-w-[320px] h-[476px]">
+                                    <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain" style="mix-blend-mode: darken;">
                                 </div>
                             @endif
                             <div class="flex flex-col items-center text-center text-blue-black">
@@ -86,8 +86,8 @@
                     @if($showIntro)
                         <div class="flex flex-col items-center justify-center gap-5 max-lg:hidden">
                             @if($introImage)
-                                <div class="w-full max-w-[320px]">
-                                    <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-auto object-contain" style="mix-blend-mode: darken;">
+                                <div class="w-full max-w-[320px] h-[476px]">
+                                    <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain" style="mix-blend-mode: darken;">
                                 </div>
                             @endif
                             <div class="flex flex-col items-center text-center text-blue-black">

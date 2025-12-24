@@ -1,16 +1,17 @@
 {{-- Horizontal Card --}}
 {{-- Desktop: flex-1 to share grid space --}}
 {{-- Tablet/Mobile: vertical layout, p-4, gap-4, image h-[206px] with tag overlay --}}
-<article class="bg-white rounded-xl overflow-hidden p-10 flex gap-10 items-end w-full
+<article class="bg-white rounded-xl overflow-hidden p-10 flex gap-10 items-center w-full
     max-lg:flex-col max-lg:px-4 max-lg:pt-4 max-lg:pb-8 max-lg:gap-4 max-lg:items-start">
-    {{-- Image - Desktop: 200px wide, Tablet/Mobile: full width h-[206px] with tag overlay --}}
-    <div class="w-[200px] self-stretch rounded overflow-hidden flex-shrink-0 relative flex items-end justify-center p-6
-        max-lg:w-full max-lg:h-[206px] max-lg:self-auto max-lg:p-4">
-        <a href="{{ $url }}" class="absolute inset-0">
+    {{-- Image - Desktop: 200px wide with auto height, centered vertically --}}
+    {{-- Tablet/Mobile: full width h-[206px] with tag overlay --}}
+    <div class="w-[200px] flex-shrink-0 relative flex items-center justify-center
+        max-lg:w-full max-lg:h-[206px] max-lg:p-4">
+        <a href="{{ $url }}" class="block w-full max-lg:absolute max-lg:inset-0">
             <img
                 src="{{ $image }}"
                 alt="{{ $imageAlt }}"
-                class="w-full h-full object-cover rounded"
+                class="w-full h-auto object-cover rounded max-lg:h-full"
             >
         </a>
         {{-- Tag overlay - only visible on tablet/mobile --}}
@@ -42,7 +43,7 @@
         @endif
 
         <a href="{{ $url }}" class="hover:opacity-80 transition-opacity">
-            <h3 class="font-display text-[32px] leading-[38px] tracking-[-1.28px] text-blue-black
+            <h3 class="font-display text-[32px] leading-[38px] tracking-[-1.28px] text-blue-black line-clamp-3
                 max-lg:text-[24px] max-lg:leading-[24px] max-lg:tracking-[-0.96px]">{{ $title }}</h3>
         </a>
 

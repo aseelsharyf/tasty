@@ -52,6 +52,7 @@ class FeaturedPerson extends Component
      * @param  string  $buttonText  Button text
      * @param  string  $tag1  First tag text
      * @param  string  $tag2  Second tag text (or uses category)
+     * @param  array<string, mixed>|null  $staticContent  Static content from CMS
      */
     public function __construct(
         ?int $postId = null,
@@ -62,6 +63,7 @@ class FeaturedPerson extends Component
         string $buttonText = 'Read More',
         string $tag1 = 'TASTY FEATURE',
         string $tag2 = '',
+        ?array $staticContent = null,
     ) {
         // Resolve background color
         $bgResolved = $this->resolveBgColor($bgColor);
@@ -73,6 +75,20 @@ class FeaturedPerson extends Component
         $this->tag1Slug = 'featured';
         $this->tag2 = $tag2;
         $this->tag2Slug = null;
+
+        // Static content from CMS (same as staticData)
+        if ($staticContent !== null) {
+            $this->post = $staticContent;
+
+            if (empty($this->tag2) && isset($staticContent['category'])) {
+                $this->tag2 = $staticContent['category'];
+            }
+            if (isset($staticContent['categorySlug'])) {
+                $this->tag2Slug = $staticContent['categorySlug'];
+            }
+
+            return;
+        }
 
         // Static mode: use provided static data
         if ($staticData !== null) {

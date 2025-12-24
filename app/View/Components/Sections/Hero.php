@@ -79,6 +79,7 @@ class Hero extends Component
      * @param  string|null  $authorUrl  Manual mode: author link URL
      * @param  string|null  $date  Manual mode: date string
      * @param  string|null  $buttonUrl  Manual mode: button link URL
+     * @param  array<string, mixed>|null  $staticContent  Static content from CMS
      */
     public function __construct(
         ?int $postId = null,
@@ -99,6 +100,7 @@ class Hero extends Component
         ?string $authorUrl = null,
         ?string $date = null,
         ?string $buttonUrl = null,
+        ?array $staticContent = null,
     ) {
         $bgResolved = $this->resolveBgColor($bgColor);
         $this->bgColorClass = $bgResolved['class'];
@@ -106,6 +108,23 @@ class Hero extends Component
         $this->buttonText = $buttonText;
         $this->buttonColor = $buttonColor;
         $this->alignment = $alignment;
+
+        // Static content from CMS (treated as manual mode)
+        if ($staticContent !== null) {
+            $this->manual = true;
+            $this->kicker = $staticContent['kicker'] ?? null;
+            $this->title = $staticContent['title'] ?? null;
+            $this->image = $staticContent['image'] ?? null;
+            $this->imageAlt = $staticContent['imageAlt'] ?? $staticContent['title'] ?? null;
+            $this->category = $staticContent['category'] ?? null;
+            $this->categoryUrl = $staticContent['categoryUrl'] ?? null;
+            $this->author = $staticContent['author'] ?? null;
+            $this->authorUrl = $staticContent['authorUrl'] ?? null;
+            $this->date = $staticContent['date'] ?? null;
+            $this->buttonUrl = $staticContent['buttonUrl'] ?? '#';
+
+            return;
+        }
 
         // Manual mode properties
         $this->manual = $manual;

@@ -7,6 +7,7 @@ use App\Http\Controllers\Cms\CommentBanController;
 use App\Http\Controllers\Cms\CommentController;
 use App\Http\Controllers\Cms\DashboardController;
 use App\Http\Controllers\Cms\LanguageController;
+use App\Http\Controllers\Cms\LayoutController;
 use App\Http\Controllers\Cms\MediaController;
 use App\Http\Controllers\Cms\MediaFolderController;
 use App\Http\Controllers\Cms\MediaItemCropController;
@@ -339,6 +340,18 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::post('media-folders', [MediaFolderController::class, 'store'])->name('cms.media-folders.store');
         Route::put('media-folders/{folder}', [MediaFolderController::class, 'update'])->name('cms.media-folders.update');
         Route::delete('media-folders/{folder}', [MediaFolderController::class, 'destroy'])->name('cms.media-folders.destroy');
+    });
+
+    // Layouts Management
+    Route::middleware('permission:settings.view')->prefix('layouts')->group(function () {
+        Route::get('homepage', [LayoutController::class, 'homepage'])->name('cms.layouts.homepage');
+        Route::put('homepage', [LayoutController::class, 'updateHomepage'])->name('cms.layouts.homepage.update');
+        Route::get('homepage/search-posts', [LayoutController::class, 'searchPosts'])->name('cms.layouts.homepage.search-posts');
+        Route::get('homepage/posts/{post}', [LayoutController::class, 'getPost'])->name('cms.layouts.homepage.get-post');
+        Route::get('homepage/posts-batch', [LayoutController::class, 'getPostsBatch'])->name('cms.layouts.homepage.posts-batch');
+        Route::get('homepage/tags', [LayoutController::class, 'getTags'])->name('cms.layouts.homepage.tags');
+        Route::get('homepage/categories', [LayoutController::class, 'getCategories'])->name('cms.layouts.homepage.categories');
+        Route::get('section-types', [LayoutController::class, 'getSectionTypes'])->name('cms.layouts.section-types');
     });
 
     // Workflow Routes

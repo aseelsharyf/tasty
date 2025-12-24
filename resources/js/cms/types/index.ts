@@ -341,3 +341,101 @@ export interface LayoutFilters {
     type?: 'homepage' | 'category' | 'tag';
     status?: 'published' | 'draft';
 }
+
+// Homepage Layout Builder Types
+export interface HomepageSection {
+    id: string;
+    type: string;
+    order: number;
+    enabled: boolean;
+    config: Record<string, unknown>;
+    dataSource: HomepageSectionDataSource;
+    slots: HomepageSectionSlot[];
+}
+
+export interface HomepageSectionDataSource {
+    action: string;
+    params: Record<string, unknown>;
+}
+
+export interface HomepageSectionSlot {
+    index: number;
+    mode: 'dynamic' | 'manual' | 'static';
+    postId: number | null;
+    product?: HomepageProduct;
+    content?: Record<string, string>;
+}
+
+export interface HomepageProduct {
+    title: string;
+    description: string;
+    image: string;
+    imageAlt: string;
+    tags: string[];
+    url: string;
+}
+
+export interface HomepageConfiguration {
+    sections: HomepageSection[];
+    version: number;
+    updatedAt: string | null;
+    updatedBy: number | null;
+}
+
+export interface SectionTypeConfigField {
+    type: 'text' | 'textarea' | 'number' | 'toggle' | 'select' | 'color' | 'media';
+    label: string;
+    default: unknown;
+    options?: string[];
+    placeholder?: string;
+}
+
+export interface PreviewSchemaArea {
+    id: string;
+    label: string;
+    width?: string;
+    height?: string;
+    slotIndex?: number;
+    showPlay?: boolean;
+    scroll?: 'horizontal' | 'vertical';
+    gridCols?: number;
+    isBackground?: boolean;
+    isOverlay?: boolean;
+    children?: PreviewSchemaArea[];
+}
+
+export interface PreviewSchema {
+    layout: string;
+    alignmentKey?: string;
+    areas: PreviewSchemaArea[];
+}
+
+export interface SectionTypeDefinition {
+    type: string;
+    name: string;
+    description: string;
+    icon: string;
+    slotCount: number;
+    minSlots: number;
+    maxSlots: number;
+    configSchema: Record<string, SectionTypeConfigField>;
+    slotSchema: Record<string, SectionTypeConfigField>;
+    slotLabels: Record<number, string>;
+    supportedActions: string[];
+    supportsDynamic: boolean;
+    defaultConfig: Record<string, unknown>;
+    defaultSlots: HomepageSectionSlot[];
+    defaultDataSource: HomepageSectionDataSource;
+    previewSchema: PreviewSchema;
+}
+
+export interface PostSearchResult {
+    id: number;
+    title: string;
+    kicker?: string;
+    excerpt?: string;
+    image?: string;
+    category?: string;
+    postType: string;
+    publishedAt?: string;
+}

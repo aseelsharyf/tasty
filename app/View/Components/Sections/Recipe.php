@@ -76,6 +76,10 @@ class Recipe extends Component
      * @param  string  $action  Action to fetch posts
      * @param  array<string, mixed>  $params  Parameters for the action
      * @param  int  $count  Number of posts to fetch (excluding featured)
+     * @param  int  $totalSlots  Total number of slots from CMS
+     * @param  array<int, int>  $manualPostIds  Index => postId for manual slots
+     * @param  array<int, array<string, mixed>>  $staticContent  Index => content for static slots
+     * @param  int  $dynamicCount  Number of dynamic slots to fill
      */
     public function __construct(
         bool $showIntro = true,
@@ -96,6 +100,10 @@ class Recipe extends Component
         string $action = 'recent',
         array $params = [],
         int $count = 4,
+        int $totalSlots = 0,
+        array $manualPostIds = [],
+        array $staticContent = [],
+        int $dynamicCount = 0,
     ) {
         $this->showIntro = $showIntro;
         $this->introImage = $introImage;
@@ -121,7 +129,25 @@ class Recipe extends Component
         $this->showDividers = $showDividers;
         $this->dividerColor = str_starts_with($dividerColor, 'bg-') ? $dividerColor : ($dividerColor === 'white' ? 'bg-white' : 'bg-gray-300');
 
-        // Handle featured post
+        // New hybrid slot mode from CMS
+        if ($totalSlots > 0 || count($manualPostIds) > 0 || count($staticContent) > 0) {
+            $slots = $this->resolveHybridSlots(
+                totalSlots: $totalSlots,
+                manualPostIds: $manualPostIds,
+                staticContent: $staticContent,
+                dynamicCount: $dynamicCount,
+                action: $action,
+                params: $params,
+            );
+
+            // First slot is featured, rest are posts
+            $this->featuredPost = $slots->shift();
+            $this->posts = $slots;
+
+            return;
+        }
+
+        // Legacy: Handle featured post
         if ($staticFeatured !== null) {
             $this->featuredPost = $staticFeatured;
         } elseif ($featuredPostId !== null) {
@@ -130,7 +156,7 @@ class Recipe extends Component
             $this->featuredPost = null;
         }
 
-        // Handle regular posts
+        // Legacy: Handle regular posts
         $staticCollection = collect($staticPosts);
 
         if (count($staticPosts) > 0 && $count === 0) {
@@ -156,6 +182,71 @@ class Recipe extends Component
 
             $this->posts = $staticCollection->merge($dynamicPosts);
         }
+    }
+
+    /**
+     * Resolve hybrid slots with mix of manual, static, and dynamic content.
+     *
+     * @param  array<int, int>  $manualPostIds
+     * @param  array<int, array<string, mixed>>  $staticContent
+     * @param  array<string, mixed>  $params
+     * @return Collection<int, Post|array<string, mixed>>
+     */
+    protected function resolveHybridSlots(
+        int $totalSlots,
+        array $manualPostIds,
+        array $staticContent,
+        int $dynamicCount,
+        string $action,
+        array $params,
+    ): Collection {
+        // Fetch manual posts
+        $manualPosts = collect();
+        if (count($manualPostIds) > 0) {
+            $manualPosts = Post::with(['author', 'categories', 'tags'])
+                ->whereIn('id', array_values($manualPostIds))
+                ->get()
+                ->keyBy('id');
+        }
+
+        // Fetch dynamic posts if needed
+        $dynamicPosts = collect();
+        if ($dynamicCount > 0) {
+            $actionClass = $this->actions[$action] ?? GetRecentPosts::class;
+            $actionInstance = new $actionClass;
+
+            // Exclude manual posts from dynamic fetch
+            $excludeIds = array_values($manualPostIds);
+
+            $result = $actionInstance->execute([
+                'page' => 1,
+                'perPage' => $dynamicCount,
+                'excludeIds' => $excludeIds,
+                ...$params,
+            ]);
+
+            $dynamicPosts = collect($result->items());
+        }
+
+        // Build final slot array
+        $slots = [];
+        $dynamicIndex = 0;
+
+        for ($i = 0; $i < $totalSlots; $i++) {
+            if (isset($manualPostIds[$i])) {
+                // Manual post for this slot
+                $slots[$i] = $manualPosts->get($manualPostIds[$i]);
+            } elseif (isset($staticContent[$i])) {
+                // Static content for this slot
+                $slots[$i] = $staticContent[$i];
+            } else {
+                // Dynamic post for this slot
+                $slots[$i] = $dynamicPosts->get($dynamicIndex);
+                $dynamicIndex++;
+            }
+        }
+
+        return collect($slots)->filter()->values();
     }
 
     /**

@@ -76,6 +76,7 @@ class FeaturedLocation extends Component
      * @param  string  $bgColor  Background color (named, Tailwind class, hex, or rgba)
      * @param  string  $textColor  Text color (Tailwind utility name like 'blue-black')
      * @param  string  $buttonVariant  Button variant (white, yellow)
+     * @param  array<string, mixed>|null  $staticContent  Static content from CMS
      */
     public function __construct(
         Post|array|null $post = null,
@@ -94,6 +95,7 @@ class FeaturedLocation extends Component
         string $bgColor = 'yellow',
         string $textColor = 'blue-black',
         string $buttonVariant = 'white',
+        ?array $staticContent = null,
     ) {
         // Resolve background color
         $bgResolved = $this->resolveBgColor($bgColor);
@@ -101,6 +103,14 @@ class FeaturedLocation extends Component
         $this->bgColorStyle = $bgResolved['style'];
         $this->textColor = $textColor;
         $this->buttonVariant = $buttonVariant;
+
+        // Static content from CMS
+        if ($staticContent !== null) {
+            $this->post = $staticContent;
+            $this->populateFromArray($staticContent);
+
+            return;
+        }
 
         // Determine post source
         if ($post instanceof Post) {

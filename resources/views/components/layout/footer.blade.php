@@ -97,7 +97,7 @@
         </div>
 
         {{-- DESKTOP --}}
-        <div class="hidden md:grid grid-cols-4 gap-8 lg:gap-12 w-full px-4 lg:px-20 mb-32 text-lg tracking-wide">
+        <div class="hidden md:grid grid-cols-4 gap-8 lg:gap-12 w-full mx-auto px-4 mb-32 text-lg tracking-wide justify-center">
             <div class="flex flex-col gap-4">
                 @foreach($menu as $item)
                     <a href="{{ $item['url'] }}" class="hover:text-yellow-400 transition">{{ $item['label'] }}</a>

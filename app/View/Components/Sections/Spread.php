@@ -70,6 +70,10 @@ class Spread extends Component
      * @param  array<string, mixed>  $params  Parameters for the action
      * @param  int  $count  Number of posts to fetch
      * @param  bool  $randomTag  Pick a random tag and load posts from it
+     * @param  int  $totalSlots  Total number of slots from CMS
+     * @param  array<int, int>  $manualPostIds  Index => postId for manual slots
+     * @param  array<int, array<string, mixed>>  $staticContent  Index => content for static slots
+     * @param  int  $dynamicCount  Number of dynamic slots to fill
      */
     public function __construct(
         bool $showIntro = true,
@@ -88,10 +92,17 @@ class Spread extends Component
         array $params = [],
         int $count = 4,
         bool $randomTag = false,
+        int $totalSlots = 0,
+        array $manualPostIds = [],
+        array $staticContent = [],
+        int $dynamicCount = 0,
     ) {
         $this->showIntro = $showIntro;
         $this->introImage = $introImage;
         $this->introImageAlt = $introImageAlt;
+        $this->titleSmall = $titleSmall;
+        $this->titleLarge = $titleLarge;
+        $this->description = $description;
         $bgResolved = $this->resolveBgColor($bgColor);
         $this->bgColorClass = $bgResolved['class'];
         $this->bgColorStyle = $bgResolved['style'];
@@ -99,14 +110,25 @@ class Spread extends Component
         $this->showDividers = $showDividers;
         $this->dividerColor = str_starts_with($dividerColor, 'bg-') ? $dividerColor : ($dividerColor === 'white' ? 'bg-white' : 'bg-gray-300');
 
-        // Static posts can be mixed with dynamic posts
+        // New hybrid slot mode from CMS
+        if ($totalSlots > 0 || count($manualPostIds) > 0 || count($staticContent) > 0) {
+            $this->posts = $this->resolveHybridSlots(
+                totalSlots: $totalSlots,
+                manualPostIds: $manualPostIds,
+                staticContent: $staticContent,
+                dynamicCount: $dynamicCount,
+                action: $action,
+                params: $params,
+            );
+
+            return;
+        }
+
+        // Legacy: Static posts can be mixed with dynamic posts
         $staticCollection = collect($staticPosts);
 
         // If only static posts provided (no action specified or count is 0 after static)
         if (count($staticPosts) > 0 && $count === 0) {
-            $this->titleSmall = $titleSmall;
-            $this->titleLarge = $titleLarge;
-            $this->description = $description;
             $this->posts = $staticCollection;
 
             return;
@@ -124,16 +146,10 @@ class Spread extends Component
                 $this->posts = $staticCollection->merge($dynamicPosts);
             } else {
                 // Fallback if no tags with posts exist
-                $this->titleSmall = $titleSmall;
-                $this->titleLarge = $titleLarge;
-                $this->description = $description;
                 $dynamicPosts = $this->fetchPostsViaAction('recent', [], $count);
                 $this->posts = $staticCollection->merge($dynamicPosts);
             }
         } elseif (count($postIds) > 0) {
-            $this->titleSmall = $titleSmall;
-            $this->titleLarge = $titleLarge;
-            $this->description = $description;
             $dynamicPosts = Post::with(['author', 'categories', 'tags'])
                 ->whereIn('id', $postIds)
                 ->get()
@@ -141,12 +157,74 @@ class Spread extends Component
                 ->values();
             $this->posts = $staticCollection->merge($dynamicPosts);
         } else {
-            $this->titleSmall = $titleSmall;
-            $this->titleLarge = $titleLarge;
-            $this->description = $description;
             $dynamicPosts = $this->fetchPostsViaAction($action, $params, $count);
             $this->posts = $staticCollection->merge($dynamicPosts);
         }
+    }
+
+    /**
+     * Resolve hybrid slots with mix of manual, static, and dynamic content.
+     *
+     * @param  array<int, int>  $manualPostIds
+     * @param  array<int, array<string, mixed>>  $staticContent
+     * @param  array<string, mixed>  $params
+     * @return Collection<int, Post|array<string, mixed>>
+     */
+    protected function resolveHybridSlots(
+        int $totalSlots,
+        array $manualPostIds,
+        array $staticContent,
+        int $dynamicCount,
+        string $action,
+        array $params,
+    ): Collection {
+        // Fetch manual posts
+        $manualPosts = collect();
+        if (count($manualPostIds) > 0) {
+            $manualPosts = Post::with(['author', 'categories', 'tags'])
+                ->whereIn('id', array_values($manualPostIds))
+                ->get()
+                ->keyBy('id');
+        }
+
+        // Fetch dynamic posts if needed
+        $dynamicPosts = collect();
+        if ($dynamicCount > 0) {
+            $actionClass = $this->actions[$action] ?? GetRecentPosts::class;
+            $actionInstance = new $actionClass;
+
+            // Exclude manual posts from dynamic fetch
+            $excludeIds = array_values($manualPostIds);
+
+            $result = $actionInstance->execute([
+                'page' => 1,
+                'perPage' => $dynamicCount,
+                'excludeIds' => $excludeIds,
+                ...$params,
+            ]);
+
+            $dynamicPosts = collect($result->items());
+        }
+
+        // Build final slot array
+        $slots = [];
+        $dynamicIndex = 0;
+
+        for ($i = 0; $i < $totalSlots; $i++) {
+            if (isset($manualPostIds[$i])) {
+                // Manual post for this slot
+                $slots[$i] = $manualPosts->get($manualPostIds[$i]);
+            } elseif (isset($staticContent[$i])) {
+                // Static content for this slot
+                $slots[$i] = $staticContent[$i];
+            } else {
+                // Dynamic post for this slot
+                $slots[$i] = $dynamicPosts->get($dynamicIndex);
+                $dynamicIndex++;
+            }
+        }
+
+        return collect($slots)->filter()->values();
     }
 
     /**

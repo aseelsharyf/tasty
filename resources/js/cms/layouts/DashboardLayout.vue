@@ -225,12 +225,23 @@ const taxonomyNavItems = computed<NavigationMenuItem[]>(() => {
 
 const layoutNavItems = computed<NavigationMenuItem[]>(() => {
     const items: NavigationMenuItem[] = [];
-    const hasLayoutAccess = can('menus.view') || can('pages.view');
+    const hasLayoutAccess = can('menus.view') || can('pages.view') || can('settings.view');
 
     if (hasLayoutAccess) {
         items.push({
-            label: 'Layout',
+            label: 'Content',
             type: 'label',
+        });
+    }
+
+    // Homepage Layout (moved from separate Layouts section)
+    if (can('settings.view')) {
+        items.push({
+            label: 'Homepage',
+            icon: 'i-lucide-home',
+            to: '/cms/layouts/homepage',
+            active: isActivePrefix('/cms/layouts/homepage'),
+            onSelect: () => { sidebarOpen.value = false; },
         });
     }
 
@@ -491,7 +502,7 @@ const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
         }
     }
 
-    // Add layout nav items
+    // Add layout nav items (includes Homepage)
     for (const item of layoutNavItems.value) {
         if (item.type === 'label') continue;
         if (item.to) {
@@ -686,7 +697,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
                         class="mt-4"
                     />
 
-                    <!-- Layout Section -->
+                    <!-- Content Section (includes Homepage, Pages, Menus) -->
                     <UNavigationMenu
                         v-if="layoutNavItems.length > 0"
                         :collapsed="collapsed"

@@ -56,7 +56,7 @@
                     'url' => '#',
                 ],
                 [
-                    'image' => Vite::asset('resources/images/image-08.png'),
+                    'image' => Vite::asset('resources/images/image-31.png'),
                     'imageAlt' => 'FHAM 2025 Culinary Challenge',
                     'category' => 'Latest',
                     'tag' => 'People',
@@ -66,7 +66,7 @@
                     'url' => '#',
                 ],
                 [
-                    'image' => Vite::asset('resources/images/image-06.png'),
+                    'image' => Vite::asset('resources/images/image-05.png'),
                     'imageAlt' => 'Food Carnival 2025',
                     'category' => 'Latest',
                     'tag' => 'Event',

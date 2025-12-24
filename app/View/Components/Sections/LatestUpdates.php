@@ -58,6 +58,8 @@ class LatestUpdates extends Component
      * @param  array<string, mixed>|null  $staticFeatured  Static data for featured post
      * @param  array<int, array<string, mixed>>  $staticPosts  Static data for posts
      * @param  array<string, mixed>  $loadParams
+     * @param  array<int, int>  $manualPostIds  Index => postId mapping for manually assigned slots
+     * @param  array<int, array<string, mixed>>  $staticContent  Index => content mapping for static slots
      */
     public function __construct(
         string $introImage = '',
@@ -76,6 +78,12 @@ class LatestUpdates extends Component
         int $featuredCount = 1,
         int $postsCount = 4,
         bool $showLoadMore = true,
+        int $totalSlots = 0,
+        array $manualPostIds = [],
+        array $staticContent = [],
+        int $dynamicCount = 0,
+        string $action = 'recent',
+        array $params = [],
     ) {
         $this->introImage = $introImage;
         $this->introImageAlt = $introImageAlt;
@@ -83,11 +91,26 @@ class LatestUpdates extends Component
         $this->titleLarge = $titleLarge;
         $this->description = $description;
         $this->buttonText = $buttonText;
-        $this->loadAction = $loadAction;
-        $this->loadParams = $loadParams;
+        $this->loadAction = $action ?: $loadAction;
+        $this->loadParams = ! empty($params) ? $params : $loadParams;
         $this->showLoadMore = $showLoadMore;
 
-        // Static mode: use provided static data arrays
+        // New hybrid slot mode: mix of manual, static, and dynamic slots
+        if ($totalSlots > 0 || count($manualPostIds) > 0 || count($staticContent) > 0) {
+            $this->resolveHybridSlots(
+                totalSlots: $totalSlots,
+                manualPostIds: $manualPostIds,
+                staticContent: $staticContent,
+                dynamicCount: $dynamicCount,
+                action: $action ?: $loadAction,
+                params: ! empty($params) ? $params : $loadParams,
+            );
+            $this->excludeIds = $this->computeExcludeIds();
+
+            return;
+        }
+
+        // Legacy: Static mode with static data arrays
         if ($staticFeatured !== null || count($staticPosts) > 0) {
             $this->featuredPost = $staticFeatured;
             $this->posts = collect($staticPosts);
@@ -96,11 +119,11 @@ class LatestUpdates extends Component
             return;
         }
 
-        // Auto-fetch posts using action class
+        // Legacy: Auto-fetch posts using action class
         if ($autoFetch || ($featuredPostId === null && count($postIds) === 0)) {
             $this->fetchPostsViaAction($loadAction, $loadParams, $featuredCount, $postsCount);
         } else {
-            // Fetch specific posts by ID
+            // Legacy: Fetch specific posts by ID
             $this->featuredPost = $featuredPostId
                 ? Post::with(['author', 'categories', 'tags'])->find($featuredPostId)
                 : null;
@@ -115,6 +138,72 @@ class LatestUpdates extends Component
         }
 
         $this->excludeIds = $this->computeExcludeIds();
+    }
+
+    /**
+     * Resolve hybrid slots with mix of manual, static, and dynamic content.
+     *
+     * @param  array<int, int>  $manualPostIds
+     * @param  array<int, array<string, mixed>>  $staticContent
+     * @param  array<string, mixed>  $params
+     */
+    protected function resolveHybridSlots(
+        int $totalSlots,
+        array $manualPostIds,
+        array $staticContent,
+        int $dynamicCount,
+        string $action,
+        array $params,
+    ): void {
+        // Fetch manual posts
+        $manualPosts = [];
+        if (count($manualPostIds) > 0) {
+            $manualPosts = Post::with(['author', 'categories', 'tags'])
+                ->whereIn('id', array_values($manualPostIds))
+                ->get()
+                ->keyBy('id');
+        }
+
+        // Fetch dynamic posts if needed
+        $dynamicPosts = collect();
+        if ($dynamicCount > 0) {
+            $actionClass = $this->actions[$action] ?? GetRecentPosts::class;
+            $actionInstance = new $actionClass;
+
+            // Exclude manual posts from dynamic fetch
+            $excludeIds = array_values($manualPostIds);
+
+            $result = $actionInstance->execute([
+                'page' => 1,
+                'perPage' => $dynamicCount,
+                'excludeIds' => $excludeIds,
+                ...$params,
+            ]);
+
+            $dynamicPosts = collect($result->items());
+        }
+
+        // Build final slot array
+        $slots = [];
+        $dynamicIndex = 0;
+
+        for ($i = 0; $i < $totalSlots; $i++) {
+            if (isset($manualPostIds[$i])) {
+                // Manual post for this slot
+                $slots[$i] = $manualPosts->get($manualPostIds[$i]);
+            } elseif (isset($staticContent[$i])) {
+                // Static content for this slot
+                $slots[$i] = $staticContent[$i];
+            } else {
+                // Dynamic post for this slot
+                $slots[$i] = $dynamicPosts->get($dynamicIndex);
+                $dynamicIndex++;
+            }
+        }
+
+        // First slot is featured, rest are posts
+        $this->featuredPost = $slots[0] ?? null;
+        $this->posts = collect(array_slice($slots, 1, null, false))->filter()->values();
     }
 
     /**

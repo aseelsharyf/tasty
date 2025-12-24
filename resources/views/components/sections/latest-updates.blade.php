@@ -19,7 +19,7 @@
             {{-- Intro Section --}}
             <div class="flex-1 flex flex-col gap-5 items-center justify-end max-lg:justify-center max-lg:w-full">
                 {{-- Intro Image --}}
-                <div class="w-full max-w-[450px] aspect-square max-lg:max-w-[300px] max-md:max-w-[200px] flex items-center justify-center">
+                <div class="w-full max-w-[450px] h-[429.5px] max-lg:h-[182px] max-lg:max-w-[300px] max-md:max-w-[200px] flex items-center justify-center">
                     <img
                         src="{{ $introImage }}"
                         alt="{{ $introImageAlt }}"
@@ -66,13 +66,13 @@
             <template x-for="(pair, index) in chunkedPosts" :key="index">
                 <div class="grid grid-cols-2 gap-10 max-lg:grid-cols-1 max-lg:gap-6">
                     <template x-for="post in pair" :key="post.id">
-                        <article class="bg-white rounded-xl overflow-hidden p-10 flex gap-10 items-end w-full
+                        <article class="bg-white rounded-xl overflow-hidden p-10 flex gap-10 items-center w-full
                             max-lg:flex-col max-lg:px-4 max-lg:pt-4 max-lg:pb-8 max-lg:gap-4 max-lg:items-start">
                             {{-- Image --}}
-                            <div class="w-[200px] self-stretch rounded overflow-hidden flex-shrink-0 relative flex items-end justify-center p-6
-                                max-lg:w-full max-lg:h-[206px] max-lg:self-auto max-lg:p-4">
-                                <a :href="post.url" class="absolute inset-0">
-                                    <img :src="post.image" :alt="post.imageAlt" class="w-full h-full object-cover rounded">
+                            <div class="w-[200px] flex-shrink-0 relative flex items-center justify-center
+                                max-lg:w-full max-lg:h-[206px] max-lg:p-4">
+                                <a :href="post.url" class="block w-full max-lg:absolute max-lg:inset-0">
+                                    <img :src="post.image" :alt="post.imageAlt" class="w-full h-auto object-cover rounded max-lg:h-full">
                                 </a>
                                 {{-- Tag overlay - only visible on tablet/mobile --}}
                                 <div class="hidden max-lg:block relative z-10 tag" x-show="post.category || post.tag">
@@ -97,7 +97,7 @@
                                     </template>
                                 </div>
                                 <a :href="post.url" class="hover:opacity-80 transition-opacity">
-                                    <h3 class="font-display text-[32px] leading-[38px] tracking-[-1.28px] text-blue-black
+                                    <h3 class="font-display text-[32px] leading-[38px] tracking-[-1.28px] text-blue-black line-clamp-3
                                         max-lg:text-[24px] max-lg:leading-[24px] max-lg:tracking-[-0.96px]" x-text="post.title"></h3>
                                 </a>
                                 {{-- Meta --}}

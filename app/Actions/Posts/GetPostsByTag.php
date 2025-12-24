@@ -8,7 +8,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class GetPostsByTag extends BasePostsAction
 {
     /**
-     * Get posts by tag slug.
+     * Get posts by tag slug(s).
      *
      * @param  array<string, mixed>  $params
      */
@@ -17,12 +17,20 @@ class GetPostsByTag extends BasePostsAction
         $page = $params['page'] ?? 1;
         $perPage = $params['perPage'] ?? $this->perPage;
         $excludeIds = $params['excludeIds'] ?? [];
-        $tagSlug = $params['tag'] ?? null;
+
+        // Support both single tag and multiple tags
+        $tagSlugs = $params['tags'] ?? [];
+        if (isset($params['tag'])) {
+            $tagSlugs = [$params['tag']];
+        }
 
         return Post::query()
             ->published()
             ->with(['author', 'categories', 'tags'])
-            ->when($tagSlug, fn ($q) => $q->whereHas('tags', fn ($q) => $q->where('slug', $tagSlug)))
+            ->when(count($tagSlugs) > 0, fn ($q) => $q->whereHas(
+                'tags',
+                fn ($q) => $q->whereIn('slug', $tagSlugs)
+            ))
             ->when(count($excludeIds) > 0, fn ($q) => $q->whereNotIn('id', $excludeIds))
             ->orderByDesc('published_at')
             ->paginate($perPage, ['*'], 'page', $page);
