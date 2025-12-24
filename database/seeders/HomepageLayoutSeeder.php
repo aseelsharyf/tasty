@@ -7,6 +7,7 @@ use App\Models\MediaItem;
 use App\Models\Setting;
 use App\Services\Layouts\SectionRegistry;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\Str;
 
 class HomepageLayoutSeeder extends Seeder
@@ -52,7 +53,7 @@ class HomepageLayoutSeeder extends Seeder
 
             // Latest Updates - Dynamic, by category
             $this->createSection('latest-updates', 1, [
-                'introImage' => '',
+                'introImage' => Vite::asset('resources/images/latest-updates-transparent.png'),
                 'introImageAlt' => 'Latest Updates',
                 'titleSmall' => 'Latest',
                 'titleLarge' => 'Updates',
@@ -77,7 +78,7 @@ class HomepageLayoutSeeder extends Seeder
             // Spread - Dynamic, by category
             $this->createSection('spread', 3, [
                 'showIntro' => true,
-                'introImage' => '',
+                'introImage' => Vite::asset('resources/images/image-07.png'),
                 'introImageAlt' => 'The Spread',
                 'titleSmall' => 'The',
                 'titleLarge' => 'SPREAD',
@@ -104,7 +105,7 @@ class HomepageLayoutSeeder extends Seeder
             // Review - Dynamic, by category
             $this->createSection('review', 5, [
                 'showIntro' => true,
-                'introImage' => '',
+                'introImage' => Vite::asset('resources/images/on-the-menu.png'),
                 'introImageAlt' => 'On the Menu',
                 'titleSmall' => 'On the',
                 'titleLarge' => 'Menu',
@@ -148,7 +149,7 @@ class HomepageLayoutSeeder extends Seeder
             // Recipe - Dynamic, by category
             $this->createSection('recipe', 8, [
                 'showIntro' => true,
-                'introImage' => '',
+                'introImage' => Vite::asset('resources/images/on-the-menu.png'),
                 'introImageAlt' => 'Everyday Cooking',
                 'titleSmall' => 'Everyday',
                 'titleLarge' => 'COOKING',
