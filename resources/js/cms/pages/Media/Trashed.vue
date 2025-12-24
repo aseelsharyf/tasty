@@ -46,6 +46,11 @@ const { can } = usePermission();
 const search = ref(props.filters.search || '');
 const selectedItems = ref<Set<string>>(new Set());
 
+// Delete confirmation modal
+const deleteModalOpen = ref(false);
+const mediaToDelete = ref<MediaItem | null>(null);
+const bulkDeletePending = ref(false);
+
 function applySearch() {
     router.get('/cms/media/trashed', {
         search: search.value || undefined,
@@ -93,18 +98,49 @@ function restoreItem(item: MediaItem) {
     });
 }
 
-function forceDeleteItem(item: MediaItem) {
-    if (confirm('Permanently delete this item? This cannot be undone.')) {
-        router.delete(`/cms/media/${item.uuid}/force`, {
-            preserveScroll: true,
-        });
-    }
+function confirmForceDelete(item: MediaItem) {
+    mediaToDelete.value = item;
+    bulkDeletePending.value = false;
+    deleteModalOpen.value = true;
+}
+
+function forceDeleteItem() {
+    if (!mediaToDelete.value) return;
+    router.delete(`/cms/media/${mediaToDelete.value.uuid}/force`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            deleteModalOpen.value = false;
+            mediaToDelete.value = null;
+        },
+    });
+}
+
+function confirmBulkForceDelete() {
+    if (selectedUuids.value.length === 0) return;
+    bulkDeletePending.value = true;
+    mediaToDelete.value = null;
+    deleteModalOpen.value = true;
+}
+
+function executeBulkForceDelete() {
+    router.post('/cms/media/bulk', {
+        action: 'force_delete',
+        ids: selectedUuids.value,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            clearSelection();
+            deleteModalOpen.value = false;
+            bulkDeletePending.value = false;
+        },
+    });
 }
 
 function bulkAction(action: 'restore' | 'force_delete') {
     if (selectedUuids.value.length === 0) return;
 
-    if (action === 'force_delete' && !confirm(`Permanently delete ${selectedUuids.value.length} items? This cannot be undone.`)) {
+    if (action === 'force_delete') {
+        confirmBulkForceDelete();
         return;
     }
 
@@ -136,7 +172,7 @@ function getRowActions(item: MediaItem) {
                 label: 'Delete Permanently',
                 icon: 'i-lucide-trash-2',
                 color: 'error' as const,
-                onSelect: () => forceDeleteItem(item),
+                onSelect: () => confirmForceDelete(item),
             },
         ]);
     }
@@ -356,5 +392,45 @@ function getRowActions(item: MediaItem) {
                 </div>
             </template>
         </UDashboardPanel>
+
+        <!-- Delete Confirmation Modal -->
+        <UModal v-model:open="deleteModalOpen">
+            <template #content>
+                <UCard :ui="{ body: 'p-6' }">
+                    <div class="flex items-start gap-4">
+                        <div class="flex items-center justify-center size-12 rounded-full bg-error/10 shrink-0">
+                            <UIcon name="i-lucide-alert-triangle" class="size-6 text-error" />
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-highlighted">Permanently Delete</h3>
+                            <p class="mt-2 text-sm text-muted">
+                                <template v-if="bulkDeletePending">
+                                    Are you sure you want to permanently delete <strong class="text-highlighted">{{ selectedCount }} items</strong>? This action cannot be undone.
+                                </template>
+                                <template v-else-if="mediaToDelete">
+                                    Are you sure you want to permanently delete <strong class="text-highlighted">{{ mediaToDelete.title || 'this item' }}</strong>? This action cannot be undone.
+                                </template>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-6">
+                        <UButton
+                            color="neutral"
+                            variant="outline"
+                            @click="deleteModalOpen = false"
+                        >
+                            Cancel
+                        </UButton>
+                        <UButton
+                            color="error"
+                            @click="bulkDeletePending ? executeBulkForceDelete() : forceDeleteItem()"
+                        >
+                            Delete Permanently
+                        </UButton>
+                    </div>
+                </UCard>
+            </template>
+        </UModal>
     </DashboardLayout>
 </template>

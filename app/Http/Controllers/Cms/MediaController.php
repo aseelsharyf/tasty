@@ -431,6 +431,8 @@ class MediaController extends Controller
 
     public function trashed(Request $request): Response
     {
+        abort_unless(auth()->user()->can('media.delete'), 403);
+
         $query = MediaItem::onlyTrashed()
             ->with(['folder', 'uploadedBy', 'creditUser', 'media']);
 

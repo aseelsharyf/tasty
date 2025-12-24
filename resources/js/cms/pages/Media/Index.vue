@@ -123,10 +123,15 @@ const search = ref(props.filters.search || '');
 const selectedType = ref(props.filters.type || '');
 const selectedTagIds = ref<number[]>(props.filters.tags || []);
 
-// Slidevers
+// Slideovers
 const editSlideoverOpen = ref(false);
 const uploadSlideoverOpen = ref(false);
 const selectedMedia = ref<MediaItem | null>(null);
+
+// Delete confirmation modal
+const deleteModalOpen = ref(false);
+const mediaToDelete = ref<MediaItem | null>(null);
+const bulkDeletePending = ref(false);
 
 // Selection
 const selectedItems = ref<Set<string>>(new Set());
@@ -157,13 +162,13 @@ const typeLinks = computed<NavigationMenuItem[][]>(() => [[
         active: selectedType.value === 'videos',
         onSelect: () => changeType('videos'),
     },
-    {
+    ...(can('media.delete') ? [{
         label: 'Trashed',
         icon: 'i-lucide-trash',
         badge: props.counts.trashed,
         to: '/cms/media/trashed',
         active: false,
-    },
+    }] : []),
 ]]);
 
 // Tag options for filter
@@ -221,12 +226,21 @@ function openUpload() {
     uploadSlideoverOpen.value = true;
 }
 
-function deleteMedia(item: MediaItem) {
-    if (confirm('Move this item to trash?')) {
-        router.delete(`/cms/media/${item.uuid}`, {
-            preserveScroll: true,
-        });
-    }
+function confirmDeleteMedia(item: MediaItem) {
+    mediaToDelete.value = item;
+    bulkDeletePending.value = false;
+    deleteModalOpen.value = true;
+}
+
+function deleteMedia() {
+    if (!mediaToDelete.value) return;
+    router.delete(`/cms/media/${mediaToDelete.value.uuid}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            deleteModalOpen.value = false;
+            mediaToDelete.value = null;
+        },
+    });
 }
 
 // Selection management
@@ -256,10 +270,32 @@ function clearSelection() {
 const selectedUuids = computed(() => Array.from(selectedItems.value));
 const selectedCount = computed(() => selectedItems.value.size);
 
+function confirmBulkDelete() {
+    if (selectedUuids.value.length === 0) return;
+    bulkDeletePending.value = true;
+    mediaToDelete.value = null;
+    deleteModalOpen.value = true;
+}
+
+function executeBulkDelete() {
+    router.post('/cms/media/bulk', {
+        action: 'delete',
+        ids: selectedUuids.value,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            clearSelection();
+            deleteModalOpen.value = false;
+            bulkDeletePending.value = false;
+        },
+    });
+}
+
 function bulkAction(action: 'move' | 'delete', folderId?: number | null) {
     if (selectedUuids.value.length === 0) return;
 
-    if (action === 'delete' && !confirm(`Move ${selectedUuids.value.length} items to trash?`)) {
+    if (action === 'delete') {
+        confirmBulkDelete();
         return;
     }
 
@@ -576,7 +612,47 @@ function getRowActions(item: MediaItem) {
             :languages="languages"
             :users="users"
             :credit-roles="creditRoles"
-            @delete="deleteMedia"
+            @delete="confirmDeleteMedia"
         />
+
+        <!-- Delete Confirmation Modal -->
+        <UModal v-model:open="deleteModalOpen">
+            <template #content>
+                <UCard :ui="{ body: 'p-6' }">
+                    <div class="flex items-start gap-4">
+                        <div class="flex items-center justify-center size-12 rounded-full bg-error/10 shrink-0">
+                            <UIcon name="i-lucide-trash-2" class="size-6 text-error" />
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-highlighted">Move to Trash</h3>
+                            <p class="mt-2 text-sm text-muted">
+                                <template v-if="bulkDeletePending">
+                                    Are you sure you want to move <strong class="text-highlighted">{{ selectedCount }} items</strong> to trash? You can restore them later.
+                                </template>
+                                <template v-else-if="mediaToDelete">
+                                    Are you sure you want to move <strong class="text-highlighted">{{ mediaToDelete.title || 'this item' }}</strong> to trash? You can restore it later.
+                                </template>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-6">
+                        <UButton
+                            color="neutral"
+                            variant="outline"
+                            @click="deleteModalOpen = false"
+                        >
+                            Cancel
+                        </UButton>
+                        <UButton
+                            color="error"
+                            @click="bulkDeletePending ? executeBulkDelete() : deleteMedia()"
+                        >
+                            Move to Trash
+                        </UButton>
+                    </div>
+                </UCard>
+            </template>
+        </UModal>
     </DashboardLayout>
 </template>
