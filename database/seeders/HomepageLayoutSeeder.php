@@ -172,7 +172,7 @@ class HomepageLayoutSeeder extends Seeder
                 'buttonText' => 'SUBSCRIBE',
                 'bgColor' => '#F3F4F6',
             ], [
-                'action' => '',
+                'action' => 'none',
                 'params' => [],
             ]),
         ];
@@ -238,8 +238,6 @@ class HomepageLayoutSeeder extends Seeder
      */
     protected function createStaticAddToCartSection(int $order): array
     {
-        $definition = $this->registry->get('add-to-cart');
-
         // Get random media items for product images
         $mediaItems = MediaItem::query()
             ->inRandomOrder()
@@ -277,9 +275,9 @@ class HomepageLayoutSeeder extends Seeder
         foreach ($sampleProducts as $i => $product) {
             $slots[] = [
                 'index' => $i,
-                'mode' => 'static',
+                'mode' => 'manual',
                 'postId' => null,
-                'content' => $product,
+                'product' => $product,
             ];
         }
 
@@ -294,7 +292,7 @@ class HomepageLayoutSeeder extends Seeder
                 'bgColor' => 'white',
             ],
             'dataSource' => [
-                'action' => '',
+                'action' => 'none',
                 'params' => [],
             ],
             'slots' => $slots,
