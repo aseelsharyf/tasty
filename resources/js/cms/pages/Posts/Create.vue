@@ -601,15 +601,22 @@ function goBack() {
                                 :placeholder="placeholders.title"
                                 :dir="textDirection"
                                 rows="1"
+                                maxlength="70"
                                 :class="[
-                                    'w-full font-bold bg-transparent border-0 outline-none placeholder:text-muted/40 mb-3 resize-none overflow-hidden',
+                                    'w-full font-bold bg-transparent border-0 outline-none placeholder:text-muted/40 mb-1 resize-none overflow-hidden',
                                     textAlign,
                                     isRtl ? 'font-dhivehi text-dhivehi-4xl leading-relaxed placeholder:font-dhivehi' : 'text-4xl leading-tight',
                                 ]"
                                 @input="autoResizeTitle"
                                 @keydown="onDhivehiKeyDown"
                             />
-                            <p v-if="form.errors.title" class="text-error text-sm mb-2">{{ form.errors.title }}</p>
+                            <div class="flex items-center justify-between mb-3">
+                                <p v-if="form.errors.title" class="text-error text-xs">{{ form.errors.title }}</p>
+                                <span v-else />
+                                <span :class="['text-xs', form.title.length > 70 ? 'text-error' : 'text-muted']">
+                                    {{ 70 - form.title.length }} left
+                                </span>
+                            </div>
 
                             <!-- Separator between headline and description -->
                             <div class="h-px bg-gray-200 dark:bg-gray-700 my-6" />
@@ -621,14 +628,20 @@ function goBack() {
                                 :placeholder="placeholders.subtitle"
                                 :dir="textDirection"
                                 rows="1"
+                                maxlength="120"
                                 :class="[
-                                    'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 mb-4 resize-none overflow-hidden',
+                                    'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 mb-1 resize-none overflow-hidden',
                                     textAlign,
                                     isRtl ? 'font-dhivehi text-dhivehi-xl leading-relaxed placeholder:font-dhivehi' : 'text-xl',
                                 ]"
                                 @input="autoResizeSubtitle"
                                 @keydown="onDhivehiKeyDown"
                             />
+                            <div class="flex items-center justify-end mb-4">
+                                <span :class="['text-xs', (form.subtitle?.length || 0) > 120 ? 'text-error' : 'text-muted']">
+                                    {{ 120 - (form.subtitle?.length || 0) }} left
+                                </span>
+                            </div>
 
                             <!-- Excerpt / Deck -->
                             <textarea
@@ -636,15 +649,21 @@ function goBack() {
                                 v-model="form.excerpt"
                                 :placeholder="placeholders.excerpt"
                                 rows="1"
+                                maxlength="160"
                                 :dir="textDirection"
                                 :class="[
-                                    'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 resize-none overflow-hidden',
+                                    'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 mb-1 resize-none overflow-hidden',
                                     textAlign,
                                     isRtl ? 'font-dhivehi text-dhivehi-base leading-relaxed placeholder:font-dhivehi' : 'text-base',
                                 ]"
                                 @input="autoResizeExcerpt"
                                 @keydown="onDhivehiKeyDown"
                             />
+                            <div class="flex items-center justify-end">
+                                <span :class="['text-xs', (form.excerpt?.length || 0) > 160 ? 'text-error' : 'text-muted']">
+                                    {{ 160 - (form.excerpt?.length || 0) }} left
+                                </span>
+                            </div>
 
                             <!-- Separator between header and content -->
                             <div class="h-px bg-gray-200 dark:bg-gray-700 my-8" />
