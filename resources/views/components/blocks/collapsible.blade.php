@@ -18,10 +18,7 @@
         :aria-expanded="expanded"
         class="w-full flex items-center justify-between py-6 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-tasty-blue-black/20 group"
     >
-        <h3
-            class="text-tasty-blue-black {{ $isRtl ? 'font-dhivehi text-right' : 'font-serif' }}"
-            style="font-size: 32px; font-weight: 400; line-height: 38px; letter-spacing: -1.28px;"
-        >
+        <h3 class="text-h4 text-tasty-blue-black {{ $isRtl ? 'font-dhivehi text-right' : '' }}">
             {!! $title !!}
         </h3>
         <span class="flex items-center justify-center w-8 h-8 text-tasty-blue-black/60 group-hover:text-tasty-blue-black transition-colors flex-shrink-0 {{ $isRtl ? 'mr-4' : 'ml-4' }}">
