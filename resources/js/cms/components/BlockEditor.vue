@@ -9,8 +9,10 @@ import Code from '@editorjs/code';
 import LinkTool from '@editorjs/link';
 import MediaBlock, { type MediaBlockItem } from '../editor-tools/MediaBlock';
 import QuoteBlock from '../editor-tools/QuoteBlock';
+import CollapsibleBlock from '../editor-tools/CollapsibleBlock';
 import '../editor-tools/media-block.css';
 import '../editor-tools/quote-block.css';
+import '../editor-tools/collapsible-block.css';
 import type { DhivehiLayout } from '../composables/useDhivehiKeyboard';
 
 // Media selection callback type
@@ -276,6 +278,69 @@ const initEditor = async () => {
                 class: Code,
                 config: {
                     placeholder: codePlaceholder,
+                },
+            },
+            collapsible: {
+                class: CollapsibleBlock,
+                config: {
+                    placeholder: isRtlMode ? 'ސެކްޝަން ޓައިޓަލް...' : 'Enter section title...',
+                    onSelectMedia: props.onSelectMedia,
+                    // Provide tools for nested editor (excluding collapsible to prevent infinite nesting)
+                    getToolsConfig: () => ({
+                        header: {
+                            class: Header,
+                            config: {
+                                placeholder: headerPlaceholder,
+                                levels: [2, 3, 4],
+                                defaultLevel: 3,
+                            },
+                        },
+                        media: {
+                            class: MediaBlock,
+                            config: {
+                                placeholder: isRtlMode ? 'މީޑީއާ އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add media',
+                                onSelectMedia: props.onSelectMedia,
+                            },
+                        },
+                        quote: {
+                            class: QuoteBlock,
+                            inlineToolbar: true,
+                            config: {
+                                quotePlaceholder: quotePlaceholder,
+                                captionPlaceholder: quoteCaptionPlaceholder,
+                                authorTitlePlaceholder: isRtlMode ? 'މަގާމު ނުވަތަ ޓައިޓަލް' : 'Title or role',
+                                onSelectMedia: props.onSelectMedia,
+                            },
+                        },
+                        linkTool: {
+                            class: LinkTool,
+                            config: {
+                                endpoint: '/cms/api/fetch-url',
+                            },
+                        },
+                        list: {
+                            class: List,
+                            inlineToolbar: true,
+                            config: {
+                                defaultStyle: 'unordered',
+                            },
+                        },
+                        delimiter: Delimiter,
+                        table: {
+                            class: Table,
+                            inlineToolbar: true,
+                            config: {
+                                rows: 2,
+                                cols: 3,
+                            },
+                        },
+                        code: {
+                            class: Code,
+                            config: {
+                                placeholder: codePlaceholder,
+                            },
+                        },
+                    }),
                 },
             },
         },

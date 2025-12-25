@@ -1,0 +1,171 @@
+/* Collapsible Block Styles */
+.ce-collapsible-block {
+    margin: 0.5rem 0;
+    border: 1px solid var(--ui-border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: var(--ui-bg);
+}
+
+/* Header with title and toggle */
+.ce-collapsible-block__header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--ui-bg-elevated);
+    border-bottom: 1px solid var(--ui-border);
+    position: relative;
+}
+
+.ce-collapsible-block__title {
+    flex: 1;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--ui-text-highlighted);
+    line-height: 1.5;
+    min-height: 2.5rem;
+    cursor: text;
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 0.5rem 0.75rem;
+    margin: 0;
+    width: 100%;
+    font-family: inherit;
+    border-radius: 0.375rem;
+    transition: all 0.15s ease;
+    position: relative;
+    z-index: 10;
+}
+
+.ce-collapsible-block__title::placeholder {
+    color: var(--ui-text-dimmed);
+    font-weight: normal;
+}
+
+.ce-collapsible-block__title:hover {
+    background-color: var(--ui-bg);
+    border-color: var(--ui-border);
+}
+
+.ce-collapsible-block__title:focus {
+    outline: none;
+    background-color: var(--ui-bg);
+    border-color: var(--ui-primary);
+    box-shadow: 0 0 0 2px rgba(var(--ui-primary-rgb, 59, 130, 246), 0.2);
+}
+
+/* Toggle button */
+.ce-collapsible-block__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--ui-border);
+    border-radius: 0.375rem;
+    background-color: var(--ui-bg);
+    color: var(--ui-text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.ce-collapsible-block__toggle:hover {
+    background-color: var(--ui-bg-accented);
+    border-color: var(--ui-border-accented);
+    color: var(--ui-text-highlighted);
+}
+
+.ce-collapsible-block__toggle svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Content area */
+.ce-collapsible-block__content {
+    padding: 1rem 1rem 1rem 3rem;
+    min-height: 80px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.ce-collapsible-block__content--collapsed {
+    display: none;
+}
+
+/* Nested editor styling overrides */
+.ce-collapsible-block__content .codex-editor {
+    border: none;
+}
+
+.ce-collapsible-block__content .codex-editor__redactor {
+    padding-bottom: 1rem !important;
+}
+
+.ce-collapsible-block__content .ce-block__content,
+.ce-collapsible-block__content .ce-toolbar__content {
+    max-width: none;
+    margin: 0;
+}
+
+/* Nested toolbar - positioned inside the content area */
+.ce-collapsible-block__content .ce-toolbar {
+    left: 0 !important;
+    position: absolute;
+}
+
+.ce-collapsible-block__content .ce-toolbar__actions {
+    position: absolute;
+    left: 0;
+    right: auto;
+}
+
+.ce-collapsible-block__content .ce-toolbar__plus,
+.ce-collapsible-block__content .ce-toolbar__settings-btn {
+    width: 26px;
+    height: 26px;
+}
+
+/* Ensure popover menus are visible */
+.ce-collapsible-block__content .ce-popover {
+    z-index: 100;
+}
+
+.ce-collapsible-block__content .ce-inline-toolbar {
+    z-index: 100;
+}
+
+/* Settings panel */
+.ce-collapsible-block__settings {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.ce-collapsible-block__settings-group {
+    display: flex;
+    gap: 0.125rem;
+}
+
+/* RTL Support */
+.block-editor--rtl .ce-collapsible-block__header {
+    flex-direction: row-reverse;
+}
+
+.block-editor--rtl .ce-collapsible-block__title {
+    text-align: right;
+}
+
+.block-editor--rtl .ce-collapsible-block__content .ce-toolbar {
+    left: auto;
+    right: -40px;
+}
+
+/* Dark mode adjustments */
+:root.dark .ce-collapsible-block {
+    background: var(--ui-bg);
+}
+
+:root.dark .ce-collapsible-block__header {
+    background-color: var(--ui-bg-elevated);
+}

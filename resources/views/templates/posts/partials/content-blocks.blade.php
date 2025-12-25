@@ -93,6 +93,18 @@
                 @endif
                 @break
 
+            {{-- Collapsible Block --}}
+            @case('collapsible')
+                <div class="{{ $contentWidth }} w-full px-4 lg:px-0">
+                    <x-blocks.collapsible
+                        :title="$data['title'] ?? ''"
+                        :content="$data['content'] ?? ['blocks' => []]"
+                        :defaultExpanded="$data['defaultExpanded'] ?? true"
+                        :isRtl="$isRtl"
+                    />
+                </div>
+                @break
+
             {{-- Media Block --}}
             @case('media')
                 @php
