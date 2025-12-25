@@ -100,7 +100,7 @@ class Setting extends Model
                     ['name' => 'cook_time', 'label' => 'Cook Time', 'type' => 'number', 'suffix' => 'min'],
                     ['name' => 'servings', 'label' => 'Servings', 'type' => 'number'],
                     ['name' => 'difficulty', 'label' => 'Difficulty', 'type' => 'select', 'options' => ['Easy', 'Medium', 'Hard']],
-                    ['name' => 'ingredients', 'label' => 'Ingredients', 'type' => 'repeater'],
+                    ['name' => 'ingredients', 'label' => 'Ingredients', 'type' => 'grouped-repeater'],
                 ],
             ],
             [

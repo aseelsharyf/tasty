@@ -60,8 +60,11 @@
         x-cloak
     >
         <div class="py-8">
-            {{-- Render nested blocks recursively --}}
-            @if(!empty($content['blocks']))
+            {{-- Check for slot content first, then fall back to EditorJS blocks --}}
+            @if($slot->isNotEmpty())
+                {{ $slot }}
+            @elseif(!empty($content['blocks']))
+                {{-- Render nested blocks recursively --}}
                 @include('templates.posts.partials.content-blocks', [
                     'blocks' => $content['blocks'],
                     'isRtl' => $isRtl,

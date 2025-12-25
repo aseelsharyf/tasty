@@ -64,7 +64,7 @@ class SettingsController extends Controller
             'post_types.*.fields' => ['array'],
             'post_types.*.fields.*.name' => ['required', 'string', 'max:50'],
             'post_types.*.fields.*.label' => ['required', 'string', 'max:100'],
-            'post_types.*.fields.*.type' => ['required', 'string', 'in:text,number,textarea,select,toggle,repeater'],
+            'post_types.*.fields.*.type' => ['required', 'string', 'in:text,number,textarea,select,toggle,repeater,grouped-repeater'],
             'post_types.*.fields.*.suffix' => ['nullable', 'string', 'max:20'],
             'post_types.*.fields.*.options' => ['nullable', 'array'],
         ]);

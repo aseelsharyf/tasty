@@ -676,20 +676,68 @@ function autoSave() {
     }, 3000);
 }
 
-// Watch for changes to trigger auto-save
+// Track unsaved changes
+const hasUnsavedChanges = ref(false);
+
+// Watch for changes to mark as dirty
 watch(
-    () => [form.title, form.subtitle, form.excerpt, form.content],
+    () => [form.title, form.subtitle, form.excerpt, form.content, form.custom_fields],
     () => {
-        autoSave();
+        hasUnsavedChanges.value = true;
     },
     { deep: true }
 );
 
-// Keyboard shortcut for fullscreen (Escape to exit)
+// Manual save function
+function manualSave() {
+    // Don't save if we don't have the lock
+    if (!lockStatus.value.isMine) return;
+
+    // Don't save published posts (read-only)
+    if (isReadOnly.value) return;
+
+    // Only save if there's a title
+    if (!form.title.trim()) {
+        toast.add({ title: 'Cannot save', description: 'Please add a title first', color: 'warning' });
+        return;
+    }
+
+    // Don't save while already saving
+    if (form.processing || isSaving.value) return;
+
+    isSaving.value = true;
+
+    const langCode = props.language?.code || props.post.language_code || 'en';
+    form.post(`/cms/posts/${langCode}/${props.post.uuid}`, {
+        forceFormData: true,
+        headers: { 'X-HTTP-Method-Override': 'PUT' },
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+            lastSaved.value = new Date();
+            hasUnsavedChanges.value = false;
+            isSaving.value = false;
+            toast.add({ title: 'Saved', description: 'Your changes have been saved', color: 'success', duration: 2000 });
+        },
+        onError: () => {
+            isSaving.value = false;
+            toast.add({ title: 'Error', description: 'Failed to save changes', color: 'error' });
+        },
+    });
+}
+
+// Keyboard shortcuts (Escape for fullscreen, Cmd/Ctrl+S for save)
 function handleKeydown(e: KeyboardEvent) {
+    // Escape to exit fullscreen
     if (e.key === 'Escape' && isFullscreen.value) {
         isFullscreen.value = false;
         showSidebar();
+    }
+
+    // Cmd+S or Ctrl+S to save
+    if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        manualSave();
     }
 }
 
@@ -1060,10 +1108,15 @@ function openDiff() {
 
                     <template #right>
                         <div class="flex items-center gap-2">
-                            <!-- Auto-save status -->
+                            <!-- Save status -->
                             <span v-if="isSaving" class="text-xs text-muted flex items-center gap-1">
                                 <UIcon name="i-lucide-loader-2" class="size-3 animate-spin" />
                                 Saving...
+                            </span>
+                            <span v-else-if="hasUnsavedChanges" class="text-xs text-warning flex items-center gap-1.5 hidden sm:flex">
+                                <span class="size-1.5 rounded-full bg-warning"></span>
+                                Unsaved changes
+                                <kbd class="text-[10px] px-1 py-0.5 rounded bg-elevated border border-default text-muted">⌘S</kbd>
                             </span>
                             <span v-else-if="lastSavedText" class="text-xs text-muted hidden sm:inline">
                                 {{ lastSavedText }}
@@ -1603,6 +1656,160 @@ function openDiff() {
                                                                     ...form.custom_fields,
                                                                     [field.name]: [...((form.custom_fields?.[field.name] as string[]) ?? []), input.value.trim()]
                                                                 };
+                                                                input.value = '';
+                                                            }
+                                                        }"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Grouped Repeater Field (for sectioned ingredients) -->
+                                        <div v-else-if="field.type === 'grouped-repeater'">
+                                            <label class="text-sm font-medium mb-2 block">{{ field.label }}</label>
+                                            <div class="space-y-3">
+                                                <!-- Sections -->
+                                                <div
+                                                    v-for="(section, sectionIndex) in ((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])"
+                                                    :key="sectionIndex"
+                                                    class="border border-default rounded-lg overflow-hidden"
+                                                >
+                                                    <!-- Section Header -->
+                                                    <div class="flex items-center gap-2 bg-elevated px-3 py-2">
+                                                        <UIcon name="i-lucide-grip-vertical" class="size-4 text-muted cursor-move" />
+                                                        <UInput
+                                                            :model-value="section.section"
+                                                            size="sm"
+                                                            class="flex-1 min-w-0 font-medium"
+                                                            placeholder="Section name..."
+                                                            :disabled="isReadOnly"
+                                                            @update:model-value="(val: string) => {
+                                                                const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
+                                                                sections[sectionIndex] = { ...sections[sectionIndex], section: val };
+                                                                form.custom_fields = { ...form.custom_fields, [field.name]: sections };
+                                                            }"
+                                                        />
+                                                        <UButton
+                                                            size="sm"
+                                                            color="error"
+                                                            variant="ghost"
+                                                            icon="i-lucide-trash-2"
+                                                            :disabled="isReadOnly"
+                                                            @click="() => {
+                                                                const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
+                                                                sections.splice(sectionIndex, 1);
+                                                                form.custom_fields = { ...form.custom_fields, [field.name]: sections };
+                                                            }"
+                                                        />
+                                                    </div>
+                                                    <!-- Section Items -->
+                                                    <div class="p-2 space-y-1.5">
+                                                        <div
+                                                            v-for="(item, itemIndex) in section.items"
+                                                            :key="itemIndex"
+                                                            class="flex gap-1.5"
+                                                        >
+                                                            <UInput
+                                                                :model-value="item"
+                                                                size="sm"
+                                                                class="flex-1 min-w-0"
+                                                                :disabled="isReadOnly"
+                                                                @update:model-value="(val: string) => {
+                                                                    const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
+                                                                    const newItems = [...sections[sectionIndex].items];
+                                                                    newItems[itemIndex] = val;
+                                                                    sections[sectionIndex] = { ...sections[sectionIndex], items: newItems };
+                                                                    form.custom_fields = { ...form.custom_fields, [field.name]: sections };
+                                                                }"
+                                                            />
+                                                            <UButton
+                                                                size="sm"
+                                                                color="neutral"
+                                                                variant="ghost"
+                                                                icon="i-lucide-x"
+                                                                :disabled="isReadOnly"
+                                                                @click="() => {
+                                                                    const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
+                                                                    const newItems = [...sections[sectionIndex].items];
+                                                                    newItems.splice(itemIndex, 1);
+                                                                    sections[sectionIndex] = { ...sections[sectionIndex], items: newItems };
+                                                                    form.custom_fields = { ...form.custom_fields, [field.name]: sections };
+                                                                }"
+                                                            />
+                                                        </div>
+                                                        <!-- Add item to section -->
+                                                        <div class="flex gap-1.5">
+                                                            <UInput
+                                                                :id="`grouped-item-new-${field.name}-${sectionIndex}`"
+                                                                placeholder="Add item..."
+                                                                size="sm"
+                                                                class="flex-1 min-w-0"
+                                                                :disabled="isReadOnly"
+                                                                @keyup.enter.prevent="(e: KeyboardEvent) => {
+                                                                    const input = e.target as HTMLInputElement;
+                                                                    if (input.value.trim()) {
+                                                                        const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
+                                                                        sections[sectionIndex] = {
+                                                                            ...sections[sectionIndex],
+                                                                            items: [...sections[sectionIndex].items, input.value.trim()]
+                                                                        };
+                                                                        form.custom_fields = { ...form.custom_fields, [field.name]: sections };
+                                                                        input.value = '';
+                                                                    }
+                                                                }"
+                                                            />
+                                                            <UButton
+                                                                size="sm"
+                                                                color="neutral"
+                                                                variant="soft"
+                                                                icon="i-lucide-plus"
+                                                                :disabled="isReadOnly"
+                                                                @click="() => {
+                                                                    const input = document.getElementById(`grouped-item-new-${field.name}-${sectionIndex}`) as HTMLInputElement;
+                                                                    if (input?.value.trim()) {
+                                                                        const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
+                                                                        sections[sectionIndex] = {
+                                                                            ...sections[sectionIndex],
+                                                                            items: [...sections[sectionIndex].items, input.value.trim()]
+                                                                        };
+                                                                        form.custom_fields = { ...form.custom_fields, [field.name]: sections };
+                                                                        input.value = '';
+                                                                    }
+                                                                }"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!-- Add new section -->
+                                                <div class="flex gap-1.5">
+                                                    <UInput
+                                                        :id="`grouped-section-new-${field.name}`"
+                                                        placeholder="Add section (e.g., Pasta, Sauce)..."
+                                                        size="sm"
+                                                        class="flex-1 min-w-0"
+                                                        :disabled="isReadOnly"
+                                                        @keyup.enter.prevent="(e: KeyboardEvent) => {
+                                                            const input = e.target as HTMLInputElement;
+                                                            if (input.value.trim()) {
+                                                                const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
+                                                                sections.push({ section: input.value.trim(), items: [] });
+                                                                form.custom_fields = { ...form.custom_fields, [field.name]: sections };
+                                                                input.value = '';
+                                                            }
+                                                        }"
+                                                    />
+                                                    <UButton
+                                                        size="sm"
+                                                        color="primary"
+                                                        variant="soft"
+                                                        icon="i-lucide-folder-plus"
+                                                        :disabled="isReadOnly"
+                                                        @click="() => {
+                                                            const input = document.getElementById(`grouped-section-new-${field.name}`) as HTMLInputElement;
+                                                            if (input?.value.trim()) {
+                                                                const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
+                                                                sections.push({ section: input.value.trim(), items: [] });
+                                                                form.custom_fields = { ...form.custom_fields, [field.name]: sections };
                                                                 input.value = '';
                                                             }
                                                         }"

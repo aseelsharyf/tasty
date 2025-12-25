@@ -7,7 +7,7 @@ import type { BreadcrumbItem } from '@nuxt/ui';
 interface PostTypeField {
     name: string;
     label: string;
-    type: 'text' | 'number' | 'textarea' | 'select' | 'toggle' | 'repeater';
+    type: 'text' | 'number' | 'textarea' | 'select' | 'toggle' | 'repeater' | 'grouped-repeater';
     suffix?: string;
     options?: string[];
 }
@@ -59,6 +59,7 @@ const fieldTypeOptions = [
     { label: 'Select', value: 'select' },
     { label: 'Toggle', value: 'toggle' },
     { label: 'Repeater', value: 'repeater' },
+    { label: 'Grouped Repeater', value: 'grouped-repeater' },
 ];
 
 const iconOptions = [

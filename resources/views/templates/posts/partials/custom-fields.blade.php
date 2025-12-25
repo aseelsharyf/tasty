@@ -63,6 +63,31 @@
                                         @endif
                                         @break
 
+                                    @case('grouped-repeater')
+                                        @if(is_array($value) && count($value) > 0)
+                                            <div class="space-y-0 -mx-5 mt-2">
+                                                @foreach($value as $section)
+                                                    @if(!empty($section['section']) && !empty($section['items']))
+                                                        <x-blocks.collapsible
+                                                            :title="$section['section']"
+                                                            :defaultExpanded="true"
+                                                            :isRtl="$isRtl"
+                                                        >
+                                                            <ul class="space-y-2">
+                                                                @foreach($section['items'] as $item)
+                                                                    <li class="flex items-start gap-2">
+                                                                        <span class="w-1.5 h-1.5 rounded-full bg-tasty-blue-black/40 mt-2 flex-shrink-0"></span>
+                                                                        <span class="text-body">{{ $item }}</span>
+                                                                    </li>
+                                                                @endforeach
+                                                            </ul>
+                                                        </x-blocks.collapsible>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                        @break
+
                                     @case('select')
                                         <span class="inline-block px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-medium">
                                             {{ $value }}
