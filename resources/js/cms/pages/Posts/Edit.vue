@@ -627,54 +627,9 @@ function onPreviewLoad() {
     previewLoading.value = false;
 }
 
-// Auto-save functionality
-const autoSaveTimer = ref<ReturnType<typeof setTimeout> | null>(null);
+// Save state
 const lastSaved = ref<Date | null>(null);
 const isSaving = ref(false);
-
-function autoSave() {
-    // Don't auto-save if we don't have the lock
-    if (!lockStatus.value.isMine) return;
-
-    // Don't auto-save published posts (read-only)
-    if (isReadOnly.value) return;
-
-    // Only auto-save if there's a title
-    if (!form.title.trim()) return;
-
-    // Don't auto-save while modal is open
-    if (mediaPickerOpen.value) return;
-
-    // Clear existing timer
-    if (autoSaveTimer.value) {
-        clearTimeout(autoSaveTimer.value);
-    }
-
-    // Set new timer for 3 seconds after last change
-    autoSaveTimer.value = setTimeout(async () => {
-        if (form.processing || isSaving.value) return;
-
-        // Double-check modal isn't open when timer fires
-        if (mediaPickerOpen.value) return;
-
-        isSaving.value = true;
-
-        const langCode = props.language?.code || props.post.language_code || 'en';
-        form.post(`/cms/posts/${langCode}/${props.post.uuid}`, {
-            forceFormData: true,
-            headers: { 'X-HTTP-Method-Override': 'PUT' },
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: () => {
-                lastSaved.value = new Date();
-                isSaving.value = false;
-            },
-            onError: () => {
-                isSaving.value = false;
-            },
-        });
-    }, 3000);
-}
 
 // Track unsaved changes
 const hasUnsavedChanges = ref(false);
@@ -757,9 +712,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     document.removeEventListener('keydown', handleKeydown);
-    if (autoSaveTimer.value) {
-        clearTimeout(autoSaveTimer.value);
-    }
     // Stop heartbeat and release lock
     stopHeartbeat();
     releaseLock();
@@ -1161,10 +1113,11 @@ function openDiff() {
                                 v-if="!isReadOnly && workflowStatus !== 'approved'"
                                 color="primary"
                                 size="sm"
-                                :loading="form.processing"
-                                @click="submit()"
+                                :loading="form.processing || isSaving"
+                                :disabled="!hasUnsavedChanges && !!lastSaved"
+                                @click="manualSave()"
                             >
-                                Save Draft
+                                {{ hasUnsavedChanges ? 'Save' : 'Saved' }}
                             </UButton>
 
                             <!-- Publish Button for Approved Versions -->
