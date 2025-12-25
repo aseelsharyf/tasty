@@ -633,12 +633,22 @@ const isSaving = ref(false);
 
 // Track unsaved changes
 const hasUnsavedChanges = ref(false);
+const initialLoadComplete = ref(false);
 
-// Watch for changes to mark as dirty
+// Mark initial load complete after first render
+onMounted(() => {
+    nextTick(() => {
+        initialLoadComplete.value = true;
+    });
+});
+
+// Watch for changes to mark as dirty (skip initial load)
 watch(
     () => [form.title, form.subtitle, form.excerpt, form.content, form.custom_fields],
     () => {
-        hasUnsavedChanges.value = true;
+        if (initialLoadComplete.value) {
+            hasUnsavedChanges.value = true;
+        }
     },
     { deep: true }
 );

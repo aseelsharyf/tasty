@@ -51,7 +51,14 @@
     @endswitch
 
     {{-- Article Content --}}
-    @if(!empty($contentBlocks))
+    @if(($post->post_type ?? 'article') === 'recipe')
+        {{-- Recipe Layout: Two-column (Ingredients | Preparation) --}}
+        @include('templates.posts.partials.recipe-body', [
+            'post' => $post,
+            'contentBlocks' => $contentBlocks,
+            'isRtl' => $isRtl,
+        ])
+    @elseif(!empty($contentBlocks))
         <div class="w-full bg-off-white py-16 {{ $isRtl ? 'text-right' : '' }}">
             @include('templates.posts.partials.content-blocks', [
                 'blocks' => $contentBlocks,

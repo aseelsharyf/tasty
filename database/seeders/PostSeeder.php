@@ -343,6 +343,8 @@ class PostSeeder extends Seeder
      */
     private function createPublishedRecipes($language, $authors, $categories, $tags, $sponsors, $mediaItems, int $count): void
     {
+        $recipes = $this->getRealisticRecipes();
+
         for ($i = 0; $i < $count; $i++) {
             $author = $authors->random();
             $category = $categories->random();
@@ -350,16 +352,29 @@ class PostSeeder extends Seeder
             // 20% chance of being sponsored
             $sponsor = fake()->boolean(20) ? $sponsors->random() : null;
 
+            // Get a realistic recipe or fall back to generated content
+            $recipe = $recipes[$i % count($recipes)];
+
             $post = Post::factory()
                 ->recipe()
                 ->withLanguage($language->code)
                 ->create([
+                    'title' => $recipe['title'],
+                    'subtitle' => $recipe['subtitle'],
+                    'excerpt' => $recipe['excerpt'],
                     'author_id' => $author->id,
                     'featured_tag_id' => $featuredTag->id,
                     'sponsor_id' => $sponsor?->id,
                     'workflow_status' => 'draft',
                     'status' => Post::STATUS_DRAFT,
-                    'content' => $this->getRecipeContent($mediaItems),
+                    'content' => $this->getRecipeContentWithCollapsibles($recipe, $mediaItems),
+                    'custom_fields' => [
+                        'prep_time' => $recipe['prep_time'],
+                        'cook_time' => $recipe['cook_time'],
+                        'servings' => $recipe['servings'],
+                        'difficulty' => $recipe['difficulty'],
+                        'ingredients' => $recipe['ingredients'],
+                    ],
                     'featured_media_id' => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
                 ]);
 
@@ -382,6 +397,173 @@ class PostSeeder extends Seeder
             $version->activate();
             $post->publish();
         }
+    }
+
+    /**
+     * Get realistic recipe data.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function getRealisticRecipes(): array
+    {
+        return [
+            [
+                'title' => 'Creamy Roasted Butternut Squash Pasta with Chicken',
+                'subtitle' => 'A comforting weeknight dinner that\'s secretly packed with vegetables',
+                'excerpt' => 'This creamy pasta dish transforms roasted butternut squash into a silky sauce that coats every strand of fusilli. Paired with perfectly seasoned chicken, it\'s comfort food at its finest.',
+                'prep_time' => 15,
+                'cook_time' => 45,
+                'servings' => 4,
+                'difficulty' => 'Medium',
+                'ingredients' => [
+                    [
+                        'section' => 'Pasta',
+                        'items' => [
+                            '3 cups of water',
+                            '½ tsp salt',
+                            '200g Reggia Nutri Bio Fusilli',
+                        ],
+                    ],
+                    [
+                        'section' => 'Sauce',
+                        'items' => [
+                            '1½ cup largely chopped butternut squash',
+                            '1 large onion quartered (2 if small)',
+                            '1 large tomato sliced in half',
+                            '5 cloves of garlic',
+                            '1 tbsp olive oil',
+                            '¼ tsp chilli powder',
+                            '½ tsp salt',
+                            '¼ tsp garlic powder',
+                            '¼ tsp oregano',
+                            '¼ tsp ground black pepper',
+                            '2 tbsp cream cheese',
+                        ],
+                    ],
+                    [
+                        'section' => 'Chicken',
+                        'items' => [
+                            '210g chicken breast',
+                            '1 tbsp lemon juice',
+                            '1 tsp chilli powder',
+                            '1 tsp salt',
+                            '¾ tsp garlic powder',
+                            '½ tsp ground black pepper',
+                            '2 tbsp olive oil',
+                        ],
+                    ],
+                    [
+                        'section' => 'Finish',
+                        'items' => [
+                            '2 Tbsp Parmesan',
+                            '1 tsp chili flakes',
+                            '½ tsp oregano',
+                            '¼ tsp salt',
+                        ],
+                    ],
+                ],
+                'steps' => [
+                    [
+                        'title' => 'Step 1: Roast the Veg',
+                        'content' => 'Heat oven to 190°C. On a parchment-lined tray, toss 1½ cups chopped butternut squash, 1 quartered onion, 1 halved tomato, 5 garlic cloves, 1 Tbsp olive oil, ½ tsp salt, ¼ tsp garlic powder, ¼ tsp oregano, and ¼ tsp black pepper. Roast 30 min, until squash is tender. Cool 15 min.',
+                    ],
+                    [
+                        'title' => 'Step 2: Cook the Pasta',
+                        'content' => '200g Reggia Nutri Bio Fusilli in salted water until al dente, about 8 min. Reserve ¼ cup pasta water, drain, and set aside.',
+                    ],
+                    [
+                        'title' => 'Step 3: Sear the Chicken',
+                        'content' => 'Pound 2 chicken breasts to even thickness. Season with 1 Tbsp lemon juice, 1 tsp chilli powder, 1 tsp salt, ¾ tsp garlic powder, and ½ tsp pepper. In a pan, heat 2 Tbsp olive oil over medium-low. Cook chicken 8 min, flipping every 2 min, then cover and cook on low 10–11 min, flipping occasionally, until golden and cooked through. Let rest.',
+                    ],
+                    [
+                        'title' => 'Step 4: Blend the Sauce',
+                        'content' => 'In a blender, combine roasted veggies, 2 Tbsp cream cheese, and ¼ cup pasta water. Blend until smooth and creamy.',
+                    ],
+                    [
+                        'title' => 'Step 5: Finish the Pasta',
+                        'content' => 'Warm sauce in a pan over medium-low. Stir in 2 Tbsp Parmesan, 1 tsp chili flakes, ½ tsp oregano, and ¼ tsp salt. Add pasta and toss until coated and heated through.',
+                    ],
+                    [
+                        'title' => 'Serve',
+                        'content' => 'Slice chicken, spoon over the pasta, and drizzle with any pan juices. Enjoy!',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Traditional Maldivian Tuna Curry (Mas Riha)',
+                'subtitle' => 'An authentic island recipe passed down through generations',
+                'excerpt' => 'This beloved Maldivian dish brings together the freshest catch with aromatic spices and creamy coconut milk. Perfect for a family dinner or special occasion.',
+                'prep_time' => 20,
+                'cook_time' => 35,
+                'servings' => 6,
+                'difficulty' => 'Easy',
+                'ingredients' => [
+                    [
+                        'section' => 'Fish',
+                        'items' => [
+                            '500g fresh tuna, cut into chunks',
+                            '½ tsp turmeric powder',
+                            '½ tsp salt',
+                        ],
+                    ],
+                    [
+                        'section' => 'Curry Base',
+                        'items' => [
+                            '2 onions, finely sliced',
+                            '4 cloves garlic, minced',
+                            '1 inch ginger, grated',
+                            '2 green chilies, sliced',
+                            '10 curry leaves',
+                            '2 tbsp coconut oil',
+                        ],
+                    ],
+                    [
+                        'section' => 'Spices',
+                        'items' => [
+                            '1 tsp turmeric powder',
+                            '1 tsp chili powder',
+                            '1 tsp cumin powder',
+                            '½ tsp fenugreek seeds',
+                            'Salt to taste',
+                        ],
+                    ],
+                    [
+                        'section' => 'To Finish',
+                        'items' => [
+                            '1 cup thick coconut milk',
+                            '½ cup thin coconut milk',
+                            'Fresh curry leaves for garnish',
+                        ],
+                    ],
+                ],
+                'steps' => [
+                    [
+                        'title' => 'Step 1: Prepare the Tuna',
+                        'content' => 'Rub tuna chunks with turmeric and salt. Set aside for 10 minutes to let the flavors penetrate.',
+                    ],
+                    [
+                        'title' => 'Step 2: Build the Base',
+                        'content' => 'Heat coconut oil in a deep pan over medium heat. Add curry leaves and let them splutter. Add sliced onions and sauté until golden brown, about 8-10 minutes.',
+                    ],
+                    [
+                        'title' => 'Step 3: Add the Aromatics',
+                        'content' => 'Add garlic, ginger, and green chilies. Cook for another 2 minutes until fragrant. Add turmeric, chili powder, cumin, and fenugreek. Stir well to combine.',
+                    ],
+                    [
+                        'title' => 'Step 4: Cook the Fish',
+                        'content' => 'Add thin coconut milk and bring to a simmer. Gently add the tuna chunks, coating them with the spice mixture. Cook for 5 minutes.',
+                    ],
+                    [
+                        'title' => 'Step 5: Finish with Coconut',
+                        'content' => 'Pour in the thick coconut milk and bring to a gentle simmer. Do not boil vigorously. Cover and cook for 15-20 minutes until the fish is cooked through.',
+                    ],
+                    [
+                        'title' => 'Serve',
+                        'content' => 'Garnish with fresh curry leaves. Serve hot with steamed rice or roshi for an authentic Maldivian meal.',
+                    ],
+                ],
+            ],
+        ];
     }
 
     /**
@@ -613,6 +795,83 @@ class PostSeeder extends Seeder
     private function generateBlockId(): string
     {
         return fake()->unique()->regexify('[a-zA-Z0-9]{10}');
+    }
+
+    /**
+     * Generate recipe content with collapsible blocks for each preparation step.
+     *
+     * @param  array<string, mixed>  $recipe
+     * @param  \Illuminate\Support\Collection<int, MediaItem>  $mediaItems
+     */
+    private function getRecipeContentWithCollapsibles(array $recipe, $mediaItems): array
+    {
+        $blocks = [];
+
+        // Intro paragraph
+        $blocks[] = [
+            'id' => $this->generateBlockId(),
+            'type' => 'paragraph',
+            'data' => [
+                'text' => $recipe['excerpt'],
+            ],
+        ];
+
+        // Add featured media if available
+        if ($mediaItems->isNotEmpty()) {
+            $image = $mediaItems->random();
+            $blocks[] = $this->createMediaBlock($image, 'The finished dish, ready to serve', 'fullScreen');
+        }
+
+        // Create collapsible blocks for each preparation step
+        foreach ($recipe['steps'] as $index => $step) {
+            $stepBlocks = [];
+
+            // Optionally add an image to some steps
+            if ($mediaItems->isNotEmpty() && fake()->boolean(40)) {
+                $stepImage = $mediaItems->random();
+                $stepBlocks[] = [
+                    'id' => $this->generateBlockId(),
+                    'type' => 'media',
+                    'data' => [
+                        'items' => [$this->createMediaItem($stepImage, $step['title'])],
+                        'layout' => 'single',
+                        'gridColumns' => 3,
+                        'gap' => 'md',
+                        'displayWidth' => 'default',
+                    ],
+                ];
+            }
+
+            // Step content
+            $stepBlocks[] = [
+                'id' => $this->generateBlockId(),
+                'type' => 'paragraph',
+                'data' => [
+                    'text' => $step['content'],
+                ],
+            ];
+
+            // Create collapsible block for this step
+            $blocks[] = [
+                'id' => $this->generateBlockId(),
+                'type' => 'collapsible',
+                'data' => [
+                    'title' => $step['title'],
+                    'content' => [
+                        'time' => now()->timestamp * 1000,
+                        'blocks' => $stepBlocks,
+                        'version' => '2.28.0',
+                    ],
+                    'defaultExpanded' => true,
+                ],
+            ];
+        }
+
+        return [
+            'time' => now()->timestamp * 1000,
+            'blocks' => $blocks,
+            'version' => '2.28.0',
+        ];
     }
 
     /**
