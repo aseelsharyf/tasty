@@ -75,27 +75,41 @@
                                     <img :src="post.image" :alt="post.imageAlt" class="w-full h-auto object-cover rounded max-lg:h-full">
                                 </a>
                                 {{-- Tag overlay - only visible on tablet/mobile --}}
-                                <div class="hidden max-lg:block relative z-10 tag" x-show="post.category || post.tag">
-                                    <template x-if="post.category">
-                                        <span x-text="post.category?.toUpperCase()"></span>
-                                    </template>
-                                </div>
+                                <template x-if="post.category || post.tag">
+                                    <div class="hidden max-lg:block relative z-10">
+                                        <div class="tag self-start">
+                                            <template x-if="post.category">
+                                                <a :href="post.categoryUrl || '#'" class="hover:underline" x-text="post.category?.toUpperCase()"></a>
+                                            </template>
+                                            <template x-if="post.category && post.tag">
+                                                <span class="mx-1">•</span>
+                                            </template>
+                                            <template x-if="post.tag">
+                                                <a :href="post.tagUrl || '#'" class="hover:underline" x-text="post.tag?.toUpperCase()"></a>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
                             {{-- Content --}}
                             <div class="flex flex-col flex-1 gap-6 justify-center min-w-0
                                 max-lg:gap-5 max-lg:w-full">
                                 {{-- Tag - only visible on desktop --}}
-                                <div class="tag self-start max-lg:hidden" x-show="post.category || post.tag">
-                                    <template x-if="post.category">
-                                        <span x-text="post.category?.toUpperCase()"></span>
-                                    </template>
-                                    <template x-if="post.category && post.tag">
-                                        <span class="mx-2.5">•</span>
-                                    </template>
-                                    <template x-if="post.tag">
-                                        <span x-text="post.tag?.toUpperCase()"></span>
-                                    </template>
-                                </div>
+                                <template x-if="post.category || post.tag">
+                                    <div class="max-lg:hidden">
+                                        <div class="tag self-start">
+                                            <template x-if="post.category">
+                                                <a :href="post.categoryUrl || '#'" class="hover:underline" x-text="post.category?.toUpperCase()"></a>
+                                            </template>
+                                            <template x-if="post.category && post.tag">
+                                                <span class="mx-1">•</span>
+                                            </template>
+                                            <template x-if="post.tag">
+                                                <a :href="post.tagUrl || '#'" class="hover:underline" x-text="post.tag?.toUpperCase()"></a>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
                                 <a :href="post.url" class="hover:opacity-80 transition-opacity">
                                     <h3 class="font-display text-[28px] leading-[1.1] tracking-[-0.04em] text-blue-black line-clamp-3
                                         max-lg:text-[24px]" x-text="post.title"></h3>

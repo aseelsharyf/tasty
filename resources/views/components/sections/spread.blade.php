@@ -1,5 +1,10 @@
 {{-- The Spread Section --}}
-<section class="w-full max-w-[1880px] mx-auto {{ $bgColorClass }} py-16 max-lg:py-8" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+<section
+    class="w-full max-w-[1880px] mx-auto {{ $bgColorClass }} py-16 max-lg:py-8"
+    @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif
+    x-data="spreadScroll()"
+    x-init="initScroll()"
+>
     {{-- Mobile Intro - Shows on mobile when intro is enabled --}}
     @if($showIntro)
         <div class="hidden max-lg:flex flex-col items-center justify-center gap-5 px-5 pb-8">
@@ -21,12 +26,12 @@
     @if($mobileLayout === 'grid')
         {{-- Grid Layout for Mobile, Scroll for Desktop --}}
         {{-- Desktop: Horizontal Scroll --}}
-        <div class="scroll-container pb-8 container-main max-lg:hidden">
+        <div class="scroll-container pb-8 container-main max-lg:hidden" x-ref="scrollContainer">
             <div class="flex pl-10 min-w-max">
                 {{-- Intro Card (Desktop only) --}}
                 @if($showIntro)
-                    <div class="flex items-center shrink-0">
-                        <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10">
+                    <div class="flex items-center self-stretch shrink-0" x-ref="introCard">
+                        <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10 h-full">
                             @if($introImage)
                                 <div class="w-full max-w-[320px] h-[429.5px]">
                                     <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain" style="mix-blend-mode: darken;">
@@ -75,12 +80,12 @@
         </div>
     @else
         {{-- Scroll Layout (Default) --}}
-        <div class="scroll-container pb-8 max-lg:pb-6 container-main">
+        <div class="scroll-container pb-8 max-lg:pb-6 container-main" x-ref="scrollContainer">
             <div class="flex pl-10 min-w-max max-lg:pl-5 max-lg:gap-8">
                 {{-- Intro Card (Desktop only) --}}
                 @if($showIntro)
-                    <div class="flex items-center shrink-0 max-lg:hidden">
-                        <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10">
+                    <div class="flex items-center self-stretch shrink-0 max-lg:hidden" x-ref="introCard">
+                        <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10 h-full">
                             @if($introImage)
                                 <div class="w-full max-w-[320px] h-[429.5px]">
                                     <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain" style="mix-blend-mode: darken;">
@@ -116,3 +121,34 @@
         </div>
     @endif
 </section>
+
+@once
+@push('scripts')
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('spreadScroll', () => ({
+        initScroll() {
+            this.$nextTick(() => {
+                const container = this.$refs.scrollContainer;
+                const introCard = this.$refs.introCard;
+
+                if (!container || !introCard || window.innerWidth < 1024) return;
+
+                // Calculate the offset to align description with container edge
+                // Intro card width (424px) minus the description area offset
+                // Description is centered in max-w-300px within px-10 padding
+                const introCardWidth = introCard.offsetWidth;
+                const containerPadding = 40; // pl-10
+
+                // Scroll so the description (last ~100px of intro) aligns with container edge
+                // We want to show roughly the description width at the left edge
+                const scrollOffset = containerPadding + introCardWidth - 340; // Keep ~300px description visible
+
+                container.scrollLeft = scrollOffset;
+            });
+        }
+    }));
+});
+</script>
+@endpush
+@endonce
