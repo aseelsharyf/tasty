@@ -48,7 +48,7 @@
     <div class="{{ $contentClass }}">
         {{-- Title --}}
         <a href="{{ $url }}" class="hover:opacity-80 transition-opacity">
-            <h3 class="text-h3 text-blue-black {{ $isFeatured ? $textAlign : 'text-center' }} line-clamp-3">{{ $title }}</h3>
+            <h3 class="text-h4 text-blue-black {{ $isFeatured ? $textAlign : 'text-center' }} line-clamp-3">{{ $title }}</h3>
         </a>
 
         {{-- Description - Only on featured variant --}}

@@ -10,14 +10,14 @@
         <div class="featured-location-content {{ $bgColorClass }}" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
             <div class="flex flex-col items-center text-center gap-10 max-lg:gap-6 w-full">
                 {{-- Kicker (large) & Title (below) --}}
-                <div class="flex flex-col gap-4 items-center w-full">
+                <div class="flex flex-col gap-3 items-center w-full">
                     @if($kicker)
-                        <p class="text-[200px] leading-[160px] tracking-[-8px] uppercase font-display text-{{ $textColor }} max-lg:text-[60px] max-lg:leading-[50px] max-lg:tracking-[-2.4px]">
+                        <p class="font-display text-[80px] leading-[1] tracking-[-0.04em] uppercase text-{{ $textColor }} max-lg:text-[48px]">
                             {{ $kicker }}
                         </p>
                     @endif
                     @if($title)
-                        <h2 class="text-h2 text-{{ $textColor }} max-w-[800px] max-lg:text-[32px] max-lg:leading-[32px] max-lg:tracking-[-1.28px]">
+                        <h2 class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] text-{{ $textColor }} max-w-[800px] max-lg:text-[24px]">
                             {{ $title }}
                         </h2>
                     @endif
@@ -40,7 +40,7 @@
 
                 {{-- Description --}}
                 @if($description)
-                    <p class="text-body-lg text-{{ $textColor }} max-w-[600px] text-center max-lg:text-[20px] max-lg:leading-[26px]">
+                    <p class="text-body-md text-{{ $textColor }} max-w-[600px] text-center">
                         {{ $description }}
                     </p>
                 @endif

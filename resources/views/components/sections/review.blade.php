@@ -44,13 +44,13 @@
                         @endif
 
                         {{-- Intro Text --}}
-                        <div class="flex flex-col gap-5 text-center text-blue-black">
+                        <div class="flex flex-col gap-4 text-center text-blue-black">
                             <div class="flex flex-col items-center">
-                                <span class="text-h2">{{ $titleSmall }}</span>
-                                <span class="text-h1 uppercase">{{ $titleLarge }}</span>
+                                <span class="font-display text-[36px] leading-[1.1] tracking-[-0.04em]">{{ $titleSmall }}</span>
+                                <span class="font-display text-[56px] leading-[1] tracking-[-0.04em] uppercase">{{ $titleLarge }}</span>
                             </div>
                             @if($description)
-                                <p class="text-[24px] leading-[26px] font-sans">{{ $description }}</p>
+                                <p class="text-body-md">{{ $description }}</p>
                             @endif
                         </div>
                     </article>
@@ -65,9 +65,9 @@
                 @foreach($posts->take($showIntro ? 2 : 3) as $index => $post)
                     @php
                         $postImage = is_array($post) ? ($post['image'] ?? '') : ($post->featured_image_url ?? '');
-                        $postTitle = is_array($post) ? ($post['title'] ?? '') : ($post->title ?? '');
-                        $postSubtitle = is_array($post) ? ($post['subtitle'] ?? '') : ($post->subtitle ?? '');
-                        $postDescription = is_array($post) ? ($post['description'] ?? '') : ($post->excerpt ?? '');
+                        $postKicker = is_array($post) ? ($post['title'] ?? '') : ($post->title ?? '');
+                        $postTitle = is_array($post) ? ($post['subtitle'] ?? '') : ($post->subtitle ?? '');
+                        $postSubtitle = is_array($post) ? ($post['description'] ?? '') : ($post->excerpt ?? '');
                         $postUrl = is_array($post) ? ($post['url'] ?? '#') : ($post->url ?? '#');
                         $postCategory = is_array($post) ? ($post['category'] ?? null) : ($post->categories->first()?->name ?? null);
                         $postRating = is_array($post) ? ($post['rating'] ?? null) : ($post->rating ?? null);
@@ -91,12 +91,12 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex flex-col gap-5 text-center text-blue-black">
-                            <div class="flex flex-col">
-                                <h3 class="text-h3 uppercase">{{ $postTitle }}</h3>
-                                @if($postSubtitle)<p class="text-h4">{{ $postSubtitle }}</p>@endif
+                        <div class="flex flex-col gap-4 text-center text-blue-black">
+                            <div class="flex flex-col gap-1 min-h-[85px]">
+                                <span class="font-display text-[32px] leading-[1] tracking-[-0.04em] uppercase">{{ $postKicker }}</span>
+                                @if($postTitle)<h3 class="font-display text-[24px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1">{{ $postTitle }}</h3>@endif
                             </div>
-                            @if($postDescription)<p class="text-body-md">{{ $postDescription }}</p>@endif
+                            @if($postSubtitle)<p class="text-body-md line-clamp-3 min-h-[78px]">{{ $postSubtitle }}</p>@endif
                         </div>
                     </a>
 
@@ -112,9 +112,9 @@
                     @foreach($posts->skip($showIntro ? 2 : 3) as $index => $post)
                         @php
                             $postImage = is_array($post) ? ($post['image'] ?? '') : ($post->featured_image_url ?? '');
-                            $postTitle = is_array($post) ? ($post['title'] ?? '') : ($post->title ?? '');
-                            $postSubtitle = is_array($post) ? ($post['subtitle'] ?? '') : ($post->subtitle ?? '');
-                            $postDescription = is_array($post) ? ($post['description'] ?? '') : ($post->excerpt ?? '');
+                            $postKicker = is_array($post) ? ($post['title'] ?? '') : ($post->title ?? '');
+                            $postTitle = is_array($post) ? ($post['subtitle'] ?? '') : ($post->subtitle ?? '');
+                            $postSubtitle = is_array($post) ? ($post['description'] ?? '') : ($post->excerpt ?? '');
                             $postUrl = is_array($post) ? ($post['url'] ?? '#') : ($post->url ?? '#');
                             $postCategory = is_array($post) ? ($post['category'] ?? null) : ($post->categories->first()?->name ?? null);
                             $postRating = is_array($post) ? ($post['rating'] ?? null) : ($post->rating ?? null);
@@ -137,12 +137,12 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="flex flex-col gap-5 text-center text-blue-black">
-                                <div class="flex flex-col">
-                                    <h3 class="text-h3 uppercase">{{ $postTitle }}</h3>
-                                    @if($postSubtitle)<p class="text-h4">{{ $postSubtitle }}</p>@endif
+                            <div class="flex flex-col gap-4 text-center text-blue-black">
+                                <div class="flex flex-col gap-1 min-h-[85px]">
+                                    <span class="font-display text-[32px] leading-[1] tracking-[-0.04em] uppercase">{{ $postKicker }}</span>
+                                    @if($postTitle)<h3 class="font-display text-[24px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1">{{ $postTitle }}</h3>@endif
                                 </div>
-                                @if($postDescription)<p class="text-body-md">{{ $postDescription }}</p>@endif
+                                @if($postSubtitle)<p class="text-body-md line-clamp-3 min-h-[78px]">{{ $postSubtitle }}</p>@endif
                             </div>
                         </a>
 
@@ -164,13 +164,13 @@
                             <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain mix-blend-darken">
                         </div>
                     @endif
-                    <div class="flex flex-col gap-5 text-center text-blue-black">
+                    <div class="flex flex-col gap-4 text-center text-blue-black">
                         <div class="flex flex-col items-center">
-                            <span class="text-h2">{{ $titleSmall }}</span>
-                            <span class="text-h1 uppercase">{{ $titleLarge }}</span>
+                            <span class="font-display text-[24px] leading-[1.1] tracking-[-0.04em]">{{ $titleSmall }}</span>
+                            <span class="font-display text-[36px] leading-[1] tracking-[-0.04em] uppercase">{{ $titleLarge }}</span>
                         </div>
                         @if($description)
-                            <p class="text-[18px] leading-[24px] font-sans">{{ $description }}</p>
+                            <p class="text-body-md">{{ $description }}</p>
                         @endif
                     </div>
                 </article>
@@ -181,9 +181,9 @@
                 @foreach($posts as $index => $post)
                     @php
                         $postImage = is_array($post) ? ($post['image'] ?? '') : ($post->featured_image_url ?? '');
-                        $postTitle = is_array($post) ? ($post['title'] ?? '') : ($post->title ?? '');
-                        $postSubtitle = is_array($post) ? ($post['subtitle'] ?? '') : ($post->subtitle ?? '');
-                        $postDescription = is_array($post) ? ($post['description'] ?? '') : ($post->excerpt ?? '');
+                        $postKicker = is_array($post) ? ($post['title'] ?? '') : ($post->title ?? '');
+                        $postTitle = is_array($post) ? ($post['subtitle'] ?? '') : ($post->subtitle ?? '');
+                        $postSubtitle = is_array($post) ? ($post['description'] ?? '') : ($post->excerpt ?? '');
                         $postUrl = is_array($post) ? ($post['url'] ?? '#') : ($post->url ?? '#');
                         $postCategory = is_array($post) ? ($post['category'] ?? null) : ($post->categories->first()?->name ?? null);
                         $postRating = is_array($post) ? ($post['rating'] ?? null) : ($post->rating ?? null);
@@ -206,12 +206,12 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex flex-col gap-4 text-center text-blue-black">
-                            <div class="flex flex-col">
-                                <h3 class="text-[28px] leading-[32px] tracking-[-1.12px] font-display uppercase">{{ $postTitle }}</h3>
-                                @if($postSubtitle)<p class="text-[24px] leading-[28px] tracking-[-0.96px] font-display">{{ $postSubtitle }}</p>@endif
+                        <div class="flex flex-col gap-3 text-center text-blue-black">
+                            <div class="flex flex-col gap-1">
+                                <span class="font-display text-[24px] leading-[1] tracking-[-0.04em] uppercase">{{ $postKicker }}</span>
+                                @if($postTitle)<h3 class="font-display text-[18px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1">{{ $postTitle }}</h3>@endif
                             </div>
-                            @if($postDescription)<p class="text-[18px] leading-[26px]">{{ $postDescription }}</p>@endif
+                            @if($postSubtitle)<p class="text-body-md line-clamp-3">{{ $postSubtitle }}</p>@endif
                         </div>
                     </a>
                 @endforeach
@@ -224,40 +224,7 @@
             <template x-for="post in loadedPosts" :key="post.id">
                 <a :href="post.url" class="flex flex-col gap-8 group">
                     <div class="relative w-full h-[460px] rounded-xl overflow-hidden">
-                        <img :src="post.image" :alt="post.title" class="absolute inset-0 w-full h-full object-cover">
-                        <div class="absolute bottom-6 left-0 right-0 flex justify-center">
-                            <div class="inline-flex items-center gap-2.5 bg-white rounded-[48px] px-3 py-2 text-[12px] leading-[12px] uppercase whitespace-nowrap">
-                                <span x-text="post.category ? post.category.toUpperCase() : 'REVIEW'"></span>
-                                <template x-if="post.rating">
-                                    <span class="contents">
-                                        <span>•</span>
-                                        <span class="inline-flex items-center gap-0.5">
-                                            <template x-for="star in 5" :key="star">
-                                                <svg class="w-3 h-3" viewBox="0 0 12 12" :fill="star <= post.rating ? '#FFE762' : '#D1D5DB'"><path d="M6 0L7.34708 4.1459H11.7063L8.17963 6.7082L9.52671 10.8541L6 8.2918L2.47329 10.8541L3.82037 6.7082L0.293661 4.1459H4.65292L6 0Z"/></svg>
-                                            </template>
-                                        </span>
-                                    </span>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex flex-col gap-5 text-center text-blue-black">
-                        <div class="flex flex-col">
-                            <h3 class="text-h3 uppercase" x-text="post.title"></h3>
-                            <p class="text-h4" x-show="post.subtitle" x-text="post.subtitle"></p>
-                        </div>
-                        <p class="text-body-md" x-show="post.description" x-text="post.description"></p>
-                    </div>
-                </a>
-            </template>
-        </div>
-
-        {{-- Dynamically loaded cards via Alpine.js (Mobile) - Always grid --}}
-        <div class="lg:hidden grid grid-cols-2 gap-6">
-            <template x-for="post in loadedPosts" :key="post.id">
-                <a :href="post.url" class="flex flex-col gap-6 group">
-                    <div class="relative w-full h-[320px] rounded-xl overflow-hidden">
-                        <img :src="post.image" :alt="post.title" class="absolute inset-0 w-full h-full object-cover">
+                        <img :src="post.image" :alt="post.subtitle" class="absolute inset-0 w-full h-full object-cover">
                         <div class="absolute bottom-6 left-0 right-0 flex justify-center">
                             <div class="inline-flex items-center gap-2.5 bg-white rounded-[48px] px-3 py-2 text-[12px] leading-[12px] uppercase whitespace-nowrap">
                                 <span x-text="post.category ? post.category.toUpperCase() : 'REVIEW'"></span>
@@ -275,11 +242,44 @@
                         </div>
                     </div>
                     <div class="flex flex-col gap-4 text-center text-blue-black">
-                        <div class="flex flex-col">
-                            <h3 class="text-[28px] leading-[32px] tracking-[-1.12px] font-display uppercase" x-text="post.title"></h3>
-                            <p class="text-[24px] leading-[28px] tracking-[-0.96px] font-display" x-show="post.subtitle" x-text="post.subtitle"></p>
+                        <div class="flex flex-col gap-1 min-h-[85px]">
+                            <span class="font-display text-[32px] leading-[1] tracking-[-0.04em] uppercase" x-text="post.title"></span>
+                            <h3 class="font-display text-[24px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1" x-show="post.subtitle" x-text="post.subtitle"></h3>
                         </div>
-                        <p class="text-[18px] leading-[26px]" x-show="post.description" x-text="post.description"></p>
+                        <p class="text-body-md line-clamp-3 min-h-[78px]" x-show="post.description" x-text="post.description"></p>
+                    </div>
+                </a>
+            </template>
+        </div>
+
+        {{-- Dynamically loaded cards via Alpine.js (Mobile) - Always grid --}}
+        <div class="lg:hidden grid grid-cols-2 gap-6">
+            <template x-for="post in loadedPosts" :key="post.id">
+                <a :href="post.url" class="flex flex-col gap-6 group">
+                    <div class="relative w-full h-[320px] rounded-xl overflow-hidden">
+                        <img :src="post.image" :alt="post.subtitle" class="absolute inset-0 w-full h-full object-cover">
+                        <div class="absolute bottom-6 left-0 right-0 flex justify-center">
+                            <div class="inline-flex items-center gap-2.5 bg-white rounded-[48px] px-3 py-2 text-[12px] leading-[12px] uppercase whitespace-nowrap">
+                                <span x-text="post.category ? post.category.toUpperCase() : 'REVIEW'"></span>
+                                <template x-if="post.rating">
+                                    <span class="contents">
+                                        <span>•</span>
+                                        <span class="inline-flex items-center gap-0.5">
+                                            <template x-for="star in 5" :key="star">
+                                                <svg class="w-3 h-3" viewBox="0 0 12 12" :fill="star <= post.rating ? '#FFE762' : '#D1D5DB'"><path d="M6 0L7.34708 4.1459H11.7063L8.17963 6.7082L9.52671 10.8541L6 8.2918L2.47329 10.8541L3.82037 6.7082L0.293661 4.1459H4.65292L6 0Z"/></svg>
+                                            </template>
+                                        </span>
+                                    </span>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-3 text-center text-blue-black">
+                        <div class="flex flex-col gap-1">
+                            <span class="font-display text-[24px] leading-[1] tracking-[-0.04em] uppercase" x-text="post.title"></span>
+                            <h3 class="font-display text-[18px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1" x-show="post.subtitle" x-text="post.subtitle"></h3>
+                        </div>
+                        <p class="text-body-md line-clamp-3" x-show="post.description" x-text="post.description"></p>
                     </div>
                 </a>
             </template>

@@ -56,10 +56,10 @@
                     @endif
 
                     {{-- Title at bottom --}}
-                    <div class="flex flex-col gap-2 text-blue-black">
-                        <h2 class="text-h3 uppercase">{{ $title }}</h2>
+                    <div class="flex flex-col gap-1 text-blue-black">
+                        <h2 class="font-display text-[36px] leading-[1] tracking-[-0.04em] uppercase">{{ $title }}</h2>
                         @if($subtitle)
-                            <p class="text-h4">{{ $subtitle }}</p>
+                            <p class="font-display text-[24px] leading-[1.1] tracking-[-0.04em]">{{ $subtitle }}</p>
                         @endif
                     </div>
                 </div>
@@ -86,9 +86,9 @@
                 </div>
 
                 {{-- Watch Button --}}
-                <a href="{{ $videoUrl }}" class="inline-flex items-center gap-2 pl-[18px] pr-5 py-3 bg-white text-blue-black rounded-full text-[20px] leading-[26px] font-sans shrink-0 hover:opacity-85 transition-opacity">
+                <a href="{{ $videoUrl }}" class="btn btn-white shrink-0">
                     {{-- Play icon --}}
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
                         <path d="M10 8.5L16 12L10 15.5V8.5Z" fill="currentColor"/>
                     </svg>
@@ -139,19 +139,19 @@
                 @endif
 
                 {{-- Title/Subtitle at bottom center --}}
-                <div class="relative z-10 flex flex-col items-center text-center text-blue-black py-2.5">
-                    <h2 class="text-[32px] leading-[32px] tracking-[-1.28px] font-display uppercase">{{ $title }}</h2>
+                <div class="relative z-10 flex flex-col items-center text-center text-blue-black py-2.5 gap-1">
+                    <h2 class="font-display text-[28px] leading-[1] tracking-[-0.04em] uppercase">{{ $title }}</h2>
                     @if($subtitle)
-                        <p class="text-[24px] leading-[24px] tracking-[-0.96px] font-display">{{ $subtitle }}</p>
+                        <p class="font-display text-[20px] leading-[1.1] tracking-[-0.04em]">{{ $subtitle }}</p>
                     @endif
                 </div>
             </a>
 
             {{-- Yellow Section with description, meta, button --}}
             <div class="flex flex-col gap-5 items-center px-4 pt-2.5 pb-8" style="background-color: {{ $overlayColor }}">
-                <div class="flex flex-col gap-6 items-center w-full">
+                <div class="flex flex-col gap-5 items-center w-full">
                     @if($description)
-                        <p class="text-[18px] leading-[24px] text-blue-black text-center">{{ $description }}</p>
+                        <p class="text-body-md text-blue-black text-center">{{ $description }}</p>
                     @endif
 
                     {{-- Author/Date - stacked vertically --}}
@@ -166,9 +166,9 @@
                 </div>
 
                 {{-- Watch Button --}}
-                <a href="{{ $videoUrl }}" class="inline-flex items-center gap-2 pl-[18px] pr-5 py-3 bg-white text-blue-black rounded-full text-[20px] leading-[26px] font-sans hover:opacity-85 transition-opacity">
+                <a href="{{ $videoUrl }}" class="btn btn-white">
                     {{-- Play icon --}}
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
                         <path d="M10 8.5L16 12L10 15.5V8.5Z" fill="currentColor"/>
                     </svg>

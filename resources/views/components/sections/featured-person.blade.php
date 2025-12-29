@@ -23,12 +23,12 @@
     <div class="{{ $bgColorClass }} pb-32 max-lg:pb-16" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
         <div class="container-main flex flex-col items-center gap-10 text-center w-full px-10 max-lg:px-5 max-lg:gap-6">
             {{-- Title & Subtitle --}}
-            <div class="flex flex-col gap-4 max-lg:gap-2">
+            <div class="flex flex-col gap-3 max-lg:gap-2">
                 <a href="{{ $url }}" class="hover:opacity-80 transition-opacity">
-                    <h2 class="text-h1 text-blue-black uppercase max-lg:text-[32px] max-lg:leading-[30px] max-lg:tracking-[-1.28px]">{{ $title }}</h2>
+                    <h2 class="font-display text-[56px] leading-[1] tracking-[-0.04em] text-blue-black uppercase max-lg:text-[36px]">{{ $title }}</h2>
                 </a>
                 @if($subtitle)
-                    <p class="text-h2 text-blue-black max-lg:text-[24px] max-lg:leading-[24px] max-lg:tracking-[-0.96px]">{{ $subtitle }}</p>
+                    <p class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] text-blue-black max-lg:text-[24px]">{{ $subtitle }}</p>
                 @endif
             </div>
 
@@ -53,7 +53,7 @@
 
             {{-- Description --}}
             @if($excerpt)
-                <p class="text-body-lg text-blue-black max-w-[650px]">{{ $excerpt }}</p>
+                <p class="text-body-md text-blue-black max-w-[650px]">{{ $excerpt }}</p>
             @endif
 
             {{-- Button --}}

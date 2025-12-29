@@ -292,13 +292,18 @@
 .btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 20px;
+    gap: 6px;
+    padding: 10px 16px;
     border-radius: 100px;
     font-family: var(--font-sans);
-    font-size: 20px;
-    line-height: 26px;
+    font-size: 14px;
+    line-height: 20px;
     transition: all 0.2s ease;
+}
+
+.btn svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* Arrow icon hover effect - moves right on button hover */
@@ -485,19 +490,11 @@
 
     @media (min-width: 1024px) {
         .featured-location-container {
-            /* Desktop: 1510px x 1058px as per Figma */
-            width: 1510px;
-            height: 1058px;
-        }
-    }
-
-    /* Scale up on larger viewports */
-    @media (min-width: 1600px) {
-        .featured-location-container {
-            width: calc(100vw * 1.0486);
-            height: calc(100vw * 1.0486 * 1058 / 1510);
+            /* Always extend beyond viewport edges */
+            width: max(1510px, 105vw);
+            height: auto;
+            aspect-ratio: 1510 / 1058;
             max-width: 1970px;
-            max-height: 1380px;
         }
     }
 
@@ -575,25 +572,14 @@
     @media (min-width: 1024px) {
         .featured-person-image-container {
             /*
-             * Figma specs: 1510px x 1126px
-             * 1510px is ~104.86% of 1440px container
-             * This creates the nice curve overhang effect
+             * Always extend beyond viewport edges for the curved effect
+             * Uses max() to ensure minimum 1510px or 105% of viewport
              */
-            width: 1510px;
-            height: 1126px;
-            aspect-ratio: auto;
+            width: max(1510px, 105vw);
+            height: auto;
+            aspect-ratio: 1510 / 1126;
             border-radius: 5000px 5000px 0 0;
-        }
-    }
-
-    /* Scale up on larger viewports while maintaining proportions */
-    @media (min-width: 1600px) {
-        .featured-person-image-container {
-            /* Scale proportionally: 1510/1440 = 1.0486 ratio */
-            width: calc(100vw * 1.0486);
-            height: calc(100vw * 1.0486 * 1126 / 1510);
-            max-width: 1970px; /* 1880 * 1.0486 */
-            max-height: 1470px;
+            max-width: 1970px;
         }
     }
 }

@@ -55,8 +55,8 @@
         @endif
 
         {{-- Hero Content --}}
-        <div class="w-1/2 h-full {{ $bgColorClass }} px-16 py-24 flex flex-col {{ $contentAlignment }} gap-10
-            max-lg:w-full max-lg:shrink-0 max-lg:h-auto max-lg:px-5 max-lg:pt-8 max-lg:pb-16 max-lg:items-center max-lg:justify-center max-lg:text-center max-lg:gap-6" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+        <div class="w-1/2 h-full {{ $bgColorClass }} px-16 pt-[200px] pb-24 flex flex-col {{ $contentAlignment }} gap-8
+            max-lg:w-full max-lg:shrink-0 max-lg:h-auto max-lg:px-5 max-lg:py-12 max-lg:items-center max-lg:justify-center max-lg:text-center max-lg:gap-6" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
             {{-- Meta: Category • Author • Date --}}
             <div class="flex flex-wrap items-center gap-5 text-body-sm uppercase text-blue-black {{ $metaAlignment }} max-lg:justify-center">
                 @if($heroCategory)
@@ -84,17 +84,17 @@
             <div class="flex flex-col gap-4 w-full max-lg:gap-2">
                 @if($manual)
                     @if($heroKicker)
-                        <h1 class="font-display text-[104px] leading-[86px] tracking-[-4.16px] uppercase text-blue-black max-lg:text-[36px] max-lg:leading-[1] max-lg:tracking-[-0.04em]">{{ $heroKicker }}</h1>
+                        <h1 class="font-display text-[56px] leading-[1] tracking-[-0.04em] uppercase text-blue-black max-lg:text-[36px] max-lg:leading-[1] max-lg:tracking-[-0.04em]">{{ $heroKicker }}</h1>
                     @endif
                     @if($heroTitle)
-                        <p class="font-display text-[64px] leading-[59px] tracking-[-2.56px] text-blue-black max-lg:text-[24px] max-lg:leading-[1.2] max-lg:tracking-[-0.04em]">{{ $heroTitle }}</p>
+                        <p class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] text-blue-black max-lg:text-[24px] max-lg:leading-[1.2] max-lg:tracking-[-0.04em]">{{ $heroTitle }}</p>
                     @endif
                 @else
                     <a href="{{ $heroUrl }}" class="hover:opacity-80 transition-opacity">
                         @if($heroKicker)
-                            <h1 class="font-display text-[104px] leading-[86px] tracking-[-4.16px] uppercase text-blue-black max-lg:text-[36px] max-lg:leading-[1] max-lg:tracking-[-0.04em]">{{ $heroKicker }}</h1>
+                            <h1 class="font-display text-[56px] leading-[1] tracking-[-0.04em] uppercase text-blue-black max-lg:text-[36px] max-lg:leading-[1] max-lg:tracking-[-0.04em]">{{ $heroKicker }}</h1>
                         @endif
-                        <p class="font-display text-[64px] leading-[59px] tracking-[-2.56px] text-blue-black max-lg:text-[24px] max-lg:leading-[1.2] max-lg:tracking-[-0.04em]">{{ $heroTitle }}</p>
+                        <p class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] text-blue-black max-lg:text-[24px] max-lg:leading-[1.2] max-lg:tracking-[-0.04em]">{{ $heroTitle }}</p>
                     </a>
                 @endif
             </div>

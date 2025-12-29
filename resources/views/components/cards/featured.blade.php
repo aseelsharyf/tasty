@@ -29,14 +29,14 @@
     </div>
 
     {{-- Content --}}
-    <div class="flex flex-col gap-6 text-center px-10
-        max-lg:px-0 max-lg:text-left max-lg:gap-5">
+    <div class="flex flex-col gap-5 text-center px-10
+        max-lg:px-0 max-lg:text-left max-lg:gap-4">
         <a href="{{ $url }}" class="hover:opacity-80 transition-opacity">
-            <h3 class="font-display text-[48px] leading-[48px] tracking-[-1.92px] text-blue-black
-                max-lg:text-[24px] max-lg:leading-[24px] max-lg:tracking-[-0.96px]">{{ $title }}</h3>
+            <h3 class="font-display text-[36px] leading-[1] tracking-[-0.04em] text-blue-black
+                max-lg:text-[24px]">{{ $title }}</h3>
         </a>
         @if($description)
-            <p class="font-sans text-[20px] leading-[28px] text-blue-black max-lg:hidden">{{ $description }}</p>
+            <p class="text-body-md text-blue-black max-lg:hidden">{{ $description }}</p>
         @endif
 
         {{-- Meta --}}

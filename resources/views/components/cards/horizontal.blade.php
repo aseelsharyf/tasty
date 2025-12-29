@@ -43,8 +43,8 @@
         @endif
 
         <a href="{{ $url }}" class="hover:opacity-80 transition-opacity">
-            <h3 class="font-display text-[32px] leading-[38px] tracking-[-1.28px] text-blue-black line-clamp-3
-                max-lg:text-[24px] max-lg:leading-[24px] max-lg:tracking-[-0.96px]">{{ $title }}</h3>
+            <h3 class="font-display text-[28px] leading-[1.1] tracking-[-0.04em] text-blue-black line-clamp-3
+                max-lg:text-[24px]">{{ $title }}</h3>
         </a>
 
         {{-- Meta - Desktop: inline row, Tablet/Mobile: stacked vertically --}}

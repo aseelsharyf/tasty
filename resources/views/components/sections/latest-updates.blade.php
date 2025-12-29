@@ -28,12 +28,12 @@
                     >
                 </div>
                 {{-- Title & Description --}}
-                <div class="flex flex-col gap-5 items-center text-center text-blue-black w-full">
+                <div class="flex flex-col gap-4 items-center text-center text-blue-black w-full">
                     <div class="flex flex-col items-center">
-                        <span class="text-h2">{{ $titleSmall }}</span>
-                        <h2 class="text-h1 uppercase">{{ $titleLarge }}</h2>
+                        <span class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] max-lg:text-[24px]">{{ $titleSmall }}</span>
+                        <h2 class="font-display text-[56px] leading-[1] tracking-[-0.04em] uppercase max-lg:text-[36px]">{{ $titleLarge }}</h2>
                     </div>
-                    <p class="text-body-lg max-w-md leading-[26px]">{{ $description }}</p>
+                    <p class="text-body-md">{{ $description }}</p>
                 </div>
             </div>
 
@@ -97,8 +97,8 @@
                                     </template>
                                 </div>
                                 <a :href="post.url" class="hover:opacity-80 transition-opacity">
-                                    <h3 class="font-display text-[32px] leading-[38px] tracking-[-1.28px] text-blue-black line-clamp-3
-                                        max-lg:text-[24px] max-lg:leading-[24px] max-lg:tracking-[-0.96px]" x-text="post.title"></h3>
+                                    <h3 class="font-display text-[28px] leading-[1.1] tracking-[-0.04em] text-blue-black line-clamp-3
+                                        max-lg:text-[24px]" x-text="post.title"></h3>
                                 </a>
                                 {{-- Meta --}}
                                 <div class="flex flex-wrap items-center gap-5 text-[14px] leading-[12px] uppercase text-blue-black
