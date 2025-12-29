@@ -25,13 +25,13 @@ class Product extends Component
      * Create a new component instance.
      *
      * @param  array<string, mixed>|null  $data
-     * @param  array<int, string>|null  $tags
+     * @param  array<int, string>|string|null  $tags
      */
     public function __construct(
         ?array $data = null,
         ?string $image = null,
         ?string $imageAlt = null,
-        ?array $tags = null,
+        array|string|null $tags = null,
         ?string $title = null,
         ?string $description = null,
         ?string $url = null,
@@ -39,7 +39,8 @@ class Product extends Component
         if (is_array($data)) {
             $this->image = $data['image'] ?? '';
             $this->imageAlt = $data['imageAlt'] ?? $data['title'] ?? '';
-            $this->tags = $data['tags'] ?? [];
+            $dataTags = $data['tags'] ?? [];
+            $this->tags = is_string($dataTags) ? array_filter(array_map('trim', explode(',', $dataTags))) : $dataTags;
             $this->title = $data['title'] ?? '';
             $this->description = $data['description'] ?? '';
             $this->url = $data['url'] ?? '#';
@@ -60,7 +61,7 @@ class Product extends Component
             $this->imageAlt = $imageAlt;
         }
         if ($tags !== null) {
-            $this->tags = $tags;
+            $this->tags = is_string($tags) ? array_filter(array_map('trim', explode(',', $tags))) : $tags;
         }
         if ($title !== null) {
             $this->title = $title;
