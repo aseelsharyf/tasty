@@ -1,11 +1,11 @@
 <article {{ $attributes->merge(['class' => 'bg-white rounded-xl overflow-hidden p-10 flex gap-10 items-center w-full max-xl:flex-col max-xl:p-0 max-xl:pt-4 max-xl:px-4 max-xl:pb-8 max-xl:gap-4 max-xl:items-start']) }}>
-    <div class="w-[200px] flex-shrink-0 relative flex items-center justify-center
-        max-xl:w-full max-xl:aspect-[4/3] max-xl:p-4 max-xl:items-start max-xl:justify-center">
-        <a href="{{ $url }}" class="block w-full max-xl:absolute max-xl:inset-0">
+    <div class="w-[200px] h-[200px] flex-shrink-0 relative
+        max-xl:w-full max-xl:h-auto max-xl:aspect-[4/3] max-xl:p-4">
+        <a href="{{ $url }}" class="block w-full h-full max-xl:absolute max-xl:inset-0">
             <img
                 src="{{ $image }}"
                 alt="{{ $imageAlt }}"
-                class="w-full h-auto object-cover rounded max-xl:h-full"
+                class="w-full h-full object-cover object-center rounded"
             >
         </a>
         @if($category || $tag)
