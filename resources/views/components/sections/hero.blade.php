@@ -31,7 +31,7 @@
 @endphp
 
 <section class="w-full flex justify-center relative z-0 -mt-[96px] md:-mt-[112px] max-lg:mt-0">
-    <div class="flex w-full max-w-[1880px] h-[clamp(500px,67.22vw,1265px)]
+    <div class="flex w-full max-w-[1880px] h-[clamp(500px,58.22vw,1265px)]
         max-lg:flex-col max-lg:items-start max-lg:w-full max-lg:h-auto max-lg:min-h-[854px]">
         {{-- Hero Image --}}
         @if($manual)

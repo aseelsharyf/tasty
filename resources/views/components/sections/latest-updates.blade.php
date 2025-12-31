@@ -10,16 +10,15 @@
     })"
     @endif
 >
-    {{-- Container with proper padding --}}
-    <div class="w-full max-w-[1440px] mx-auto px-10 pt-16 pb-32 max-lg:px-5 max-lg:pt-10 max-lg:pb-16 flex flex-col gap-16 max-lg:gap-10">
-
+    {{-- Top Row Container - aligns with hero's 1880px container --}}
+    <div class="w-full max-w-[1880px] mx-auto pt-16 max-xl:pt-10 max-xl:px-5">
         {{-- Row 1: Intro Section | Featured Card --}}
-        {{-- items-end aligns intro section with bottom of featured card --}}
-        <div class="flex gap-10 items-end max-lg:flex-col max-lg:items-stretch max-lg:gap-6">
-            {{-- Intro Section --}}
-            <div class="flex-1 flex flex-col gap-5 items-center justify-end max-lg:justify-center max-lg:w-full">
+        {{-- Uses same 50/50 split as hero section --}}
+        <div class="flex max-xl:flex-col max-xl:items-stretch max-xl:gap-6">
+            {{-- Intro Section - takes left 50% like hero image --}}
+            <div class="w-1/2 flex flex-col gap-5 items-center justify-center max-xl:w-full">
                 {{-- Intro Image --}}
-                <div class="w-full max-w-[450px] h-[429.5px] max-lg:h-[182px] max-lg:max-w-[300px] max-md:max-w-[200px] flex items-center justify-center">
+                <div class="w-full max-w-[450px] h-[429.5px] max-xl:h-[182px] max-xl:max-w-[300px] max-md:max-w-[200px] flex items-center justify-center">
                     <img
                         src="{{ $introImage }}"
                         alt="{{ $introImageAlt }}"
@@ -28,102 +27,98 @@
                     >
                 </div>
                 {{-- Title & Description --}}
-                <div class="flex flex-col gap-4 items-center text-center text-blue-black w-full">
+                <div class="flex flex-col gap-4 items-center text-center text-blue-black w-full max-w-[450px]">
                     <div class="flex flex-col items-center">
-                        <span class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] max-lg:text-[24px]">{{ $titleSmall }}</span>
-                        <h2 class="font-display text-[56px] leading-[1] tracking-[-0.04em] uppercase max-lg:text-[36px]">{{ $titleLarge }}</h2>
+                        <span class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] max-xl:text-[24px]">{{ $titleSmall }}</span>
+                        <h2 class="font-display text-[56px] leading-[1] tracking-[-0.04em] uppercase max-xl:text-[36px]">{{ $titleLarge }}</h2>
                     </div>
                     <p class="text-body-md">{{ $description }}</p>
                 </div>
             </div>
 
-            {{-- Featured Card --}}
+            {{-- Featured Card - takes right 50% like hero yellow section --}}
             @if($featuredPost)
-                <x-cards.featured :post="$featuredPost" />
-            @endif
-        </div>
-
-        {{-- Horizontal Cards Grid (2 columns, 2 per row) --}}
-        <div class="flex flex-col gap-10 max-lg:gap-6">
-            {{-- Row of 2 cards --}}
-            <div class="grid grid-cols-2 gap-10 max-lg:grid-cols-1 max-lg:gap-6">
-                @foreach($posts->take(2) as $post)
-                    <x-cards.horizontal :post="$post" />
-                @endforeach
-            </div>
-
-            {{-- Row of 2 cards --}}
-            @if($posts->count() > 2)
-                <div class="grid grid-cols-2 gap-10 max-lg:grid-cols-1 max-lg:gap-6">
-                    @foreach($posts->skip(2)->take(2) as $post)
-                        <x-cards.horizontal :post="$post" />
-                    @endforeach
+                <div class="w-1/2 pr-10 max-xl:w-full max-xl:pr-0 max-xl:flex max-xl:justify-center">
+                    <x-cards.featured :post="$featuredPost" />
                 </div>
             @endif
+        </div>
+    </div>
+
+    {{-- Cards Grid Container - uses same 1880px container as top row --}}
+    <div class="w-full max-w-[1880px] mx-auto pt-16 pb-32 max-lg:pt-10 max-lg:pb-16 px-10 max-lg:px-5">
+        {{-- 2-column grid: Post1 | Post2, Post3 | Post4 --}}
+        {{-- Desktop: horizontal cards, left aligned right, right aligned left --}}
+        {{-- Tablet: vertical cards, 2 per row with gap --}}
+        {{-- Mobile: single column --}}
+        <div class="grid grid-cols-2 gap-y-10 max-xl:gap-6 max-lg:grid-cols-1">
+            @foreach($posts as $index => $post)
+                <div class="{{ $index % 2 === 0 ? 'justify-self-end pr-10' : 'justify-self-start' }} max-xl:justify-self-auto max-xl:pr-0 max-xl:max-w-none w-full max-w-[660px]">
+                    <x-cards.horizontal :post="$post" class="h-full" />
+                </div>
+            @endforeach
 
             @if($showLoadMore)
             {{-- Dynamically loaded posts via Alpine.js --}}
-            <template x-for="(pair, index) in chunkedPosts" :key="index">
-                <div class="grid grid-cols-2 gap-10 max-lg:grid-cols-1 max-lg:gap-6">
-                    <template x-for="post in pair" :key="post.id">
-                        <article class="bg-white rounded-xl overflow-hidden p-10 flex gap-10 items-center w-full
-                            max-lg:flex-col max-lg:px-4 max-lg:pt-4 max-lg:pb-8 max-lg:gap-4 max-lg:items-start">
-                            {{-- Image --}}
-                            <div class="w-[200px] flex-shrink-0 relative flex items-center justify-center
-                                max-lg:w-full max-lg:h-[206px] max-lg:p-4">
-                                <a :href="post.url" class="block w-full max-lg:absolute max-lg:inset-0">
-                                    <img :src="post.image" :alt="post.imageAlt" class="w-full h-auto object-cover rounded max-lg:h-full">
-                                </a>
-                                {{-- Tag overlay - only visible on tablet/mobile --}}
-                                <template x-if="post.category || post.tag">
-                                    <div class="hidden max-lg:block relative z-10">
-                                        <div class="tag self-start">
-                                            <template x-if="post.category">
-                                                <a :href="post.categoryUrl || '#'" class="hover:underline" x-text="post.category?.toUpperCase()"></a>
-                                            </template>
-                                            <template x-if="post.category && post.tag">
-                                                <span class="mx-1">•</span>
-                                            </template>
-                                            <template x-if="post.tag">
-                                                <a :href="post.tagUrl || '#'" class="hover:underline" x-text="post.tag?.toUpperCase()"></a>
-                                            </template>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
-                            {{-- Content --}}
-                            <div class="flex flex-col flex-1 gap-6 justify-center min-w-0
-                                max-lg:gap-5 max-lg:w-full">
-                                {{-- Tag - only visible on desktop --}}
-                                <template x-if="post.category || post.tag">
-                                    <div class="max-lg:hidden">
-                                        <div class="tag self-start">
-                                            <template x-if="post.category">
-                                                <a :href="post.categoryUrl || '#'" class="hover:underline" x-text="post.category?.toUpperCase()"></a>
-                                            </template>
-                                            <template x-if="post.category && post.tag">
-                                                <span class="mx-1">•</span>
-                                            </template>
-                                            <template x-if="post.tag">
-                                                <a :href="post.tagUrl || '#'" class="hover:underline" x-text="post.tag?.toUpperCase()"></a>
-                                            </template>
-                                        </div>
-                                    </div>
-                                </template>
-                                <a :href="post.url" class="hover:opacity-80 transition-opacity">
-                                    <h3 class="font-display text-[28px] leading-[1.1] tracking-[-0.04em] text-blue-black line-clamp-3
-                                        max-lg:text-[24px]" x-text="post.title"></h3>
-                                </a>
-                                {{-- Meta --}}
-                                <div class="flex flex-wrap items-center gap-5 text-[14px] leading-[12px] uppercase text-blue-black
-                                    max-lg:flex-col max-lg:items-start max-lg:gap-4 max-lg:text-[12px]">
-                                    <a :href="post.authorUrl" class="underline underline-offset-4 hover:opacity-80 transition-opacity" x-text="'BY ' + post.author?.toUpperCase()"></a>
-                                    <span class="max-lg:hidden">•</span>
-                                    <span x-text="post.date?.toUpperCase()"></span>
+            <template x-for="(post, index) in loadedPosts" :key="post.id">
+                <div :class="[({{ count($posts) }} + index) % 2 === 0 ? 'justify-self-end pr-10' : 'justify-self-start', 'max-xl:justify-self-auto max-xl:pr-0 max-xl:max-w-none', 'w-full', 'max-w-[660px]']">
+                <article class="bg-white rounded-xl overflow-hidden p-10 flex gap-10 items-center w-full h-full
+                    max-xl:flex-col max-xl:p-0 max-xl:pt-4 max-xl:px-4 max-xl:pb-8 max-xl:gap-4 max-xl:items-start">
+                    {{-- Image --}}
+                    <div class="w-[200px] flex-shrink-0 relative flex items-center justify-center
+                        max-xl:w-full max-xl:aspect-[4/3] max-xl:p-4 max-xl:items-start max-xl:justify-center">
+                        <a :href="post.url" class="block w-full max-xl:absolute max-xl:inset-0">
+                            <img :src="post.image" :alt="post.imageAlt" class="w-full h-auto object-cover rounded max-xl:h-full">
+                        </a>
+                        {{-- Tag overlay - only visible on tablet/mobile --}}
+                        <template x-if="post.category || post.tag">
+                            <div class="hidden max-xl:block relative z-10">
+                                <div class="tag self-start">
+                                    <template x-if="post.category">
+                                        <a :href="post.categoryUrl || '#'" class="hover:underline" x-text="post.category?.toUpperCase()"></a>
+                                    </template>
+                                    <template x-if="post.category && post.tag">
+                                        <span class="mx-1">•</span>
+                                    </template>
+                                    <template x-if="post.tag">
+                                        <a :href="post.tagUrl || '#'" class="hover:underline" x-text="post.tag?.toUpperCase()"></a>
+                                    </template>
                                 </div>
                             </div>
-                        </article>
-                    </template>
+                        </template>
+                    </div>
+                    {{-- Content --}}
+                    <div class="flex flex-col flex-1 gap-6 justify-center min-w-0
+                        max-xl:gap-5 max-xl:w-full">
+                        {{-- Tag - only visible on desktop --}}
+                        <template x-if="post.category || post.tag">
+                            <div class="max-xl:hidden">
+                                <div class="tag self-start">
+                                    <template x-if="post.category">
+                                        <a :href="post.categoryUrl || '#'" class="hover:underline" x-text="post.category?.toUpperCase()"></a>
+                                    </template>
+                                    <template x-if="post.category && post.tag">
+                                        <span class="mx-1">•</span>
+                                    </template>
+                                    <template x-if="post.tag">
+                                        <a :href="post.tagUrl || '#'" class="hover:underline" x-text="post.tag?.toUpperCase()"></a>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                        <a :href="post.url" class="hover:opacity-80 transition-opacity">
+                            <h3 class="font-display text-[28px] leading-[1.1] tracking-[-0.04em] text-blue-black line-clamp-3
+                                max-xl:text-[24px]" x-text="post.title"></h3>
+                        </a>
+                        {{-- Meta --}}
+                        <div class="flex flex-wrap items-center gap-5 text-[14px] leading-[12px] uppercase text-blue-black
+                            max-xl:flex-col max-xl:items-start max-xl:gap-4 max-xl:text-[12px]">
+                            <a :href="post.authorUrl" class="underline underline-offset-4 hover:opacity-80 transition-opacity" x-text="'BY ' + post.author?.toUpperCase()"></a>
+                            <span class="max-xl:hidden">•</span>
+                            <span x-text="post.date?.toUpperCase()"></span>
+                        </div>
+                    </div>
+                </article>
                 </div>
             </template>
             @endif
@@ -131,7 +126,7 @@
 
         @if($showLoadMore)
         {{-- Load More Button --}}
-        <div class="flex justify-center" x-show="hasMore" x-cloak>
+        <div class="flex justify-center mt-16 max-lg:mt-10" x-show="hasMore" x-cloak>
             <button
                 @click="loadMore()"
                 class="btn btn-yellow"
@@ -164,14 +159,6 @@ document.addEventListener('alpine:init', () => {
         params: config.params || {},
         excludeIds: config.excludeIds || [],
         perPage: config.perPage || 2,
-
-        get chunkedPosts() {
-            const chunks = [];
-            for (let i = 0; i < this.loadedPosts.length; i += 2) {
-                chunks.push(this.loadedPosts.slice(i, i + 2));
-            }
-            return chunks;
-        },
 
         async loadMore() {
             if (this.loading || !this.hasMore) return;
