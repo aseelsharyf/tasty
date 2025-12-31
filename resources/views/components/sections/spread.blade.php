@@ -38,8 +38,8 @@
                                 </div>
                             @endif
                             <div class="flex flex-col items-center text-center text-blue-black">
-                                <span class="text-h3">{{ $titleSmall }}</span>
-                                <h2 class="text-h2 uppercase">{{ $titleLarge }}</h2>
+                                <span class="font-display text-[48px] leading-[1.1] tracking-[-0.04em]">{{ $titleSmall }}</span>
+                                <h2 class="font-display text-[72px] leading-[1] tracking-[-0.04em] uppercase">{{ $titleLarge }}</h2>
                             </div>
                             @if($description)
                                 <p class="text-body-md text-blue-black text-center max-w-[300px]">{{ $description }}</p>
@@ -92,8 +92,8 @@
                                 </div>
                             @endif
                             <div class="flex flex-col items-center text-center text-blue-black">
-                                <span class="text-h3">{{ $titleSmall }}</span>
-                                <h2 class="text-h2 uppercase">{{ $titleLarge }}</h2>
+                                <span class="font-display text-[48px] leading-[1.1] tracking-[-0.04em]">{{ $titleSmall }}</span>
+                                <h2 class="font-display text-[72px] leading-[1] tracking-[-0.04em] uppercase">{{ $titleLarge }}</h2>
                             </div>
                             @if($description)
                                 <p class="text-body-md text-blue-black text-center max-w-[300px]">{{ $description }}</p>

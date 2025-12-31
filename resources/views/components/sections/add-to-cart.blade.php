@@ -14,8 +14,8 @@
     <div class="w-full max-w-[1440px] mx-auto px-10 pt-16 pb-32 max-lg:px-5 max-lg:pt-10 max-lg:pb-16 flex flex-col gap-16 max-lg:gap-10">
         {{-- Header --}}
         <div class="flex flex-col gap-5 items-center text-center text-blue-black w-full max-w-[660px] mx-auto">
-            <h2 class="text-h1 uppercase">{{ $title }}</h2>
-            <p class="text-body-lg">{{ $description }}</p>
+            <h2 class="text-h2 uppercase">{{ $title }}</h2>
+            <p class="text-body-md">{{ $description }}</p>
         </div>
 
         {{-- Products Grid --}}

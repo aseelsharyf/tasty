@@ -84,17 +84,17 @@
             <div class="flex flex-col gap-4 w-full max-lg:gap-2">
                 @if($manual)
                     @if($heroKicker)
-                        <h1 class="font-display text-[56px] leading-[1] tracking-[-0.04em] uppercase text-blue-black max-lg:text-[36px] max-lg:leading-[1] max-lg:tracking-[-0.04em]">{{ $heroKicker }}</h1>
+                        <h1 class="font-display text-[72px] leading-[1] tracking-[-0.04em] uppercase text-blue-black max-lg:text-[36px] max-lg:leading-[1] max-lg:tracking-[-0.04em]">{{ $heroKicker }}</h1>
                     @endif
                     @if($heroTitle)
-                        <p class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] text-blue-black max-lg:text-[24px] max-lg:leading-[1.2] max-lg:tracking-[-0.04em]">{{ $heroTitle }}</p>
+                        <p class="font-display text-[48px] leading-[1.1] tracking-[-0.04em] text-blue-black max-lg:text-[24px] max-lg:leading-[1.2] max-lg:tracking-[-0.04em]">{{ $heroTitle }}</p>
                     @endif
                 @else
                     <a href="{{ $heroUrl }}" class="hover:opacity-80 transition-opacity">
                         @if($heroKicker)
-                            <h1 class="font-display text-[56px] leading-[1] tracking-[-0.04em] uppercase text-blue-black max-lg:text-[36px] max-lg:leading-[1] max-lg:tracking-[-0.04em]">{{ $heroKicker }}</h1>
+                            <h1 class="font-display text-[72px] leading-[1] tracking-[-0.04em] uppercase text-blue-black max-lg:text-[36px] max-lg:leading-[1] max-lg:tracking-[-0.04em]">{{ $heroKicker }}</h1>
                         @endif
-                        <p class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] text-blue-black max-lg:text-[24px] max-lg:leading-[1.2] max-lg:tracking-[-0.04em]">{{ $heroTitle }}</p>
+                        <p class="font-display text-[48px] leading-[1.1] tracking-[-0.04em] text-blue-black max-lg:text-[24px] max-lg:leading-[1.2] max-lg:tracking-[-0.04em]">{{ $heroTitle }}</p>
                     </a>
                 @endif
             </div>

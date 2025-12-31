@@ -31,7 +31,7 @@
             <div class="flex gap-10">
                 {{-- Intro Card --}}
                 @if($showIntro)
-                    <article class="flex flex-col gap-5 flex-1 min-w-[280px]">
+                    <article class="flex flex-col gap-5 flex-1 min-w-[280px] justify-center">
                         {{-- Intro Image --}}
                         @if($introImage)
                             <div class="w-full h-[429.5px] overflow-hidden">
@@ -46,8 +46,8 @@
                         {{-- Intro Text --}}
                         <div class="flex flex-col gap-4 text-center text-blue-black">
                             <div class="flex flex-col items-center">
-                                <span class="font-display text-[36px] leading-[1.1] tracking-[-0.04em]">{{ $titleSmall }}</span>
-                                <span class="font-display text-[56px] leading-[1] tracking-[-0.04em] uppercase">{{ $titleLarge }}</span>
+                                <span class="font-display text-[48px] leading-[1.1] tracking-[-0.04em]">{{ $titleSmall }}</span>
+                                <span class="font-display text-[72px] leading-[1] tracking-[-0.04em] uppercase">{{ $titleLarge }}</span>
                             </div>
                             @if($description)
                                 <p class="text-body-md">{{ $description }}</p>
