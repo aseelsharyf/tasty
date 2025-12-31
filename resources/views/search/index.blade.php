@@ -71,7 +71,7 @@
                     @if($results['posts']->isNotEmpty())
                         <div class="mb-12">
                             <h2 class="text-h4 text-tasty-blue-black mb-6">Articles</h2>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
                                 @foreach($results['posts'] as $post)
                                     <x-cards.horizontal :post="$post" />
                                 @endforeach

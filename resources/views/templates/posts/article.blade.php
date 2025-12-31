@@ -101,11 +101,14 @@
 
 {{-- Related Posts (only for public view, not preview) --}}
 @if(!$isPreview && $relatedPosts?->isNotEmpty())
+    @php
+        $primaryCategory = $post->categories->first();
+    @endphp
     <section class="w-full max-w-[1880px] mx-auto py-16 md:py-24">
         <div class="container-main px-5 md:px-10">
-            <h2 class="text-h2 text-blue-black text-center mb-10 md:mb-16">Related Articles</h2>
+            <h2 class="text-h2 text-blue-black text-center mb-10 md:mb-16">More In {{ $primaryCategory?->name ?? 'This Category' }}</h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
                 @foreach($relatedPosts as $relatedPost)
                     <x-cards.horizontal :post="$relatedPost" />
                 @endforeach
