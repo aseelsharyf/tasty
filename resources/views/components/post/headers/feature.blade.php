@@ -8,9 +8,9 @@
     $photographer = $post->getCustomField('photographer');
 @endphp
 
-<header class="w-full">
+<header class="w-full max-w-[1880px] mx-auto">
     {{-- Hero Image with Gradient --}}
-    <div class="relative w-full h-[400px] sm:h-[600px] lg:h-[840px] max-w-[1440px] mx-auto">
+    <div class="relative w-full h-[400px] sm:h-[600px] lg:h-[840px]">
         @if($post->featured_image_url)
             <img
                 src="{{ $post->featured_image_url }}"
@@ -25,7 +25,7 @@
     </div>
 
     {{-- Title Section on Yellow --}}
-    <div class="bg-tasty-yellow pb-12 lg:pb-16 max-w-[1440px] mx-auto">
+    <div class="bg-tasty-yellow pb-12 lg:pb-16">
         <div class="flex flex-col gap-8 lg:gap-10 items-center text-center px-4 lg:px-10">
             {{-- Title & Subtitle --}}
             <div class="flex flex-col gap-4 items-center w-full">

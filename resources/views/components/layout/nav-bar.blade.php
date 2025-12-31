@@ -47,16 +47,25 @@
 
                 <div @click="openSearch()" class="hidden lg:flex h-full px-6 md:px-8 items-center justify-center cursor-pointer hover:opacity-70 transition gap-3">
                     <span class="font-mono text-base text-blue-black uppercase tracking-wide">Search</span>
-                    <i class="fas fa-search text-blue-black text-base"></i>
+                    <svg class="w-5 h-5 text-blue-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
                 </div>
 
                 <div class="lg:hidden flex items-center h-full px-4 gap-4">
                     <button @click="openSearch()" class="text-blue-black focus:outline-none">
-                        <i class="fas fa-search text-base"></i>
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
                     </button>
                     <button @click="menuOpen = !menuOpen" class="flex items-center gap-3 text-blue-black focus:outline-none">
                         <span class="font-mono text-base tracking-widest uppercase">Menu</span>
-                        <i class="fas text-base" :class="menuOpen ? 'fa-xmark' : 'fa-bars'"></i>
+                        <svg x-show="!menuOpen" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                        </svg>
+                        <svg x-show="menuOpen" x-cloak class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
                     </button>
                 </div>
             </div>
@@ -89,7 +98,6 @@
                         @endphp
 
                         @if($isSearch)
-                            {{-- Search button triggers modal --}}
                             @if($variant === 'primary')
                                 <button @click="openSearch(); menuOpen = false" class="text-xs font-bold uppercase bg-yellow-400 px-4 py-2 rounded-full">
                                     {{ $label }}
@@ -100,7 +108,6 @@
                                 </button>
                             @endif
                         @else
-                            {{-- Regular link --}}
                             @if($variant === 'primary')
                                 <a href="{{ $href }}" class="text-xs font-bold uppercase bg-yellow-400 px-4 py-2 rounded-full">
                                     {{ $label }}
@@ -118,131 +125,98 @@
         </div>
     </nav>
 
-    <!-- SEARCH MODAL (Outside nav, sibling element) -->
+    <!-- SEARCH MODAL -->
     <div
         x-show="searchOpen"
         x-cloak
         @click="closeSearch()"
         @keydown.escape.window="closeSearch()"
-        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter="transition ease-out duration-150"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave="transition ease-in duration-100"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-start justify-center pt-[120px] px-4"
+        class="fixed inset-0 bg-blue-black/40 backdrop-blur-sm z-[100] flex items-center justify-center px-5"
     >
+        <!-- Close Button -->
+        <button
+            @click="closeSearch()"
+            class="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 transition"
+        >
+            <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+        </button>
+
         <div
             @click.stop
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 scale-95 -translate-y-4"
-            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-            x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-            x-transition:leave-end="opacity-0 scale-95 -translate-y-4"
-            class="w-full max-w-3xl bg-white/95 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl overflow-hidden"
+            x-transition:enter="transition ease-out duration-150"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-100"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="w-full max-w-[680px] bg-white rounded-2xl shadow-2xl overflow-hidden"
         >
             <!-- Search Input -->
-            <div class="flex items-center gap-4 p-6 border-b border-stone-200">
-                <i class="fas fa-search text-stone-400 text-xl flex-shrink-0"></i>
-                <input
-                    x-ref="searchInput"
-                    x-model="query"
-                    @input="debounceSearch()"
-                    @keydown.down.prevent="navigateResults('down')"
-                    @keydown.up.prevent="navigateResults('up')"
-                    @keydown.enter.prevent="selectResult()"
-                    type="text"
-                    placeholder="Search for recipes, ingredients, articles..."
-                    class="flex-1 bg-transparent border-none outline-none text-lg text-blue-black placeholder-stone-400 font-mono"
-                >
-                <button @click="closeSearch()" class="flex-shrink-0 text-stone-400 hover:text-blue-black transition">
-                    <i class="fas fa-xmark text-2xl"></i>
-                </button>
-            </div>
+            <form @submit.prevent="goToSearch()">
+                <div class="flex items-center gap-4 px-5 py-4">
+                    <svg class="w-5 h-5 text-blue-black/40 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                    <input
+                        x-ref="searchInput"
+                        x-model="query"
+                        @input="debounceSearch()"
+                        @keydown.down.prevent="navigateResults('down')"
+                        @keydown.up.prevent="navigateResults('up')"
+                        @keydown.enter.prevent="selectResult()"
+                        type="text"
+                        placeholder="Search"
+                        class="flex-1 bg-transparent border-none outline-none text-xl text-blue-black placeholder-blue-black/40"
+                    >
+                </div>
+            </form>
 
-            <!-- Search Results -->
-            <div class="max-h-[60vh] overflow-y-auto">
-                <!-- Loading State -->
-                <div x-show="loading" class="p-8 text-center">
-                    <i class="fas fa-spinner fa-spin text-3xl text-yellow-600 mb-3"></i>
-                    <p class="text-sm text-stone-500 font-mono">Searching...</p>
+            <!-- Results -->
+            <div x-show="query.length >= 2" x-cloak class="border-t border-blue-black/10">
+                <!-- Loading -->
+                <div x-show="loading" class="p-6 text-center">
+                    <div class="w-5 h-5 border-2 border-blue-black/20 border-t-blue-black rounded-full animate-spin mx-auto"></div>
                 </div>
 
-                <!-- Results -->
-                <template x-if="!loading && results.length > 0">
-                    <div class="p-4">
-                        <template x-for="(result, index) in results" :key="index">
-                            <a
-                                :href="result.url"
-                                @mouseenter="selectedIndex = index"
-                                :class="{'bg-yellow-50': selectedIndex === index}"
-                                class="block p-4 rounded-lg hover:bg-yellow-50 transition group"
-                            >
-                                <div class="flex items-start gap-4">
-                                    <!-- Icon based on type -->
-                                    <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
-                                        <i :class="result.icon || 'fa-utensils'" class="fas text-white text-lg"></i>
-                                    </div>
+                <!-- Results List -->
+                <div x-show="!loading && results.length > 0" class="max-h-[50vh] overflow-y-auto">
+                    <template x-for="(result, index) in results" :key="index">
+                        <a
+                            :href="result.url"
+                            @mouseenter="selectedIndex = index"
+                            :class="selectedIndex === index ? 'bg-tasty-yellow/30' : 'bg-transparent'"
+                            class="flex items-center gap-4 px-5 py-3 hover:bg-tasty-yellow/20 transition"
+                        >
+                            <div x-show="result.image" class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-blue-black/5">
+                                <img :src="result.image" :alt="result.title" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-blue-black text-base truncate" x-text="result.title"></p>
+                                <p class="text-sm text-blue-black/50" x-text="result.subtitle"></p>
+                            </div>
+                        </a>
+                    </template>
 
-                                    <div class="flex-1 min-w-0">
-                                        <h3 class="font-mono font-bold text-blue-black group-hover:text-yellow-600 transition mb-1" x-text="result.title"></h3>
-                                        <p class="text-sm text-stone-600 line-clamp-2 mb-2" x-text="result.description"></p>
-                                        <div class="flex items-center gap-3 text-xs text-stone-500">
-                                            <span class="uppercase tracking-wider" x-text="result.type"></span>
-                                            <span x-show="result.readTime">•</span>
-                                            <span x-show="result.readTime" x-text="result.readTime"></span>
-                                        </div>
-                                    </div>
-
-                                    <i class="fas fa-arrow-right text-stone-400 group-hover:text-yellow-600 group-hover:translate-x-1 transition flex-shrink-0 mt-1"></i>
-                                </div>
-                            </a>
-                        </template>
-
-                        <!-- View All Results Link -->
-                        <div class="mt-4 pt-4 border-t border-stone-200">
-                            <a
-                                :href="`/search?q=${encodeURIComponent(query)}`"
-                                class="flex items-center justify-center gap-2 p-3 text-sm font-mono text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 rounded-lg transition"
-                            >
-                                <span>View all results</span>
-                                <i class="fas fa-arrow-right"></i>
-                            </a>
-                        </div>
-                    </div>
-                </template>
+                    <!-- View All -->
+                    <a
+                        :href="`/search?q=${encodeURIComponent(query)}`"
+                        class="block px-5 py-3 text-sm text-blue-black/50 hover:text-blue-black hover:bg-blue-black/5 transition border-t border-blue-black/10"
+                    >
+                        View all results →
+                    </a>
+                </div>
 
                 <!-- No Results -->
-                <div x-show="!loading && query.length > 0 && results.length === 0" class="p-8 text-center">
-                    <i class="fas fa-search text-4xl text-stone-300 mb-3"></i>
-                    <p class="text-lg font-mono text-stone-600 mb-1">No results found</p>
-                    <p class="text-sm text-stone-500">Try different keywords or check your spelling</p>
-                </div>
-
-                <!-- Popular Searches (shown when empty) -->
-                <div x-show="!loading && query.length === 0" class="p-6">
-                    <p class="text-xs uppercase tracking-wider text-stone-500 font-mono mb-4">Popular Searches</p>
-                    <div class="grid grid-cols-2 gap-3">
-                        <template x-for="suggestion in popularSearches" :key="suggestion.term">
-                            <button
-                                @click="selectSuggestion(suggestion.term)"
-                                class="flex items-center gap-3 p-3 bg-stone-50 hover:bg-yellow-50 rounded-lg transition text-left group"
-                            >
-                                <i :class="suggestion.icon" class="fas text-yellow-600 text-lg"></i>
-                                <span class="font-mono text-sm text-blue-black group-hover:text-yellow-600" x-text="suggestion.term"></span>
-                            </button>
-                        </template>
-                    </div>
-
-                    <div class="mt-6 pt-6 border-t border-stone-200">
-                        <p class="text-xs uppercase tracking-wider text-stone-500 font-mono mb-3">Quick Links</p>
-                        <div class="flex flex-wrap gap-2">
-                            <a href="#" class="px-4 py-2 bg-white border border-stone-200 hover:border-yellow-600 hover:bg-yellow-50 rounded-full text-sm font-mono transition">All Recipes</a>
-                            <a href="#" class="px-4 py-2 bg-white border border-stone-200 hover:border-yellow-600 hover:bg-yellow-50 rounded-full text-sm font-mono transition">Collections</a>
-                            <a href="#" class="px-4 py-2 bg-white border border-stone-200 hover:border-yellow-600 hover:bg-yellow-50 rounded-full text-sm font-mono transition">Blog</a>
-                        </div>
-                    </div>
+                <div x-show="!loading && query.length >= 2 && results.length === 0" class="px-5 py-6 text-center">
+                    <p class="text-blue-black/50">No results found</p>
                 </div>
             </div>
         </div>
@@ -261,45 +235,27 @@ function searchNav() {
         selectedIndex: -1,
         debounceTimer: null,
         navVisible: true,
-        scrollY: 0,
         lastScrollY: 0,
         scrollThreshold: 10,
-        popularSearches: [
-            { term: 'Pasta Recipes', icon: 'fa-bowl-food' },
-            { term: 'Quick Desserts', icon: 'fa-cake-candles' },
-            { term: 'Healthy Meals', icon: 'fa-leaf' },
-            { term: 'Vegetarian', icon: 'fa-carrot' },
-            { term: 'Grilling', icon: 'fa-fire' },
-            { term: 'Breakfast Ideas', icon: 'fa-mug-hot' }
-        ],
 
         init() {
             window.addEventListener('scroll', () => this.handleScroll());
         },
 
         handleScroll() {
-            this.scrollY = window.scrollY;
+            const scrollY = window.scrollY;
 
-            // Always show nav at the top of the page
-            if (this.scrollY < 50) {
+            if (scrollY < 50) {
                 this.navVisible = true;
-                this.lastScrollY = this.scrollY;
+                this.lastScrollY = scrollY;
                 return;
             }
 
-            // Check if scroll difference exceeds threshold
-            const scrollDiff = this.scrollY - this.lastScrollY;
+            const scrollDiff = scrollY - this.lastScrollY;
 
             if (Math.abs(scrollDiff) > this.scrollThreshold) {
-                if (scrollDiff > 0) {
-                    // Scrolling down - hide nav
-                    this.navVisible = false;
-                } else {
-                    // Scrolling up - show nav
-                    this.navVisible = true;
-                }
-
-                this.lastScrollY = this.scrollY;
+                this.navVisible = scrollDiff < 0;
+                this.lastScrollY = scrollY;
             }
         },
 
@@ -315,6 +271,12 @@ function searchNav() {
             this.query = '';
             this.results = [];
             this.selectedIndex = -1;
+        },
+
+        goToSearch() {
+            if (this.query.length > 0) {
+                window.location.href = `/search?q=${encodeURIComponent(this.query)}`;
+            }
         },
 
         debounceSearch() {
@@ -336,35 +298,13 @@ function searchNav() {
             try {
                 const response = await fetch(`/api/search?q=${encodeURIComponent(this.query)}`);
                 const data = await response.json();
-                this.results = data.results.map(result => ({
-                    title: result.title,
-                    description: result.subtitle,
-                    type: result.type,
-                    url: result.url,
-                    image: result.image,
-                    icon: this.getIconForType(result.type)
-                }));
+                this.results = data.results.slice(0, 5);
             } catch (error) {
                 console.error('Search error:', error);
                 this.results = [];
             } finally {
                 this.loading = false;
             }
-        },
-
-        getIconForType(type) {
-            const icons = {
-                'post': 'fa-newspaper',
-                'category': 'fa-folder',
-                'tag': 'fa-tag',
-                'author': 'fa-user'
-            };
-            return icons[type] || 'fa-file';
-        },
-
-        selectSuggestion(term) {
-            this.query = term;
-            this.performSearch();
         },
 
         navigateResults(direction) {
@@ -380,6 +320,8 @@ function searchNav() {
         selectResult() {
             if (this.selectedIndex >= 0 && this.results[this.selectedIndex]) {
                 window.location.href = this.results[this.selectedIndex].url;
+            } else if (this.query.length > 0) {
+                this.goToSearch();
             }
         }
     }
