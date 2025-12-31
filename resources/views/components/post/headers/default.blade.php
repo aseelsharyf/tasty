@@ -9,9 +9,9 @@
 @endphp
 
 <header class="w-full max-w-[1880px] mx-auto">
-    <div class="flex flex-col lg:flex-row min-h-[500px] lg:min-h-[864px]">
+    <div class="flex flex-col lg:flex-row min-h-[854px] lg:min-h-[864px]">
         {{-- Image Section (Left) --}}
-        <div class="w-full lg:w-[65%] h-[300px] sm:h-[400px] lg:h-auto relative">
+        <div class="w-full lg:w-[65%] flex-1 lg:flex-none lg:h-auto relative">
             @if($post->featured_image_url)
                 <img
                     src="{{ $post->featured_image_url }}"
