@@ -23,7 +23,7 @@
     })"
     @endif
 >
-    <div class="w-full max-w-[1440px] mx-auto px-10 pt-16 pb-32 max-lg:px-5 max-lg:pt-10 max-lg:pb-16 flex flex-col gap-10 lg:gap-16">
+    <div class="w-full max-w-[1440px] mx-auto px-10 pt-10 pb-16 max-lg:px-5 max-lg:pt-8 max-lg:pb-10 flex flex-col gap-10 lg:gap-16">
 
         {{-- DESKTOP LAYOUT --}}
         <div class="hidden lg:contents">

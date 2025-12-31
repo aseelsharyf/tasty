@@ -1,6 +1,6 @@
 {{-- The Spread Section --}}
 <section
-    class="w-full max-w-[1880px] mx-auto {{ $bgColorClass }} py-16 max-lg:py-8"
+    class="w-full max-w-[1880px] mx-auto {{ $bgColorClass }} py-10 max-lg:py-6"
     @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif
     x-data="spreadScroll()"
     x-init="initScroll()"

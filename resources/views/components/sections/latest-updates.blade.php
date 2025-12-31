@@ -11,7 +11,7 @@
     @endif
 >
     {{-- Top Row Container - aligns with hero's 1880px container --}}
-    <div class="w-full max-w-[1880px] mx-auto pt-16 max-xl:pt-10 max-xl:px-5">
+    <div class="w-full max-w-[1880px] mx-auto pt-16 max-xl:pt-8 max-xl:px-5">
         {{-- Row 1: Intro Section | Featured Card --}}
         {{-- Uses same 50/50 split as hero section --}}
         <div class="flex max-xl:flex-col max-xl:items-stretch max-xl:gap-6">
@@ -46,7 +46,7 @@
     </div>
 
     {{-- Cards Grid Container - uses same 1880px container as top row --}}
-    <div class="w-full max-w-[1880px] mx-auto pt-16 pb-32 max-lg:pt-10 max-lg:pb-16 px-10 max-lg:px-5">
+    <div class="w-full max-w-[1880px] mx-auto pt-16 pb-32 max-lg:pt-8 max-lg:pb-16 px-10 max-lg:px-5">
         {{-- 2-column grid: Post1 | Post2, Post3 | Post4 --}}
         {{-- Desktop: horizontal cards, left aligned right, right aligned left --}}
         {{-- Tablet: vertical cards, 2 per row with gap --}}

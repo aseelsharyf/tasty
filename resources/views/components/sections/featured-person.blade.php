@@ -20,7 +20,7 @@
 
 {{-- Content Section --}}
 <section class="w-full max-w-[1880px] mx-auto">
-    <div class="{{ $bgColorClass }} pb-32 max-lg:pb-16" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+    <div class="{{ $bgColorClass }} pb-16 max-lg:pb-10" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
         <div class="container-main flex flex-col items-center gap-10 text-center w-full px-10 max-lg:px-5 max-lg:gap-6">
             {{-- Title & Subtitle --}}
             <div class="flex flex-col gap-3 max-lg:gap-2">
