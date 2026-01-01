@@ -38,7 +38,7 @@
                 <div class="absolute inset-0 flex flex-col justify-between p-10">
                     {{-- Tag at top --}}
                     @if($category || $tag)
-                        <div class="flex items-start">
+                        <div class="flex justify-center">
                             <div class="tag tag-white">
                                 @if($category)
                                     <span>{{ strtoupper($category) }}</span>
@@ -103,7 +103,7 @@
         {{-- Video Card - Full width --}}
         <article class="w-full rounded-xl overflow-hidden flex flex-col">
             {{-- Image Section with overlay content --}}
-            <a href="{{ $videoUrl }}" class="relative flex-1 min-h-[300px] flex flex-col justify-between px-4 pt-6 pb-2.5 overflow-hidden">
+            <a href="{{ $videoUrl }}" class="relative flex-1 min-h-[450px] flex flex-col justify-between px-4 pt-6 pb-2.5 overflow-hidden">
                 {{-- Background Image --}}
                 @if($image)
                     <img
@@ -125,11 +125,11 @@
                         <div class="tag">
                             @if($category)
                                 <span>{{ strtoupper($category) }}</span>
-                            @endif
-                            @if($category && $tag)
-                                <span class="mx-2.5">•</span>
-                            @endif
-                            @if($tag)
+                                @if($tag)
+                                    <span class="mx-2.5 hidden">•</span>
+                                    <span class="hidden">{{ strtoupper($tag) }}</span>
+                                @endif
+                            @elseif($tag)
                                 <span>{{ strtoupper($tag) }}</span>
                             @endif
                         </div>
