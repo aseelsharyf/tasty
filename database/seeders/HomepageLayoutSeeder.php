@@ -12,6 +12,13 @@ use Illuminate\Support\Str;
 
 class HomepageLayoutSeeder extends Seeder
 {
+    /**
+     * Track assigned post IDs to prevent duplicates across slots.
+     *
+     * @var array<int, bool>
+     */
+    protected array $assignedPostIds = [];
+
     public function __construct(
         protected SectionRegistry $registry
     ) {}
@@ -191,8 +198,10 @@ class HomepageLayoutSeeder extends Seeder
 
     /**
      * Create a section configuration.
+     *
+     * @param  array<int, int|null>  $manualPostIds  Optional array of post IDs to assign to slots (index => postId)
      */
-    protected function createSection(string $type, int $order, array $config = [], array $dataSource = []): array
+    protected function createSection(string $type, int $order, array $config = [], array $dataSource = [], array $manualPostIds = []): array
     {
         $definition = $this->registry->get($type);
 
@@ -214,10 +223,14 @@ class HomepageLayoutSeeder extends Seeder
         }
 
         for ($i = 0; $i < $slotCount; $i++) {
+            // Check if this slot has a manual post assignment
+            $postId = isset($manualPostIds[$i]) ? $this->assignPostId($manualPostIds[$i]) : null;
+            $mode = $postId !== null ? 'manual' : ($supportsDynamic ? 'dynamic' : 'static');
+
             $slots[] = [
                 'index' => $i,
-                'mode' => $supportsDynamic ? 'dynamic' : 'static',
-                'postId' => null,
+                'mode' => $mode,
+                'postId' => $postId,
                 'content' => $defaultContent,
             ];
         }
@@ -275,7 +288,7 @@ class HomepageLayoutSeeder extends Seeder
         foreach ($sampleProducts as $i => $product) {
             $slots[] = [
                 'index' => $i,
-                'mode' => 'manual',
+                'mode' => 'static',
                 'postId' => null,
                 'product' => $product,
             ];
@@ -317,5 +330,40 @@ class HomepageLayoutSeeder extends Seeder
                 'slug' => $category->slug,
             ],
         ];
+    }
+
+    /**
+     * Check if a post ID is already assigned to another slot.
+     */
+    protected function isPostAssigned(int $postId): bool
+    {
+        return isset($this->assignedPostIds[$postId]);
+    }
+
+    /**
+     * Mark a post ID as assigned.
+     */
+    protected function markPostAssigned(int $postId): void
+    {
+        $this->assignedPostIds[$postId] = true;
+    }
+
+    /**
+     * Get an unassigned post ID, marking it as assigned.
+     * Returns null if the post is already assigned.
+     */
+    protected function assignPostId(?int $postId): ?int
+    {
+        if ($postId === null) {
+            return null;
+        }
+
+        if ($this->isPostAssigned($postId)) {
+            return null;
+        }
+
+        $this->markPostAssigned($postId);
+
+        return $postId;
     }
 }

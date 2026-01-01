@@ -5,6 +5,7 @@ import type { PostSearchResult } from '../../types';
 
 const props = defineProps<{
     open: boolean;
+    excludedPostIds?: number[];
 }>();
 
 const emit = defineEmits<{
@@ -21,6 +22,11 @@ const searchQuery = ref('');
 const isLoading = ref(false);
 const posts = ref<PostSearchResult[]>([]);
 const error = ref<string | null>(null);
+
+// Check if a post is excluded (already assigned)
+function isPostExcluded(postId: number): boolean {
+    return props.excludedPostIds?.includes(postId) ?? false;
+}
 
 // Debounced search
 const debouncedSearch = useDebounceFn(async () => {
@@ -132,12 +138,16 @@ function selectPost(post: PostSearchResult) {
 
                     <!-- Posts List -->
                     <div v-else class="divide-y divide-default">
-                        <button
+                        <div
                             v-for="post in posts"
                             :key="post.id"
-                            type="button"
-                            class="w-full flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors text-left"
-                            @click="selectPost(post)"
+                            :class="[
+                                'w-full flex items-center gap-4 p-4 text-left',
+                                isPostExcluded(post.id)
+                                    ? 'opacity-50 cursor-not-allowed bg-muted/20'
+                                    : 'hover:bg-muted/50 transition-colors cursor-pointer'
+                            ]"
+                            @click="!isPostExcluded(post.id) && selectPost(post)"
                         >
                             <img
                                 v-if="post.image"
@@ -149,7 +159,12 @@ function selectPost(post: PostSearchResult) {
                                 <UIcon name="i-lucide-image" class="size-6 text-muted" />
                             </div>
                             <div class="flex-1 min-w-0">
-                                <h4 class="font-medium text-highlighted truncate">{{ post.title }}</h4>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="font-medium text-highlighted truncate">{{ post.title }}</h4>
+                                    <UBadge v-if="isPostExcluded(post.id)" color="warning" variant="subtle" size="xs">
+                                        Already assigned
+                                    </UBadge>
+                                </div>
                                 <p v-if="post.excerpt" class="text-sm text-muted line-clamp-1 mt-0.5">
                                     {{ post.excerpt }}
                                 </p>
@@ -162,8 +177,17 @@ function selectPost(post: PostSearchResult) {
                                     </span>
                                 </div>
                             </div>
-                            <UIcon name="i-lucide-chevron-right" class="size-5 text-muted shrink-0" />
-                        </button>
+                            <UIcon
+                                v-if="!isPostExcluded(post.id)"
+                                name="i-lucide-chevron-right"
+                                class="size-5 text-muted shrink-0"
+                            />
+                            <UIcon
+                                v-else
+                                name="i-lucide-ban"
+                                class="size-5 text-warning shrink-0"
+                            />
+                        </div>
                     </div>
                 </div>
             </UCard>

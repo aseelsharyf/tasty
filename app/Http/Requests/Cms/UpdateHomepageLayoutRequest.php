@@ -4,6 +4,7 @@ namespace App\Http\Requests\Cms;
 
 use App\Services\Layouts\SectionRegistry;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class UpdateHomepageLayoutRequest extends FormRequest
 {
@@ -37,7 +38,7 @@ class UpdateHomepageLayoutRequest extends FormRequest
             'sections.*.dataSource.params' => ['nullable', 'array'],
             'sections.*.slots' => ['nullable', 'array'],
             'sections.*.slots.*.index' => ['required', 'integer', 'min:0'],
-            'sections.*.slots.*.mode' => ['required', 'string', 'in:dynamic,manual'],
+            'sections.*.slots.*.mode' => ['required', 'string', 'in:dynamic,manual,static'],
             'sections.*.slots.*.postId' => ['nullable', 'integer', 'exists:posts,id'],
             'sections.*.slots.*.product' => ['nullable', 'array'],
             'sections.*.slots.*.product.title' => ['nullable', 'string', 'max:255'],
@@ -47,6 +48,47 @@ class UpdateHomepageLayoutRequest extends FormRequest
             'sections.*.slots.*.product.tags' => ['nullable', 'array'],
             'sections.*.slots.*.product.url' => ['nullable', 'string', 'max:500'],
         ];
+    }
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $this->validateNoDuplicatePosts($validator);
+        });
+    }
+
+    /**
+     * Validate that no post is assigned to multiple slots.
+     */
+    protected function validateNoDuplicatePosts(Validator $validator): void
+    {
+        $sections = $this->input('sections', []);
+        $assignedPosts = [];
+
+        foreach ($sections as $sectionIndex => $section) {
+            $slots = $section['slots'] ?? [];
+
+            foreach ($slots as $slotIndex => $slot) {
+                if (($slot['mode'] ?? '') === 'manual' && ! empty($slot['postId'])) {
+                    $postId = $slot['postId'];
+
+                    if (isset($assignedPosts[$postId])) {
+                        $validator->errors()->add(
+                            "sections.{$sectionIndex}.slots.{$slotIndex}.postId",
+                            'This post is already assigned to another slot.'
+                        );
+                    } else {
+                        $assignedPosts[$postId] = [
+                            'section' => $sectionIndex,
+                            'slot' => $slotIndex,
+                        ];
+                    }
+                }
+            }
+        }
     }
 
     /**

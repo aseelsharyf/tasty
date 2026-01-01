@@ -48,6 +48,23 @@ const mediaPickerConfigKey = ref<string | null>(null);
 // Dynamic preview posts per section (for dynamic slots)
 const dynamicPreviewPosts = ref<Record<string, PostSearchResult[]>>({});
 
+// Compute all assigned post IDs across all sections (excluding the currently editing slot)
+const excludedPostIds = computed(() => {
+    const ids: number[] = [];
+    for (const section of props.modelValue) {
+        for (const slot of section.slots) {
+            // Skip the slot currently being edited
+            if (section.id === editingSectionId.value && slot.index === editingSlotIndex.value) {
+                continue;
+            }
+            if (slot.mode === 'manual' && slot.postId) {
+                ids.push(slot.postId);
+            }
+        }
+    }
+    return ids;
+});
+
 // Fetch posts data for all assigned postIds on mount
 async function fetchAssignedPosts() {
     const postIds = new Set<number>();
@@ -1021,6 +1038,7 @@ function handlePreviewSlotClick(section: HomepageSection, slotIndex: number) {
         <!-- Post Picker Modal -->
         <PostPickerModal
             v-model:open="showPostPicker"
+            :excluded-post-ids="excludedPostIds"
             @select="selectPost"
         />
 
