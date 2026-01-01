@@ -6,7 +6,7 @@
     'class' => '',
 ])
 
-<div {{ $attributes->merge(['class' => 'tag self-start ' . $class]) }}>
+<div {{ $attributes->merge(['class' => 'tag ' . $class]) }}>
     @if($category)
         <a href="{{ $categoryUrl ?? '#' }}" class="hover:underline">{{ strtoupper($category) }}</a>
     @endif

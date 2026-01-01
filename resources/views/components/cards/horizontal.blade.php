@@ -9,7 +9,7 @@
             >
         </a>
         @if($category || $tag)
-            <div class="hidden max-xl:block relative z-10">
+            <div class="hidden max-xl:flex max-xl:justify-center relative z-10">
                 <x-post.meta-tags
                     :category="$category"
                     :category-url="$categoryUrl"
