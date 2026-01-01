@@ -4,7 +4,7 @@
 
     <div class="relative rounded overflow-hidden flex items-end justify-center p-6
         h-[580px]
-        max-xl:aspect-[4/3] max-xl:h-auto max-xl:p-4 max-xl:items-start max-xl:justify-center">
+        max-xl:aspect-[3/4] max-xl:h-auto max-xl:p-4 max-xl:items-start max-xl:justify-center">
         <a href="{{ $url }}" class="absolute inset-0 z-0">
             <img
                 src="{{ $image }}"

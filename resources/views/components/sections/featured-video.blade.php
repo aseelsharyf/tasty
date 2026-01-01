@@ -14,7 +14,7 @@
 @endphp
 <section class="w-full max-w-[1880px] mx-auto" style="{{ $sectionStyle }}">
     {{-- Desktop Layout --}}
-    <div class="hidden lg:flex w-full max-w-[1440px] mx-auto px-10 pt-10 pb-16 flex-col items-center gap-10">
+    <div class="hidden lg:flex w-full max-w-[1440px] mx-auto px-10 pt-16 pb-24 flex-col items-center gap-10">
         {{-- Video Card - 966px max width --}}
         <article class="w-full max-w-[966px] rounded-xl overflow-hidden">
             {{-- Image/Video Section - 544px height on desktop --}}
@@ -99,7 +99,7 @@
     </div>
 
     {{-- Mobile Layout --}}
-    <div class="lg:hidden w-full px-5 pt-6 pb-10 flex flex-col items-center">
+    <div class="lg:hidden w-full px-5 pt-10 pb-16 flex flex-col items-center">
         {{-- Video Card - Full width --}}
         <article class="w-full rounded-xl overflow-hidden flex flex-col">
             {{-- Image Section with overlay content --}}
