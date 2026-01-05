@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import axios from 'axios';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import BlockEditor, { type MediaSelectCallback } from '../../components/BlockEditor.vue';
 import MediaPickerModal from '../../components/MediaPickerModal.vue';
@@ -379,13 +380,57 @@ const flattenedCategories = computed(() => {
     return flatten(props.categories);
 });
 
+// Reactive tags list (can be extended when creating new tags inline)
+const localTags = ref<Tag[]>([...props.tags]);
+
 const tagOptions = computed(() =>
-    props.tags.map((tag) => ({ label: tag.name, value: tag.id }))
+    localTags.value.map((tag) => ({ label: tag.name, value: tag.id }))
 );
 
 const sponsorOptions = computed(() =>
     props.sponsors?.map((sponsor) => ({ label: sponsor.name, value: sponsor.id })) || []
 );
+
+// Create a new tag inline (for multi-select tags)
+async function onCreateTag(name: string) {
+    const newTag = await createTag(name);
+    if (newTag) {
+        form.tags.push(newTag.id);
+    }
+}
+
+// Create a new featured tag inline (for single-select)
+async function onCreateFeaturedTag(name: string) {
+    const newTag = await createTag(name);
+    if (newTag) {
+        form.featured_tag_id = newTag.id;
+    }
+}
+
+// Shared function to create a tag
+async function createTag(name: string): Promise<{ id: number; name: string; slug: string } | null> {
+    try {
+        const response = await axios.post('/cms/tags', {
+            name: { [props.language.code]: name },
+        });
+        const newTag = response.data;
+        // Add to local tags list
+        localTags.value.push({ id: newTag.id, name: newTag.name, slug: newTag.slug });
+        toast.add({
+            title: 'Tag Created',
+            description: `Tag "${name}" has been created.`,
+            color: 'success',
+        });
+        return newTag;
+    } catch (error: any) {
+        toast.add({
+            title: 'Error',
+            description: error.response?.data?.message || 'Failed to create tag',
+            color: 'error',
+        });
+        return null;
+    }
+}
 
 function removeFeaturedMedia() {
     selectedFeaturedMedia.value = null;
@@ -969,10 +1014,12 @@ function goBack() {
                                             v-model="form.featured_tag_id"
                                             :items="tagOptions"
                                             value-key="value"
-                                            placeholder="Select featured tag..."
+                                            placeholder="Select or create..."
                                             searchable
+                                            create-item
                                             size="sm"
                                             class="w-full"
+                                            @create="onCreateFeaturedTag"
                                         />
                                         <p v-if="form.errors.featured_tag_id" class="text-error text-xs mt-1">{{ form.errors.featured_tag_id }}</p>
                                     </div>
@@ -983,10 +1030,12 @@ function goBack() {
                                             :items="tagOptions"
                                             value-key="value"
                                             multiple
-                                            placeholder="Select..."
+                                            placeholder="Select or create..."
                                             searchable
+                                            create-item
                                             size="sm"
                                             class="w-full"
+                                            @create="onCreateTag"
                                         />
                                     </div>
                                     <!-- Display Options -->

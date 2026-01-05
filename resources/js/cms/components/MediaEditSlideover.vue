@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
+import axios from 'axios';
 import { usePermission } from '../composables/usePermission';
 import { formatDistanceToNow } from 'date-fns';
 import DhivehiInput from './DhivehiInput.vue';
 import MediaCropCreator from './MediaCropCreator.vue';
+
+const toast = useToast();
 
 interface Tag {
     id: number;
@@ -167,13 +170,45 @@ watch(() => props.media, (media) => {
     }
 }, { immediate: true });
 
+// Reactive tags list (can be extended when creating new tags inline)
+const localTags = ref<Tag[]>([...props.tags]);
+
 // Tag options for multi-select
 const tagOptions = computed(() => {
-    return props.tags.map(tag => ({
+    return localTags.value.map(tag => ({
         value: tag.id,
         label: typeof tag.name === 'string' ? tag.name : (tag.name?.en || tag.slug),
     }));
 });
+
+// Create a new tag inline
+async function onCreateTag(name: string) {
+    try {
+        // Get the default language or use 'en'
+        const defaultLang = props.languages.find(l => l.is_default);
+        const langCode = defaultLang?.code || 'en';
+
+        const response = await axios.post('/cms/tags', {
+            name: { [langCode]: name },
+        });
+        const newTag = response.data;
+        // Add to local tags list
+        localTags.value.push({ id: newTag.id, name: newTag.name, slug: newTag.slug });
+        // Add to selected tags
+        selectedTagIds.value.push(newTag.id);
+        toast.add({
+            title: 'Tag Created',
+            description: `Tag "${name}" has been created.`,
+            color: 'success',
+        });
+    } catch (error: any) {
+        toast.add({
+            title: 'Error',
+            description: error.response?.data?.message || 'Failed to create tag',
+            color: 'error',
+        });
+    }
+}
 
 // User options
 const userOptions = computed(() => {
@@ -439,10 +474,12 @@ function setCreditType(type: 'user' | 'external') {
                                         v-model="selectedTagIds"
                                         :items="tagOptions"
                                         value-key="value"
-                                        placeholder="Select tags..."
+                                        placeholder="Select or create tags..."
                                         multiple
                                         searchable
+                                        create-item
                                         class="w-full"
+                                        @create="onCreateTag"
                                     />
                                 </UFormField>
                             </div>

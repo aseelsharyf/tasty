@@ -759,13 +759,58 @@ const flattenedCategories = computed(() => {
     return flatten(props.categories);
 });
 
+// Reactive tags list (can be extended when creating new tags inline)
+const localTags = ref<Tag[]>([...props.tags]);
+
 const tagOptions = computed(() =>
-    props.tags.map((tag) => ({ label: tag.name, value: tag.id }))
+    localTags.value.map((tag) => ({ label: tag.name, value: tag.id }))
 );
 
 const sponsorOptions = computed(() =>
     props.sponsors.map((sponsor) => ({ label: sponsor.name, value: sponsor.id }))
 );
+
+// Create a new tag inline (for multi-select tags)
+async function onCreateTag(name: string) {
+    const newTag = await createTag(name);
+    if (newTag) {
+        form.tags.push(newTag.id);
+    }
+}
+
+// Create a new featured tag inline (for single-select)
+async function onCreateFeaturedTag(name: string) {
+    const newTag = await createTag(name);
+    if (newTag) {
+        form.featured_tag_id = newTag.id;
+    }
+}
+
+// Shared function to create a tag
+async function createTag(name: string): Promise<{ id: number; name: string; slug: string } | null> {
+    try {
+        const langCode = props.language?.code || props.post.language_code || 'en';
+        const response = await axios.post('/cms/tags', {
+            name: { [langCode]: name },
+        });
+        const newTag = response.data;
+        // Add to local tags list
+        localTags.value.push({ id: newTag.id, name: newTag.name, slug: newTag.slug });
+        toast.add({
+            title: 'Tag Created',
+            description: `Tag "${name}" has been created.`,
+            color: 'success',
+        });
+        return newTag;
+    } catch (error: any) {
+        toast.add({
+            title: 'Error',
+            description: error.response?.data?.message || 'Failed to create tag',
+            color: 'error',
+        });
+        return null;
+    }
+}
 
 // Get selected category name for preview
 const selectedCategoryName = computed(() => {
@@ -2009,11 +2054,13 @@ function openDiff() {
                                             v-model="form.featured_tag_id"
                                             :items="tagOptions"
                                             value-key="value"
-                                            placeholder="Select..."
+                                            placeholder="Select or create..."
                                             searchable
+                                            :create-item="!isReadOnly"
                                             size="sm"
                                             class="w-full"
                                             :disabled="isReadOnly"
+                                            @create="onCreateFeaturedTag"
                                         />
                                     </div>
                                     <div>
@@ -2038,11 +2085,13 @@ function openDiff() {
                                             :items="tagOptions"
                                             value-key="value"
                                             multiple
-                                            placeholder="Select..."
+                                            placeholder="Select or create..."
                                             searchable
+                                            :create-item="!isReadOnly"
                                             size="sm"
                                             class="w-full"
                                             :disabled="isReadOnly"
+                                            @create="onCreateTag"
                                         />
                                     </div>
                                     <!-- Display Options -->

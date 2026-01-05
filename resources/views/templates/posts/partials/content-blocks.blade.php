@@ -8,7 +8,7 @@
     'fullWidth' => 'w-full max-w-[1146px]', // Full width for media (1146px)
 ])
 
-<div class="flex flex-col items-center gap-16">
+<div class="flex flex-col items-center gap-8">
     @foreach($blocks as $block)
         @php
             $type = $block['type'] ?? null;

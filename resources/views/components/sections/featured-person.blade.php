@@ -3,8 +3,8 @@
 @php
     // Handle both Post model and static array
     $isStatic = is_array($post);
+    $kicker = $isStatic ? ($post['kicker'] ?? '') : $post->kicker;
     $title = $isStatic ? ($post['title'] ?? '') : $post->title;
-    $subtitle = $isStatic ? ($post['subtitle'] ?? '') : $post->subtitle;
     $excerpt = $isStatic ? ($post['excerpt'] ?? $post['description'] ?? '') : $post->excerpt;
     $url = $isStatic ? ($post['url'] ?? '#') : $post->url;
     $image = $isStatic ? ($post['image'] ?? '') : $post->featured_image_url;
@@ -22,13 +22,15 @@
 <section class="w-full max-w-[1880px] mx-auto">
     <div class="{{ $bgColorClass }} pb-24 max-lg:pb-16" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
         <div class="container-main flex flex-col items-center gap-10 text-center w-full px-10 max-lg:px-5 max-lg:gap-6">
-            {{-- Title & Subtitle --}}
+            {{-- Kicker & Title --}}
             <div class="flex flex-col gap-3 max-lg:gap-2">
-                <a href="{{ $url }}" class="hover:opacity-80 transition-opacity">
-                    <h2 class="font-display text-[56px] leading-[1] tracking-[-0.04em] text-blue-black uppercase max-lg:text-[36px]">{{ $title }}</h2>
-                </a>
-                @if($subtitle)
-                    <p class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] text-blue-black max-lg:text-[24px]">{{ $subtitle }}</p>
+                @if($kicker)
+                    <a href="{{ $url }}" class="hover:opacity-80 transition-opacity">
+                        <p class="font-display text-[80px] leading-[1] tracking-[-0.04em] text-blue-black uppercase max-lg:text-[48px]">{{ $kicker }}</p>
+                    </a>
+                @endif
+                @if($title)
+                    <h2 class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] text-blue-black max-lg:text-[24px]">{{ $title }}</h2>
                 @endif
             </div>
 

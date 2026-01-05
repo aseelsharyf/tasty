@@ -84,7 +84,7 @@ class TagController extends Controller
         ]);
     }
 
-    public function store(StoreTagRequest $request): RedirectResponse
+    public function store(StoreTagRequest $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $validated = $request->validated();
 
@@ -94,10 +94,19 @@ class TagController extends Controller
             $name = array_filter($name, fn ($v) => $v !== null && $v !== '');
         }
 
-        Tag::create([
+        $tag = Tag::create([
             'name' => $name,
             'slug' => $validated['slug'] ?? null,
         ]);
+
+        // Return JSON for AJAX requests (inline tag creation from post editor)
+        if ($request->wantsJson()) {
+            return response()->json([
+                'id' => $tag->id,
+                'name' => $tag->name,
+                'slug' => $tag->slug,
+            ]);
+        }
 
         return redirect()->route('cms.tags.index')
             ->with('success', 'Tag created successfully.');

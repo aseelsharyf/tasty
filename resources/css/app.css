@@ -178,14 +178,7 @@
     font-family: var(--font-sans);
     font-size: 20px;
     line-height: 30px;
-}
-
-@media (min-width: 1024px) {
-    .text-body-lg,
-    .text-body-large {
-        font-size: 24px;
-        line-height: 36px;
-    }
+    word-spacing: 1px;
 }
 
 .text-body-md,
