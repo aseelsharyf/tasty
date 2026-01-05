@@ -21,11 +21,11 @@
     @if($mobileLayout === 'scroll')
         {{-- Scroll Layout - Horizontal scroll on both desktop and mobile --}}
         <div class="scroll-container pb-8 max-lg:pb-6 container-main">
-            <div class="flex pl-10 min-w-max max-lg:pl-5 max-lg:gap-6">
+            <div class="flex items-stretch gap-6 pl-10 min-w-max max-lg:pl-5">
                 {{-- Intro Card (Desktop only) --}}
                 @if($showIntro)
-                    <div class="flex items-start shrink-0 max-lg:hidden">
-                        <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10 pt-8">
+                    <div class="flex items-center shrink-0 max-lg:hidden">
+                        <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10">
                             @if($introImage)
                                 <div class="w-full max-w-[320px] h-[476px]">
                                     <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain" style="mix-blend-mode: darken;">
@@ -47,11 +47,11 @@
 
                 {{-- Featured Recipe Card --}}
                 @if($featuredPost)
-                    <div class="flex items-start shrink-0 pt-8 max-lg:pt-0">
-                        <div class="w-[480px] max-lg:w-[320px]">
+                    <div class="flex shrink-0">
+                        <div class="w-[320px] max-lg:w-[280px]">
                             <x-cards.recipe
                                 :post="$featuredPost"
-                                variant="featured"
+                                variant="scroll"
                             />
                         </div>
                         @if($showDividers && $posts->isNotEmpty())
@@ -62,11 +62,11 @@
 
                 {{-- Recipe Cards --}}
                 @foreach($posts as $index => $post)
-                    <div class="flex items-start shrink-0 pt-8 max-lg:pt-0 {{ $loop->last ? 'pr-10 max-lg:pr-5' : '' }}">
+                    <div class="flex shrink-0 {{ $loop->last ? 'pr-10 max-lg:pr-5' : '' }}">
                         <div class="w-[320px] max-lg:w-[280px]">
                             <x-cards.recipe
                                 :post="$post"
-                                variant="default"
+                                variant="scroll"
                             />
                         </div>
                         @if(!$loop->last && $showDividers)

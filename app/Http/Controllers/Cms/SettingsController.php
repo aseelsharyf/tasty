@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Cms;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Language;
 use App\Models\Setting;
+use App\Services\Layouts\SectionCategoryMappingService;
+use App\Services\Layouts\SectionRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -374,5 +377,69 @@ class SettingsController extends Controller
 
         return redirect()->route('cms.settings.workflows')
             ->with('success', 'Workflow deleted successfully.');
+    }
+
+    public function sectionCategories(
+        SectionRegistry $registry,
+        SectionCategoryMappingService $mappingService
+    ): Response {
+        $sections = collect($registry->all())
+            ->map(fn ($section) => [
+                'type' => $section->type(),
+                'name' => $section->name(),
+                'icon' => $section->icon(),
+                'description' => $section->description(),
+            ])
+            ->values()
+            ->toArray();
+
+        $mappings = $mappingService->getAllMappingsWithCategories();
+
+        $categories = Category::query()
+            ->whereNull('parent_id')
+            ->with('children')
+            ->orderBy('order')
+            ->get();
+
+        $flattenCategories = function ($items, $depth = 0) use (&$flattenCategories) {
+            $result = [];
+            foreach ($items as $item) {
+                $result[] = [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'slug' => $item->slug,
+                    'depth' => $depth,
+                ];
+                if ($item->children->isNotEmpty()) {
+                    $result = array_merge($result, $flattenCategories($item->children, $depth + 1));
+                }
+            }
+
+            return $result;
+        };
+
+        return Inertia::render('Settings/SectionCategories', [
+            'sections' => $sections,
+            'mappings' => $mappings,
+            'categories' => $flattenCategories($categories),
+        ]);
+    }
+
+    public function updateSectionCategories(
+        Request $request,
+        SectionCategoryMappingService $mappingService
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'mappings' => ['required', 'array'],
+            'mappings.*' => ['array'],
+            'mappings.*.*' => ['integer', 'exists:categories,id'],
+        ]);
+
+        foreach ($validated['mappings'] as $sectionType => $categoryIds) {
+            $mappingService->setAllowedCategories($sectionType, $categoryIds);
+        }
+
+        return redirect()->route('cms.settings.section-categories')
+            ->with('success', 'Section category restrictions updated successfully.');
     }
 }

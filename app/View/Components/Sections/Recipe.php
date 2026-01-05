@@ -7,6 +7,7 @@ use App\Actions\Posts\GetPostsByTag;
 use App\Actions\Posts\GetRecentPosts;
 use App\Actions\Posts\GetTrendingPosts;
 use App\Models\Post;
+use App\View\Components\Sections\Concerns\HasSectionCategoryRestrictions;
 use App\View\Concerns\ResolvesColors;
 use Closure;
 use Illuminate\Contracts\View\View;
@@ -15,7 +16,13 @@ use Illuminate\View\Component;
 
 class Recipe extends Component
 {
+    use HasSectionCategoryRestrictions;
     use ResolvesColors;
+
+    protected function sectionType(): string
+    {
+        return 'recipe';
+    }
 
     public bool $showIntro;
 
@@ -200,13 +207,14 @@ class Recipe extends Component
         string $action,
         array $params,
     ): Collection {
-        // Fetch manual posts
+        // Fetch manual posts and filter by allowed categories
         $manualPosts = collect();
         if (count($manualPostIds) > 0) {
             $manualPosts = Post::with(['author', 'categories', 'tags'])
                 ->whereIn('id', array_values($manualPostIds))
-                ->get()
-                ->keyBy('id');
+                ->get();
+
+            $manualPosts = $this->filterAllowedPosts($manualPosts)->keyBy('id');
         }
 
         // Fetch dynamic posts if needed
@@ -222,6 +230,7 @@ class Recipe extends Component
                 'page' => 1,
                 'perPage' => $dynamicCount,
                 'excludeIds' => $excludeIds,
+                'sectionType' => $this->sectionType(),
                 ...$params,
             ]);
 
@@ -234,8 +243,11 @@ class Recipe extends Component
 
         for ($i = 0; $i < $totalSlots; $i++) {
             if (isset($manualPostIds[$i])) {
-                // Manual post for this slot
-                $slots[$i] = $manualPosts->get($manualPostIds[$i]);
+                // Manual post for this slot (only if allowed)
+                $post = $manualPosts->get($manualPostIds[$i]);
+                if ($post) {
+                    $slots[$i] = $post;
+                }
             } elseif (isset($staticContent[$i])) {
                 // Static content for this slot
                 $slots[$i] = $staticContent[$i];
@@ -266,6 +278,7 @@ class Recipe extends Component
         $result = $actionInstance->execute([
             'page' => 1,
             'perPage' => $fetchCount,
+            'sectionType' => $this->sectionType(),
             ...$params,
         ]);
 

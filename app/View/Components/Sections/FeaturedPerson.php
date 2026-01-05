@@ -7,6 +7,7 @@ use App\Actions\Posts\GetPostsByTag;
 use App\Actions\Posts\GetRecentPosts;
 use App\Actions\Posts\GetTrendingPosts;
 use App\Models\Post;
+use App\View\Components\Sections\Concerns\HasSectionCategoryRestrictions;
 use App\View\Concerns\ResolvesColors;
 use Closure;
 use Illuminate\Contracts\View\View;
@@ -14,7 +15,13 @@ use Illuminate\View\Component;
 
 class FeaturedPerson extends Component
 {
+    use HasSectionCategoryRestrictions;
     use ResolvesColors;
+
+    protected function sectionType(): string
+    {
+        return 'featured-person';
+    }
 
     /** @var Post|array<string, mixed>|null */
     public Post|array|null $post;
@@ -135,6 +142,7 @@ class FeaturedPerson extends Component
         $result = $actionInstance->execute([
             'page' => 1,
             'perPage' => 1,
+            'sectionType' => $this->sectionType(),
             ...$params,
         ]);
 

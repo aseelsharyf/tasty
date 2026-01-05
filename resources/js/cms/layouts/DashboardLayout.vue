@@ -429,6 +429,11 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
                     to: '/cms/settings/media',
                     icon: 'i-lucide-crop',
                 },
+                {
+                    label: 'Section Categories',
+                    to: '/cms/settings/section-categories',
+                    icon: 'i-lucide-layout-grid',
+                },
             ],
         });
     }

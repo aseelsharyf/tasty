@@ -36,6 +36,7 @@ const expandedSlots = ref<Record<string, number | null>>({});
 const showPostPicker = ref(false);
 const editingSlotIndex = ref<number | null>(null);
 const editingSectionId = ref<string | null>(null);
+const editingSectionType = ref<string | null>(null);
 const postCache = ref<Record<number, PostSearchResult>>({});
 
 // Media picker state
@@ -335,9 +336,10 @@ function cycleSlotMode(section: HomepageSection, slotIndex: number) {
     });
 }
 
-function openPostPicker(sectionId: string, slotIndex: number) {
+function openPostPicker(sectionId: string, slotIndex: number, sectionType: string) {
     editingSectionId.value = sectionId;
     editingSlotIndex.value = slotIndex;
+    editingSectionType.value = sectionType;
     showPostPicker.value = true;
 }
 
@@ -353,6 +355,7 @@ function selectPost(post: PostSearchResult) {
     showPostPicker.value = false;
     editingSectionId.value = null;
     editingSlotIndex.value = null;
+    editingSectionType.value = null;
 }
 
 function clearSlotPost(section: HomepageSection, slotIndex: number) {
@@ -505,7 +508,7 @@ function handlePreviewSlotClick(section: HomepageSection, slotIndex: number) {
         if (slot.mode === 'dynamic') {
             updateSlot(section, slotIndex, { mode: 'manual', postId: null });
         }
-        openPostPicker(section.id, slotIndex);
+        openPostPicker(section.id, slotIndex, section.type);
     } else if (slot.mode === 'static') {
         // For static, expand the slot in the accordion
         setActiveTab(section.id, 'slots');
@@ -764,7 +767,7 @@ function handlePreviewSlotClick(section: HomepageSection, slotIndex: number) {
                                                                 <button
                                                                     type="button"
                                                                     class="flex-1 p-3 border-2 border-dashed border-default rounded-lg text-muted hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
-                                                                    @click="openPostPicker(section.id, slotIndex)"
+                                                                    @click="openPostPicker(section.id, slotIndex, section.type)"
                                                                 >
                                                                     <UIcon name="i-lucide-plus" class="size-4" />
                                                                     <span class="text-sm">Select Post</span>
@@ -796,7 +799,7 @@ function handlePreviewSlotClick(section: HomepageSection, slotIndex: number) {
                                                                         color="neutral"
                                                                         variant="ghost"
                                                                         size="xs"
-                                                                        @click="openPostPicker(section.id, slotIndex)"
+                                                                        @click="openPostPicker(section.id, slotIndex, section.type)"
                                                                     />
                                                                     <UButton
                                                                         icon="i-lucide-x"
@@ -1039,6 +1042,7 @@ function handlePreviewSlotClick(section: HomepageSection, slotIndex: number) {
         <PostPickerModal
             v-model:open="showPostPicker"
             :excluded-post-ids="excludedPostIds"
+            :section-type="editingSectionType ?? undefined"
             @select="selectPost"
         />
 

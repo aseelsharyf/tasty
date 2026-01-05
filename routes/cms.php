@@ -124,6 +124,10 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::post('settings/workflows', [SettingsController::class, 'storeWorkflow'])->name('cms.settings.workflows.store');
         Route::put('settings/workflows/{key}', [SettingsController::class, 'updateWorkflow'])->name('cms.settings.workflows.update');
         Route::delete('settings/workflows/{key}', [SettingsController::class, 'destroyWorkflow'])->name('cms.settings.workflows.destroy');
+
+        // Section Categories
+        Route::get('settings/section-categories', [SettingsController::class, 'sectionCategories'])->name('cms.settings.section-categories');
+        Route::put('settings/section-categories', [SettingsController::class, 'updateSectionCategories'])->name('cms.settings.section-categories.update');
     });
 
     // Languages API (for fetching available languages)

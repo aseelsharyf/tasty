@@ -8,6 +8,7 @@ use App\Actions\Posts\GetRecentPosts;
 use App\Actions\Posts\GetTrendingPosts;
 use App\Models\Post;
 use App\Models\Tag;
+use App\View\Components\Sections\Concerns\HasSectionCategoryRestrictions;
 use App\View\Concerns\ResolvesColors;
 use Closure;
 use Illuminate\Contracts\View\View;
@@ -16,7 +17,13 @@ use Illuminate\View\Component;
 
 class Spread extends Component
 {
+    use HasSectionCategoryRestrictions;
     use ResolvesColors;
+
+    protected function sectionType(): string
+    {
+        return 'spread';
+    }
 
     public bool $showIntro;
 
@@ -178,13 +185,14 @@ class Spread extends Component
         string $action,
         array $params,
     ): Collection {
-        // Fetch manual posts
+        // Fetch manual posts and filter by allowed categories
         $manualPosts = collect();
         if (count($manualPostIds) > 0) {
             $manualPosts = Post::with(['author', 'categories', 'tags'])
                 ->whereIn('id', array_values($manualPostIds))
-                ->get()
-                ->keyBy('id');
+                ->get();
+
+            $manualPosts = $this->filterAllowedPosts($manualPosts)->keyBy('id');
         }
 
         // Fetch dynamic posts if needed
@@ -200,6 +208,7 @@ class Spread extends Component
                 'page' => 1,
                 'perPage' => $dynamicCount,
                 'excludeIds' => $excludeIds,
+                'sectionType' => $this->sectionType(),
                 ...$params,
             ]);
 
@@ -212,8 +221,11 @@ class Spread extends Component
 
         for ($i = 0; $i < $totalSlots; $i++) {
             if (isset($manualPostIds[$i])) {
-                // Manual post for this slot
-                $slots[$i] = $manualPosts->get($manualPostIds[$i]);
+                // Manual post for this slot (only if allowed)
+                $post = $manualPosts->get($manualPostIds[$i]);
+                if ($post) {
+                    $slots[$i] = $post;
+                }
             } elseif (isset($staticContent[$i])) {
                 // Static content for this slot
                 $slots[$i] = $staticContent[$i];
@@ -241,6 +253,7 @@ class Spread extends Component
         $result = $actionInstance->execute([
             'page' => 1,
             'perPage' => $count,
+            'sectionType' => $this->sectionType(),
             ...$params,
         ]);
 

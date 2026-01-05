@@ -21,7 +21,7 @@ class SectionRegistry
      */
     protected array $sections = [];
 
-    public function __construct()
+    public function __construct(protected SectionCategoryMappingService $mappingService)
     {
         $this->registerDefaults();
     }
@@ -85,12 +85,41 @@ class SectionRegistry
     public function toArray(): array
     {
         $result = [];
+        $mappings = $this->mappingService->getAllMappingsWithCategories();
 
         foreach ($this->sections as $type => $section) {
-            $result[$type] = $section->toArray();
+            $sectionArray = $section->toArray();
+            $sectionArray['allowedCategories'] = $mappings[$type] ?? null;
+            $result[$type] = $sectionArray;
         }
 
         return $result;
+    }
+
+    /**
+     * Get allowed category IDs for a section type.
+     *
+     * @return array<int>|null
+     */
+    public function getAllowedCategoryIds(string $type): ?array
+    {
+        return $this->mappingService->getAllowedCategoryIds($type);
+    }
+
+    /**
+     * Check if a category is allowed for a section type.
+     */
+    public function isCategoryAllowed(string $type, int $categoryId): bool
+    {
+        return $this->mappingService->isCategoryAllowed($type, $categoryId);
+    }
+
+    /**
+     * Get the mapping service.
+     */
+    public function getMappingService(): SectionCategoryMappingService
+    {
+        return $this->mappingService;
     }
 
     /**

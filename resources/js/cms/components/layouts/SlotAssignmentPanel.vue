@@ -186,6 +186,7 @@ function getSlotLabel(index: number): string {
         <!-- Post Picker Modal -->
         <PostPickerModal
             v-model:open="showPostPicker"
+            :section-type="sectionType"
             @select="selectPost"
         />
     </div>

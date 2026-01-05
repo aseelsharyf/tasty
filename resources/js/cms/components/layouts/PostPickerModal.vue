@@ -6,6 +6,7 @@ import type { PostSearchResult } from '../../types';
 const props = defineProps<{
     open: boolean;
     excludedPostIds?: number[];
+    sectionType?: string;
 }>();
 
 const emit = defineEmits<{
@@ -55,6 +56,9 @@ async function searchPosts() {
             params.set('query', searchQuery.value);
         }
         params.set('limit', '20');
+        if (props.sectionType) {
+            params.set('sectionType', props.sectionType);
+        }
 
         const response = await fetch(`/cms/layouts/homepage/search-posts?${params.toString()}`);
 

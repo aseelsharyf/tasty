@@ -2,11 +2,14 @@
 
 namespace App\Actions\Posts;
 
+use App\Actions\Posts\Concerns\FiltersBySectionCategories;
 use App\Models\Post;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class GetPostsByTag extends BasePostsAction
 {
+    use FiltersBySectionCategories;
+
     /**
      * Get posts by tag slug(s).
      *
@@ -17,6 +20,7 @@ class GetPostsByTag extends BasePostsAction
         $page = $params['page'] ?? 1;
         $perPage = $params['perPage'] ?? $this->perPage;
         $excludeIds = $params['excludeIds'] ?? [];
+        $sectionType = $params['sectionType'] ?? null;
 
         // Support both single tag and multiple tags
         $tagSlugs = $params['tags'] ?? [];
@@ -24,7 +28,7 @@ class GetPostsByTag extends BasePostsAction
             $tagSlugs = [$params['tag']];
         }
 
-        return Post::query()
+        $query = Post::query()
             ->published()
             ->with(['author', 'categories', 'tags'])
             ->when(count($tagSlugs) > 0, fn ($q) => $q->whereHas(
@@ -32,7 +36,10 @@ class GetPostsByTag extends BasePostsAction
                 fn ($q) => $q->whereIn('slug', $tagSlugs)
             ))
             ->when(count($excludeIds) > 0, fn ($q) => $q->whereNotIn('id', $excludeIds))
-            ->orderByDesc('published_at')
-            ->paginate($perPage, ['*'], 'page', $page);
+            ->orderByDesc('published_at');
+
+        $query = $this->applySectionCategoryFilter($query, $sectionType);
+
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 }

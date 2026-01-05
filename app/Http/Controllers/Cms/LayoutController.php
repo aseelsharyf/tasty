@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Post;
 use App\Models\Tag;
 use App\Services\Layouts\HomepageConfigurationService;
+use App\Services\Layouts\SectionCategoryMappingService;
 use App\Services\Layouts\SectionRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -19,7 +20,8 @@ class LayoutController extends Controller
 {
     public function __construct(
         protected SectionRegistry $registry,
-        protected HomepageConfigurationService $configService
+        protected HomepageConfigurationService $configService,
+        protected SectionCategoryMappingService $mappingService
     ) {}
 
     /**
@@ -61,6 +63,7 @@ class LayoutController extends Controller
             'query' => ['nullable', 'string', 'max:255'],
             'type' => ['nullable', 'string', 'max:50'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
+            'sectionType' => ['nullable', 'string', 'max:50'],
         ]);
 
         $query = Post::query()
@@ -81,6 +84,15 @@ class LayoutController extends Controller
             $query->where('post_type', $validated['type']);
         }
 
+        // Apply section category restrictions
+        if (! empty($validated['sectionType'])) {
+            $allowedCategoryIds = $this->mappingService->getAllowedCategoryIds($validated['sectionType']);
+
+            if ($allowedCategoryIds !== null) {
+                $query->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $allowedCategoryIds));
+            }
+        }
+
         $posts = $query->limit($validated['limit'] ?? 20)->get();
 
         return response()->json([
@@ -91,6 +103,7 @@ class LayoutController extends Controller
                 'excerpt' => $post->excerpt,
                 'image' => $post->featured_image_thumb,
                 'category' => $post->categories->first()?->name,
+                'categoryIds' => $post->categories->pluck('id')->toArray(),
                 'postType' => $post->post_type,
                 'publishedAt' => $post->published_at?->format('M j, Y'),
             ]),
