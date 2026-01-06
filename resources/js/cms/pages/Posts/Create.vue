@@ -225,73 +225,107 @@ function toggleFullscreen() {
     }
 }
 
-// Auto-save functionality
-const autoSaveTimer = ref<ReturnType<typeof setTimeout> | null>(null);
+// Save state
 const lastSaved = ref<Date | null>(null);
 const isSaving = ref(false);
 const postUuid = ref<string | null>(null); // Will be set after first save
+const hasUnsavedChanges = ref(false);
 
-function autoSave() {
-    // Only auto-save if there's a title (minimum requirement)
+// Idle auto-save (5 minutes of inactivity)
+const IDLE_SAVE_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
+const idleTimer = ref<ReturnType<typeof setTimeout> | null>(null);
+
+// Perform save operation
+function performSave() {
+    // Only save if there's a title (minimum requirement)
     if (!form.title.trim()) return;
+    if (form.processing || isSaving.value) return;
 
-    // Clear existing timer
-    if (autoSaveTimer.value) {
-        clearTimeout(autoSaveTimer.value);
+    isSaving.value = true;
+
+    // If we already have a UUID, update the existing draft
+    if (postUuid.value) {
+        form.post(`/cms/posts/${props.language.code}/${postUuid.value}`, {
+            forceFormData: true,
+            headers: { 'X-HTTP-Method-Override': 'PUT' },
+            preserveScroll: true,
+            onSuccess: () => {
+                lastSaved.value = new Date();
+                hasUnsavedChanges.value = false;
+                isSaving.value = false;
+            },
+            onError: () => {
+                isSaving.value = false;
+            },
+        });
+    } else {
+        // First save - create as draft
+        form.transform((data) => ({
+            ...data,
+            status: 'draft',
+        })).post(`/cms/posts/${props.language.code}`, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: (page: any) => {
+                // Extract UUID from redirect URL or response
+                const match = page.url?.match(/\/cms\/posts\/[^/]+\/([^/]+)\/edit/);
+                if (match) {
+                    postUuid.value = match[1];
+                    // Update URL without full navigation
+                    window.history.replaceState({}, '', `/cms/posts/${props.language.code}/${match[1]}/edit`);
+                }
+                lastSaved.value = new Date();
+                hasUnsavedChanges.value = false;
+                isSaving.value = false;
+            },
+            onError: () => {
+                isSaving.value = false;
+            },
+        });
     }
-
-    // Set new timer for 3 seconds after last change
-    autoSaveTimer.value = setTimeout(async () => {
-        if (form.processing || isSaving.value) return;
-
-        isSaving.value = true;
-
-        // If we already have a UUID, update the existing draft
-        if (postUuid.value) {
-            form.post(`/cms/posts/${props.language.code}/${postUuid.value}`, {
-                forceFormData: true,
-                headers: { 'X-HTTP-Method-Override': 'PUT' },
-                preserveScroll: true,
-                onSuccess: () => {
-                    lastSaved.value = new Date();
-                    isSaving.value = false;
-                },
-                onError: () => {
-                    isSaving.value = false;
-                },
-            });
-        } else {
-            // First save - create as draft
-            form.transform((data) => ({
-                ...data,
-                status: 'draft',
-            })).post(`/cms/posts/${props.language.code}`, {
-                forceFormData: true,
-                preserveScroll: true,
-                onSuccess: (page: any) => {
-                    // Extract UUID from redirect URL or response
-                    const match = page.url?.match(/\/cms\/posts\/[^/]+\/([^/]+)\/edit/);
-                    if (match) {
-                        postUuid.value = match[1];
-                        // Update URL without full navigation
-                        window.history.replaceState({}, '', `/cms/posts/${props.language.code}/${match[1]}/edit`);
-                    }
-                    lastSaved.value = new Date();
-                    isSaving.value = false;
-                },
-                onError: () => {
-                    isSaving.value = false;
-                },
-            });
-        }
-    }, 3000);
 }
 
-// Watch for changes to trigger auto-save
+// Reset idle timer on user activity
+function resetIdleTimer() {
+    if (idleTimer.value) {
+        clearTimeout(idleTimer.value);
+    }
+
+    // Only set timer if there are unsaved changes
+    if (hasUnsavedChanges.value) {
+        idleTimer.value = setTimeout(() => {
+            if (hasUnsavedChanges.value && form.title.trim()) {
+                performSave();
+            }
+        }, IDLE_SAVE_TIMEOUT);
+    }
+}
+
+// Track user activity events
+function setupIdleDetection() {
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => {
+        document.addEventListener(event, resetIdleTimer, { passive: true });
+    });
+}
+
+function cleanupIdleDetection() {
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => {
+        document.removeEventListener(event, resetIdleTimer);
+    });
+    if (idleTimer.value) {
+        clearTimeout(idleTimer.value);
+        idleTimer.value = null;
+    }
+}
+
+// Watch for changes to mark as dirty and reset idle timer
 watch(
     () => [form.title, form.subtitle, form.excerpt, form.content],
     () => {
-        autoSave();
+        hasUnsavedChanges.value = true;
+        resetIdleTimer();
     },
     { deep: true }
 );
@@ -306,13 +340,14 @@ function handleKeydown(e: KeyboardEvent) {
 
 onMounted(() => {
     document.addEventListener('keydown', handleKeydown);
+    // Setup idle detection for auto-save after 5 minutes of inactivity
+    setupIdleDetection();
 });
 
 onBeforeUnmount(() => {
     document.removeEventListener('keydown', handleKeydown);
-    if (autoSaveTimer.value) {
-        clearTimeout(autoSaveTimer.value);
-    }
+    // Cleanup idle detection
+    cleanupIdleDetection();
     // Restore sidebar when leaving the page
     showSidebar();
 });
@@ -545,10 +580,14 @@ function goBack() {
 
                     <template #right>
                         <div class="flex items-center gap-2">
-                            <!-- Auto-save status -->
+                            <!-- Save status -->
                             <span v-if="isSaving" class="text-xs text-muted flex items-center gap-1">
                                 <UIcon name="i-lucide-loader-2" class="size-3 animate-spin" />
                                 Saving...
+                            </span>
+                            <span v-else-if="hasUnsavedChanges" class="text-xs text-warning flex items-center gap-1.5 hidden sm:flex">
+                                <span class="size-1.5 rounded-full bg-warning"></span>
+                                Unsaved changes
                             </span>
                             <span v-else-if="lastSavedText" class="text-xs text-muted">
                                 {{ lastSavedText }}

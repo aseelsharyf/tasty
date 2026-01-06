@@ -635,6 +635,48 @@ const isSaving = ref(false);
 const hasUnsavedChanges = ref(false);
 const initialLoadComplete = ref(false);
 
+// Idle auto-save (5 minutes of inactivity)
+const IDLE_SAVE_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
+const idleTimer = ref<ReturnType<typeof setTimeout> | null>(null);
+const lastActivity = ref<Date>(new Date());
+
+// Reset idle timer on user activity
+function resetIdleTimer() {
+    lastActivity.value = new Date();
+
+    if (idleTimer.value) {
+        clearTimeout(idleTimer.value);
+    }
+
+    // Only set timer if there might be unsaved changes
+    if (hasUnsavedChanges.value && lockStatus.value.isMine && !isReadOnly.value) {
+        idleTimer.value = setTimeout(() => {
+            if (hasUnsavedChanges.value && form.title.trim()) {
+                manualSave();
+            }
+        }, IDLE_SAVE_TIMEOUT);
+    }
+}
+
+// Track user activity events
+function setupIdleDetection() {
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => {
+        document.addEventListener(event, resetIdleTimer, { passive: true });
+    });
+}
+
+function cleanupIdleDetection() {
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => {
+        document.removeEventListener(event, resetIdleTimer);
+    });
+    if (idleTimer.value) {
+        clearTimeout(idleTimer.value);
+        idleTimer.value = null;
+    }
+}
+
 // Mark initial load complete after first render
 onMounted(() => {
     nextTick(() => {
@@ -648,6 +690,8 @@ watch(
     () => {
         if (initialLoadComplete.value) {
             hasUnsavedChanges.value = true;
+            // Reset idle timer when content changes
+            resetIdleTimer();
         }
     },
     { deep: true }
@@ -718,6 +762,8 @@ onMounted(() => {
     if (lockStatus.value.isMine) {
         startHeartbeat();
     }
+    // Setup idle detection for auto-save after 5 minutes of inactivity
+    setupIdleDetection();
 });
 
 onBeforeUnmount(() => {
@@ -725,6 +771,8 @@ onBeforeUnmount(() => {
     // Stop heartbeat and release lock
     stopHeartbeat();
     releaseLock();
+    // Cleanup idle detection
+    cleanupIdleDetection();
     // Restore sidebar when leaving the page
     showSidebar();
 });
