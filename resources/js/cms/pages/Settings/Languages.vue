@@ -76,7 +76,7 @@ function openEditModal(language: Language) {
 function updateLanguage() {
     if (!languageToEdit.value) return;
 
-    editLanguageForm.put(`/cms/settings/languages/${languageToEdit.value.id}`, {
+    editLanguageForm.put(`/cms/settings/languages/${languageToEdit.value.code}`, {
         onSuccess: () => {
             editLanguageModal.value = false;
             languageToEdit.value = null;
@@ -92,7 +92,7 @@ function openDeleteModal(language: Language) {
 function deleteLanguage() {
     if (!languageToDelete.value) return;
 
-    router.delete(`/cms/settings/languages/${languageToDelete.value.id}`, {
+    router.delete(`/cms/settings/languages/${languageToDelete.value.code}`, {
         onSuccess: () => {
             deleteLanguageModal.value = false;
             languageToDelete.value = null;
@@ -101,14 +101,14 @@ function deleteLanguage() {
 }
 
 function setAsDefault(language: Language) {
-    router.put(`/cms/settings/languages/${language.id}`, {
+    router.put(`/cms/settings/languages/${language.code}`, {
         ...language,
         is_default: true,
     });
 }
 
 function toggleActive(language: Language) {
-    router.put(`/cms/settings/languages/${language.id}`, {
+    router.put(`/cms/settings/languages/${language.code}`, {
         ...language,
         is_active: !language.is_active,
     });
