@@ -27,10 +27,10 @@
         {{-- Grid Layout for Mobile, Scroll for Desktop --}}
         {{-- Desktop: Horizontal Scroll --}}
         <div class="scroll-container pb-8 container-main max-lg:hidden" x-ref="scrollContainer">
-            <div class="flex items-center pl-10 min-w-max">
+            <div class="flex items-start pl-10 min-w-max">
                 {{-- Intro Card (Desktop only) --}}
                 @if($showIntro)
-                    <div class="flex items-center shrink-0" x-ref="introCard">
+                    <div class="flex items-start shrink-0 self-center" x-ref="introCard">
                         <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10">
                             @if($introImage)
                                 <div class="w-full max-w-[320px] h-[429.5px]">
@@ -53,7 +53,7 @@
 
                 {{-- Cards with dividers --}}
                 @foreach($posts as $index => $post)
-                    <div class="flex items-center shrink-0 {{ $loop->last ? 'pr-10' : '' }}">
+                    <div class="flex items-start shrink-0 {{ $loop->last ? 'pr-10' : '' }}">
                         <x-cards.spread
                             :post="$post"
                             :reversed="$loop->even"
@@ -81,10 +81,10 @@
     @else
         {{-- Scroll Layout (Default) --}}
         <div class="scroll-container pb-8 max-lg:pb-6 container-main" x-ref="scrollContainer">
-            <div class="flex items-center pl-10 min-w-max max-lg:pl-5 max-lg:gap-8">
+            <div class="flex items-start pl-10 min-w-max max-lg:pl-5 max-lg:gap-8">
                 {{-- Intro Card (Desktop only) --}}
                 @if($showIntro)
-                    <div class="flex items-center shrink-0 max-lg:hidden" x-ref="introCard">
+                    <div class="flex items-start shrink-0 max-lg:hidden self-center" x-ref="introCard">
                         <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10">
                             @if($introImage)
                                 <div class="w-full max-w-[320px] h-[429.5px]">
@@ -107,7 +107,7 @@
 
                 {{-- Cards with dividers --}}
                 @foreach($posts as $index => $post)
-                    <div class="flex items-center shrink-0 {{ $loop->last ? 'pr-10 max-lg:pr-5' : '' }}">
+                    <div class="flex items-start shrink-0 {{ $loop->last ? 'pr-10 max-lg:pr-5' : '' }}">
                         <x-cards.spread
                             :post="$post"
                             :reversed="$loop->even"
