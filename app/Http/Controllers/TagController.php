@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Tag;
 use App\Services\Layouts\SectionDataResolver;
+use App\Services\SeoService;
 use Illuminate\Contracts\View\View;
 
 class TagController extends Controller
 {
     public function __construct(
-        protected SectionDataResolver $dataResolver
+        protected SectionDataResolver $dataResolver,
+        protected SeoService $seoService,
     ) {}
 
     /**
@@ -17,6 +19,9 @@ class TagController extends Controller
      */
     public function show(Tag $tag): View
     {
+        // Set SEO
+        $this->seoService->setTag($tag);
+
         // Check for custom layout
         $tag->load('pageLayout');
 

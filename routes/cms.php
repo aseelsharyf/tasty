@@ -19,6 +19,7 @@ use App\Http\Controllers\Cms\PostEditLockController;
 use App\Http\Controllers\Cms\PostPreviewController;
 use App\Http\Controllers\Cms\ProfileController;
 use App\Http\Controllers\Cms\RoleController;
+use App\Http\Controllers\Cms\SeoSettingController;
 use App\Http\Controllers\Cms\SettingsController;
 use App\Http\Controllers\Cms\SponsorController;
 use App\Http\Controllers\Cms\SubscriberController;
@@ -128,6 +129,12 @@ Route::middleware(['auth', 'cms'])->group(function () {
         // Section Categories
         Route::get('settings/section-categories', [SettingsController::class, 'sectionCategories'])->name('cms.settings.section-categories');
         Route::put('settings/section-categories', [SettingsController::class, 'updateSectionCategories'])->name('cms.settings.section-categories.update');
+
+        // SEO Settings (Page-level SEO)
+        Route::get('seo-settings', [SeoSettingController::class, 'index'])->name('cms.seo-settings.index');
+        Route::post('seo-settings', [SeoSettingController::class, 'store'])->name('cms.seo-settings.store');
+        Route::put('seo-settings/{seoSetting}', [SeoSettingController::class, 'update'])->name('cms.seo-settings.update');
+        Route::delete('seo-settings/{seoSetting}', [SeoSettingController::class, 'destroy'])->name('cms.seo-settings.destroy');
     });
 
     // Languages API (for fetching available languages)

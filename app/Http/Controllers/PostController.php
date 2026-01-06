@@ -4,11 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Post;
+use App\Services\SeoService;
 use Illuminate\Contracts\View\View;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PostController extends Controller
 {
+    public function __construct(
+        protected SeoService $seoService,
+    ) {}
+
     /**
      * Display a single post.
      */
@@ -26,6 +31,9 @@ class PostController extends Controller
         if (! $post) {
             throw new NotFoundHttpException("Post not found: {$postSlug}");
         }
+
+        // Set SEO
+        $this->seoService->setPost($post);
 
         // Get related posts from the same category
         $relatedPosts = Post::published()

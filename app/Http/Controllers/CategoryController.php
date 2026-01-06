@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Services\Layouts\SectionDataResolver;
+use App\Services\SeoService;
 use Illuminate\Contracts\View\View;
 
 class CategoryController extends Controller
 {
     public function __construct(
-        protected SectionDataResolver $dataResolver
+        protected SectionDataResolver $dataResolver,
+        protected SeoService $seoService,
     ) {}
 
     /**
@@ -17,6 +19,9 @@ class CategoryController extends Controller
      */
     public function show(Category $category): View
     {
+        // Set SEO
+        $this->seoService->setCategory($category);
+
         // Check for custom layout
         $category->load('pageLayout');
 

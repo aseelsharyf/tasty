@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\Layouts\HomepageConfigurationService;
 use App\Services\Layouts\SectionDataResolver;
+use App\Services\SeoService;
 use Illuminate\Contracts\View\View;
 
 class HomeController extends Controller
@@ -11,6 +12,7 @@ class HomeController extends Controller
     public function __construct(
         protected HomepageConfigurationService $configService,
         protected SectionDataResolver $dataResolver,
+        protected SeoService $seoService,
     ) {}
 
     /**
@@ -18,6 +20,9 @@ class HomeController extends Controller
      */
     public function __invoke(): View
     {
+        // Set SEO
+        $this->seoService->setHomepage();
+
         $configuration = $this->configService->getConfiguration();
 
         // Get enabled sections sorted by order
