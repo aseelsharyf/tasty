@@ -61,6 +61,7 @@ class MediaItem extends Model implements HasMedia
 
     protected $appends = [
         'url',
+        'original_url',
         'thumbnail_url',
         'is_image',
         'is_video',
@@ -72,12 +73,55 @@ class MediaItem extends Model implements HasMedia
      */
     public function registerMediaConversions(?Media $media = null): void
     {
+        // Optimized WebP version - main display image
+        // This creates an optimized WebP version for web display
+        $this->addMediaConversion('optimized')
+            ->format('webp')
+            ->quality(85)
+            ->optimize()
+            ->performOnCollections('default')
+            ->nonQueued(); // Generate immediately so it's available right away
+
+        // Thumbnail in WebP format
+        $this->addMediaConversion('thumb')
+            ->width(400)
+            ->height(300)
+            ->format('webp')
+            ->quality(80)
+            ->optimize()
+            ->performOnCollections('default')
+            ->nonQueued();
+
+        // Large optimized version for full-screen/hero images
+        $this->addMediaConversion('large')
+            ->width(1920)
+            ->height(1080)
+            ->format('webp')
+            ->quality(85)
+            ->optimize()
+            ->fit('max', 1920, 1080) // Maintain aspect ratio, max dimensions
+            ->performOnCollections('default');
+
+        // Medium size for article content
+        $this->addMediaConversion('medium')
+            ->width(800)
+            ->height(600)
+            ->format('webp')
+            ->quality(85)
+            ->optimize()
+            ->fit('max', 800, 600)
+            ->performOnCollections('default');
+
+        // Register crop preset conversions
         $presets = Setting::get('media.crop_presets', self::getDefaultCropPresets());
 
         foreach ($presets as $preset) {
             $this->addMediaConversion($preset['name'])
                 ->width($preset['width'])
                 ->height($preset['height'])
+                ->format('webp')
+                ->quality(85)
+                ->optimize()
                 ->performOnCollections('default');
         }
     }
@@ -88,7 +132,17 @@ class MediaItem extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('default')
-            ->singleFile();
+            ->singleFile()
+            ->acceptsMimeTypes([
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+                'image/webp',
+                'image/svg+xml',
+                'video/mp4',
+                'video/quicktime',
+                'video/webm',
+            ]);
     }
 
     // =========================================================================
@@ -181,8 +235,30 @@ class MediaItem extends Model implements HasMedia
 
     /**
      * Get the main URL of the media item.
+     * Returns the optimized WebP version if available, otherwise the original.
      */
     public function getUrlAttribute(): ?string
+    {
+        if ($this->type === self::TYPE_VIDEO_EMBED) {
+            return $this->embed_thumbnail_url;
+        }
+
+        // Prefer the optimized WebP version for images
+        if ($this->is_image) {
+            $optimizedUrl = $this->getFirstMediaUrl('default', 'optimized');
+            if ($optimizedUrl) {
+                return $optimizedUrl;
+            }
+        }
+
+        return $this->getFirstMediaUrl('default');
+    }
+
+    /**
+     * Get the original (non-optimized) URL.
+     * Useful when you need the original file (e.g., for downloads).
+     */
+    public function getOriginalUrlAttribute(): ?string
     {
         if ($this->type === self::TYPE_VIDEO_EMBED) {
             return $this->embed_thumbnail_url;
@@ -193,6 +269,7 @@ class MediaItem extends Model implements HasMedia
 
     /**
      * Get the thumbnail URL.
+     * Returns the WebP thumb version if available.
      */
     public function getThumbnailUrlAttribute(): ?string
     {
@@ -200,7 +277,16 @@ class MediaItem extends Model implements HasMedia
             return $this->embed_thumbnail_url;
         }
 
-        return $this->getFirstMediaUrl('default', 'thumbnail') ?: $this->getFirstMediaUrl('default');
+        // Try thumb conversion first, then fall back to original
+        return $this->getFirstMediaUrl('default', 'thumb') ?: $this->getFirstMediaUrl('default');
+    }
+
+    /**
+     * Get a specific conversion URL.
+     */
+    public function getConversionUrl(string $conversion): ?string
+    {
+        return $this->getFirstMediaUrl('default', $conversion) ?: $this->getFirstMediaUrl('default');
     }
 
     /**
