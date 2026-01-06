@@ -35,11 +35,13 @@
 <article class="{{ $wrapperClass }}">
     {{-- Image with tag --}}
     <a href="{{ $url }}" class="{{ $imageWrapperClass }}">
-        <img
-            src="{{ $image }}"
-            alt="{{ $imageAlt }}"
-            class="absolute inset-0 w-full h-full object-cover rounded-t-[4px]"
-        >
+        <x-ui.image
+            :src="$image"
+            :alt="$imageAlt"
+            :blurhash="$blurhash"
+            class="absolute inset-0 w-full h-full rounded-t-[4px]"
+            img-class="object-cover"
+        />
         @if(count($tags) > 0)
             <div class="relative z-10">
                 <span class="tag">{{ implode(' • ', $tags) }}</span>

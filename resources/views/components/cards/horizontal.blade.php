@@ -2,11 +2,13 @@
     <div class="w-[200px] h-[200px] flex-shrink-0 relative
         max-xl:w-full max-xl:h-auto max-xl:aspect-[4/5] max-xl:p-4">
         <a href="{{ $url }}" class="block w-full h-full max-xl:absolute max-xl:inset-0">
-            <img
-                src="{{ $image }}"
-                alt="{{ $imageAlt }}"
-                class="w-full h-full object-cover object-center rounded"
-            >
+            <x-ui.image
+                :src="$image"
+                :alt="$imageAlt"
+                :blurhash="$blurhash"
+                class="w-full h-full rounded"
+                img-class="object-cover object-center"
+            />
         </a>
         @if($category || $tag)
             <div class="hidden max-xl:flex max-xl:justify-center relative z-10">

@@ -3,11 +3,13 @@
     {{-- Image --}}
     <div class="relative aspect-[3/4] rounded-xl overflow-hidden">
         <a href="{{ $url }}" class="absolute inset-0 z-0 group">
-            <img
-                src="{{ $image }}"
-                alt="{{ $imageAlt }}"
-                class="w-full h-full object-cover"
-            >
+            <x-ui.image
+                :src="$image"
+                :alt="$imageAlt"
+                :blurhash="$blurhash"
+                class="w-full h-full"
+                img-class="object-cover"
+            />
         </a>
         @if($category || $tag)
             <div class="absolute inset-0 flex items-end justify-center p-6 z-10 pointer-events-none">

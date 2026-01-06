@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
+import BlurHashImage from './BlurHashImage.vue';
 
 interface CropVersion {
     id: number;
@@ -21,6 +22,7 @@ interface MediaItem {
     type: 'image' | 'video_local' | 'video_embed';
     url: string | null;
     thumbnail_url: string | null;
+    blurhash: string | null;
     title: string | null;
     alt_text: string | null;
     caption?: string | null;
@@ -473,11 +475,13 @@ function closeModal() {
                                     @click="toggleSelect(item)"
                                 >
                                     <div class="aspect-square">
-                                        <img
+                                        <BlurHashImage
                                             v-if="item.thumbnail_url"
                                             :src="item.thumbnail_url"
                                             :alt="item.title || 'Media'"
-                                            class="w-full h-full object-cover"
+                                            :blurhash="item.blurhash"
+                                            class="w-full h-full"
+                                            img-class="object-cover"
                                         />
                                         <div
                                             v-else
@@ -676,11 +680,13 @@ function closeModal() {
                                 @click="selectWithCrop(cropSelectorItem!, null)"
                             >
                                 <div class="aspect-video bg-muted/30">
-                                    <img
+                                    <BlurHashImage
                                         v-if="cropSelectorItem.thumbnail_url"
                                         :src="cropSelectorItem.thumbnail_url"
                                         :alt="cropSelectorItem.title || 'Original'"
-                                        class="w-full h-full object-cover"
+                                        :blurhash="cropSelectorItem.blurhash"
+                                        class="w-full h-full"
+                                        img-class="object-cover"
                                     />
                                 </div>
                                 <div class="p-3">

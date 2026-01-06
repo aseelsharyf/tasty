@@ -9,6 +9,7 @@ use App\Models\MediaItem;
 use App\Models\MediaItemCrop;
 use App\Models\Tag;
 use App\Models\User;
+use App\Services\BlurHashService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -170,14 +171,27 @@ class MediaController extends Controller
             $spatieMedia = $mediaItem->addMediaFromRequest('file')
                 ->toMediaCollection('default');
 
-            // Update dimensions for images
+            // Update dimensions and generate blurhash for images
             if ($type === MediaItem::TYPE_IMAGE && $spatieMedia) {
-                $dimensions = getimagesize($spatieMedia->getPath());
+                $updateData = [];
+                $imagePath = $spatieMedia->getPath();
+
+                // Get dimensions
+                $dimensions = getimagesize($imagePath);
                 if ($dimensions) {
-                    $mediaItem->update([
-                        'width' => $dimensions[0],
-                        'height' => $dimensions[1],
-                    ]);
+                    $updateData['width'] = $dimensions[0];
+                    $updateData['height'] = $dimensions[1];
+                }
+
+                // Generate blurhash
+                $blurHashService = app(BlurHashService::class);
+                $blurhash = $blurHashService->encode($imagePath);
+                if ($blurhash) {
+                    $updateData['blurhash'] = $blurhash;
+                }
+
+                if (! empty($updateData)) {
+                    $mediaItem->update($updateData);
                 }
             }
 
@@ -409,6 +423,9 @@ class MediaController extends Controller
                 'alt_text' => $item->alt_text,
                 'caption' => $item->caption,
                 'credit_display' => $item->credit_display,
+                'width' => $item->width,
+                'height' => $item->height,
+                'blurhash' => $item->blurhash,
                 'is_image' => $item->is_image,
                 'is_video' => $item->is_video,
                 'has_crops' => $item->is_image && $item->crops->count() > 0,
@@ -481,6 +498,7 @@ class MediaController extends Controller
             'credit_display' => $item->credit_display,
             'width' => $item->width,
             'height' => $item->height,
+            'blurhash' => $item->blurhash,
             'file_size' => $item->file_size,
             'mime_type' => $item->mime_type,
             'duration' => $item->duration,

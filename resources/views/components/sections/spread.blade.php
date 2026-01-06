@@ -27,11 +27,11 @@
         {{-- Grid Layout for Mobile, Scroll for Desktop --}}
         {{-- Desktop: Horizontal Scroll --}}
         <div class="scroll-container pb-8 container-main max-lg:hidden" x-ref="scrollContainer">
-            <div class="flex pl-10 min-w-max">
+            <div class="flex items-center pl-10 min-w-max">
                 {{-- Intro Card (Desktop only) --}}
                 @if($showIntro)
-                    <div class="flex items-center self-stretch shrink-0" x-ref="introCard">
-                        <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10 h-full">
+                    <div class="flex items-center shrink-0" x-ref="introCard">
+                        <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10">
                             @if($introImage)
                                 <div class="w-full max-w-[320px] h-[429.5px]">
                                     <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain" style="mix-blend-mode: darken;">
@@ -46,7 +46,7 @@
                             @endif
                         </div>
                         @if($showDividers)
-                            <div class="w-px self-stretch {{ $dividerColor }} shrink-0"></div>
+                            <div class="w-px h-[600px] {{ $dividerColor }} shrink-0"></div>
                         @endif
                     </div>
                 @endif
@@ -59,7 +59,7 @@
                             :reversed="$loop->even"
                         />
                         @if(!$loop->last && $showDividers)
-                            <div class="w-px self-stretch {{ $dividerColor }} shrink-0"></div>
+                            <div class="w-px h-[600px] {{ $dividerColor }} shrink-0"></div>
                         @endif
                     </div>
                 @endforeach
@@ -81,11 +81,11 @@
     @else
         {{-- Scroll Layout (Default) --}}
         <div class="scroll-container pb-8 max-lg:pb-6 container-main" x-ref="scrollContainer">
-            <div class="flex pl-10 min-w-max max-lg:pl-5 max-lg:gap-8">
+            <div class="flex items-center pl-10 min-w-max max-lg:pl-5 max-lg:gap-8">
                 {{-- Intro Card (Desktop only) --}}
                 @if($showIntro)
-                    <div class="flex items-center self-stretch shrink-0 max-lg:hidden" x-ref="introCard">
-                        <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10 h-full">
+                    <div class="flex items-center shrink-0 max-lg:hidden" x-ref="introCard">
+                        <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10">
                             @if($introImage)
                                 <div class="w-full max-w-[320px] h-[429.5px]">
                                     <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain" style="mix-blend-mode: darken;">
@@ -100,7 +100,7 @@
                             @endif
                         </div>
                         @if($showDividers)
-                            <div class="w-px self-stretch {{ $dividerColor }} shrink-0"></div>
+                            <div class="w-px h-[600px] {{ $dividerColor }} shrink-0"></div>
                         @endif
                     </div>
                 @endif
@@ -113,7 +113,7 @@
                             :reversed="$loop->even"
                         />
                         @if(!$loop->last && $showDividers)
-                            <div class="w-px self-stretch {{ $dividerColor }} shrink-0 max-lg:hidden"></div>
+                            <div class="w-px h-[600px] {{ $dividerColor }} shrink-0 max-lg:hidden"></div>
                         @endif
                     </div>
                 @endforeach

@@ -5,6 +5,7 @@ import { useDebounceFn } from '@vueuse/core';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import MediaEditSlideover from '../../components/MediaEditSlideover.vue';
 import MediaUploadSlideover from '../../components/MediaUploadSlideover.vue';
+import BlurHashImage from '../../components/BlurHashImage.vue';
 import { usePermission } from '../../composables/usePermission';
 import type { NavigationMenuItem } from '@nuxt/ui';
 import { formatDistanceToNow } from 'date-fns';
@@ -51,6 +52,7 @@ interface MediaItem {
     } | null;
     width: number | null;
     height: number | null;
+    blurhash: string | null;
     file_size: number | null;
     mime_type: string | null;
     is_image: boolean;

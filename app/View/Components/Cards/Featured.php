@@ -13,6 +13,8 @@ class Featured extends Component
 
     public string $imageAlt;
 
+    public ?string $blurhash;
+
     public ?string $category;
 
     public ?string $categoryUrl;
@@ -42,6 +44,7 @@ class Featured extends Component
         Post|array|null $post = null,
         ?string $image = null,
         ?string $imageAlt = null,
+        ?string $blurhash = null,
         ?string $category = null,
         ?string $categoryUrl = null,
         ?string $tag = null,
@@ -59,6 +62,7 @@ class Featured extends Component
 
             $this->image = $post->featured_image_url ?? '';
             $this->imageAlt = $post->title;
+            $this->blurhash = $post->featured_image_blurhash;
             $this->category = $categoryModel?->name;
             $this->categoryUrl = $categoryModel ? route('category.show', $categoryModel->slug) : null;
             $this->tag = $tagModel?->name;
@@ -72,6 +76,7 @@ class Featured extends Component
         } elseif (is_array($post)) {
             $this->image = $post['image'] ?? '';
             $this->imageAlt = $post['imageAlt'] ?? $post['title'] ?? '';
+            $this->blurhash = $post['blurhash'] ?? null;
             $this->category = $post['category'] ?? null;
             $this->categoryUrl = $post['categoryUrl'] ?? null;
             $this->tag = $post['tag'] ?? null;
@@ -85,6 +90,7 @@ class Featured extends Component
         } else {
             $this->image = '';
             $this->imageAlt = '';
+            $this->blurhash = null;
             $this->category = null;
             $this->categoryUrl = null;
             $this->tag = null;
@@ -103,6 +109,9 @@ class Featured extends Component
         }
         if ($imageAlt !== null) {
             $this->imageAlt = $imageAlt;
+        }
+        if ($blurhash !== null) {
+            $this->blurhash = $blurhash;
         }
         if ($category !== null) {
             $this->category = $category;

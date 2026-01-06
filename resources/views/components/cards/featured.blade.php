@@ -6,11 +6,13 @@
         h-[580px]
         max-xl:aspect-[3/4] max-xl:h-auto max-xl:p-4 max-xl:items-start max-xl:justify-center">
         <a href="{{ $url }}" class="absolute inset-0 z-0">
-            <img
-                src="{{ $image }}"
-                alt="{{ $imageAlt }}"
-                class="w-full h-full object-cover rounded"
-            >
+            <x-ui.image
+                :src="$image"
+                :alt="$imageAlt"
+                :blurhash="$blurhash"
+                class="w-full h-full rounded"
+                img-class="object-cover"
+            />
         </a>
         @if($category || $tag)
             <x-post.meta-tags

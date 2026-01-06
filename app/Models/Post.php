@@ -66,6 +66,7 @@ class Post extends Model implements HasMedia
     protected $appends = [
         'featured_image_url',
         'featured_image_thumb',
+        'featured_image_blurhash',
         'url',
     ];
 
@@ -255,6 +256,11 @@ class Post extends Model implements HasMedia
         }
 
         return $this->getFirstMediaUrl('featured', 'thumb') ?: null;
+    }
+
+    public function getFeaturedImageBlurhashAttribute(): ?string
+    {
+        return $this->featuredMedia?->blurhash;
     }
 
     public function getUrlAttribute(): string

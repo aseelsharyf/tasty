@@ -13,6 +13,8 @@ class Recipe extends Component
 
     public string $imageAlt;
 
+    public ?string $blurhash;
+
     /** @var array<int, string> */
     public array $tags;
 
@@ -40,6 +42,7 @@ class Recipe extends Component
         Post|array|null $post = null,
         ?string $image = null,
         ?string $imageAlt = null,
+        ?string $blurhash = null,
         ?array $tags = null,
         ?string $title = null,
         ?string $description = null,
@@ -55,6 +58,7 @@ class Recipe extends Component
         if ($post instanceof Post) {
             $this->image = $post->featured_image_url ?? '';
             $this->imageAlt = $post->title;
+            $this->blurhash = $post->featured_image_blurhash;
             $this->tags = $this->extractTags($post);
             $this->title = $post->title;
             $this->description = $post->excerpt ?? '';
@@ -64,6 +68,7 @@ class Recipe extends Component
         } elseif (is_array($post)) {
             $this->image = $post['image'] ?? '';
             $this->imageAlt = $post['imageAlt'] ?? $post['title'] ?? '';
+            $this->blurhash = $post['blurhash'] ?? null;
             $this->tags = $post['tags'] ?? [];
             $this->title = $post['title'] ?? '';
             $this->description = $post['description'] ?? '';
@@ -73,6 +78,7 @@ class Recipe extends Component
         } else {
             $this->image = '';
             $this->imageAlt = '';
+            $this->blurhash = null;
             $this->tags = [];
             $this->title = '';
             $this->description = '';
@@ -87,6 +93,9 @@ class Recipe extends Component
         }
         if ($imageAlt !== null) {
             $this->imageAlt = $imageAlt;
+        }
+        if ($blurhash !== null) {
+            $this->blurhash = $blurhash;
         }
         if ($tags !== null) {
             $this->tags = $tags;

@@ -52,6 +52,7 @@ class MediaItem extends Model implements HasMedia
         'credit_role',
         'width',
         'height',
+        'blurhash',
         'file_size',
         'mime_type',
         'duration',
