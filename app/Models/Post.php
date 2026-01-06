@@ -27,8 +27,6 @@ class Post extends Model implements HasMedia
         return 'uuid';
     }
 
-    public const STATUS_PENDING = 'pending';
-
     public const STATUS_PUBLISHED = 'published';
 
     public const STATUS_SCHEDULED = 'scheduled';
@@ -170,9 +168,14 @@ class Post extends Model implements HasMedia
         return $query->where('status', self::STATUS_DRAFT);
     }
 
-    public function scopePending(Builder $query): Builder
+    /**
+     * Scope to get posts that are in editorial review (review or copydesk workflow status).
+     * These are posts that editors need to review.
+     */
+    public function scopeInEditorialReview(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_PENDING);
+        return $query->where('status', self::STATUS_DRAFT)
+            ->whereIn('workflow_status', ['review', 'copydesk']);
     }
 
     public function scopePublished(Builder $query): Builder
@@ -282,9 +285,10 @@ class Post extends Model implements HasMedia
         return $this->status === self::STATUS_DRAFT;
     }
 
-    public function isPending(): bool
+    public function isInEditorialReview(): bool
     {
-        return $this->status === self::STATUS_PENDING;
+        return $this->status === self::STATUS_DRAFT
+            && in_array($this->workflow_status, ['review', 'copydesk']);
     }
 
     public function isRecipe(): bool
@@ -315,13 +319,6 @@ class Post extends Model implements HasMedia
             'status' => self::STATUS_SCHEDULED,
             'scheduled_at' => $date,
             'published_at' => null,
-        ]);
-    }
-
-    public function submitForReview(): void
-    {
-        $this->update([
-            'status' => self::STATUS_PENDING,
         ]);
     }
 

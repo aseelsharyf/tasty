@@ -43,7 +43,8 @@ class PostFactory extends Factory
             'excerpt' => fake()->paragraph(2),
             'content' => $this->generateEditorJsContent(),
             'post_type' => fake()->randomElement([Post::TYPE_ARTICLE, Post::TYPE_RECIPE]),
-            'status' => fake()->randomElement([Post::STATUS_DRAFT, Post::STATUS_PUBLISHED, Post::STATUS_PENDING]),
+            'status' => fake()->randomElement([Post::STATUS_DRAFT, Post::STATUS_PUBLISHED]),
+            'workflow_status' => 'draft',
             'published_at' => fn (array $attributes) => $attributes['status'] === Post::STATUS_PUBLISHED ? fake()->dateTimeBetween('-1 year', 'now') : null,
             'allow_comments' => true,
         ];
@@ -65,10 +66,26 @@ class PostFactory extends Factory
         ]);
     }
 
-    public function pending(): static
+    /**
+     * Set the post as in editorial review (draft status with review workflow).
+     */
+    public function inReview(): static
     {
         return $this->state(fn () => [
-            'status' => Post::STATUS_PENDING,
+            'status' => Post::STATUS_DRAFT,
+            'workflow_status' => 'review',
+            'published_at' => null,
+        ]);
+    }
+
+    /**
+     * Set the post as in copydesk (draft status with copydesk workflow).
+     */
+    public function inCopydesk(): static
+    {
+        return $this->state(fn () => [
+            'status' => Post::STATUS_DRAFT,
+            'workflow_status' => 'copydesk',
             'published_at' => null,
         ]);
     }

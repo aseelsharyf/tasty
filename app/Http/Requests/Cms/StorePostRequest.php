@@ -33,7 +33,6 @@ class StorePostRequest extends FormRequest
             'post_type' => ['required', Rule::in($validPostTypes)],
             'status' => ['required', Rule::in([
                 Post::STATUS_DRAFT,
-                Post::STATUS_PENDING,
                 Post::STATUS_PUBLISHED,
                 Post::STATUS_SCHEDULED,
             ])],

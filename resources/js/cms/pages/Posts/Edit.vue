@@ -301,6 +301,55 @@ const isUnpublishing = ref(false);
 // Create new draft loading state
 const creatingNewDraft = ref(false);
 
+// Repeater input values (using reactive state instead of direct DOM manipulation)
+const repeaterInputValues = ref<Record<string, string>>({});
+const groupedSectionInputValues = ref<Record<string, string>>({});
+const groupedItemInputValues = ref<Record<string, Record<number, string>>>({});
+
+// Helper to get/set repeater input value
+function getRepeaterInput(fieldName: string): string {
+    return repeaterInputValues.value[fieldName] ?? '';
+}
+
+function setRepeaterInput(fieldName: string, value: string) {
+    repeaterInputValues.value[fieldName] = value;
+}
+
+function clearRepeaterInput(fieldName: string) {
+    repeaterInputValues.value[fieldName] = '';
+}
+
+// Helper to get/set grouped section input value
+function getGroupedSectionInput(fieldName: string): string {
+    return groupedSectionInputValues.value[fieldName] ?? '';
+}
+
+function setGroupedSectionInput(fieldName: string, value: string) {
+    groupedSectionInputValues.value[fieldName] = value;
+}
+
+function clearGroupedSectionInput(fieldName: string) {
+    groupedSectionInputValues.value[fieldName] = '';
+}
+
+// Helper to get/set grouped item input value
+function getGroupedItemInput(fieldName: string, sectionIndex: number): string {
+    return groupedItemInputValues.value[fieldName]?.[sectionIndex] ?? '';
+}
+
+function setGroupedItemInput(fieldName: string, sectionIndex: number, value: string) {
+    if (!groupedItemInputValues.value[fieldName]) {
+        groupedItemInputValues.value[fieldName] = {};
+    }
+    groupedItemInputValues.value[fieldName][sectionIndex] = value;
+}
+
+function clearGroupedItemInput(fieldName: string, sectionIndex: number) {
+    if (groupedItemInputValues.value[fieldName]) {
+        groupedItemInputValues.value[fieldName][sectionIndex] = '';
+    }
+}
+
 // Use workflow composable
 const workflow = useWorkflow(props.workflowConfig);
 const transitionLoading = workflow.loading;
@@ -1685,18 +1734,19 @@ function openDiff() {
                                                 </div>
                                                 <div class="flex gap-2">
                                                     <UInput
-                                                        :id="`custom-repeater-${field.name}`"
+                                                        :model-value="getRepeaterInput(field.name)"
                                                         placeholder="Add new item..."
                                                         class="flex-1"
                                                         :disabled="isReadOnly"
-                                                        @keyup.enter.prevent="(e: KeyboardEvent) => {
-                                                            const input = e.target as HTMLInputElement;
-                                                            if (input.value.trim()) {
+                                                        @update:model-value="setRepeaterInput(field.name, $event as string)"
+                                                        @keyup.enter.prevent="() => {
+                                                            const value = getRepeaterInput(field.name);
+                                                            if (value.trim()) {
                                                                 form.custom_fields = {
                                                                     ...form.custom_fields,
-                                                                    [field.name]: [...((form.custom_fields?.[field.name] as string[]) ?? []), input.value.trim()]
+                                                                    [field.name]: [...((form.custom_fields?.[field.name] as string[]) ?? []), value.trim()]
                                                                 };
-                                                                input.value = '';
+                                                                clearRepeaterInput(field.name);
                                                             }
                                                         }"
                                                     />
@@ -1706,13 +1756,13 @@ function openDiff() {
                                                         icon="i-lucide-plus"
                                                         :disabled="isReadOnly"
                                                         @click="() => {
-                                                            const input = document.getElementById(`custom-repeater-${field.name}`) as HTMLInputElement;
-                                                            if (input?.value.trim()) {
+                                                            const value = getRepeaterInput(field.name);
+                                                            if (value.trim()) {
                                                                 form.custom_fields = {
                                                                     ...form.custom_fields,
-                                                                    [field.name]: [...((form.custom_fields?.[field.name] as string[]) ?? []), input.value.trim()]
+                                                                    [field.name]: [...((form.custom_fields?.[field.name] as string[]) ?? []), value.trim()]
                                                                 };
-                                                                input.value = '';
+                                                                clearRepeaterInput(field.name);
                                                             }
                                                         }"
                                                     />
@@ -1796,21 +1846,22 @@ function openDiff() {
                                                         <!-- Add item to section -->
                                                         <div class="flex gap-1.5">
                                                             <UInput
-                                                                :id="`grouped-item-new-${field.name}-${sectionIndex}`"
+                                                                :model-value="getGroupedItemInput(field.name, sectionIndex)"
                                                                 placeholder="Add item..."
                                                                 size="sm"
                                                                 class="flex-1 min-w-0"
                                                                 :disabled="isReadOnly"
-                                                                @keyup.enter.prevent="(e: KeyboardEvent) => {
-                                                                    const input = e.target as HTMLInputElement;
-                                                                    if (input.value.trim()) {
+                                                                @update:model-value="setGroupedItemInput(field.name, sectionIndex, $event as string)"
+                                                                @keyup.enter.prevent="() => {
+                                                                    const value = getGroupedItemInput(field.name, sectionIndex);
+                                                                    if (value.trim()) {
                                                                         const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
                                                                         sections[sectionIndex] = {
                                                                             ...sections[sectionIndex],
-                                                                            items: [...sections[sectionIndex].items, input.value.trim()]
+                                                                            items: [...sections[sectionIndex].items, value.trim()]
                                                                         };
                                                                         form.custom_fields = { ...form.custom_fields, [field.name]: sections };
-                                                                        input.value = '';
+                                                                        clearGroupedItemInput(field.name, sectionIndex);
                                                                     }
                                                                 }"
                                                             />
@@ -1821,15 +1872,15 @@ function openDiff() {
                                                                 icon="i-lucide-plus"
                                                                 :disabled="isReadOnly"
                                                                 @click="() => {
-                                                                    const input = document.getElementById(`grouped-item-new-${field.name}-${sectionIndex}`) as HTMLInputElement;
-                                                                    if (input?.value.trim()) {
+                                                                    const value = getGroupedItemInput(field.name, sectionIndex);
+                                                                    if (value.trim()) {
                                                                         const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
                                                                         sections[sectionIndex] = {
                                                                             ...sections[sectionIndex],
-                                                                            items: [...sections[sectionIndex].items, input.value.trim()]
+                                                                            items: [...sections[sectionIndex].items, value.trim()]
                                                                         };
                                                                         form.custom_fields = { ...form.custom_fields, [field.name]: sections };
-                                                                        input.value = '';
+                                                                        clearGroupedItemInput(field.name, sectionIndex);
                                                                     }
                                                                 }"
                                                             />
@@ -1839,18 +1890,19 @@ function openDiff() {
                                                 <!-- Add new section -->
                                                 <div class="flex gap-1.5">
                                                     <UInput
-                                                        :id="`grouped-section-new-${field.name}`"
+                                                        :model-value="getGroupedSectionInput(field.name)"
                                                         placeholder="Add section (e.g., Pasta, Sauce)..."
                                                         size="sm"
                                                         class="flex-1 min-w-0"
                                                         :disabled="isReadOnly"
-                                                        @keyup.enter.prevent="(e: KeyboardEvent) => {
-                                                            const input = e.target as HTMLInputElement;
-                                                            if (input.value.trim()) {
+                                                        @update:model-value="setGroupedSectionInput(field.name, $event as string)"
+                                                        @keyup.enter.prevent="() => {
+                                                            const value = getGroupedSectionInput(field.name);
+                                                            if (value.trim()) {
                                                                 const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
-                                                                sections.push({ section: input.value.trim(), items: [] });
+                                                                sections.push({ section: value.trim(), items: [] });
                                                                 form.custom_fields = { ...form.custom_fields, [field.name]: sections };
-                                                                input.value = '';
+                                                                clearGroupedSectionInput(field.name);
                                                             }
                                                         }"
                                                     />
@@ -1861,12 +1913,12 @@ function openDiff() {
                                                         icon="i-lucide-folder-plus"
                                                         :disabled="isReadOnly"
                                                         @click="() => {
-                                                            const input = document.getElementById(`grouped-section-new-${field.name}`) as HTMLInputElement;
-                                                            if (input?.value.trim()) {
+                                                            const value = getGroupedSectionInput(field.name);
+                                                            if (value.trim()) {
                                                                 const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
-                                                                sections.push({ section: input.value.trim(), items: [] });
+                                                                sections.push({ section: value.trim(), items: [] });
                                                                 form.custom_fields = { ...form.custom_fields, [field.name]: sections };
-                                                                input.value = '';
+                                                                clearGroupedSectionInput(field.name);
                                                             }
                                                         }"
                                                     />

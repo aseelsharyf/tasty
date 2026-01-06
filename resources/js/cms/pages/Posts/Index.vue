@@ -62,12 +62,12 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => [[
         onSelect: () => changeStatus('draft'),
     },
     {
-        label: 'Pending',
-        icon: 'i-lucide-clock',
-        badge: props.counts.pending,
-        to: `/cms/posts/${currentLanguageCode.value}?status=pending`,
-        active: currentStatus.value === 'pending',
-        onSelect: () => changeStatus('pending'),
+        label: 'Copydesk',
+        icon: 'i-lucide-spell-check-2',
+        badge: props.counts.copydesk,
+        to: `/cms/posts/${currentLanguageCode.value}?status=copydesk`,
+        active: currentStatus.value === 'copydesk',
+        onSelect: () => changeStatus('copydesk'),
     },
     {
         label: 'Published',

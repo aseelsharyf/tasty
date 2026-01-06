@@ -45,7 +45,6 @@ class UpdatePostRequest extends FormRequest
             // Status is controlled by workflow, not direct form submission
             'status' => ['nullable', Rule::in([
                 Post::STATUS_DRAFT,
-                Post::STATUS_PENDING,
                 Post::STATUS_PUBLISHED,
                 Post::STATUS_SCHEDULED,
             ])],

@@ -143,7 +143,7 @@ export interface Post {
 export interface PostCounts {
     all: number;
     draft: number;
-    pending: number;
+    copydesk: number;
     published: number;
     scheduled: number;
     trashed: number;

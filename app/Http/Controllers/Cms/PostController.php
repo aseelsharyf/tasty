@@ -54,8 +54,8 @@ class PostController extends Controller
 
         // Filter by status
         match ($status) {
-            'draft' => $query->draft(),
-            'pending' => $query->pending(),
+            'draft' => $query->draft()->whereNotIn('workflow_status', ['review', 'copydesk']),
+            'copydesk' => $query->inEditorialReview(),
             'published' => $query->where('status', Post::STATUS_PUBLISHED),
             'scheduled' => $query->where('status', Post::STATUS_SCHEDULED),
             'trashed' => $query->onlyTrashed(),
@@ -64,9 +64,9 @@ class PostController extends Controller
 
         // Role-based filtering:
         // - Draft: Writers see only their own drafts, Editors/Admins see all
-        // - Pending: Writers see only their own, Editors/Admins see all
+        // - Copydesk: Editors/Admins see all posts in review, Writers see only their own
         // - Published: Everyone can see (read-only for non-authors/non-editors)
-        if (! $isEditorOrAdmin && in_array($status, ['draft', 'pending'])) {
+        if (! $isEditorOrAdmin && in_array($status, ['draft', 'copydesk'])) {
             $query->where('author_id', $user->id);
         }
 
@@ -147,21 +147,21 @@ class PostController extends Controller
             // Editors and Admins see all posts
             $counts = [
                 'all' => $baseQuery()->withoutTrashed()->count(),
-                'draft' => $baseQuery()->draft()->count(),
-                'pending' => $baseQuery()->pending()->count(),
+                'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk'])->count(),
+                'copydesk' => $baseQuery()->inEditorialReview()->count(),
                 'published' => $baseQuery()->where('status', Post::STATUS_PUBLISHED)->count(),
                 'scheduled' => $baseQuery()->where('status', Post::STATUS_SCHEDULED)->count(),
                 'trashed' => $baseQuery()->onlyTrashed()->count(),
             ];
         } else {
-            // Writers see their own drafts/pending, but all published posts
+            // Writers see their own drafts/copydesk posts, but all published posts
             $counts = [
                 'all' => $baseQuery()->withoutTrashed()->where(function ($q) use ($user) {
                     $q->where('author_id', $user->id)
                         ->orWhere('status', Post::STATUS_PUBLISHED);
                 })->count(),
-                'draft' => $baseQuery()->draft()->where('author_id', $user->id)->count(),
-                'pending' => $baseQuery()->pending()->where('author_id', $user->id)->count(),
+                'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk'])->where('author_id', $user->id)->count(),
+                'copydesk' => $baseQuery()->inEditorialReview()->where('author_id', $user->id)->count(),
                 'published' => $baseQuery()->where('status', Post::STATUS_PUBLISHED)->count(),
                 'scheduled' => $baseQuery()->where('status', Post::STATUS_SCHEDULED)->where('author_id', $user->id)->count(),
                 'trashed' => $baseQuery()->onlyTrashed()->where('author_id', $user->id)->count(),

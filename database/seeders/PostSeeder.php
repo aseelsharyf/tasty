@@ -273,14 +273,12 @@ class PostSeeder extends Seeder
             $featuredTag = $tags->random();
 
             $post = Post::factory()
-                ->pending()
+                ->inReview()
                 ->article()
                 ->withLanguage($language->code)
                 ->create([
                     'author_id' => $author->id,
                     'featured_tag_id' => $featuredTag->id,
-                    'workflow_status' => 'review',
-                    'status' => Post::STATUS_PENDING,
                     'content' => $this->getArticleContent($mediaItems),
                     'featured_media_id' => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
                 ]);
@@ -310,14 +308,13 @@ class PostSeeder extends Seeder
             $featuredTag = $tags->random();
 
             $post = Post::factory()
-                ->pending()
+                ->draft()
                 ->article()
                 ->withLanguage($language->code)
                 ->create([
                     'author_id' => $author->id,
                     'featured_tag_id' => $featuredTag->id,
                     'workflow_status' => 'approved',
-                    'status' => Post::STATUS_PENDING,
                     'content' => $this->getArticleContent($mediaItems),
                     'featured_media_id' => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
                 ]);

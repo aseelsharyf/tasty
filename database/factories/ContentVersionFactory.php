@@ -35,6 +35,8 @@ class ContentVersionFactory extends Factory
                 'meta_title' => fake()->optional()->sentence(),
                 'meta_description' => fake()->optional()->text(150),
                 'custom_fields' => [],
+                'category_ids' => [1], // Default category for approval validation
+                'tag_ids' => [1], // Default tag for approval validation
             ],
             'workflow_status' => ContentVersion::STATUS_DRAFT,
             'is_active' => false,
