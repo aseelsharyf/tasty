@@ -342,6 +342,14 @@ export interface LayoutFilters {
     status?: 'published' | 'draft';
 }
 
+// Layout Context for category/tag page builders
+export interface LayoutContext {
+    type: 'category' | 'tag';
+    id: number;
+    name: string;
+    slug: string;
+}
+
 // Homepage Layout Builder Types
 export interface HomepageSection {
     id: string;

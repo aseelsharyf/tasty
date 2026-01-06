@@ -158,6 +158,11 @@ function getRowActions(row: Tag) {
                 icon: 'i-lucide-pencil',
                 onSelect: () => openEditSlideover(row),
             },
+            {
+                label: 'Layout',
+                icon: 'i-lucide-layout-template',
+                onSelect: () => router.visit(`/cms/layouts/tags/${row.uuid}`),
+            },
         ]);
     }
 

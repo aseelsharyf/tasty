@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Cms;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Cms\UpdateHomepageLayoutRequest;
+use App\Http\Requests\Cms\UpdatePageLayoutRequest;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Tag;
@@ -23,6 +24,70 @@ class LayoutController extends Controller
         protected HomepageConfigurationService $configService,
         protected SectionCategoryMappingService $mappingService
     ) {}
+
+    /**
+     * Show the layouts index page with all configured layouts.
+     */
+    public function index(): Response
+    {
+        // Get categories with custom layouts
+        $categoriesWithLayouts = Category::query()
+            ->whereHas('pageLayout')
+            ->with('pageLayout')
+            ->orderByTranslatedName(app()->getLocale())
+            ->get()
+            ->map(fn (Category $category) => [
+                'id' => $category->id,
+                'uuid' => $category->uuid,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'sectionsCount' => count($category->pageLayout?->configuration['sections'] ?? []),
+                'updatedAt' => $category->pageLayout?->updated_at?->format('M j, Y'),
+            ]);
+
+        // Get tags with custom layouts
+        $tagsWithLayouts = Tag::query()
+            ->whereHas('pageLayout')
+            ->with('pageLayout')
+            ->orderByTranslatedName(app()->getLocale())
+            ->get()
+            ->map(fn (Tag $tag) => [
+                'id' => $tag->id,
+                'uuid' => $tag->uuid,
+                'name' => $tag->name,
+                'slug' => $tag->slug,
+                'sectionsCount' => count($tag->pageLayout?->configuration['sections'] ?? []),
+                'updatedAt' => $tag->pageLayout?->updated_at?->format('M j, Y'),
+            ]);
+
+        // Get all categories and tags for quick access
+        $allCategories = Category::query()
+            ->orderByTranslatedName(app()->getLocale())
+            ->get()
+            ->map(fn (Category $category) => [
+                'id' => $category->id,
+                'uuid' => $category->uuid,
+                'name' => $category->name,
+                'slug' => $category->slug,
+            ]);
+
+        $allTags = Tag::query()
+            ->orderByTranslatedName(app()->getLocale())
+            ->get()
+            ->map(fn (Tag $tag) => [
+                'id' => $tag->id,
+                'uuid' => $tag->uuid,
+                'name' => $tag->name,
+                'slug' => $tag->slug,
+            ]);
+
+        return Inertia::render('Layouts/Index', [
+            'categoriesWithLayouts' => $categoriesWithLayouts,
+            'tagsWithLayouts' => $tagsWithLayouts,
+            'allCategories' => $allCategories,
+            'allTags' => $allTags,
+        ]);
+    }
 
     /**
      * Show the homepage layout editor.
@@ -182,7 +247,7 @@ class LayoutController extends Controller
     public function getTags(): JsonResponse
     {
         $tags = Tag::query()
-            ->orderBy('name')
+            ->orderByTranslatedName(app()->getLocale())
             ->get(['id', 'name', 'slug']);
 
         return response()->json([
@@ -225,5 +290,179 @@ class LayoutController extends Controller
         return response()->json([
             'categories' => $flatten($categories),
         ]);
+    }
+
+    /**
+     * Show the category layout editor.
+     */
+    public function categoryLayout(Category $category): Response
+    {
+        $category->load('pageLayout');
+
+        $hasCustomLayout = $category->pageLayout !== null;
+        $useCustomLayout = $hasCustomLayout && ($category->pageLayout->configuration['enabled'] ?? true);
+        $configuration = $category->getLayoutConfiguration() ?? $this->getDefaultCategoryConfiguration($category);
+        $sectionTypes = $this->registry->toArray();
+
+        return Inertia::render('Layouts/CategoryLayout', [
+            'category' => [
+                'id' => $category->id,
+                'uuid' => $category->uuid,
+                'name' => $category->name,
+                'slug' => $category->slug,
+            ],
+            'configuration' => $configuration,
+            'useCustomLayout' => $useCustomLayout,
+            'hasExistingLayout' => $hasCustomLayout,
+            'sectionTypes' => $sectionTypes,
+        ]);
+    }
+
+    /**
+     * Update the category layout configuration.
+     */
+    public function updateCategoryLayout(UpdatePageLayoutRequest $request, Category $category): RedirectResponse
+    {
+        $validated = $request->validated();
+        $useCustomLayout = $request->boolean('useCustomLayout', true);
+
+        $category->pageLayout()->updateOrCreate(
+            ['layoutable_type' => Category::class, 'layoutable_id' => $category->id],
+            [
+                'configuration' => [
+                    'enabled' => $useCustomLayout,
+                    'sections' => $validated['sections'],
+                ],
+                'version' => ($category->pageLayout?->version ?? 0) + 1,
+                'updated_by' => $request->user()->id,
+            ]
+        );
+
+        return redirect()->route('cms.layouts.category', $category)
+            ->with('success', 'Category layout updated successfully.');
+    }
+
+    /**
+     * Show the tag layout editor.
+     */
+    public function tagLayout(Tag $tag): Response
+    {
+        $tag->load('pageLayout');
+
+        $hasCustomLayout = $tag->pageLayout !== null;
+        $useCustomLayout = $hasCustomLayout && ($tag->pageLayout->configuration['enabled'] ?? true);
+        $configuration = $tag->getLayoutConfiguration() ?? $this->getDefaultTagConfiguration($tag);
+        $sectionTypes = $this->registry->toArray();
+
+        return Inertia::render('Layouts/TagLayout', [
+            'tag' => [
+                'id' => $tag->id,
+                'uuid' => $tag->uuid,
+                'name' => $tag->name,
+                'slug' => $tag->slug,
+            ],
+            'configuration' => $configuration,
+            'useCustomLayout' => $useCustomLayout,
+            'hasExistingLayout' => $hasCustomLayout,
+            'sectionTypes' => $sectionTypes,
+        ]);
+    }
+
+    /**
+     * Update the tag layout configuration.
+     */
+    public function updateTagLayout(UpdatePageLayoutRequest $request, Tag $tag): RedirectResponse
+    {
+        $validated = $request->validated();
+        $useCustomLayout = $request->boolean('useCustomLayout', true);
+
+        $tag->pageLayout()->updateOrCreate(
+            ['layoutable_type' => Tag::class, 'layoutable_id' => $tag->id],
+            [
+                'configuration' => [
+                    'enabled' => $useCustomLayout,
+                    'sections' => $validated['sections'],
+                ],
+                'version' => ($tag->pageLayout?->version ?? 0) + 1,
+                'updated_by' => $request->user()->id,
+            ]
+        );
+
+        return redirect()->route('cms.layouts.tag', $tag)
+            ->with('success', 'Tag layout updated successfully.');
+    }
+
+    /**
+     * Get default layout configuration for a category.
+     *
+     * @return array<string, mixed>
+     */
+    protected function getDefaultCategoryConfiguration(Category $category): array
+    {
+        return [
+            'sections' => [
+                [
+                    'id' => (string) \Illuminate\Support\Str::uuid(),
+                    'type' => 'latest-updates',
+                    'order' => 0,
+                    'enabled' => true,
+                    'config' => [
+                        'showIntro' => true,
+                        'titleSmall' => $category->name,
+                        'titleLarge' => 'Latest',
+                        'bgColor' => 'white',
+                    ],
+                    'dataSource' => [
+                        'action' => 'byCategory',
+                        'params' => ['slug' => $category->slug],
+                    ],
+                    'slots' => array_map(fn ($i) => [
+                        'index' => $i,
+                        'mode' => 'dynamic',
+                        'postId' => null,
+                    ], range(0, 8)),
+                ],
+            ],
+            'version' => 1,
+            'updatedAt' => null,
+            'updatedBy' => null,
+        ];
+    }
+
+    /**
+     * Get default layout configuration for a tag.
+     *
+     * @return array<string, mixed>
+     */
+    protected function getDefaultTagConfiguration(Tag $tag): array
+    {
+        return [
+            'sections' => [
+                [
+                    'id' => (string) \Illuminate\Support\Str::uuid(),
+                    'type' => 'latest-updates',
+                    'order' => 0,
+                    'enabled' => true,
+                    'config' => [
+                        'showIntro' => true,
+                        'titleSmall' => $tag->name,
+                        'titleLarge' => 'Tagged',
+                        'bgColor' => 'white',
+                    ],
+                    'dataSource' => [
+                        'action' => 'byTag',
+                        'params' => ['slug' => $tag->slug],
+                    ],
+                    'slots' => array_map(fn ($i) => [
+                        'index' => $i,
+                        'mode' => 'dynamic',
+                        'postId' => null,
+                    ], range(0, 8)),
+                ],
+            ],
+            'version' => 1,
+            'updatedAt' => null,
+            'updatedBy' => null,
+        ];
     }
 }

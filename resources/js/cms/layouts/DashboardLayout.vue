@@ -234,14 +234,28 @@ const layoutNavItems = computed<NavigationMenuItem[]>(() => {
         });
     }
 
-    // Homepage Layout (moved from separate Layouts section)
+    // Layouts section
     if (can('settings.view')) {
         items.push({
-            label: 'Homepage',
-            icon: 'i-lucide-home',
-            to: '/cms/layouts/homepage',
-            active: isActivePrefix('/cms/layouts/homepage'),
-            onSelect: () => { sidebarOpen.value = false; },
+            label: 'Layouts',
+            icon: 'i-lucide-layout-template',
+            to: '/cms/layouts',
+            active: isActivePrefix('/cms/layouts'),
+            open: isActivePrefix('/cms/layouts'),
+            children: [
+                {
+                    label: 'Homepage',
+                    to: '/cms/layouts/homepage',
+                    icon: 'i-lucide-home',
+                    active: isActivePrefix('/cms/layouts/homepage'),
+                },
+                {
+                    label: 'Categories & Tags',
+                    to: '/cms/layouts',
+                    icon: 'i-lucide-folder-tree',
+                    active: isActive('/cms/layouts', true) || isActivePrefix('/cms/layouts/categories') || isActivePrefix('/cms/layouts/tags'),
+                },
+            ],
         });
     }
 

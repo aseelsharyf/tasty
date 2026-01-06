@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, Link } from '@inertiajs/vue3';
 import { ref, computed, h, resolveComponent } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import CategoryCreateSlideover from '../../components/CategoryCreateSlideover.vue';
@@ -173,6 +173,11 @@ function getRowActions(row: Category) {
                 label: 'Edit',
                 icon: 'i-lucide-pencil',
                 onSelect: () => openEditSlideover(row),
+            },
+            {
+                label: 'Layout',
+                icon: 'i-lucide-layout-template',
+                onSelect: () => router.visit(`/cms/layouts/categories/${row.uuid}`),
             },
         ]);
     }
@@ -473,7 +478,10 @@ const flattenedTree = computed(() => flattenTree(props.tree));
                         <UDropdownMenu
                             :content="{ align: 'end' }"
                             :items="[
-                                can('categories.edit') ? [{ label: 'Edit', icon: 'i-lucide-pencil', onSelect: () => openEditSlideover(item) }] : [],
+                                can('categories.edit') ? [
+                                    { label: 'Edit', icon: 'i-lucide-pencil', onSelect: () => openEditSlideover(item) },
+                                    { label: 'Layout', icon: 'i-lucide-layout-template', onSelect: () => router.visit(`/cms/layouts/categories/${item.uuid}`) },
+                                ] : [],
                                 can('categories.delete') ? [{ label: 'Delete', icon: 'i-lucide-trash', color: 'error', onSelect: () => confirmDelete(item) }] : [],
                             ].filter(g => g.length > 0)"
                         >

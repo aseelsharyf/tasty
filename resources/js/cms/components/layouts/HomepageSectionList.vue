@@ -5,11 +5,12 @@ import DataSourceConfig from './DataSourceConfig.vue';
 import PostPickerModal from './PostPickerModal.vue';
 import SectionPreview from './SectionPreview.vue';
 import MediaPickerModal from '../MediaPickerModal.vue';
-import type { HomepageSection, SectionTypeDefinition, HomepageSectionSlot, PostSearchResult } from '../../types';
+import type { HomepageSection, SectionTypeDefinition, HomepageSectionSlot, PostSearchResult, LayoutContext } from '../../types';
 
 const props = defineProps<{
     modelValue: HomepageSection[];
     sectionTypes: Record<string, SectionTypeDefinition>;
+    context?: LayoutContext;
 }>();
 
 const emit = defineEmits<{

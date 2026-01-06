@@ -348,6 +348,7 @@ Route::middleware(['auth', 'cms'])->group(function () {
 
     // Layouts Management
     Route::middleware('permission:settings.view')->prefix('layouts')->group(function () {
+        Route::get('/', [LayoutController::class, 'index'])->name('cms.layouts.index');
         Route::get('homepage', [LayoutController::class, 'homepage'])->name('cms.layouts.homepage');
         Route::put('homepage', [LayoutController::class, 'updateHomepage'])->name('cms.layouts.homepage.update');
         Route::get('homepage/search-posts', [LayoutController::class, 'searchPosts'])->name('cms.layouts.homepage.search-posts');
@@ -356,6 +357,14 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::get('homepage/tags', [LayoutController::class, 'getTags'])->name('cms.layouts.homepage.tags');
         Route::get('homepage/categories', [LayoutController::class, 'getCategories'])->name('cms.layouts.homepage.categories');
         Route::get('section-types', [LayoutController::class, 'getSectionTypes'])->name('cms.layouts.section-types');
+
+        // Category layouts
+        Route::get('categories/{category}', [LayoutController::class, 'categoryLayout'])->name('cms.layouts.category');
+        Route::put('categories/{category}', [LayoutController::class, 'updateCategoryLayout'])->name('cms.layouts.category.update');
+
+        // Tag layouts
+        Route::get('tags/{tag}', [LayoutController::class, 'tagLayout'])->name('cms.layouts.tag');
+        Route::put('tags/{tag}', [LayoutController::class, 'updateTagLayout'])->name('cms.layouts.tag.update');
     });
 
     // Workflow Routes
