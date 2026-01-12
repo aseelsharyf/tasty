@@ -441,13 +441,19 @@ const {
 const textDirection = computed(() => isRtl.value ? 'rtl' : 'ltr');
 const textAlign = computed(() => isRtl.value ? 'text-right' : 'text-left');
 
-// Dhivehi placeholders
-const placeholders = computed(() => ({
-    kicker: isRtl.value ? 'ކިކާ (މިސާލު: ފީޗާ)' : 'KICKER (e.g., TASTY FEATURE)',
-    title: isRtl.value ? 'ސުރުޚީ' : 'Title',
-    subtitle: isRtl.value ? 'ސަބް ސުރުޚީ...' : 'Add a subtitle...',
-    excerpt: isRtl.value ? 'ޚުލާސާ / ޑެކް ލިޔޭ...' : 'Write a deck or summary...',
-}));
+// Dynamic placeholders based on language and post type
+const placeholders = computed(() => {
+    const isReview = form.post_type === 'restaurant-review';
+
+    return {
+        kicker: isReview
+            ? (isRtl.value ? 'ރެސްޓޯރެންޓް / ކެފੇ ނަން' : 'Restaurant / Cafe Name')
+            : (isRtl.value ? 'ކިކާ (މިސާލު: ފީޗާ)' : 'KICKER (e.g., TASTY FEATURE)'),
+        title: isRtl.value ? 'ސުرُޚީ' : 'Title',
+        subtitle: isRtl.value ? 'ސަބް ސުرُޚީ...' : 'Add a subtitle...',
+        excerpt: isRtl.value ? 'ޚުލާސާ / ޑެކް ލިޔޭ...' : 'Write a deck or summary...',
+    };
+});
 
 // Handle keydown for Dhivehi input fields
 function onDhivehiKeyDown(e: KeyboardEvent) {

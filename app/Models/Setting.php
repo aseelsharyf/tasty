@@ -127,8 +127,6 @@ class Setting extends Model
                     ['name' => 'cuisine', 'label' => 'Cuisine Type', 'type' => 'text'],
                     ['name' => 'rating', 'label' => 'Rating', 'type' => 'select', 'options' => ['1', '2', '3', '4', '5']],
                     ['name' => 'price_range', 'label' => 'Price Range', 'type' => 'select', 'options' => ['$', '$$', '$$$', '$$$$']],
-                    ['name' => 'visit_date', 'label' => 'Visit Date', 'type' => 'text'],
-                    ['name' => 'highlights', 'label' => 'Must Try Dishes', 'type' => 'repeater'],
                 ],
             ],
         ];
