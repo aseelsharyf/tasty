@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import DashboardLayout from '../layouts/DashboardLayout.vue';
+import { useCreatePost } from '../composables/useCreatePost';
 import type { DropdownMenuItem } from '@nuxt/ui';
+
+const { openCreateModal } = useCreatePost();
 
 interface RecentPost {
     id: number;
@@ -37,7 +40,7 @@ const quickActions: DropdownMenuItem[][] = [
         {
             label: 'New Post',
             icon: 'i-lucide-file-plus',
-            to: '/cms/posts/create',
+            onSelect: openCreateModal,
         },
         {
             label: 'New User',
@@ -209,17 +212,16 @@ function formatDate(dateString: string): string {
                         variant="outline"
                     >
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <Link href="/cms/posts/create">
-                                <UButton
-                                    color="neutral"
-                                    variant="soft"
-                                    icon="i-lucide-file-plus"
-                                    block
-                                    class="justify-start"
-                                >
-                                    New Post
-                                </UButton>
-                            </Link>
+                            <UButton
+                                color="neutral"
+                                variant="soft"
+                                icon="i-lucide-file-plus"
+                                block
+                                class="justify-start"
+                                @click="openCreateModal"
+                            >
+                                New Post
+                            </UButton>
                             <Link href="/cms/users/create">
                                 <UButton
                                     color="neutral"

@@ -8,6 +8,7 @@ use App\Models\Language;
 use App\Models\Setting;
 use App\Services\Layouts\SectionCategoryMappingService;
 use App\Services\Layouts\SectionRegistry;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -55,6 +56,17 @@ class SettingsController extends Controller
             'postTypes' => Setting::getPostTypes(),
             'defaultPostTypes' => Setting::getDefaultPostTypes(),
         ]);
+    }
+
+    public function postTypesJson(): JsonResponse
+    {
+        $postTypes = collect(Setting::getPostTypes())->map(fn ($type) => [
+            'value' => $type['slug'],
+            'label' => $type['name'],
+            'icon' => $type['icon'] ?? null,
+        ])->values()->all();
+
+        return response()->json(['postTypes' => $postTypes]);
     }
 
     public function updatePostTypes(Request $request): RedirectResponse

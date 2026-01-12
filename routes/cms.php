@@ -109,6 +109,7 @@ Route::middleware(['auth', 'cms'])->group(function () {
             ->where('tab', 'general|seo|opengraph|favicons|social');
         Route::post('settings', [SettingsController::class, 'update'])->name('cms.settings.update');
         Route::get('settings/post-types', [SettingsController::class, 'postTypes'])->name('cms.settings.post-types');
+        Route::get('settings/post-types/json', [SettingsController::class, 'postTypesJson'])->name('cms.settings.post-types.json');
         Route::put('settings/post-types', [SettingsController::class, 'updatePostTypes'])->name('cms.settings.post-types.update');
         Route::get('settings/media', [SettingsController::class, 'media'])->name('cms.settings.media');
         Route::put('settings/media', [SettingsController::class, 'updateMedia'])->name('cms.settings.media.update');
@@ -158,13 +159,17 @@ Route::middleware(['auth', 'cms'])->group(function () {
             ->name('cms.posts.index')
             ->where('language', '[a-zA-Z]{2,5}');
 
-        // Create post (language required)
-        Route::get('posts/{language}/create', [PostController::class, 'create'])
+        // Legacy create route - redirect to index (now uses modal)
+        Route::get('posts/{language}/create', fn (string $language) => redirect()->route('cms.posts.index', ['language' => $language]))
             ->name('cms.posts.create')
             ->where('language', '[a-zA-Z]{2,5}');
         Route::post('posts/{language}', [PostController::class, 'store'])
             ->name('cms.posts.store')
             ->where('language', '[a-zA-Z]{2,5}');
+
+        // Quick draft creation (from modal)
+        Route::post('posts/quick-draft', [PostController::class, 'quickDraft'])
+            ->name('cms.posts.quick-draft');
 
         // Edit/Update/Delete (language-agnostic since post already has language)
         Route::get('posts/{language}/{post}/edit', [PostController::class, 'edit'])

@@ -5,6 +5,7 @@ import { useDebounceFn } from '@vueuse/core';
 import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCreatePost } from '../../composables/useCreatePost';
 import type { Post, PostCounts, PostFilters, Author, Category, PaginatedResponse } from '../../types';
 import type { NavigationMenuItem } from '@nuxt/ui';
 
@@ -16,6 +17,20 @@ interface LanguageInfo {
     is_rtl: boolean;
 }
 
+interface Language {
+    code: string;
+    name: string;
+    native_name: string;
+    direction: 'ltr' | 'rtl';
+    is_default: boolean;
+}
+
+interface PostType {
+    value: string;
+    label: string;
+    icon?: string;
+}
+
 const props = defineProps<{
     posts: PaginatedResponse<Post>;
     counts: PostCounts;
@@ -23,6 +38,8 @@ const props = defineProps<{
     categories: Category[];
     filters: PostFilters;
     language: LanguageInfo;
+    languages: Language[];
+    postTypes: PostType[];
 }>();
 
 const { can } = usePermission();
@@ -31,8 +48,11 @@ const { can } = usePermission();
 const currentLanguageCode = computed(() => props.language.code);
 const isRtlLanguage = computed(() => props.language.is_rtl);
 
+// Create post modal (global)
+const { openCreateModal } = useCreatePost();
+
 function createNewPost() {
-    router.visit(`/cms/posts/${currentLanguageCode.value}/create`);
+    openCreateModal();
 }
 
 const search = ref(props.filters.search || '');
@@ -95,11 +115,10 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => [[
     },
 ]]);
 
-const postTypeOptions = [
+const postTypeOptions = computed(() => [
     { label: 'All Types', value: null },
-    { label: 'Articles', value: 'article' },
-    { label: 'Recipes', value: 'recipe' },
-];
+    ...props.postTypes.map((t) => ({ label: t.label, value: t.value })),
+]);
 
 const authorOptions = computed(() => [
     { label: 'All Authors', value: null },

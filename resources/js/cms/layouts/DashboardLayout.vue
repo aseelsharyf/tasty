@@ -3,7 +3,9 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { usePermission } from '../composables/usePermission';
 import { useSidebar } from '../composables/useSidebar';
+import { useCreatePost } from '../composables/useCreatePost';
 import TastyLogo from '../components/TastyLogo.vue';
+import CreatePostModal from '../components/CreatePostModal.vue';
 import type { PageProps } from '../types';
 import type { NavigationMenuItem, DropdownMenuItem, CommandPaletteItem, CommandPaletteGroup } from '@nuxt/ui';
 
@@ -14,6 +16,12 @@ interface Language {
     native_name: string;
     direction: 'ltr' | 'rtl';
     is_default: boolean;
+}
+
+interface PostType {
+    value: string;
+    label: string;
+    icon?: string;
 }
 
 const page = usePage<PageProps>();
@@ -48,9 +56,11 @@ function dismissToast() {
 }
 
 const { can } = usePermission();
+const { isCreateModalOpen } = useCreatePost();
 
-// Languages for dynamic post navigation
+// Languages and post types for create post modal
 const languages = ref<Language[]>([]);
+const postTypes = ref<PostType[]>([]);
 
 async function fetchLanguages() {
     try {
@@ -61,8 +71,19 @@ async function fetchLanguages() {
     }
 }
 
+async function fetchPostTypes() {
+    try {
+        const response = await fetch('/cms/settings/post-types/json');
+        const data = await response.json();
+        postTypes.value = data.postTypes || [];
+    } catch (error) {
+        console.error('Failed to fetch post types:', error);
+    }
+}
+
 onMounted(() => {
     fetchLanguages();
+    fetchPostTypes();
 });
 
 const sidebarOpen = ref(false);
@@ -234,21 +255,25 @@ const layoutNavItems = computed<NavigationMenuItem[]>(() => {
         });
     }
 
+    // Homepage (top-level)
+    if (can('settings.view')) {
+        items.push({
+            label: 'Homepage',
+            icon: 'i-lucide-home',
+            to: '/cms/layouts/homepage',
+            active: isActivePrefix('/cms/layouts/homepage'),
+        });
+    }
+
     // Layouts section
     if (can('settings.view')) {
         items.push({
             label: 'Layouts',
             icon: 'i-lucide-layout-template',
             to: '/cms/layouts',
-            active: isActivePrefix('/cms/layouts'),
-            open: isActivePrefix('/cms/layouts'),
+            active: isActive('/cms/layouts', true) || isActivePrefix('/cms/layouts/categories') || isActivePrefix('/cms/layouts/tags'),
+            open: isActivePrefix('/cms/layouts/categories') || isActivePrefix('/cms/layouts/tags'),
             children: [
-                {
-                    label: 'Homepage',
-                    to: '/cms/layouts/homepage',
-                    icon: 'i-lucide-home',
-                    active: isActivePrefix('/cms/layouts/homepage'),
-                },
                 {
                     label: 'Categories & Tags',
                     to: '/cms/layouts',
@@ -838,5 +863,12 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
                 </Transition>
             </Teleport>
         </UDashboardGroup>
+
+        <!-- Global Create Post Modal -->
+        <CreatePostModal
+            v-model:open="isCreateModalOpen"
+            :languages="languages"
+            :post-types="postTypes"
+        />
     </UApp>
 </template>

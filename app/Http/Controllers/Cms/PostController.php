@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cms;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Cms\QuickDraftRequest;
 use App\Http\Requests\Cms\StorePostRequest;
 use App\Http\Requests\Cms\UpdatePostRequest;
 use App\Models\Category;
@@ -14,6 +15,7 @@ use App\Models\Sponsor;
 use App\Models\Tag;
 use App\Models\User;
 use App\Services\PostTemplateRegistry;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -179,6 +181,14 @@ class PostController extends Controller
                 'name' => $c->getTranslation('name', $language, false) ?: $c->getTranslation('name', 'en'),
             ]);
 
+        // Get languages and post types for quick draft modal
+        $languages = Language::active()->ordered()->get(['code', 'name', 'native_name', 'direction', 'is_default']);
+        $postTypes = collect(Setting::getPostTypes())->map(fn ($type) => [
+            'value' => $type['slug'],
+            'label' => $type['name'],
+            'icon' => $type['icon'] ?? null,
+        ])->values()->all();
+
         return Inertia::render('Posts/Index', [
             'posts' => $posts,
             'counts' => $counts,
@@ -192,6 +202,8 @@ class PostController extends Controller
                 'direction' => $lang->direction,
                 'is_rtl' => $lang->isRtl(),
             ],
+            'languages' => $languages,
+            'postTypes' => $postTypes,
             'userCapabilities' => [
                 'isEditorOrAdmin' => $isEditorOrAdmin,
                 'userId' => $user->id,
@@ -298,6 +310,31 @@ class PostController extends Controller
         // Redirect to edit page so user can use workflow
         return redirect()->route('cms.posts.edit', ['language' => $language, 'post' => $post])
             ->with('success', 'Post created. Use the workflow panel to submit for review.');
+    }
+
+    public function quickDraft(QuickDraftRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $post = Post::create([
+            'author_id' => Auth::id(),
+            'language_code' => $validated['language_code'],
+            'title' => $validated['title'],
+            'post_type' => $validated['post_type'],
+            'status' => Post::STATUS_DRAFT,
+            'workflow_status' => 'draft',
+        ]);
+
+        // Create initial version
+        $post->createVersion(null, 'Initial version');
+
+        return response()->json([
+            'success' => true,
+            'redirect' => route('cms.posts.edit', [
+                'language' => $validated['language_code'],
+                'post' => $post,
+            ]),
+        ]);
     }
 
     public function show(string $language, Post $post): Response
