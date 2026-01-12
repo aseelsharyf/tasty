@@ -470,7 +470,7 @@ defineExpose({
 
 /* Position toolbar on the left */
 .ce-toolbar {
-    left: -50px;
+    left: -70px;
 }
 
 .ce-toolbar__content {
@@ -892,7 +892,7 @@ defineExpose({
 
 .block-editor--rtl .ce-toolbar {
     left: auto;
-    right: -50px;
+    right: -70px;
 }
 
 .block-editor--rtl .ce-toolbar__actions {
@@ -950,6 +950,28 @@ defineExpose({
         left: 1rem !important;
         right: 1rem !important;
         width: auto !important;
+    }
+
+    /* Toolbar positioning on mobile - inline instead of left-positioned */
+    .ce-toolbar {
+        left: 0 !important;
+    }
+
+    .ce-toolbar__actions {
+        position: static;
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .ce-toolbar__plus,
+    .ce-toolbar__settings-btn {
+        width: 28px;
+        height: 28px;
+    }
+
+    .block-editor--rtl .ce-toolbar {
+        right: 0 !important;
+        left: auto !important;
     }
 }
 </style>

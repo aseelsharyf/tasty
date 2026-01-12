@@ -119,18 +119,24 @@ class TaxonomySeeder extends Seeder
             $children = $categoryData['children'] ?? [];
             unset($categoryData['children']);
 
-            $parent = Category::create([
-                ...$categoryData,
-                'order' => $order++,
-            ]);
+            $parent = Category::firstOrCreate(
+                ['slug' => $categoryData['slug']],
+                [
+                    ...$categoryData,
+                    'order' => $order++,
+                ]
+            );
 
             $childOrder = 1;
             foreach ($children as $childData) {
-                Category::create([
-                    ...$childData,
-                    'parent_id' => $parent->id,
-                    'order' => $childOrder++,
-                ]);
+                Category::firstOrCreate(
+                    ['slug' => $childData['slug']],
+                    [
+                        ...$childData,
+                        'parent_id' => $parent->id,
+                        'order' => $childOrder++,
+                    ]
+                );
             }
         }
     }
@@ -241,10 +247,10 @@ class TaxonomySeeder extends Seeder
         ];
 
         foreach ($tags as $tagName) {
-            Tag::create([
-                'name' => $tagName,
-                'slug' => \Str::slug($tagName['en']),
-            ]);
+            Tag::firstOrCreate(
+                ['slug' => \Str::slug($tagName['en'])],
+                ['name' => $tagName]
+            );
         }
     }
 }

@@ -265,6 +265,12 @@ class PostController extends Controller
             abort(404, 'Invalid language code');
         }
 
+        // Auto-generate slug if empty
+        $slug = $validated['slug'] ?? null;
+        if (empty($slug) && ! empty($validated['title'])) {
+            $slug = Post::generateUniqueSlug($validated['title']);
+        }
+
         // Create post with draft status initially (workflow controls publishing)
         $post = Post::create([
             'author_id' => Auth::id(),
@@ -272,7 +278,7 @@ class PostController extends Controller
             'title' => $validated['title'],
             'kicker' => $validated['kicker'] ?? null,
             'subtitle' => $validated['subtitle'] ?? null,
-            'slug' => $validated['slug'] ?? null,
+            'slug' => $slug,
             'excerpt' => $validated['excerpt'] ?? null,
             'content' => $validated['content'] ?? null,
             'post_type' => $validated['post_type'] ?? Post::TYPE_ARTICLE,
@@ -534,6 +540,11 @@ class PostController extends Controller
     public function update(UpdatePostRequest $request, string $language, Post $post): RedirectResponse
     {
         $validated = $request->validated();
+
+        // Auto-generate slug if empty (based on title)
+        if (empty($validated['slug']) && ! empty($validated['title'])) {
+            $validated['slug'] = Post::generateUniqueSlug($validated['title']);
+        }
 
         // Check if the post is currently published
         // If published, we only update the draft version's snapshot - NOT the post model

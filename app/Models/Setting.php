@@ -116,6 +116,21 @@ class Setting extends Model
                     ['name' => 'social_linkedin', 'label' => 'LinkedIn', 'type' => 'text'],
                 ],
             ],
+            [
+                'slug' => 'restaurant-review',
+                'name' => 'Restaurant Review',
+                'icon' => 'i-lucide-utensils',
+                'is_default' => true,
+                'fields' => [
+                    ['name' => 'restaurant_name', 'label' => 'Restaurant Name', 'type' => 'text'],
+                    ['name' => 'location', 'label' => 'Location', 'type' => 'text'],
+                    ['name' => 'cuisine', 'label' => 'Cuisine Type', 'type' => 'text'],
+                    ['name' => 'rating', 'label' => 'Rating', 'type' => 'select', 'options' => ['1', '2', '3', '4', '5']],
+                    ['name' => 'price_range', 'label' => 'Price Range', 'type' => 'select', 'options' => ['$', '$$', '$$$', '$$$$']],
+                    ['name' => 'visit_date', 'label' => 'Visit Date', 'type' => 'text'],
+                    ['name' => 'highlights', 'label' => 'Must Try Dishes', 'type' => 'repeater'],
+                ],
+            ],
         ];
     }
 

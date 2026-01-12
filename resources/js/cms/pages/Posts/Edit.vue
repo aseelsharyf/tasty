@@ -777,9 +777,23 @@ function manualSave() {
             isSaving.value = false;
             toast.add({ title: 'Saved', description: 'Your changes have been saved', color: 'success', duration: 2000 });
         },
-        onError: () => {
+        onError: (errors) => {
             isSaving.value = false;
-            toast.add({ title: 'Error', description: 'Failed to save changes', color: 'error' });
+            // Show specific validation errors
+            const errorMessages = Object.values(errors).flat();
+            if (errorMessages.length > 0) {
+                const description = errorMessages.length === 1
+                    ? errorMessages[0]
+                    : `${errorMessages.length} issues need attention`;
+                toast.add({
+                    title: 'Unable to save',
+                    description: description as string,
+                    color: 'error',
+                    duration: 5000,
+                });
+            } else {
+                toast.add({ title: 'Error', description: 'Failed to save changes', color: 'error' });
+            }
         },
     });
 }
@@ -843,10 +857,11 @@ function removeFeaturedMedia() {
 
 // Category and tag options for sidebar
 const flattenedCategories = computed(() => {
-    const flatten = (cats: Category[], depth = 0): { label: string; value: number }[] => {
+    const flatten = (cats: Category[], depth = 0): { label: string; value: number; depth: number }[] => {
         return cats.flatMap((cat) => {
-            const prefix = '— '.repeat(depth);
-            const result = [{ label: prefix + cat.name, value: cat.id }];
+            // Use non-breaking spaces for visual indentation in dropdown
+            const indent = '\u00A0\u00A0\u00A0\u00A0'.repeat(depth);
+            const result = [{ label: indent + cat.name, value: cat.id, depth }];
             if (cat.children && cat.children.length > 0) {
                 result.push(...flatten(cat.children, depth + 1));
             }
@@ -1186,6 +1201,27 @@ function openDiff() {
                                     {{ currentVersionLabel }}
                                 </UButton>
                             </UDropdownMenu>
+                            <!-- Workflow Actions Dropdown -->
+                            <UDropdownMenu
+                                v-if="availableTransitions.length > 0"
+                                :items="availableTransitions.map(t => ({
+                                    label: t.label,
+                                    icon: 'i-lucide-arrow-right',
+                                    onSelect: () => performQuickTransition(t),
+                                }))"
+                            >
+                                <UButton
+                                    color="primary"
+                                    variant="soft"
+                                    size="xs"
+                                    trailing-icon="i-lucide-chevron-down"
+                                    class="shrink-0"
+                                    :loading="transitionLoading"
+                                >
+                                    <UIcon name="i-lucide-workflow" class="size-3 mr-1" />
+                                    <span class="hidden sm:inline">Actions</span>
+                                </UButton>
+                            </UDropdownMenu>
                             <!-- Quick Unpublish button for published posts -->
                             <UButton
                                 v-if="isPublished"
@@ -1326,16 +1362,14 @@ function openDiff() {
                                 @click="openDiff"
                                 title="Compare with Live"
                             />
-                            <!-- Mobile sidebar toggle -->
-                            <UButton
-                                v-if="!isFullscreen"
-                                color="neutral"
-                                variant="ghost"
-                                icon="i-lucide-panel-right"
-                                size="sm"
-                                class="lg:hidden"
-                                @click="sidebarOpen = !sidebarOpen"
-                            />
+
+                            <!-- Word count indicator -->
+                            <div class="hidden sm:flex items-center gap-1.5 text-xs text-muted px-2">
+                                <UIcon name="i-lucide-file-text" class="size-3.5" />
+                                <span>{{ wordCount }} words</span>
+                                <span class="text-muted/50">·</span>
+                                <span>{{ readingTime }}</span>
+                            </div>
                         </div>
                     </template>
                 </UDashboardNavbar>
@@ -1379,13 +1413,6 @@ function openDiff() {
                 </div>
 
                 <div class="flex h-full relative">
-                    <!-- Mobile sidebar overlay -->
-                    <div
-                        v-if="sidebarOpen && !isFullscreen"
-                        class="fixed inset-0 bg-black/50 z-50 lg:hidden"
-                        @click="sidebarOpen = false"
-                    />
-
                     <!-- Main Editor Area -->
                     <div
                         :class="[
@@ -1440,7 +1467,7 @@ function openDiff() {
                         </div>
 
                         <!-- Edit Mode -->
-                        <div v-else :class="['mx-auto px-6 py-12', isFullscreen ? 'max-w-screen-2xl' : 'max-w-2xl']">
+                        <div v-else :class="['mx-auto py-12 px-6 md:pl-20 md:pr-8', isFullscreen ? 'max-w-screen-2xl' : 'max-w-4xl']">
                             <!-- Read-only notice -->
                             <div v-if="isReadOnly" class="mb-6 p-4 rounded-lg bg-elevated border border-default">
                                 <div class="flex items-start gap-3">
@@ -1521,6 +1548,158 @@ function openDiff() {
                                 </div>
                             </div>
 
+                            <!-- Validation Errors Alert -->
+                            <div v-if="Object.keys(form.errors).length > 0" class="mb-6 p-4 rounded-lg bg-error/10 border border-error/20">
+                                <div class="flex items-start gap-3">
+                                    <UIcon name="i-lucide-alert-circle" class="size-5 text-error shrink-0 mt-0.5" />
+                                    <div>
+                                        <p class="font-medium text-error">Please fix the following issues:</p>
+                                        <ul class="mt-2 space-y-1 text-sm text-error/80">
+                                            <li v-for="(error, field) in form.errors" :key="field">• {{ error }}</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Post Metadata (Medium-inspired) -->
+                            <div class="mb-6 flex flex-wrap items-center gap-x-2 gap-y-2 text-sm">
+                                <!-- Category inline -->
+                                <span class="text-muted">in</span>
+                                <USelectMenu
+                                    v-model="form.category_id"
+                                    :items="flattenedCategories"
+                                    value-key="value"
+                                    placeholder="Category"
+                                    variant="none"
+                                    size="sm"
+                                    :disabled="isReadOnly"
+                                    :search-input="{ placeholder: 'Search...', variant: 'none' }"
+                                    :ui="{ content: 'min-w-56' }"
+                                    :content="{ align: 'start' }"
+                                    :class="[
+                                        'transition-colors',
+                                        form.errors.category_id ? 'text-error' : 'text-highlighted hover:text-primary'
+                                    ]"
+                                />
+                                <span class="text-muted/40">·</span>
+                                <!-- Featured Tag -->
+                                <USelectMenu
+                                    v-model="form.featured_tag_id"
+                                    :items="tagOptions"
+                                    value-key="value"
+                                    placeholder="Featured Tag"
+                                    variant="none"
+                                    searchable
+                                    :create-item="!isReadOnly"
+                                    size="sm"
+                                    :disabled="isReadOnly"
+                                    :ui="{ content: 'min-w-56' }"
+                                    :content="{ align: 'start' }"
+                                    :class="[
+                                        'transition-colors',
+                                        form.errors.featured_tag_id ? 'text-error' : 'text-highlighted hover:text-primary'
+                                    ]"
+                                    @create="onCreateFeaturedTag"
+                                />
+                                <span class="text-muted/40">·</span>
+                                <!-- Post Type -->
+                                <USelectMenu
+                                    v-model="form.post_type"
+                                    :items="postTypes"
+                                    value-key="value"
+                                    variant="none"
+                                    size="sm"
+                                    :search-input="false"
+                                    :disabled="isReadOnly"
+                                    :ui="{ content: 'min-w-40' }"
+                                    :content="{ align: 'start' }"
+                                    class="text-highlighted hover:text-primary transition-colors"
+                                />
+
+                                <!-- Template switcher (subtle, right-aligned) -->
+                                <div class="ml-auto flex items-center">
+                                    <div class="flex bg-elevated/50 rounded-lg p-0.5">
+                                        <button
+                                            v-for="template in templates"
+                                            :key="template.key"
+                                            type="button"
+                                            :class="[
+                                                'inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-all',
+                                                form.template === template.key
+                                                    ? 'bg-default text-highlighted shadow-sm'
+                                                    : 'text-muted hover:text-highlighted',
+                                                isReadOnly ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+                                            ]"
+                                            :disabled="isReadOnly"
+                                            :title="template.description"
+                                            @click="form.template = template.key"
+                                        >
+                                            <UIcon :name="template.icon" class="size-3.5" />
+                                            <span class="hidden sm:inline">{{ template.name }}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Workflow Actions (compact bar) -->
+                            <div v-if="availableTransitions.length > 0 && !isReadOnly" class="mb-6 flex flex-wrap items-center gap-2">
+                                <span class="text-xs text-muted">Actions:</span>
+                                <UButton
+                                    v-for="transition in availableTransitions"
+                                    :key="`${transition.from}-${transition.to}`"
+                                    size="xs"
+                                    :color="workflow.getStateColor(transition.to)"
+                                    variant="soft"
+                                    :loading="transitionLoading"
+                                    @click="performQuickTransition(transition)"
+                                >
+                                    <template #leading>
+                                        <UIcon name="i-lucide-arrow-right" class="size-3" />
+                                    </template>
+                                    {{ transition.label }}
+                                </UButton>
+                            </div>
+
+                            <!-- Cover Image -->
+                            <div class="mb-6">
+                                <div v-if="selectedFeaturedMedia" class="relative">
+                                    <img
+                                        :src="selectedFeaturedMedia.thumbnail_url || selectedFeaturedMedia.url || ''"
+                                        :alt="selectedFeaturedMedia.title || 'Cover'"
+                                        class="w-full h-64 object-cover rounded-lg"
+                                    />
+                                    <div v-if="!isReadOnly" class="absolute top-2 right-2 flex gap-1.5">
+                                        <UButton
+                                            color="neutral"
+                                            variant="solid"
+                                            icon="i-lucide-image-plus"
+                                            size="xs"
+                                            @click="openCoverPicker"
+                                        />
+                                        <UButton
+                                            color="neutral"
+                                            variant="solid"
+                                            icon="i-lucide-x"
+                                            size="xs"
+                                            @click="removeFeaturedMedia"
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    v-else-if="!isReadOnly"
+                                    type="button"
+                                    class="w-full h-40 border border-dashed border-default rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-colors"
+                                    @click="openCoverPicker"
+                                >
+                                    <UIcon name="i-lucide-image-plus" class="size-8 text-muted" />
+                                    <span class="text-sm text-muted">Add cover image</span>
+                                </button>
+                                <div v-else class="w-full h-40 border border-dashed border-default rounded-lg flex flex-col items-center justify-center gap-2">
+                                    <UIcon name="i-lucide-image-off" class="size-8 text-muted" />
+                                    <span class="text-sm text-muted">No cover image</span>
+                                </div>
+                            </div>
+
                             <!-- Kicker -->
                             <input
                                 v-model="form.kicker"
@@ -1555,16 +1734,17 @@ function openDiff() {
                                 @input="autoResizeTitle"
                                 @keydown="onDhivehiKeyDown"
                             />
-                            <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center justify-between mb-3 h-4">
                                 <p v-if="form.errors.title" class="text-error text-xs">{{ form.errors.title }}</p>
                                 <span v-else />
-                                <span :class="['text-xs', form.title.length > 70 ? 'text-error' : 'text-muted']">
-                                    {{ 70 - form.title.length }} left
+                                <span
+                                    v-if="form.title.length > 50"
+                                    :class="['text-xs transition-opacity', form.title.length > 70 ? 'text-error' : 'text-muted/60']"
+                                >
+                                    {{ 70 - form.title.length }}
                                 </span>
                             </div>
 
-                            <!-- Separator between headline and description -->
-                            <div class="h-px bg-gray-200 dark:bg-gray-700 my-6" />
 
                             <!-- Subtitle -->
                             <textarea
@@ -1584,9 +1764,12 @@ function openDiff() {
                                 @input="autoResizeSubtitle"
                                 @keydown="onDhivehiKeyDown"
                             />
-                            <div class="flex items-center justify-end mb-4">
-                                <span :class="['text-xs', (form.subtitle?.length || 0) > 120 ? 'text-error' : 'text-muted']">
-                                    {{ 120 - (form.subtitle?.length || 0) }} left
+                            <div class="flex items-center justify-end mb-4 h-4">
+                                <span
+                                    v-if="(form.subtitle?.length || 0) > 90"
+                                    :class="['text-xs', (form.subtitle?.length || 0) > 120 ? 'text-error' : 'text-muted/60']"
+                                >
+                                    {{ 120 - (form.subtitle?.length || 0) }}
                                 </span>
                             </div>
 
@@ -1608,14 +1791,14 @@ function openDiff() {
                                 @input="autoResizeExcerpt"
                                 @keydown="onDhivehiKeyDown"
                             />
-                            <div class="flex items-center justify-end">
-                                <span :class="['text-xs', (form.excerpt?.length || 0) > 160 ? 'text-error' : 'text-muted']">
-                                    {{ 160 - (form.excerpt?.length || 0) }} left
+                            <div class="flex items-center justify-end h-4 mb-8">
+                                <span
+                                    v-if="(form.excerpt?.length || 0) > 120"
+                                    :class="['text-xs', (form.excerpt?.length || 0) > 160 ? 'text-error' : 'text-muted/60']"
+                                >
+                                    {{ 160 - (form.excerpt?.length || 0) }}
                                 </span>
                             </div>
-
-                            <!-- Separator between header and content -->
-                            <div class="h-px bg-gray-200 dark:bg-gray-700 my-8" />
 
                             <!-- Content Editor -->
                             <BlockEditor
@@ -1928,317 +2111,82 @@ function openDiff() {
                                     </template>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Slim Sidebar - Document stats, cover, and actions only -->
-                    <div
-                        v-show="!isFullscreen"
-                        :class="[
-                            'w-72 border-l border-default overflow-y-auto',
-                            'bg-[var(--ui-bg)] lg:bg-elevated/25',
-                            'fixed lg:relative inset-y-0 right-0 z-[60]',
-                            'transition-transform duration-200 ease-in-out',
-                            sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0',
-                        ]"
-                    >
-                        <!-- Mobile close button -->
-                        <div class="lg:hidden flex items-center justify-between p-4 border-b border-default">
-                            <span class="text-sm font-medium">Post Info</span>
-                            <UButton
-                                color="neutral"
-                                variant="ghost"
-                                icon="i-lucide-x"
-                                size="sm"
-                                @click="sidebarOpen = false"
-                            />
-                        </div>
-                        <div class="p-4 space-y-5">
-
-                            <!-- Workflow Quick Actions -->
-                            <div v-if="availableTransitions.length > 0">
-                                <div class="flex items-center gap-2 mb-3">
-                                    <UIcon :name="currentWorkflowState.icon" class="size-4 text-muted" />
-                                    <span class="text-xs font-medium text-muted uppercase tracking-wider">Workflow</span>
-                                    <UBadge :color="workflow.getStateColor(workflowStatus)" variant="subtle" size="xs" class="ml-auto">
-                                        {{ currentWorkflowState.label }}
-                                    </UBadge>
-                                </div>
-                                <div class="space-y-2">
-                                    <UButton
-                                        v-for="transition in availableTransitions"
-                                        :key="`${transition.from}-${transition.to}`"
-                                        :color="workflow.getStateColor(transition.to)"
-                                        variant="soft"
-                                        size="sm"
-                                        block
-                                        :loading="transitionLoading"
-                                        @click="performQuickTransition(transition)"
-                                    >
-                                        <template #leading>
-                                            <UIcon name="i-lucide-arrow-right" class="size-4" />
-                                        </template>
-                                        {{ transition.label }}
-                                    </UButton>
-                                </div>
-                            </div>
-
-                            <!-- Current Status (when in read-only mode) -->
-                            <div v-else-if="isReadOnly">
-                                <!-- Published/Active version -->
-                                <div v-if="isCurrentVersionActive" class="p-3 rounded-lg bg-success/10 border border-success/20">
-                                    <div class="flex items-center gap-2">
-                                        <UIcon name="i-lucide-check-circle" class="size-5 text-success" />
-                                        <div>
-                                            <p class="text-sm font-medium text-success">Published</p>
-                                            <p class="text-xs text-muted">This post is live</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Version in workflow (review, approved, etc.) -->
-                                <div v-else class="p-3 rounded-lg border" :class="`bg-${workflow.getStateColor(workflowStatus)}/10 border-${workflow.getStateColor(workflowStatus)}/20`">
-                                    <div class="flex items-center gap-2">
-                                        <UIcon :name="currentWorkflowState.icon" class="size-5" :class="`text-${workflow.getStateColor(workflowStatus)}`" />
-                                        <div>
-                                            <p class="text-sm font-medium" :class="`text-${workflow.getStateColor(workflowStatus)}`">{{ currentWorkflowState.label }}</p>
-                                            <p class="text-xs text-muted">This version is in the workflow</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div v-if="availableTransitions.length > 0 || isReadOnly" class="h-px bg-default" />
-
-                            <!-- Document Stats -->
-                            <div>
-                                <div class="flex items-center gap-2 mb-3">
-                                    <UIcon name="i-lucide-file-text" class="size-4 text-muted" />
-                                    <span class="text-xs font-medium text-muted uppercase tracking-wider">Document</span>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div class="text-center p-2 rounded-lg bg-elevated/50">
-                                        <p class="text-lg font-semibold text-highlighted">{{ wordCount.toLocaleString() }}</p>
-                                        <p class="text-xs text-muted">words</p>
-                                    </div>
-                                    <div class="text-center p-2 rounded-lg bg-elevated/50">
-                                        <p class="text-lg font-semibold text-highlighted">{{ readingTime.replace(' read', '') }}</p>
-                                        <p class="text-xs text-muted">read time</p>
-                                    </div>
-                                </div>
-                                <div class="mt-3 text-xs text-muted space-y-1">
-                                    <p><span class="text-highlighted">Last saved:</span> {{ timeAgo }}</p>
-                                    <p v-if="post.author"><span class="text-highlighted">Author:</span> {{ post.author.name }}</p>
-                                </div>
-                            </div>
-
-                            <div class="h-px bg-default" />
-
-                            <!-- Featured Image -->
-                            <div>
-                                <div class="flex items-center gap-2 mb-3">
-                                    <UIcon name="i-lucide-image" class="size-4 text-muted" />
-                                    <span class="text-xs font-medium text-muted uppercase tracking-wider">Cover</span>
-                                </div>
-                                <div v-if="selectedFeaturedMedia" class="relative mb-2">
-                                    <img
-                                        :src="selectedFeaturedMedia.thumbnail_url || selectedFeaturedMedia.url || ''"
-                                        :alt="selectedFeaturedMedia.title || 'Cover'"
-                                        class="w-full h-32 object-cover rounded-lg"
-                                    />
-                                    <UButton
-                                        v-if="!isReadOnly"
-                                        color="neutral"
-                                        variant="solid"
-                                        icon="i-lucide-x"
-                                        size="xs"
-                                        class="absolute top-1.5 right-1.5"
-                                        @click="removeFeaturedMedia"
-                                    />
-                                </div>
-                                <button
-                                    v-if="!isReadOnly"
-                                    type="button"
-                                    class="w-full border border-dashed border-default rounded-lg px-3 py-4 text-center hover:border-primary hover:bg-primary/5 transition-colors"
-                                    @click="openCoverPicker"
-                                >
-                                    <UIcon name="i-lucide-image-plus" class="size-5 text-muted mx-auto mb-1" />
-                                    <p class="text-xs text-muted">{{ selectedFeaturedMedia ? 'Change cover' : 'Select cover image' }}</p>
-                                </button>
-                                <div v-else-if="!selectedFeaturedMedia" class="text-xs text-muted text-center py-4">
-                                    No cover image
-                                </div>
-                            </div>
-
-                            <div class="h-px bg-default" />
-
-                            <!-- Template Selection -->
-                            <div>
-                                <div class="flex items-center gap-2 mb-3">
-                                    <UIcon name="i-lucide-layout-template" class="size-4 text-muted" />
-                                    <span class="text-xs font-medium text-muted uppercase tracking-wider">Template</span>
-                                </div>
-                                <div class="space-y-2">
-                                    <button
-                                        v-for="template in templates"
-                                        :key="template.key"
-                                        type="button"
-                                        :class="[
-                                            'w-full text-left p-3 rounded-lg border transition-all',
-                                            form.template === template.key
-                                                ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                                                : 'border-default hover:border-muted hover:bg-elevated/50',
-                                            isReadOnly ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
-                                        ]"
-                                        :disabled="isReadOnly"
-                                        @click="form.template = template.key"
-                                    >
-                                        <div class="flex items-start gap-2.5">
-                                            <UIcon :name="template.icon" :class="[
-                                                'size-4 mt-0.5 shrink-0',
-                                                form.template === template.key ? 'text-primary' : 'text-muted'
-                                            ]" />
-                                            <div class="min-w-0">
-                                                <p :class="[
-                                                    'text-sm font-medium',
-                                                    form.template === template.key ? 'text-primary' : ''
-                                                ]">{{ template.name }}</p>
-                                                <p class="text-xs text-muted mt-0.5 line-clamp-2">{{ template.description }}</p>
-                                            </div>
-                                        </div>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="h-px bg-default" />
-
-                            <!-- Settings -->
-                            <div>
-                                <div class="flex items-center gap-2 mb-3">
-                                    <UIcon name="i-lucide-settings-2" class="size-4 text-muted" />
-                                    <span class="text-xs font-medium text-muted uppercase tracking-wider">Settings</span>
-                                </div>
-                                <div class="space-y-3">
-                                    <div>
-                                        <label class="text-xs text-muted mb-1 block">Type</label>
-                                        <USelectMenu
-                                            v-model="form.post_type"
-                                            :items="postTypes"
-                                            value-key="value"
-                                            size="sm"
-                                            class="w-full"
-                                            :disabled="isReadOnly"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label class="text-xs text-muted mb-1 block">URL Slug</label>
-                                        <div class="flex gap-1.5">
-                                            <UInput v-model="form.slug" placeholder="post-slug" size="sm" class="flex-1 min-w-0" :disabled="isReadOnly" />
-                                            <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-refresh-cw" :disabled="isReadOnly" @click="generateSlug" />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="text-xs text-muted mb-1 block">Category <span class="text-error">*</span></label>
-                                        <USelectMenu
-                                            v-model="form.category_id"
-                                            :items="flattenedCategories"
-                                            value-key="value"
-                                            placeholder="Select..."
-                                            size="sm"
-                                            class="w-full"
-                                            :disabled="isReadOnly"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label class="text-xs text-muted mb-1 block">Featured Tag <span class="text-error">*</span></label>
-                                        <USelectMenu
-                                            v-model="form.featured_tag_id"
-                                            :items="tagOptions"
-                                            value-key="value"
-                                            placeholder="Select or create..."
-                                            searchable
-                                            :create-item="!isReadOnly"
-                                            size="sm"
-                                            class="w-full"
-                                            :disabled="isReadOnly"
-                                            @create="onCreateFeaturedTag"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label class="text-xs text-muted mb-1 block">Sponsor</label>
-                                        <USelectMenu
-                                            v-model="form.sponsor_id"
-                                            :items="sponsorOptions"
-                                            value-key="value"
-                                            placeholder="None"
-                                            searchable
-                                            size="sm"
-                                            class="w-full"
-                                            :disabled="isReadOnly"
-                                            :ui="{ clear: 'flex' }"
-                                            clearable
-                                        />
-                                    </div>
-                                    <div>
-                                        <label class="text-xs text-muted mb-1 block">Tags</label>
-                                        <USelectMenu
-                                            v-model="form.tags"
-                                            :items="tagOptions"
-                                            value-key="value"
-                                            multiple
-                                            placeholder="Select or create..."
-                                            searchable
-                                            :create-item="!isReadOnly"
-                                            size="sm"
-                                            class="w-full"
-                                            :disabled="isReadOnly"
-                                            @create="onCreateTag"
-                                        />
-                                    </div>
-                                    <!-- Display Options -->
-                                    <div class="pt-3 border-t border-default mt-3">
-                                        <label class="text-xs text-muted mb-2 block">Display Options</label>
-                                        <label class="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                v-model="form.show_author"
-                                                class="rounded border-default text-primary focus:ring-primary"
-                                                :disabled="isReadOnly"
-                                            />
-                                            <span class="text-sm">Show author name</span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Open Editorial Slideover -->
-                            <UButton
-                                color="neutral"
-                                variant="soft"
-                                icon="i-lucide-panel-right-open"
-                                block
-                                @click="editorialSlideoverOpen = true"
-                            >
-                                Editorial Panel
-                            </UButton>
-
-                            <div class="h-px bg-default" />
 
                             <!-- Actions -->
-                            <div class="space-y-1">
-                                <UButton
-                                    color="neutral"
-                                    variant="ghost"
-                                    icon="i-lucide-trash"
-                                    size="sm"
-                                    class="w-full justify-start text-error hover:bg-error/10"
+                            <div class="mt-10 pt-6 border-t border-default flex items-center justify-between">
+                                <button
+                                    type="button"
+                                    class="text-sm text-muted hover:text-highlighted flex items-center gap-1.5 transition-colors"
+                                    @click="editorialSlideoverOpen = true"
+                                >
+                                    <UIcon name="i-lucide-panel-right" class="size-4" />
+                                    Editorial
+                                </button>
+                                <button
+                                    type="button"
+                                    class="text-sm text-muted hover:text-error flex items-center gap-1.5 transition-colors"
                                     @click="openDeleteModal"
                                 >
-                                    Move to trash
-                                </UButton>
+                                    <UIcon name="i-lucide-trash-2" class="size-4" />
+                                    Delete
+                                </button>
                             </div>
 
+                            <!-- Tags (Medium-style inline) -->
+                            <div class="mt-6">
+                                <div class="flex items-center gap-2 text-sm text-muted mb-3">
+                                    <UIcon name="i-lucide-tags" class="size-4" />
+                                    <span>Tags</span>
+                                </div>
+                                <USelectMenu
+                                    v-model="form.tags"
+                                    :items="tagOptions"
+                                    value-key="value"
+                                    multiple
+                                    placeholder="Add tags..."
+                                    searchable
+                                    :create-item="!isReadOnly"
+                                    variant="none"
+                                    size="sm"
+                                    :disabled="isReadOnly"
+                                    :ui="{ content: 'min-w-64' }"
+                                    class="text-highlighted"
+                                    @create="onCreateTag"
+                                />
+                            </div>
+
+                            <!-- Additional Settings (subtle) -->
+                            <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
+                                <!-- Sponsor (if available) -->
+                                <div v-if="sponsorOptions.length > 0" class="flex items-center gap-2">
+                                    <UIcon name="i-lucide-handshake" class="size-4 text-muted" />
+                                    <USelectMenu
+                                        v-model="form.sponsor_id"
+                                        :items="sponsorOptions"
+                                        value-key="value"
+                                        placeholder="Add sponsor"
+                                        searchable
+                                        variant="none"
+                                        size="sm"
+                                        :disabled="isReadOnly"
+                                        :ui="{ content: 'min-w-48' }"
+                                        class="text-muted hover:text-highlighted transition-colors"
+                                    />
+                                </div>
+
+                                <!-- Show Author Toggle -->
+                                <label class="flex items-center gap-2 cursor-pointer text-muted hover:text-highlighted transition-colors">
+                                    <USwitch
+                                        v-model="form.show_author"
+                                        size="sm"
+                                        :disabled="isReadOnly"
+                                    />
+                                    <span>Show author</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
+
                 </div>
             </template>
         </UDashboardPanel>
