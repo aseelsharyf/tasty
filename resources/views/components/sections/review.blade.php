@@ -70,7 +70,7 @@
                         $postSubtitle = is_array($post) ? ($post['description'] ?? '') : ($post->excerpt ?? '');
                         $postUrl = is_array($post) ? ($post['url'] ?? '#') : ($post->url ?? '#');
                         $postCategory = is_array($post) ? ($post['category'] ?? null) : ($post->categories->first()?->name ?? null);
-                        $postRating = is_array($post) ? ($post['rating'] ?? null) : ($post->rating ?? null);
+                        $postRating = is_array($post) ? ($post['rating'] ?? null) : ($post->getCustomField('rating'));
                     @endphp
 
                     <a href="{{ $postUrl }}" class="flex flex-col gap-8 flex-1 min-w-[280px] group">
@@ -117,7 +117,7 @@
                             $postSubtitle = is_array($post) ? ($post['description'] ?? '') : ($post->excerpt ?? '');
                             $postUrl = is_array($post) ? ($post['url'] ?? '#') : ($post->url ?? '#');
                             $postCategory = is_array($post) ? ($post['category'] ?? null) : ($post->categories->first()?->name ?? null);
-                            $postRating = is_array($post) ? ($post['rating'] ?? null) : ($post->rating ?? null);
+                            $postRating = is_array($post) ? ($post['rating'] ?? null) : ($post->getCustomField('rating'));
                         @endphp
 
                         <a href="{{ $postUrl }}" class="flex flex-col gap-8 flex-1 min-w-[280px] group">
@@ -186,7 +186,7 @@
                         $postSubtitle = is_array($post) ? ($post['description'] ?? '') : ($post->excerpt ?? '');
                         $postUrl = is_array($post) ? ($post['url'] ?? '#') : ($post->url ?? '#');
                         $postCategory = is_array($post) ? ($post['category'] ?? null) : ($post->categories->first()?->name ?? null);
-                        $postRating = is_array($post) ? ($post['rating'] ?? null) : ($post->rating ?? null);
+                        $postRating = is_array($post) ? ($post['rating'] ?? null) : ($post->getCustomField('rating'));
                     @endphp
 
                     <a href="{{ $postUrl }}" class="{{ $cardClass }}">
@@ -289,7 +289,7 @@
         <div class="flex justify-center" x-show="hasMore" x-cloak>
             <button
                 @click="loadMore()"
-                class="btn btn-yellow"
+                class="btn btn-yellow !pl-[18px] !pr-5 !py-3 !gap-2 !text-[20px] !leading-[26px] lg:!px-8 lg:!py-4 lg:!gap-3 lg:!text-base lg:!leading-normal"
                 :disabled="loading"
                 :class="{ 'opacity-50 cursor-not-allowed': loading }"
             >

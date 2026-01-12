@@ -37,6 +37,7 @@ abstract class BasePostsAction implements PostsActionContract
                 'authorUrl' => $post->author?->url ?? '#',
                 'date' => $post->published_at?->format('F j, Y') ?? '',
                 'url' => $post->url,
+                'rating' => $post->getCustomField('rating'),
             ];
         })->toArray();
     }

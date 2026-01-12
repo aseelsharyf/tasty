@@ -88,6 +88,12 @@ class PostSeeder extends Seeder
             // Create 2 published recipes per language
             $this->createPublishedRecipes($language, $authors, $categories, $tags, $sponsors, $mediaItems, 2);
 
+            // Create 3 restaurant reviews per language
+            $this->createPublishedRestaurantReviews($language, $authors, $categories, $tags, $sponsors, $mediaItems, 3);
+
+            // Create 2 people posts per language
+            $this->createPublishedPeoplePosts($language, $authors, $categories, $tags, $sponsors, $mediaItems, 2);
+
             $this->command->info("Created posts for language: {$language->name}");
         }
     }
@@ -394,6 +400,389 @@ class PostSeeder extends Seeder
             $version->activate();
             $post->publish();
         }
+    }
+
+    /**
+     * Create published restaurant reviews with proper workflow.
+     */
+    private function createPublishedRestaurantReviews($language, $authors, $categories, $tags, $sponsors, $mediaItems, int $count): void
+    {
+        $reviews = $this->getRealisticRestaurantReviews();
+        $reviewCategory = Category::where('slug', 'review')->first();
+
+        for ($i = 0; $i < $count; $i++) {
+            $author = $authors->random();
+            $category = $reviewCategory ?? $categories->random();
+            $featuredTag = $tags->random();
+            $sponsor = fake()->boolean(25) ? $sponsors->random() : null;
+
+            $review = $reviews[$i % count($reviews)];
+
+            $post = Post::factory()
+                ->withLanguage($language->code)
+                ->create([
+                    'post_type' => 'restaurant-review',
+                    'title' => $review['title'],
+                    'kicker' => $review['kicker'],
+                    'subtitle' => $review['subtitle'],
+                    'excerpt' => $review['excerpt'],
+                    'author_id' => $author->id,
+                    'featured_tag_id' => $featuredTag->id,
+                    'sponsor_id' => $sponsor?->id,
+                    'workflow_status' => 'draft',
+                    'status' => Post::STATUS_DRAFT,
+                    'content' => $this->getRestaurantReviewContent($review, $mediaItems),
+                    'custom_fields' => [
+                        'restaurant_name' => $review['restaurant_name'],
+                        'location' => $review['location'],
+                        'cuisine' => $review['cuisine'],
+                        'rating' => $review['rating'],
+                        'price_range' => $review['price_range'],
+                    ],
+                    'featured_media_id' => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
+                ]);
+
+            $post->categories()->attach($category->id);
+
+            $post->tags()->attach($featuredTag->id);
+            $additionalTags = $tags->except($featuredTag->id)->random(min(rand(1, 3), $tags->count() - 1));
+            $post->tags()->attach($additionalTags->pluck('id'));
+
+            $version = $post->createVersion(null, 'Initial review version', $author->id);
+            $version->transitionTo('review', 'Submitted for review', $author->id);
+            $version->transitionTo('copydesk', 'Sent to copy desk', $author->id);
+            $version->transitionTo('approved', 'Review approved', $author->id);
+            $version->transitionTo('published', 'Published', $author->id);
+
+            $version->activate();
+            $post->publish();
+        }
+    }
+
+    /**
+     * Create published people/interview posts with proper workflow.
+     */
+    private function createPublishedPeoplePosts($language, $authors, $categories, $tags, $sponsors, $mediaItems, int $count): void
+    {
+        $people = $this->getRealisticPeople();
+        $peopleCategory = Category::where('slug', 'people')->first();
+
+        for ($i = 0; $i < $count; $i++) {
+            $author = $authors->random();
+            $category = $peopleCategory ?? $categories->random();
+            $featuredTag = $tags->random();
+            $sponsor = fake()->boolean(20) ? $sponsors->random() : null;
+
+            $person = $people[$i % count($people)];
+
+            $post = Post::factory()
+                ->withLanguage($language->code)
+                ->create([
+                    'post_type' => 'people',
+                    'title' => $person['title'],
+                    'kicker' => $person['kicker'],
+                    'subtitle' => $person['subtitle'],
+                    'excerpt' => $person['excerpt'],
+                    'author_id' => $author->id,
+                    'featured_tag_id' => $featuredTag->id,
+                    'sponsor_id' => $sponsor?->id,
+                    'workflow_status' => 'draft',
+                    'status' => Post::STATUS_DRAFT,
+                    'content' => $this->getPeopleContent($person, $mediaItems),
+                    'custom_fields' => [
+                        'role' => $person['role'],
+                        'organization' => $person['organization'],
+                        'bio' => $person['bio'],
+                        'social_twitter' => $person['social_twitter'],
+                        'social_linkedin' => $person['social_linkedin'],
+                    ],
+                    'featured_media_id' => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
+                ]);
+
+            $post->categories()->attach($category->id);
+
+            $post->tags()->attach($featuredTag->id);
+            $additionalTags = $tags->except($featuredTag->id)->random(min(rand(1, 3), $tags->count() - 1));
+            $post->tags()->attach($additionalTags->pluck('id'));
+
+            $version = $post->createVersion(null, 'Initial interview version', $author->id);
+            $version->transitionTo('review', 'Submitted for review', $author->id);
+            $version->transitionTo('copydesk', 'Sent to copy desk', $author->id);
+            $version->transitionTo('approved', 'Interview approved', $author->id);
+            $version->transitionTo('published', 'Published', $author->id);
+
+            $version->activate();
+            $post->publish();
+        }
+    }
+
+    /**
+     * Get realistic restaurant review data.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function getRealisticRestaurantReviews(): array
+    {
+        return [
+            [
+                'kicker' => 'TAWA',
+                'title' => 'Elevated local bites in Hulhumalé',
+                'subtitle' => 'A modern take on Maldivian comfort food',
+                'excerpt' => 'In Hulhumalé, Tawa blends café relaxation with inventive small plates—ideal for a pause or a casual dinner.',
+                'restaurant_name' => 'Tawa Café & Restaurant',
+                'location' => 'Hulhumalé, Maldives',
+                'cuisine' => 'Modern Maldivian',
+                'rating' => '4',
+                'price_range' => '$$',
+            ],
+            [
+                'kicker' => 'SALA THAI',
+                'title' => 'Authentic Thai flavors in Malé',
+                'subtitle' => 'Traditional recipes with a tropical twist',
+                'excerpt' => 'Sala Thai brings the vibrant tastes of Bangkok to the Maldives, with fresh ingredients and bold spices that transport you straight to Thailand.',
+                'restaurant_name' => 'Sala Thai Restaurant',
+                'location' => 'Malé, Maldives',
+                'cuisine' => 'Thai',
+                'rating' => '5',
+                'price_range' => '$$$',
+            ],
+            [
+                'kicker' => 'SEAGULL CAFÉ',
+                'title' => 'Beachside dining done right',
+                'subtitle' => 'Fresh seafood with ocean views',
+                'excerpt' => 'With sand between your toes and the freshest catch of the day, Seagull Café offers the quintessential Maldivian dining experience.',
+                'restaurant_name' => 'Seagull Café House',
+                'location' => 'Maafushi, Maldives',
+                'cuisine' => 'Seafood',
+                'rating' => '3',
+                'price_range' => '$$',
+            ],
+            [
+                'kicker' => 'JADE BISTRO',
+                'title' => 'Fine dining meets island casual',
+                'subtitle' => 'Contemporary cuisine in an intimate setting',
+                'excerpt' => 'Jade Bistro elevates the dining scene with creative fusion dishes that celebrate both local and international flavors in perfect harmony.',
+                'restaurant_name' => 'Jade Bistro',
+                'location' => 'Hulhumalé, Maldives',
+                'cuisine' => 'Fusion',
+                'rating' => '4',
+                'price_range' => '$$$$',
+            ],
+            [
+                'kicker' => 'ISLAND SPICE',
+                'title' => 'Heat seekers paradise',
+                'subtitle' => 'Bold curries and fiery delights',
+                'excerpt' => 'For those who like it hot, Island Spice delivers authentic Maldivian curries with the perfect balance of heat and flavor.',
+                'restaurant_name' => 'Island Spice Kitchen',
+                'location' => 'Malé, Maldives',
+                'cuisine' => 'Maldivian',
+                'rating' => '4',
+                'price_range' => '$',
+            ],
+        ];
+    }
+
+    /**
+     * Get realistic people/interview data.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function getRealisticPeople(): array
+    {
+        return [
+            [
+                'kicker' => 'CHEF SPOTLIGHT',
+                'title' => 'Ibrahim Mohamed: Preserving Tradition',
+                'subtitle' => 'A journey through Maldivian culinary heritage',
+                'excerpt' => 'Meet the chef who is on a mission to document and preserve traditional Maldivian recipes for future generations.',
+                'role' => 'Executive Chef',
+                'organization' => 'Ocean Restaurant Malé',
+                'bio' => 'Chef Ibrahim Mohamed has spent over 20 years perfecting traditional Maldivian cuisine. His journey began in his grandmother\'s kitchen and has taken him to kitchens around the world before returning home.',
+                'social_twitter' => '@chefibrahim_mv',
+                'social_linkedin' => 'ibrahim-mohamed-chef',
+            ],
+            [
+                'kicker' => 'FOOD ENTREPRENEUR',
+                'title' => 'Aminath Hassan: Building a Food Empire',
+                'subtitle' => 'From home kitchen to restaurant chain',
+                'excerpt' => 'How one woman turned her passion for cooking into one of the Maldives\' most successful restaurant businesses.',
+                'role' => 'Founder & CEO',
+                'organization' => 'Taste of Maldives Group',
+                'bio' => 'Aminath Hassan started with a small café in Malé and now operates five restaurants across the Maldives. Her focus on quality local ingredients has made her a pioneer in farm-to-table dining.',
+                'social_twitter' => '@aminath_foodie',
+                'social_linkedin' => 'aminath-hassan-maldives',
+            ],
+            [
+                'kicker' => 'SUSTAINABLE FISHING',
+                'title' => 'Ahmed Ali: The Pole-and-Line Champion',
+                'subtitle' => 'Advocating for sustainable tuna fishing',
+                'excerpt' => 'Meet the fisherman leading the charge for sustainable fishing practices in the Maldivian tuna industry.',
+                'role' => 'Sustainability Advocate',
+                'organization' => 'Maldives Fishermen Association',
+                'bio' => 'Ahmed Ali has been fishing the Maldivian waters for three decades. Now he travels the world educating others about the importance of sustainable pole-and-line tuna fishing.',
+                'social_twitter' => '@sustainabletuna',
+                'social_linkedin' => 'ahmed-ali-fishing',
+            ],
+        ];
+    }
+
+    /**
+     * Generate restaurant review content in EditorJS format.
+     *
+     * @param  array<string, mixed>  $review
+     * @param  \Illuminate\Support\Collection<int, MediaItem>  $mediaItems
+     */
+    private function getRestaurantReviewContent(array $review, $mediaItems): array
+    {
+        $blocks = [];
+
+        $blocks[] = [
+            'id' => $this->generateBlockId(),
+            'type' => 'paragraph',
+            'data' => [
+                'text' => $review['excerpt'],
+            ],
+        ];
+
+        if ($mediaItems->isNotEmpty()) {
+            $image = $mediaItems->random();
+            $blocks[] = $this->createMediaBlock($image, 'Interior of '.$review['restaurant_name'], 'fullScreen');
+        }
+
+        $blocks[] = [
+            'id' => $this->generateBlockId(),
+            'type' => 'header',
+            'data' => [
+                'text' => 'The Experience',
+                'level' => 2,
+            ],
+        ];
+
+        $blocks[] = [
+            'id' => $this->generateBlockId(),
+            'type' => 'paragraph',
+            'data' => [
+                'text' => 'Located in '.$review['location'].', '.$review['restaurant_name'].' offers a unique dining experience that combines '.strtolower($review['cuisine']).' cuisine with exceptional service. The atmosphere is warm and inviting, perfect for both casual meals and special occasions.',
+            ],
+        ];
+
+        $blocks[] = [
+            'id' => $this->generateBlockId(),
+            'type' => 'header',
+            'data' => [
+                'text' => 'The Food',
+                'level' => 2,
+            ],
+        ];
+
+        $blocks[] = [
+            'id' => $this->generateBlockId(),
+            'type' => 'paragraph',
+            'data' => [
+                'text' => 'The menu showcases the best of '.strtolower($review['cuisine']).' cooking, with dishes that highlight fresh, local ingredients. Each plate is crafted with attention to detail, balancing flavors and textures in a way that delights the palate.',
+            ],
+        ];
+
+        if ($mediaItems->count() > 1) {
+            $blocks[] = $this->createMediaGridBlock($mediaItems, 2, 'default');
+        }
+
+        $blocks[] = [
+            'id' => $this->generateBlockId(),
+            'type' => 'header',
+            'data' => [
+                'text' => 'The Verdict',
+                'level' => 2,
+            ],
+        ];
+
+        $blocks[] = [
+            'id' => $this->generateBlockId(),
+            'type' => 'paragraph',
+            'data' => [
+                'text' => 'With a rating of '.$review['rating'].' out of 5 stars and a '.$review['price_range'].' price point, '.$review['restaurant_name'].' is a must-visit destination for anyone looking for authentic '.strtolower($review['cuisine']).' flavors in the Maldives.',
+            ],
+        ];
+
+        return [
+            'time' => now()->timestamp * 1000,
+            'blocks' => $blocks,
+            'version' => '2.28.0',
+        ];
+    }
+
+    /**
+     * Generate people/interview content in EditorJS format.
+     *
+     * @param  array<string, mixed>  $person
+     * @param  \Illuminate\Support\Collection<int, MediaItem>  $mediaItems
+     */
+    private function getPeopleContent(array $person, $mediaItems): array
+    {
+        $blocks = [];
+
+        $blocks[] = [
+            'id' => $this->generateBlockId(),
+            'type' => 'paragraph',
+            'data' => [
+                'text' => $person['bio'],
+            ],
+        ];
+
+        if ($mediaItems->isNotEmpty()) {
+            $image = $mediaItems->random();
+            $blocks[] = $this->createMediaBlock($image, $person['title'], 'default');
+        }
+
+        $blocks[] = [
+            'id' => $this->generateBlockId(),
+            'type' => 'header',
+            'data' => [
+                'text' => 'The Journey',
+                'level' => 2,
+            ],
+        ];
+
+        $blocks[] = [
+            'id' => $this->generateBlockId(),
+            'type' => 'paragraph',
+            'data' => [
+                'text' => 'As '.$person['role'].' at '.$person['organization'].', they have dedicated their career to excellence in the Maldivian food industry. Their passion and commitment have made them a respected figure in the community.',
+            ],
+        ];
+
+        $quotePhoto = $mediaItems->isNotEmpty() ? $mediaItems->random() : null;
+        $blocks[] = $this->createQuoteBlock(
+            'Food is more than just sustenance—it\'s a way to connect with our heritage and share our culture with the world.',
+            explode(':', $person['title'])[0] ?? 'Featured Person',
+            $person['role'],
+            $quotePhoto,
+            'left',
+            'large'
+        );
+
+        $blocks[] = [
+            'id' => $this->generateBlockId(),
+            'type' => 'header',
+            'data' => [
+                'text' => 'Looking Ahead',
+                'level' => 2,
+            ],
+        ];
+
+        $blocks[] = [
+            'id' => $this->generateBlockId(),
+            'type' => 'paragraph',
+            'data' => [
+                'text' => 'With exciting projects on the horizon and a continued commitment to their craft, they continue to inspire the next generation of food professionals in the Maldives.',
+            ],
+        ];
+
+        return [
+            'time' => now()->timestamp * 1000,
+            'blocks' => $blocks,
+            'version' => '2.28.0',
+        ];
     }
 
     /**
