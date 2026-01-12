@@ -37,8 +37,13 @@
                     </div>
                 @endif
 
-                {{-- Title & Description --}}
+                {{-- Kicker, Title & Excerpt --}}
                 <div class="flex flex-col gap-3">
+                    @if($post->kicker)
+                        <span class="text-h2 text-tasty-blue-black uppercase">
+                            {{ $post->kicker }}
+                        </span>
+                    @endif
                     <h1 class="text-h3 text-tasty-blue-black">
                         {{ $post->title }}
                     </h1>
@@ -52,6 +57,9 @@
                 {{-- Credits & Share (in card, aligned left) --}}
                 @if($includeMeta)
                     <div class="flex flex-col gap-8">
+                        {{-- Sponsor Badge --}}
+                        <x-article.sponsor-badge :sponsor="$post->sponsor" />
+
                         {{-- Author/Photographer/Date Row --}}
                         <div class="flex items-center gap-5 text-[14px] leading-[12px] uppercase text-tasty-blue-black font-sans flex-wrap">
                             @if($post->author)

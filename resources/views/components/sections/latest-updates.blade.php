@@ -62,55 +62,46 @@
             {{-- Dynamically loaded posts via Alpine.js --}}
             <template x-for="(post, index) in loadedPosts" :key="post.id">
                 <div :class="[({{ count($posts) }} + index) % 2 === 0 ? 'justify-self-end pr-10' : 'justify-self-start', 'max-xl:justify-self-auto max-xl:pr-0 max-xl:max-w-none', 'w-full', 'max-w-[660px]']">
-                <article class="bg-white rounded-xl overflow-hidden p-10 flex gap-10 items-center w-full h-full
-                    max-xl:flex-col max-xl:p-0 max-xl:pt-4 max-xl:px-4 max-xl:pb-8 max-xl:gap-4 max-xl:items-start">
-                    {{-- Image --}}
-                    <div class="w-[200px] h-[200px] flex-shrink-0 relative
-                        max-xl:w-full max-xl:h-auto max-xl:aspect-[4/3] max-xl:p-4">
-                        <a :href="post.url" class="block w-full h-full max-xl:absolute max-xl:inset-0">
-                            <img :src="post.image" :alt="post.imageAlt" class="w-full h-full object-cover object-center rounded">
+                <article class="bg-white rounded-[12px] overflow-hidden p-10 flex gap-10 items-center w-full h-full
+                    max-xl:flex-col max-xl:pt-4 max-xl:px-4 max-xl:pb-8 max-xl:gap-4 max-xl:items-start">
+                    {{-- Image with BlurHash --}}
+                    <div class="w-[200px] h-[200px] shrink-0 max-xl:w-full max-xl:!h-[206px] max-xl:shrink-0">
+                        <a :href="post.url" class="block w-full h-full relative overflow-hidden rounded max-xl:rounded-[4px]"
+                           :data-blurhash="post.blurhash"
+                           :data-blurhash-id="'blurhash-' + post.id">
+                            <template x-if="post.blurhash">
+                                <canvas :id="'blurhash-' + post.id" width="32" height="32" class="absolute inset-0 w-full h-full" style="object-fit: cover;"></canvas>
+                            </template>
+                            <template x-if="!post.blurhash">
+                                <div class="absolute inset-0 bg-gray-200 animate-pulse"></div>
+                            </template>
+                            <img :src="post.image" :alt="post.imageAlt"
+                                 class="w-full h-full object-cover object-center transition-opacity duration-300 opacity-0"
+                                 @load="$el.classList.remove('opacity-0'); $el.classList.add('opacity-100'); if($el.previousElementSibling) $el.previousElementSibling.style.display='none';">
                         </a>
-                        {{-- Tag overlay - only visible on tablet/mobile --}}
-                        <template x-if="post.category || post.tag">
-                            <div class="hidden max-xl:block relative z-10">
-                                <div class="tag self-start">
-                                    <template x-if="post.category">
-                                        <a :href="post.categoryUrl || '#'" class="hover:underline" x-text="post.category?.toUpperCase()"></a>
-                                    </template>
-                                    <template x-if="post.category && post.tag">
-                                        <span class="mx-1">•</span>
-                                    </template>
-                                    <template x-if="post.tag">
-                                        <a :href="post.tagUrl || '#'" class="hover:underline" x-text="post.tag?.toUpperCase()"></a>
-                                    </template>
-                                </div>
-                            </div>
-                        </template>
                     </div>
                     {{-- Content --}}
-                    <div class="flex flex-col flex-1 gap-6 justify-center min-w-0
-                        max-xl:gap-5 max-xl:w-full">
-                        {{-- Tag - only visible on desktop --}}
+                    <div class="flex flex-col flex-1 gap-6 justify-center min-w-0 max-xl:gap-5 max-xl:w-full max-xl:flex-none">
+                        {{-- Tag - visible on all screen sizes, below image on mobile --}}
                         <template x-if="post.category || post.tag">
-                            <div class="max-xl:hidden">
-                                <div class="tag self-start">
-                                    <template x-if="post.category">
-                                        <a :href="post.categoryUrl || '#'" class="hover:underline" x-text="post.category?.toUpperCase()"></a>
-                                    </template>
-                                    <template x-if="post.category && post.tag">
-                                        <span class="mx-1">•</span>
-                                    </template>
-                                    <template x-if="post.tag">
-                                        <a :href="post.tagUrl || '#'" class="hover:underline" x-text="post.tag?.toUpperCase()"></a>
-                                    </template>
-                                </div>
+                            <div class="tag self-start">
+                                <template x-if="post.category">
+                                    <a :href="post.categoryUrl || '#'" class="hover:underline" x-text="post.category?.toUpperCase()"></a>
+                                </template>
+                                <template x-if="post.category && post.tag">
+                                    <span class="mx-1">•</span>
+                                </template>
+                                <template x-if="post.tag">
+                                    <a :href="post.tagUrl || '#'" class="hover:underline" x-text="post.tag?.toUpperCase()"></a>
+                                </template>
                             </div>
                         </template>
+                        {{-- Title --}}
                         <a :href="post.url" class="hover:opacity-80 transition-opacity">
                             <h3 class="font-display text-[28px] leading-[1.1] tracking-[-0.04em] text-blue-black line-clamp-3
-                                max-xl:text-[24px]" x-text="post.title"></h3>
+                                max-xl:text-[24px] max-xl:leading-[24px] max-xl:tracking-[-0.96px]" x-text="post.title"></h3>
                         </a>
-                        {{-- Meta --}}
+                        {{-- Meta: Author & Date --}}
                         <div class="flex flex-wrap items-center gap-5 text-[14px] leading-[12px] uppercase text-blue-black
                             max-xl:flex-col max-xl:items-start max-xl:gap-4 max-xl:text-[12px]">
                             <a :href="post.authorUrl" class="underline underline-offset-4 hover:opacity-80 transition-opacity" x-text="'BY ' + post.author?.toUpperCase()"></a>
@@ -129,14 +120,14 @@
         <div class="flex justify-center mt-16 max-lg:mt-10" x-show="hasMore" x-cloak>
             <button
                 @click="loadMore()"
-                class="btn btn-yellow"
+                class="btn btn-yellow !pl-[18px] !pr-5 !py-3 !gap-2 !text-[20px] !leading-[26px] lg:!px-8 lg:!py-4 lg:!gap-3 lg:!text-base lg:!leading-normal"
                 :disabled="loading"
                 :class="{ 'opacity-50 cursor-not-allowed': loading }"
             >
-                <svg x-show="!loading" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg x-show="!loading" class="!w-6 !h-6 lg:!w-5 lg:!h-5" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <svg x-show="loading" class="animate-spin" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg x-show="loading" class="animate-spin !w-6 !h-6 lg:!w-5 lg:!h-5" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -195,6 +186,13 @@ document.addEventListener('alpine:init', () => {
                         }
                     });
                     this.page++;
+
+                    // Initialize blurhash for newly loaded images
+                    this.$nextTick(() => {
+                        if (window.initBlurHash) {
+                            window.initBlurHash();
+                        }
+                    });
                 }
 
                 this.hasMore = data.hasMore || false;

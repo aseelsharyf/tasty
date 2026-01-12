@@ -105,7 +105,7 @@ class Spread extends Component
         int $dynamicCount = 0,
     ) {
         $this->showIntro = $showIntro;
-        $this->introImage = $introImage;
+        $this->introImage = $introImage ?: \Illuminate\Support\Facades\Vite::asset('resources/images/image-07.png');
         $this->introImageAlt = $introImageAlt;
         $this->titleSmall = $titleSmall;
         $this->titleLarge = $titleLarge;

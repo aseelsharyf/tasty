@@ -38,7 +38,7 @@
                 <div class="absolute inset-0 flex flex-col justify-between p-10">
                     {{-- Tag at top --}}
                     @if($category || $tag)
-                        <div class="flex justify-center">
+                        <div class="flex items-start">
                             <div class="tag tag-white">
                                 @if($category)
                                     <span>{{ strtoupper($category) }}</span>

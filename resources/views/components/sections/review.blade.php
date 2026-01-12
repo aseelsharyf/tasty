@@ -65,8 +65,8 @@
                 @foreach($posts->take($showIntro ? 2 : 3) as $index => $post)
                     @php
                         $postImage = is_array($post) ? ($post['image'] ?? '') : ($post->featured_image_url ?? '');
-                        $postKicker = is_array($post) ? ($post['title'] ?? '') : ($post->title ?? '');
-                        $postTitle = is_array($post) ? ($post['subtitle'] ?? '') : ($post->subtitle ?? '');
+                        $postKicker = is_array($post) ? ($post['kicker'] ?? '') : ($post->kicker ?? '');
+                        $postTitle = is_array($post) ? ($post['title'] ?? '') : ($post->title ?? '');
                         $postSubtitle = is_array($post) ? ($post['description'] ?? '') : ($post->excerpt ?? '');
                         $postUrl = is_array($post) ? ($post['url'] ?? '#') : ($post->url ?? '#');
                         $postCategory = is_array($post) ? ($post['category'] ?? null) : ($post->categories->first()?->name ?? null);
@@ -112,8 +112,8 @@
                     @foreach($posts->skip($showIntro ? 2 : 3) as $index => $post)
                         @php
                             $postImage = is_array($post) ? ($post['image'] ?? '') : ($post->featured_image_url ?? '');
-                            $postKicker = is_array($post) ? ($post['title'] ?? '') : ($post->title ?? '');
-                            $postTitle = is_array($post) ? ($post['subtitle'] ?? '') : ($post->subtitle ?? '');
+                            $postKicker = is_array($post) ? ($post['kicker'] ?? '') : ($post->kicker ?? '');
+                            $postTitle = is_array($post) ? ($post['title'] ?? '') : ($post->title ?? '');
                             $postSubtitle = is_array($post) ? ($post['description'] ?? '') : ($post->excerpt ?? '');
                             $postUrl = is_array($post) ? ($post['url'] ?? '#') : ($post->url ?? '#');
                             $postCategory = is_array($post) ? ($post['category'] ?? null) : ($post->categories->first()?->name ?? null);
@@ -181,8 +181,8 @@
                 @foreach($posts as $index => $post)
                     @php
                         $postImage = is_array($post) ? ($post['image'] ?? '') : ($post->featured_image_url ?? '');
-                        $postKicker = is_array($post) ? ($post['title'] ?? '') : ($post->title ?? '');
-                        $postTitle = is_array($post) ? ($post['subtitle'] ?? '') : ($post->subtitle ?? '');
+                        $postKicker = is_array($post) ? ($post['kicker'] ?? '') : ($post->kicker ?? '');
+                        $postTitle = is_array($post) ? ($post['title'] ?? '') : ($post->title ?? '');
                         $postSubtitle = is_array($post) ? ($post['description'] ?? '') : ($post->excerpt ?? '');
                         $postUrl = is_array($post) ? ($post['url'] ?? '#') : ($post->url ?? '#');
                         $postCategory = is_array($post) ? ($post['category'] ?? null) : ($post->categories->first()?->name ?? null);
@@ -243,8 +243,8 @@
                     </div>
                     <div class="flex flex-col gap-4 text-center text-blue-black">
                         <div class="flex flex-col gap-1 min-h-[85px]">
-                            <span class="font-display text-[32px] leading-[1] tracking-[-0.04em] uppercase" x-text="post.title"></span>
-                            <h3 class="font-display text-[24px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1" x-show="post.subtitle" x-text="post.subtitle"></h3>
+                            <span class="font-display text-[32px] leading-[1] tracking-[-0.04em] uppercase" x-text="post.kicker"></span>
+                            <h3 class="font-display text-[24px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1" x-show="post.title" x-text="post.title"></h3>
                         </div>
                         <p class="text-body-md line-clamp-3 min-h-[78px]" x-show="post.description" x-text="post.description"></p>
                     </div>
@@ -276,8 +276,8 @@
                     </div>
                     <div class="flex flex-col gap-3 text-center text-blue-black">
                         <div class="flex flex-col gap-1">
-                            <span class="font-display text-[24px] leading-[1] tracking-[-0.04em] uppercase" x-text="post.title"></span>
-                            <h3 class="font-display text-[18px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1" x-show="post.subtitle" x-text="post.subtitle"></h3>
+                            <span class="font-display text-[24px] leading-[1] tracking-[-0.04em] uppercase" x-text="post.kicker"></span>
+                            <h3 class="font-display text-[18px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1" x-show="post.title" x-text="post.title"></h3>
                         </div>
                         <p class="text-body-md line-clamp-3" x-show="post.description" x-text="post.description"></p>
                     </div>

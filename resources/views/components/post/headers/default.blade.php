@@ -34,14 +34,19 @@
                 </div>
             @endif
 
-            {{-- Title & Subtitle --}}
+            {{-- Kicker, Title & Excerpt --}}
             <div class="flex flex-col gap-4">
-                <h1 class="text-h2 text-tasty-blue-black">
-                    {{ $post->kick ?? $post->title }}
+                @if($post->kicker)
+                    <span class="text-h2 text-tasty-blue-black uppercase">
+                        {{ $post->kicker }}
+                    </span>
+                @endif
+                <h1 class="text-h3 text-tasty-blue-black">
+                    {{ $post->title }}
                 </h1>
-                @if($post->subtitle)
-                    <p class="text-h3 text-tasty-blue-black">
-                        {{ $post->subtitle }}
+                @if($post->excerpt)
+                    <p class="text-body-lg text-tasty-blue-black">
+                        {{ $post->excerpt }}
                     </p>
                 @endif
             </div>
@@ -68,6 +73,9 @@
                     <span>{{ $post->published_at->format('F j, Y') }}</span>
                 @endif
             </div>
+
+            {{-- Sponsor Badge --}}
+            <x-article.sponsor-badge :sponsor="$post->sponsor" />
         </div>
     </div>
 </header>

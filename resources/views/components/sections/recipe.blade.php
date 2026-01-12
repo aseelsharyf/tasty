@@ -27,7 +27,7 @@
                     <div class="flex items-center shrink-0 max-lg:hidden">
                         <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10">
                             @if($introImage)
-                                <div class="w-full max-w-[320px] h-[476px]">
+                                <div class="w-full max-w-[320px] max-h-[476px]">
                                     <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain" style="mix-blend-mode: darken;">
                                 </div>
                             @endif
@@ -86,7 +86,7 @@
                     @if($showIntro)
                         <div class="flex flex-col items-center justify-center gap-5 max-lg:hidden">
                             @if($introImage)
-                                <div class="w-full max-w-[320px] h-[476px]">
+                                <div class="w-full max-w-[320px] max-h-[476px]">
                                     <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain" style="mix-blend-mode: darken;">
                                 </div>
                             @endif

@@ -93,7 +93,7 @@ class LatestUpdates extends Component
         string $action = 'recent',
         array $params = [],
     ) {
-        $this->introImage = $introImage;
+        $this->introImage = $introImage ?: \Illuminate\Support\Facades\Vite::asset('resources/images/latest-updates.png');
         $this->introImageAlt = $introImageAlt;
         $this->titleSmall = $titleSmall;
         $this->titleLarge = $titleLarge;

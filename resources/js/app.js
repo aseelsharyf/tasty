@@ -6,7 +6,7 @@ import.meta.glob('../images/**/*', { eager: true });
 
 // Initialize BlurHash placeholders
 function initBlurHash() {
-    const elements = document.querySelectorAll('[data-blurhash]');
+    const elements = document.querySelectorAll('[data-blurhash]:not([data-blurhash-initialized])');
 
     elements.forEach((element) => {
         const blurhash = element.getAttribute('data-blurhash');
@@ -25,11 +25,17 @@ function initBlurHash() {
             const imageData = ctx.createImageData(32, 32);
             imageData.data.set(pixels);
             ctx.putImageData(imageData, 0, 0);
+
+            // Mark as initialized to avoid re-processing
+            element.setAttribute('data-blurhash-initialized', 'true');
         } catch (e) {
             console.warn('Failed to decode blurhash:', e);
         }
     });
 }
+
+// Make initBlurHash globally available for dynamic content
+window.initBlurHash = initBlurHash;
 
 // Run on DOM ready
 if (document.readyState === 'loading') {

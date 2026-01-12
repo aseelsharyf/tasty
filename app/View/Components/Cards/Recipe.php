@@ -18,6 +18,8 @@ class Recipe extends Component
     /** @var array<int, string> */
     public array $tags;
 
+    public string $kicker;
+
     public string $title;
 
     public string $description;
@@ -44,6 +46,7 @@ class Recipe extends Component
         ?string $imageAlt = null,
         ?string $blurhash = null,
         ?array $tags = null,
+        ?string $kicker = null,
         ?string $title = null,
         ?string $description = null,
         ?string $author = null,
@@ -60,6 +63,7 @@ class Recipe extends Component
             $this->imageAlt = $post->title;
             $this->blurhash = $post->featured_image_blurhash;
             $this->tags = $this->extractTags($post);
+            $this->kicker = $post->kicker ?? '';
             $this->title = $post->title;
             $this->description = $post->excerpt ?? '';
             $this->author = $post->author?->name ?? 'Unknown';
@@ -70,6 +74,7 @@ class Recipe extends Component
             $this->imageAlt = $post['imageAlt'] ?? $post['title'] ?? '';
             $this->blurhash = $post['blurhash'] ?? null;
             $this->tags = $post['tags'] ?? [];
+            $this->kicker = $post['kicker'] ?? '';
             $this->title = $post['title'] ?? '';
             $this->description = $post['description'] ?? '';
             $this->author = $post['author'] ?? 'Unknown';
@@ -80,6 +85,7 @@ class Recipe extends Component
             $this->imageAlt = '';
             $this->blurhash = null;
             $this->tags = [];
+            $this->kicker = '';
             $this->title = '';
             $this->description = '';
             $this->author = 'Unknown';
@@ -99,6 +105,9 @@ class Recipe extends Component
         }
         if ($tags !== null) {
             $this->tags = $tags;
+        }
+        if ($kicker !== null) {
+            $this->kicker = $kicker;
         }
         if ($title !== null) {
             $this->title = $title;
