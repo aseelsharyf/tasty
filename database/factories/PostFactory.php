@@ -14,8 +14,30 @@ class PostFactory extends Factory
 {
     public function definition(): array
     {
-        // Keep titles short (3-6 words)
-        $title = fake()->sentence(rand(3, 6), false);
+        // Realistic food article titles
+        $titles = [
+            'The Ghost Kitchen Feeding Malé After Dark',
+            'A New Wave of Island Chefs',
+            'The Secret to Perfect Mas Riha',
+            'Where Locals Eat in Hulhumalé',
+            'The Rise of Maldivian Fine Dining',
+            'Street Food Revolution',
+            'The Best Cafes in the Capital',
+            'Cooking with Coconut: A Deep Dive',
+            'The Fish Markets of Malé',
+            'Traditional Recipes, Modern Twist',
+            'The Art of Roshi Making',
+            'Sustainable Seafood in the Maldives',
+            'A Chef\'s Journey Home',
+            'The Spice Traders of the Indian Ocean',
+            'Breakfast Traditions Across the Atolls',
+            'The Coffee Culture Revolution',
+            'Farm to Table in Paradise',
+            'The Women Behind Island Cuisine',
+            'Late Night Eats in the City',
+            'The Heritage of Hedhikaa',
+        ];
+        $title = fake()->randomElement($titles);
 
         // Kickers are short uppercase labels
         $kickers = [
@@ -29,8 +51,25 @@ class PostFactory extends Factory
             'LOCAL FLAVORS',
             'SEAFOOD',
             'STREET FOOD',
-            null, // Sometimes no kicker
-            null,
+            'ON CULTURE',
+            'THE SPREAD',
+            'BITE CLUB',
+            'FRESH CATCH',
+            'SPICE ROUTE',
+        ];
+
+        // Subtitles - compelling secondary headlines
+        $subtitles = [
+            'A culinary journey through the islands',
+            'The story behind the flavors',
+            'Where tradition meets innovation',
+            'Exploring local ingredients and techniques',
+            'A taste of paradise',
+            'Behind the scenes with local chefs',
+            'The flavors that define a generation',
+            'From ocean to table',
+            'The art of island cooking',
+            'Secrets from the kitchen',
         ];
 
         return [
@@ -38,7 +77,7 @@ class PostFactory extends Factory
             'language_code' => fn () => Language::first()?->code ?? 'en',
             'title' => $title,
             'kicker' => fake()->randomElement($kickers),
-            'subtitle' => fake()->optional(0.5)->sentence(),
+            'subtitle' => fake()->randomElement($subtitles),
             'slug' => \Illuminate\Support\Str::slug($title).'-'.fake()->unique()->randomNumber(5),
             'excerpt' => fake()->paragraph(2),
             'content' => $this->generateEditorJsContent(),

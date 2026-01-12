@@ -37,7 +37,7 @@
             {{-- Title & Subtitle --}}
             <div class="flex flex-col gap-4">
                 <h1 class="text-h2 text-tasty-blue-black">
-                    {{ $post->title }}
+                    {{ $post->kick ?? $post->title }}
                 </h1>
                 @if($post->subtitle)
                     <p class="text-h3 text-tasty-blue-black">
