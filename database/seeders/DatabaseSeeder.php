@@ -9,7 +9,7 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      *
-     * Production seeds (always run):
+     * Production (ProductionSeeder):
      * - Roles and permissions
      * - Languages (English & Dhivehi)
      * - Workflow configuration
@@ -26,15 +26,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Core system seeders
-        $this->call([
-            RolesAndPermissionsSeeder::class,
-            LanguageSeeder::class,
-            WorkflowSeeder::class,
-            MenuSeeder::class,
-        ]);
-
-        // Production data (post types, basic categories, users)
+        // Production data (everything needed for a fresh install)
         $this->call(ProductionSeeder::class);
 
         $this->command->info('Production database seeded successfully!');

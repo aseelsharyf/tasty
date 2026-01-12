@@ -15,12 +15,24 @@ class ProductionSeeder extends Seeder
      * Seed essential production data.
      *
      * This seeder creates:
+     * - Roles and permissions (if not exists)
+     * - Languages
+     * - Workflow configuration
+     * - Navigation menus
      * - Default post types
      * - Basic categories structure
      * - Sample users (one per role)
      */
     public function run(): void
     {
+        // Ensure core seeders have run
+        $this->call([
+            RolesAndPermissionsSeeder::class,
+            LanguageSeeder::class,
+            WorkflowSeeder::class,
+            MenuSeeder::class,
+        ]);
+
         $this->seedPostTypes();
         $this->seedCategories();
         $this->seedUsers();
