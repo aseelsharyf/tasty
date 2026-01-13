@@ -167,32 +167,33 @@ class MediaController extends Controller
                 'file_size' => $file->getSize(),
             ]);
 
-            // Add media using Spatie
-            $spatieMedia = $mediaItem->addMediaFromRequest('file')
-                ->toMediaCollection('default');
+            // Get dimensions and blurhash BEFORE uploading to S3 (while file is still local)
+            $updateData = [];
+            if ($type === MediaItem::TYPE_IMAGE) {
+                $tempPath = $file->getRealPath();
 
-            // Update dimensions and generate blurhash for images
-            if ($type === MediaItem::TYPE_IMAGE && $spatieMedia) {
-                $updateData = [];
-                $imagePath = $spatieMedia->getPath();
-
-                // Get dimensions
-                $dimensions = getimagesize($imagePath);
+                // Get dimensions from the local temp file
+                $dimensions = @getimagesize($tempPath);
                 if ($dimensions) {
                     $updateData['width'] = $dimensions[0];
                     $updateData['height'] = $dimensions[1];
                 }
 
-                // Generate blurhash
+                // Generate blurhash from the local temp file
                 $blurHashService = app(BlurHashService::class);
-                $blurhash = $blurHashService->encode($imagePath);
+                $blurhash = $blurHashService->encode($tempPath);
                 if ($blurhash) {
                     $updateData['blurhash'] = $blurhash;
                 }
+            }
 
-                if (! empty($updateData)) {
-                    $mediaItem->update($updateData);
-                }
+            // Add media using Spatie (this uploads to S3)
+            $spatieMedia = $mediaItem->addMediaFromRequest('file')
+                ->toMediaCollection('default');
+
+            // Update with dimensions/blurhash that were calculated before upload
+            if (! empty($updateData)) {
+                $mediaItem->update($updateData);
             }
 
             // Sync tags

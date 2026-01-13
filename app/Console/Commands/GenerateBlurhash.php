@@ -75,7 +75,9 @@ class GenerateBlurhash extends Command
 
         $this->info("Generating blurhash for media item #{$id}...");
 
-        $blurhash = $this->blurHashService->encode($media->getPath());
+        // Use URL for S3/remote storage, fallback to path for local
+        $imagePath = $media->getUrl() ?: $media->getPath();
+        $blurhash = $this->blurHashService->encode($imagePath);
 
         if ($blurhash) {
             $mediaItem->update(['blurhash' => $blurhash]);
@@ -141,7 +143,9 @@ class GenerateBlurhash extends Command
                 }
 
                 try {
-                    $blurhash = $this->blurHashService->encode($media->getPath());
+                    // Use URL for S3/remote storage, fallback to path for local
+                    $imagePath = $media->getUrl() ?: $media->getPath();
+                    $blurhash = $this->blurHashService->encode($imagePath);
 
                     if ($blurhash) {
                         $mediaItem->update(['blurhash' => $blurhash]);

@@ -22,17 +22,27 @@ class BlurHashService
     private const MAX_SAMPLE_SIZE = 64;
 
     /**
-     * Generate a blurhash from an image file path.
+     * Generate a blurhash from an image file path or URL.
      */
     public function encode(string $imagePath): ?string
     {
+        // Handle URLs (for S3/remote storage)
+        if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
+            $contents = @file_get_contents($imagePath);
+            if ($contents === false) {
+                return null;
+            }
+
+            return $this->encodeFromString($contents);
+        }
+
         if (! file_exists($imagePath)) {
             return null;
         }
 
         try {
             // Get image info
-            $imageInfo = getimagesize($imagePath);
+            $imageInfo = @getimagesize($imagePath);
             if (! $imageInfo) {
                 return null;
             }

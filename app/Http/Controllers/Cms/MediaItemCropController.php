@@ -178,7 +178,7 @@ class MediaItemCropController extends Controller
             return 'Original image not found.';
         }
 
-        $extension = strtolower(pathinfo($originalMedia->getPath(), PATHINFO_EXTENSION));
+        $extension = strtolower(pathinfo($originalMedia->file_name, PATHINFO_EXTENSION));
         $mimeType = strtolower($originalMedia->mime_type ?? '');
 
         // Check GD support for various formats
@@ -218,8 +218,8 @@ class MediaItemCropController extends Controller
             return;
         }
 
-        // Get original image path
-        $originalPath = $originalMedia->getPath();
+        // Get original image path or URL (URL for S3/remote storage)
+        $originalPath = $originalMedia->getUrl() ?: $originalMedia->getPath();
 
         // Calculate pixel coordinates
         $pixels = $crop->getCropPixels($mediaItem->width, $mediaItem->height);
