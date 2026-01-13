@@ -9,6 +9,7 @@ use App\Actions\Posts\GetTrendingPosts;
 use App\Models\Post;
 use App\Models\Tag;
 use App\View\Components\Sections\Concerns\HasSectionCategoryRestrictions;
+use App\View\Components\Sections\Concerns\TracksUsedPosts;
 use App\View\Concerns\ResolvesColors;
 use Closure;
 use Illuminate\Contracts\View\View;
@@ -19,6 +20,7 @@ class Spread extends Component
 {
     use HasSectionCategoryRestrictions;
     use ResolvesColors;
+    use TracksUsedPosts;
 
     protected function sectionType(): string
     {
@@ -104,6 +106,9 @@ class Spread extends Component
         array $staticContent = [],
         int $dynamicCount = 0,
     ) {
+        // Initialize post tracker to prevent duplicates across sections
+        $this->initPostTracker();
+
         $this->showIntro = $showIntro;
         $this->introImage = $introImage ?: \Illuminate\Support\Facades\Vite::asset('resources/images/image-07.png');
         $this->introImageAlt = $introImageAlt;
@@ -127,6 +132,7 @@ class Spread extends Component
                 action: $action,
                 params: $params,
             );
+            $this->markPostsUsed($this->posts);
 
             return;
         }
@@ -167,6 +173,9 @@ class Spread extends Component
             $dynamicPosts = $this->fetchPostsViaAction($action, $params, $count);
             $this->posts = $staticCollection->merge($dynamicPosts);
         }
+
+        // Mark all posts as used so other sections don't show them
+        $this->markPostsUsed($this->posts);
     }
 
     /**
@@ -201,8 +210,8 @@ class Spread extends Component
             $actionClass = $this->actions[$action] ?? GetRecentPosts::class;
             $actionInstance = new $actionClass;
 
-            // Exclude manual posts from dynamic fetch
-            $excludeIds = array_values($manualPostIds);
+            // Exclude manual posts AND posts used by other sections
+            $excludeIds = $this->getExcludeIds(array_values($manualPostIds));
 
             $result = $actionInstance->execute([
                 'page' => 1,
@@ -254,6 +263,7 @@ class Spread extends Component
             'page' => 1,
             'perPage' => $count,
             'sectionType' => $this->sectionType(),
+            'excludeIds' => $this->getExcludeIds(),
             ...$params,
         ]);
 

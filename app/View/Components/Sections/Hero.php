@@ -8,6 +8,7 @@ use App\Actions\Posts\GetRecentPosts;
 use App\Actions\Posts\GetTrendingPosts;
 use App\Models\Post;
 use App\View\Components\Sections\Concerns\HasSectionCategoryRestrictions;
+use App\View\Components\Sections\Concerns\TracksUsedPosts;
 use App\View\Concerns\ResolvesColors;
 use Closure;
 use Illuminate\Contracts\View\View;
@@ -17,6 +18,7 @@ class Hero extends Component
 {
     use HasSectionCategoryRestrictions;
     use ResolvesColors;
+    use TracksUsedPosts;
 
     protected function sectionType(): string
     {
@@ -146,6 +148,9 @@ class Hero extends Component
         $this->date = $date;
         $this->buttonUrl = $buttonUrl ?? '#';
 
+        // Initialize post tracker to prevent duplicates across sections
+        $this->initPostTracker();
+
         // Fetch post only if not in manual mode
         if (! $manual) {
             if ($postId !== null) {
@@ -154,6 +159,9 @@ class Hero extends Component
                 $this->post = $this->fetchPostViaAction($action, $params);
             }
         }
+
+        // Mark post as used so other sections don't show it
+        $this->markPostUsed($this->post);
     }
 
     /**
@@ -170,6 +178,7 @@ class Hero extends Component
             'page' => 1,
             'perPage' => 1,
             'sectionType' => $this->sectionType(),
+            'excludeIds' => $this->getExcludeIds(),
             ...$params,
         ]);
 

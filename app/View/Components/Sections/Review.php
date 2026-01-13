@@ -8,6 +8,7 @@ use App\Actions\Posts\GetRecentPosts;
 use App\Actions\Posts\GetTrendingPosts;
 use App\Models\Post;
 use App\View\Components\Sections\Concerns\HasSectionCategoryRestrictions;
+use App\View\Components\Sections\Concerns\TracksUsedPosts;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
@@ -16,6 +17,7 @@ use Illuminate\View\Component;
 class Review extends Component
 {
     use HasSectionCategoryRestrictions;
+    use TracksUsedPosts;
 
     protected function sectionType(): string
     {
@@ -109,6 +111,9 @@ class Review extends Component
         array $staticContent = [],
         int $dynamicCount = 0,
     ) {
+        // Initialize post tracker to prevent duplicates across sections
+        $this->initPostTracker();
+
         $this->showIntro = $showIntro;
         $this->introImage = $introImage ?: \Illuminate\Support\Facades\Vite::asset('resources/images/image-19.png');
         $this->introImageAlt = $introImageAlt;
@@ -134,6 +139,7 @@ class Review extends Component
                 params: $params,
             );
             $this->excludeIds = $this->computeExcludeIds();
+            $this->markPostsUsed($this->posts);
 
             return;
         }
@@ -162,6 +168,7 @@ class Review extends Component
         // Legacy: Fetch via action
         $this->posts = $this->fetchPostsViaAction($action, $params, $count);
         $this->excludeIds = $this->computeExcludeIds();
+        $this->markPostsUsed($this->posts);
     }
 
     /**
@@ -197,8 +204,8 @@ class Review extends Component
             $actionClass = $this->actions[$action] ?? GetRecentPosts::class;
             $actionInstance = new $actionClass;
 
-            // Exclude manual posts from dynamic fetch
-            $excludeIds = array_values($manualPostIds);
+            // Exclude manual posts AND posts used by other sections
+            $excludeIds = $this->getExcludeIds(array_values($manualPostIds));
 
             $result = $actionInstance->execute([
                 'page' => 1,
@@ -250,6 +257,7 @@ class Review extends Component
             'page' => 1,
             'perPage' => $count,
             'sectionType' => $this->sectionType(),
+            'excludeIds' => $this->getExcludeIds(),
             ...$params,
         ]);
 

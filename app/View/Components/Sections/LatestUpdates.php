@@ -8,6 +8,7 @@ use App\Actions\Posts\GetRecentPosts;
 use App\Actions\Posts\GetTrendingPosts;
 use App\Models\Post;
 use App\View\Components\Sections\Concerns\HasSectionCategoryRestrictions;
+use App\View\Components\Sections\Concerns\TracksUsedPosts;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
@@ -16,6 +17,7 @@ use Illuminate\View\Component;
 class LatestUpdates extends Component
 {
     use HasSectionCategoryRestrictions;
+    use TracksUsedPosts;
 
     protected function sectionType(): string
     {
@@ -93,6 +95,9 @@ class LatestUpdates extends Component
         string $action = 'recent',
         array $params = [],
     ) {
+        // Initialize post tracker to prevent duplicates across sections
+        $this->initPostTracker();
+
         $this->introImage = $introImage ?: \Illuminate\Support\Facades\Vite::asset('resources/images/latest-updates.png');
         $this->introImageAlt = $introImageAlt;
         $this->titleSmall = $titleSmall;
@@ -114,6 +119,7 @@ class LatestUpdates extends Component
                 params: ! empty($params) ? $params : $loadParams,
             );
             $this->excludeIds = $this->computeExcludeIds();
+            $this->markSectionPostsUsed();
 
             return;
         }
@@ -146,6 +152,16 @@ class LatestUpdates extends Component
         }
 
         $this->excludeIds = $this->computeExcludeIds();
+        $this->markSectionPostsUsed();
+    }
+
+    /**
+     * Mark all posts in this section as used.
+     */
+    protected function markSectionPostsUsed(): void
+    {
+        $this->markPostUsed($this->featuredPost);
+        $this->markPostsUsed($this->posts);
     }
 
     /**
@@ -179,8 +195,8 @@ class LatestUpdates extends Component
             $actionClass = $this->actions[$action] ?? GetRecentPosts::class;
             $actionInstance = new $actionClass;
 
-            // Exclude manual posts from dynamic fetch
-            $excludeIds = array_values($manualPostIds);
+            // Exclude manual posts AND posts used by other sections
+            $excludeIds = $this->getExcludeIds(array_values($manualPostIds));
 
             $result = $actionInstance->execute([
                 'page' => 1,
@@ -235,6 +251,7 @@ class LatestUpdates extends Component
             'page' => 1,
             'perPage' => $totalNeeded,
             'sectionType' => $this->sectionType(),
+            'excludeIds' => $this->getExcludeIds(),
             ...$params,
         ]);
 

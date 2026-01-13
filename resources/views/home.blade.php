@@ -25,8 +25,13 @@
                     :titleLarge="$section['data']['titleLarge'] ?? 'Updates'"
                     :description="$section['data']['description'] ?? ''"
                     :buttonText="$section['data']['buttonText'] ?? 'More Updates'"
-                    :loadAction="$section['data']['loadAction'] ?? 'recent'"
-                    :postIds="$section['data']['postIds'] ?? []"
+                    :showLoadMore="$section['data']['showLoadMore'] ?? true"
+                    :action="$section['data']['action'] ?? 'recent'"
+                    :params="$section['data']['params'] ?? []"
+                    :totalSlots="$section['data']['totalSlots'] ?? 0"
+                    :manualPostIds="$section['data']['manualPostIds'] ?? []"
+                    :staticContent="$section['data']['staticContent'] ?? []"
+                    :dynamicCount="$section['data']['dynamicCount'] ?? 0"
                 />
                 @break
 
@@ -44,8 +49,10 @@
                     :mobileLayout="$section['data']['mobileLayout'] ?? 'scroll'"
                     :action="$section['data']['action'] ?? 'recent'"
                     :params="$section['data']['params'] ?? []"
-                    :postIds="$section['data']['postIds'] ?? []"
-                    :count="$section['data']['count'] ?? 4"
+                    :totalSlots="$section['data']['totalSlots'] ?? 0"
+                    :manualPostIds="$section['data']['manualPostIds'] ?? []"
+                    :staticContent="$section['data']['staticContent'] ?? []"
+                    :dynamicCount="$section['data']['dynamicCount'] ?? 0"
                 />
                 @break
 
@@ -64,8 +71,10 @@
                     :showLoadMore="$section['data']['showLoadMore'] ?? true"
                     :action="$section['data']['action'] ?? 'recent'"
                     :params="$section['data']['params'] ?? []"
-                    :postIds="$section['data']['postIds'] ?? []"
-                    :count="$section['data']['count'] ?? 5"
+                    :totalSlots="$section['data']['totalSlots'] ?? 0"
+                    :manualPostIds="$section['data']['manualPostIds'] ?? []"
+                    :staticContent="$section['data']['staticContent'] ?? []"
+                    :dynamicCount="$section['data']['dynamicCount'] ?? 0"
                 />
                 @break
 
@@ -80,10 +89,14 @@
                     :bgColor="$section['data']['bgColor'] ?? 'yellow'"
                     :gradient="$section['data']['gradient'] ?? 'top'"
                     :mobileLayout="$section['data']['mobileLayout'] ?? 'grid'"
+                    :showDividers="$section['data']['showDividers'] ?? false"
+                    :dividerColor="$section['data']['dividerColor'] ?? 'white'"
                     :action="$section['data']['action'] ?? 'recent'"
                     :params="$section['data']['params'] ?? []"
-                    :postIds="$section['data']['postIds'] ?? []"
-                    :count="$section['data']['count'] ?? 3"
+                    :totalSlots="$section['data']['totalSlots'] ?? 0"
+                    :manualPostIds="$section['data']['manualPostIds'] ?? []"
+                    :staticContent="$section['data']['staticContent'] ?? []"
+                    :dynamicCount="$section['data']['dynamicCount'] ?? 0"
                 />
                 @break
 

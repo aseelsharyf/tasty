@@ -8,6 +8,7 @@ use App\Actions\Posts\GetRecentPosts;
 use App\Actions\Posts\GetTrendingPosts;
 use App\Models\Post;
 use App\View\Components\Sections\Concerns\HasSectionCategoryRestrictions;
+use App\View\Components\Sections\Concerns\TracksUsedPosts;
 use App\View\Concerns\ResolvesColors;
 use Closure;
 use Illuminate\Contracts\View\View;
@@ -17,6 +18,7 @@ class FeaturedLocation extends Component
 {
     use HasSectionCategoryRestrictions;
     use ResolvesColors;
+    use TracksUsedPosts;
 
     protected function sectionType(): string
     {
@@ -104,6 +106,9 @@ class FeaturedLocation extends Component
         string $buttonVariant = 'white',
         ?array $staticContent = null,
     ) {
+        // Initialize post tracker to prevent duplicates across sections
+        $this->initPostTracker();
+
         // Resolve background color
         $bgResolved = $this->resolveBgColor($bgColor);
         $this->bgColorClass = $bgResolved['class'];
@@ -123,6 +128,7 @@ class FeaturedLocation extends Component
         if ($post instanceof Post) {
             $this->post = $post;
             $this->populateFromPost($post);
+            $this->markPostUsed($post);
         } elseif (is_array($post)) {
             // Static array data
             $this->post = $post;
@@ -132,6 +138,7 @@ class FeaturedLocation extends Component
             $this->post = Post::with(['author', 'categories', 'tags'])->find($postId);
             if ($this->post) {
                 $this->populateFromPost($this->post);
+                $this->markPostUsed($this->post);
             } else {
                 $this->setDefaults();
             }
@@ -140,6 +147,7 @@ class FeaturedLocation extends Component
             $this->post = $this->fetchPostViaAction($action, $params);
             if ($this->post) {
                 $this->populateFromPost($this->post);
+                $this->markPostUsed($this->post);
             } else {
                 $this->setDefaults();
             }
@@ -249,6 +257,7 @@ class FeaturedLocation extends Component
             'page' => 1,
             'perPage' => 1,
             'sectionType' => $this->sectionType(),
+            'excludeIds' => $this->getExcludeIds(),
             ...$params,
         ]);
 

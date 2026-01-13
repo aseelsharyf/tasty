@@ -8,6 +8,7 @@ use App\Actions\Posts\GetRecentPosts;
 use App\Actions\Posts\GetTrendingPosts;
 use App\Models\Post;
 use App\View\Components\Sections\Concerns\HasSectionCategoryRestrictions;
+use App\View\Components\Sections\Concerns\TracksUsedPosts;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
@@ -15,6 +16,7 @@ use Illuminate\View\Component;
 class FeaturedVideo extends Component
 {
     use HasSectionCategoryRestrictions;
+    use TracksUsedPosts;
 
     protected function sectionType(): string
     {
@@ -93,6 +95,9 @@ class FeaturedVideo extends Component
         ?string $sectionBgColor = null,
         ?array $staticContent = null,
     ) {
+        // Initialize post tracker to prevent duplicates across sections
+        $this->initPostTracker();
+
         $this->buttonText = $buttonText;
         $this->overlayColor = $overlayColor;
         $this->showSectionGradient = $showSectionGradient;
@@ -147,6 +152,9 @@ class FeaturedVideo extends Component
             $post = $this->fetchPostViaAction($action, $params);
         }
 
+        // Mark post as used so other sections don't show it
+        $this->markPostUsed($post);
+
         if ($post) {
             $categoryModel = $post->categories->first();
             $tagModel = $post->tags->first();
@@ -197,6 +205,7 @@ class FeaturedVideo extends Component
             'page' => 1,
             'perPage' => 1,
             'sectionType' => $this->sectionType(),
+            'excludeIds' => $this->getExcludeIds(),
             ...$params,
         ]);
 

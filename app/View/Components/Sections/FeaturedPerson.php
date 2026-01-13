@@ -8,6 +8,7 @@ use App\Actions\Posts\GetRecentPosts;
 use App\Actions\Posts\GetTrendingPosts;
 use App\Models\Post;
 use App\View\Components\Sections\Concerns\HasSectionCategoryRestrictions;
+use App\View\Components\Sections\Concerns\TracksUsedPosts;
 use App\View\Concerns\ResolvesColors;
 use Closure;
 use Illuminate\Contracts\View\View;
@@ -17,6 +18,7 @@ class FeaturedPerson extends Component
 {
     use HasSectionCategoryRestrictions;
     use ResolvesColors;
+    use TracksUsedPosts;
 
     protected function sectionType(): string
     {
@@ -72,6 +74,9 @@ class FeaturedPerson extends Component
         string $tag2 = '',
         ?array $staticContent = null,
     ) {
+        // Initialize post tracker to prevent duplicates across sections
+        $this->initPostTracker();
+
         // Resolve background color
         $bgResolved = $this->resolveBgColor($bgColor);
         $this->bgColorClass = $bgResolved['class'];
@@ -126,6 +131,9 @@ class FeaturedPerson extends Component
                 $this->tag2 = $category?->name ?? 'PEOPLE';
             }
             $this->tag2Slug = $category?->slug;
+
+            // Mark post as used so other sections don't show it
+            $this->markPostUsed($this->post);
         }
     }
 
@@ -143,6 +151,7 @@ class FeaturedPerson extends Component
             'page' => 1,
             'perPage' => 1,
             'sectionType' => $this->sectionType(),
+            'excludeIds' => $this->getExcludeIds(),
             ...$params,
         ]);
 

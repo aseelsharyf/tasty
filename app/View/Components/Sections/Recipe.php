@@ -8,6 +8,7 @@ use App\Actions\Posts\GetRecentPosts;
 use App\Actions\Posts\GetTrendingPosts;
 use App\Models\Post;
 use App\View\Components\Sections\Concerns\HasSectionCategoryRestrictions;
+use App\View\Components\Sections\Concerns\TracksUsedPosts;
 use App\View\Concerns\ResolvesColors;
 use Closure;
 use Illuminate\Contracts\View\View;
@@ -18,6 +19,7 @@ class Recipe extends Component
 {
     use HasSectionCategoryRestrictions;
     use ResolvesColors;
+    use TracksUsedPosts;
 
     protected function sectionType(): string
     {
@@ -112,6 +114,9 @@ class Recipe extends Component
         array $staticContent = [],
         int $dynamicCount = 0,
     ) {
+        // Initialize post tracker to prevent duplicates across sections
+        $this->initPostTracker();
+
         $this->showIntro = $showIntro;
         $this->introImage = $introImage ?: \Illuminate\Support\Facades\Vite::asset('resources/images/image-30.png');
         $this->introImageAlt = $introImageAlt;
@@ -151,6 +156,10 @@ class Recipe extends Component
             $this->featuredPost = $slots->shift();
             $this->posts = $slots;
 
+            // Mark all posts as used
+            $this->markPostUsed($this->featuredPost);
+            $this->markPostsUsed($this->posts);
+
             return;
         }
 
@@ -189,6 +198,10 @@ class Recipe extends Component
 
             $this->posts = $staticCollection->merge($dynamicPosts);
         }
+
+        // Mark all posts as used so other sections don't show them
+        $this->markPostUsed($this->featuredPost);
+        $this->markPostsUsed($this->posts);
     }
 
     /**
@@ -223,8 +236,8 @@ class Recipe extends Component
             $actionClass = $this->actions[$action] ?? GetRecentPosts::class;
             $actionInstance = new $actionClass;
 
-            // Exclude manual posts from dynamic fetch
-            $excludeIds = array_values($manualPostIds);
+            // Exclude manual posts AND posts used by other sections
+            $excludeIds = $this->getExcludeIds(array_values($manualPostIds));
 
             $result = $actionInstance->execute([
                 'page' => 1,
@@ -279,6 +292,7 @@ class Recipe extends Component
             'page' => 1,
             'perPage' => $fetchCount,
             'sectionType' => $this->sectionType(),
+            'excludeIds' => $this->getExcludeIds(),
             ...$params,
         ]);
 
