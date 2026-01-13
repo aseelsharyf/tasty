@@ -277,14 +277,20 @@ const isCurrentVersionActive = computed(() => {
     return currentVersionInfo.value?.is_active === true;
 });
 
-// Read-only if viewing the published/active version OR if the version is not in draft status OR if locked by someone else
+// Versions that can be edited: draft (not yet submitted) or rejected (sent back for revisions)
+const isCurrentVersionEditable = computed(() => {
+    const status = currentVersionInfo.value?.workflow_status;
+    return status === 'draft' || status === 'rejected';
+});
+
+// Read-only if viewing the published/active version OR if the version is not editable OR if locked by someone else
 const isReadOnly = computed(() => {
     // If locked by someone else, it's read-only
     if (isLockedByOther.value && !canTakeOver.value) return true;
     // If viewing the active (published) version, it's read-only
     if (isCurrentVersionActive.value) return true;
-    // If the current version is not a draft, it's read-only (in review, approved, etc.)
-    if (!isCurrentVersionDraft.value) return true;
+    // If the current version is not editable (in review, copydesk, approved, etc.), it's read-only
+    if (!isCurrentVersionEditable.value) return true;
     return false;
 });
 
@@ -741,7 +747,26 @@ onMounted(() => {
 
 // Watch for changes to mark as dirty (skip initial load)
 watch(
-    () => [form.title, form.subtitle, form.excerpt, form.content, form.custom_fields],
+    () => [
+        form.title,
+        form.subtitle,
+        form.kicker,
+        form.excerpt,
+        form.content,
+        form.slug,
+        form.category_id,
+        form.featured_tag_id,
+        form.sponsor_id,
+        form.tags,
+        form.template,
+        form.scheduled_at,
+        form.featured_media_id,
+        form.custom_fields,
+        form.meta_title,
+        form.meta_description,
+        form.show_author,
+        form.post_type,
+    ],
     () => {
         if (initialLoadComplete.value) {
             hasUnsavedChanges.value = true;

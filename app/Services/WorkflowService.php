@@ -444,13 +444,18 @@ class WorkflowService
     {
         $errors = [];
 
-        // Get category and tags from the version snapshot (not the content model)
-        // since the version may have different values than what's currently on the content
+        // Get category and tags from the version snapshot first,
+        // but fallback to the content model if snapshot is empty
+        // (this handles cases where tags/categories were added after version submission)
         $snapshot = $version->content_snapshot ?? [];
 
         // Check for category
         if (method_exists($content, 'categories')) {
             $categoryIds = $snapshot['category_ids'] ?? [];
+            // Fallback to content model if snapshot is empty
+            if (empty($categoryIds) && method_exists($content, 'categories')) {
+                $categoryIds = $content->categories()->pluck('categories.id')->toArray();
+            }
             if (empty($categoryIds)) {
                 $errors[] = 'A category must be assigned before approval';
             }
@@ -459,6 +464,10 @@ class WorkflowService
         // Check for tags
         if (method_exists($content, 'tags')) {
             $tagIds = $snapshot['tag_ids'] ?? [];
+            // Fallback to content model if snapshot is empty
+            if (empty($tagIds)) {
+                $tagIds = $content->tags()->pluck('tags.id')->toArray();
+            }
             if (empty($tagIds)) {
                 $errors[] = 'At least one tag must be assigned before approval';
             }
