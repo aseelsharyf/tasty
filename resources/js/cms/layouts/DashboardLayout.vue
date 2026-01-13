@@ -3,9 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { usePermission } from '../composables/usePermission';
 import { useSidebar } from '../composables/useSidebar';
-import { useCreatePost } from '../composables/useCreatePost';
 import TastyLogo from '../components/TastyLogo.vue';
-import CreatePostModal from '../components/CreatePostModal.vue';
 import type { PageProps } from '../types';
 import type { NavigationMenuItem, DropdownMenuItem, CommandPaletteItem, CommandPaletteGroup } from '@nuxt/ui';
 
@@ -16,12 +14,6 @@ interface Language {
     native_name: string;
     direction: 'ltr' | 'rtl';
     is_default: boolean;
-}
-
-interface PostType {
-    value: string;
-    label: string;
-    icon?: string;
 }
 
 const page = usePage<PageProps>();
@@ -56,11 +48,9 @@ function dismissToast() {
 }
 
 const { can } = usePermission();
-const { isCreateModalOpen } = useCreatePost();
 
-// Languages and post types for create post modal
+// Languages for navigation
 const languages = ref<Language[]>([]);
-const postTypes = ref<PostType[]>([]);
 
 async function fetchLanguages() {
     try {
@@ -71,19 +61,8 @@ async function fetchLanguages() {
     }
 }
 
-async function fetchPostTypes() {
-    try {
-        const response = await fetch('/cms/settings/post-types/json');
-        const data = await response.json();
-        postTypes.value = data.postTypes || [];
-    } catch (error) {
-        console.error('Failed to fetch post types:', error);
-    }
-}
-
 onMounted(() => {
     fetchLanguages();
-    fetchPostTypes();
 });
 
 const sidebarOpen = ref(false);
@@ -864,11 +843,5 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
             </Teleport>
         </UDashboardGroup>
 
-        <!-- Global Create Post Modal -->
-        <CreatePostModal
-            v-model:open="isCreateModalOpen"
-            :languages="languages"
-            :post-types="postTypes"
-        />
     </UApp>
 </template>

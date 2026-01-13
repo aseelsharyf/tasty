@@ -2,12 +2,10 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
-import { useCreatePost } from '../../composables/useCreatePost';
 import type { PageProps } from '../../types';
 
 const page = usePage<PageProps>();
 const user = computed(() => page.props.auth?.user);
-const { openCreateModal } = useCreatePost();
 
 interface TargetProgress {
     current: number;
@@ -144,7 +142,9 @@ function editPost(post: Post) {
                     </template>
                     <template #right>
                         <UColorModeButton color="neutral" variant="ghost" />
-                        <UButton icon="i-lucide-plus" label="New Post" @click="openCreateModal" />
+                        <Link href="/cms/posts/en">
+                            <UButton icon="i-lucide-plus" label="New Post" />
+                        </Link>
                     </template>
                 </UDashboardNavbar>
             </template>
@@ -367,7 +367,9 @@ function editPost(post: Post) {
                         <div v-if="recentPosts.length === 0" class="flex flex-col items-center py-8">
                             <UIcon name="i-lucide-file-text" class="size-12 text-muted mb-3" />
                             <p class="text-muted">No posts yet</p>
-                            <UButton label="Create your first post" class="mt-4" @click="openCreateModal" />
+                            <Link href="/cms/posts/en">
+                                <UButton label="Create your first post" class="mt-4" />
+                            </Link>
                         </div>
 
                         <div v-else class="divide-y divide-default -mx-4">

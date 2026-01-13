@@ -5,9 +5,8 @@ import { useDebounceFn } from '@vueuse/core';
 import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
-import { useCreatePost } from '../../composables/useCreatePost';
 import type { Post, PostCounts, PostFilters, Author, Category, PaginatedResponse } from '../../types';
-import type { NavigationMenuItem } from '@nuxt/ui';
+import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui';
 
 interface LanguageInfo {
     code: string;
@@ -48,11 +47,55 @@ const { can } = usePermission();
 const currentLanguageCode = computed(() => props.language.code);
 const isRtlLanguage = computed(() => props.language.is_rtl);
 
-// Create post modal (global)
-const { openCreateModal } = useCreatePost();
+// Create post functionality
+const isCreatingPost = ref(false);
 
-function createNewPost() {
-    openCreateModal();
+// Dropdown items for post type selection
+const postTypeMenuItems = computed<DropdownMenuItem[][]>(() => [
+    props.postTypes.map((type) => ({
+        label: type.label,
+        icon: type.icon || (type.value === 'recipe' ? 'i-lucide-chef-hat' : 'i-lucide-file-text'),
+        disabled: isCreatingPost.value,
+        onSelect: () => createPostOfType(type.value),
+    })),
+]);
+
+async function createPostOfType(postType: string) {
+    if (isCreatingPost.value) return;
+
+    isCreatingPost.value = true;
+
+    try {
+        const response = await fetch('/cms/posts/quick-draft', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-XSRF-TOKEN': getCsrfToken(),
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                post_type: postType,
+                language_code: currentLanguageCode.value,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.redirect) {
+            router.visit(data.redirect);
+        }
+    } catch (e) {
+        console.error('Create post error:', e);
+    } finally {
+        isCreatingPost.value = false;
+    }
+}
+
+function getCsrfToken(): string {
+    const cookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('XSRF-TOKEN='));
+    return cookie ? decodeURIComponent(cookie.split('=')[1]) : '';
 }
 
 const search = ref(props.filters.search || '');
@@ -360,13 +403,19 @@ function formatDate(dateStr: string) {
                     </template>
 
                     <template #right>
-                        <UButton
+                        <UDropdownMenu
                             v-if="can('posts.create')"
-                            icon="i-lucide-plus"
-                            @click="createNewPost"
+                            :items="postTypeMenuItems"
+                            :content="{ align: 'end' }"
                         >
-                            New Post
-                        </UButton>
+                            <UButton
+                                icon="i-lucide-plus"
+                                :loading="isCreatingPost"
+                                trailing-icon="i-lucide-chevron-down"
+                            >
+                                New Post
+                            </UButton>
+                        </UDropdownMenu>
                     </template>
                 </UDashboardNavbar>
 
@@ -439,14 +488,19 @@ function formatDate(dateStr: string) {
                             ? 'Try adjusting your filters'
                             : 'Get started by creating your first post' }}
                     </p>
-                    <UButton
+                    <UDropdownMenu
                         v-if="can('posts.create') && !search"
-                        icon="i-lucide-plus"
-                        class="mt-4"
-                        @click="createNewPost"
+                        :items="postTypeMenuItems"
                     >
-                        Create Post
-                    </UButton>
+                        <UButton
+                            icon="i-lucide-plus"
+                            class="mt-4"
+                            :loading="isCreatingPost"
+                            trailing-icon="i-lucide-chevron-down"
+                        >
+                            Create Post
+                        </UButton>
+                    </UDropdownMenu>
                 </div>
 
                 <!-- Post Cards -->

@@ -2,12 +2,10 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
-import { useCreatePost } from '../../composables/useCreatePost';
 import type { PageProps } from '../../types';
 
 const page = usePage<PageProps>();
 const user = computed(() => page.props.auth?.user);
-const { openCreateModal } = useCreatePost();
 
 interface PostsByType {
     type: string;
@@ -126,7 +124,9 @@ function getBarHeight(count: number): string {
                     </template>
                     <template #right>
                         <UColorModeButton color="neutral" variant="ghost" />
-                        <UButton icon="i-lucide-plus" label="New Post" @click="openCreateModal" />
+                        <Link href="/cms/posts/en">
+                            <UButton icon="i-lucide-plus" label="New Post" />
+                        </Link>
                     </template>
                 </UDashboardNavbar>
             </template>

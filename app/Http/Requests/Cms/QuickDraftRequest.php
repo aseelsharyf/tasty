@@ -25,7 +25,7 @@ class QuickDraftRequest extends FormRequest
         $validLanguages = Language::active()->pluck('code')->toArray();
 
         return [
-            'title' => ['required', 'string', 'max:70'],
+            'title' => ['nullable', 'string', 'max:70'],
             'post_type' => ['required', Rule::in($validPostTypes)],
             'language_code' => ['required', Rule::in($validLanguages)],
         ];
@@ -37,7 +37,6 @@ class QuickDraftRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'title.required' => 'Please enter a title for your post.',
             'title.max' => 'Title should be 70 characters or less.',
             'post_type.required' => 'Please select an article type.',
             'post_type.in' => 'Invalid article type selected.',
