@@ -43,7 +43,7 @@
             img-class="object-cover"
         />
         @if(count($tags) > 0)
-            <div class="relative z-10">
+            <div class="absolute bottom-10 left-1/2 -translate-x-1/2 z-10">
                 <span class="tag">{{ implode(' • ', $tags) }}</span>
             </div>
         @endif
