@@ -25,7 +25,7 @@ class UpdatePostRequest extends FormRequest
         $validPostTypes = array_column($postTypes, 'slug');
 
         return [
-            'title' => ['required', 'string', 'max:70'],
+            'title' => ['nullable', 'string', 'max:70'],
             'kicker' => ['nullable', 'string', 'max:100'],
             'subtitle' => ['nullable', 'string', 'max:120'],
             'slug' => [
@@ -71,7 +71,6 @@ class UpdatePostRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'title.required' => 'Please enter a title for your post.',
             'title.max' => 'Headline should be 70 characters or less.',
             'subtitle.max' => 'Subheading should be 120 characters or less.',
             'excerpt.max' => 'Summary should be 160 characters or less.',

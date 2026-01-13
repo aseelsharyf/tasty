@@ -304,11 +304,39 @@ class Post extends Model implements HasMedia
 
     public function publish(): void
     {
-        $this->update([
+        $updateData = [
             'status' => self::STATUS_PUBLISHED,
             'published_at' => now(),
             'scheduled_at' => null,
-        ]);
+        ];
+
+        // Regenerate slug from title if it's still a placeholder
+        if ($this->title && $this->shouldRegenerateSlug()) {
+            $updateData['slug'] = static::generateUniqueSlug($this->title);
+        }
+
+        $this->update($updateData);
+    }
+
+    /**
+     * Check if the slug should be regenerated (is a placeholder).
+     */
+    protected function shouldRegenerateSlug(): bool
+    {
+        // Regenerate if slug is empty or matches placeholder patterns
+        if (empty($this->slug)) {
+            return true;
+        }
+
+        // Check if slug starts with common placeholder patterns
+        $placeholderPatterns = ['post', 'untitled'];
+        foreach ($placeholderPatterns as $pattern) {
+            if ($this->slug === $pattern || preg_match('/^'.preg_quote($pattern, '/').'-\d+$/', $this->slug)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function unpublish(): void

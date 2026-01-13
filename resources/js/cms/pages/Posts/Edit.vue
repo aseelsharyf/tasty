@@ -1593,7 +1593,7 @@ function openDiff() {
                             </div>
 
                             <!-- Post Metadata (Medium-inspired) -->
-                            <div class="mb-6 flex flex-wrap items-center gap-x-2 gap-y-2 text-sm">
+                            <div class="mb-6 flex flex-wrap items-center gap-x-3 gap-y-2 text-base">
                                 <!-- Category inline -->
                                 <span class="text-muted">in</span>
                                 <USelectMenu
@@ -1602,7 +1602,7 @@ function openDiff() {
                                     value-key="value"
                                     placeholder="Category"
                                     variant="none"
-                                    size="sm"
+                                    size="md"
                                     :disabled="isReadOnly"
                                     :search-input="{ placeholder: 'Search...', variant: 'none' }"
                                     :ui="{ content: 'min-w-56' }"
@@ -1622,7 +1622,7 @@ function openDiff() {
                                     variant="none"
                                     searchable
                                     :create-item="!isReadOnly"
-                                    size="sm"
+                                    size="md"
                                     :disabled="isReadOnly"
                                     :ui="{ content: 'min-w-56' }"
                                     :content="{ align: 'start' }"
@@ -1639,7 +1639,7 @@ function openDiff() {
                                     :items="postTypes"
                                     value-key="value"
                                     variant="none"
-                                    size="sm"
+                                    size="md"
                                     :search-input="false"
                                     :disabled="isReadOnly"
                                     :ui="{ content: 'min-w-40' }"
@@ -1649,13 +1649,13 @@ function openDiff() {
 
                                 <!-- Template switcher (subtle, right-aligned) -->
                                 <div class="ml-auto flex items-center">
-                                    <div class="flex bg-elevated/50 rounded-lg p-0.5">
+                                    <div class="flex bg-elevated/50 rounded-lg p-1">
                                         <button
                                             v-for="template in templates"
                                             :key="template.key"
                                             type="button"
                                             :class="[
-                                                'inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-all',
+                                                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all',
                                                 form.template === template.key
                                                     ? 'bg-default text-highlighted shadow-sm'
                                                     : 'text-muted hover:text-highlighted',
@@ -1665,7 +1665,7 @@ function openDiff() {
                                             :title="template.description"
                                             @click="form.template = template.key"
                                         >
-                                            <UIcon :name="template.icon" class="size-3.5" />
+                                            <UIcon :name="template.icon" class="size-4" />
                                             <span class="hidden sm:inline">{{ template.name }}</span>
                                         </button>
                                     </div>
