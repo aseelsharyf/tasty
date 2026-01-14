@@ -112,6 +112,42 @@ class SectionCategoryMappingService
     }
 
     /**
+     * Get all category IDs that are reserved (assigned to any section).
+     * Used by unrestricted sections to exclude posts from reserved categories.
+     *
+     * @return array<int>
+     */
+    public function getAllReservedCategoryIds(): array
+    {
+        return Cache::remember(self::CACHE_KEY.'_reserved', self::CACHE_TTL, function () {
+            return SectionCategoryMapping::query()
+                ->distinct()
+                ->pluck('category_id')
+                ->toArray();
+        });
+    }
+
+    /**
+     * Get category IDs reserved by OTHER sections (excluding the given section type).
+     * Used to exclude posts from categories that belong to other sections.
+     *
+     * @return array<int>
+     */
+    public function getCategoryIdsReservedByOtherSections(string $excludeSectionType): array
+    {
+        $allMappings = $this->getAllMappings();
+
+        $reservedIds = [];
+        foreach ($allMappings as $sectionType => $categoryIds) {
+            if ($sectionType !== $excludeSectionType) {
+                $reservedIds = array_merge($reservedIds, $categoryIds);
+            }
+        }
+
+        return array_unique($reservedIds);
+    }
+
+    /**
      * Get all mappings with full category data for admin UI.
      *
      * @return array<string, array<int, array{id: int, name: string, slug: string}>>
@@ -144,5 +180,6 @@ class SectionCategoryMappingService
     public function clearCache(): void
     {
         Cache::forget(self::CACHE_KEY);
+        Cache::forget(self::CACHE_KEY.'_reserved');
     }
 }

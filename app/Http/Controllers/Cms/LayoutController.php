@@ -154,7 +154,15 @@ class LayoutController extends Controller
             $allowedCategoryIds = $this->mappingService->getAllowedCategoryIds($validated['sectionType']);
 
             if ($allowedCategoryIds !== null) {
+                // Section has specific categories - only show posts from those categories
                 $query->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $allowedCategoryIds));
+            } else {
+                // Section has no restrictions - exclude posts from categories reserved by other sections
+                $reservedCategoryIds = $this->mappingService->getCategoryIdsReservedByOtherSections($validated['sectionType']);
+
+                if (! empty($reservedCategoryIds)) {
+                    $query->whereDoesntHave('categories', fn ($q) => $q->whereIn('categories.id', $reservedCategoryIds));
+                }
             }
         }
 

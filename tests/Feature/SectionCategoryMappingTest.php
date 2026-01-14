@@ -256,4 +256,44 @@ describe('Post Search API with Section Type', function () {
         $response->assertStatus(200)
             ->assertJsonCount(2, 'posts');
     });
+
+    it('excludes posts with reserved categories from unrestricted sections', function () {
+        $user = User::factory()->create();
+        $user->assignRole('Admin');
+
+        $reviewCategory = Category::factory()->create(['name' => 'Reviews']);
+        $generalCategory = Category::factory()->create(['name' => 'General']);
+
+        // Create mapping: review section -> Reviews category
+        SectionCategoryMapping::create([
+            'section_type' => 'review',
+            'category_id' => $reviewCategory->id,
+        ]);
+
+        // Clear cache
+        $service = app(SectionCategoryMappingService::class);
+        $service->clearCache();
+
+        // Post with Reviews category (should be excluded from unrestricted sections)
+        $reviewPost = Post::factory()->published()->create(['title' => 'Review Post']);
+        $reviewPost->categories()->attach($reviewCategory);
+
+        // Post with General category (should appear in unrestricted sections)
+        $generalPost = Post::factory()->published()->create(['title' => 'General Post']);
+        $generalPost->categories()->attach($generalCategory);
+
+        // Query latest-updates (unrestricted) - should only return the general post
+        $response = $this->actingAs($user)->get('/cms/layouts/homepage/search-posts?sectionType=latest-updates');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'posts')
+            ->assertJsonPath('posts.0.title', 'General Post');
+
+        // Query review section - should only return the review post
+        $response = $this->actingAs($user)->get('/cms/layouts/homepage/search-posts?sectionType=review');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'posts')
+            ->assertJsonPath('posts.0.title', 'Review Post');
+    });
 });

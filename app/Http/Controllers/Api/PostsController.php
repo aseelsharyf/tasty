@@ -38,6 +38,7 @@ class PostsController extends Controller
             'excludeIds.*' => 'integer',
             'tag' => 'nullable|string',
             'category' => 'nullable|string',
+            'sectionType' => 'nullable|string|max:50',
         ]);
 
         $actionClass = $this->actions[$validated['action']];
@@ -50,6 +51,7 @@ class PostsController extends Controller
             'excludeIds' => $validated['excludeIds'] ?? [],
             'tag' => $validated['tag'] ?? null,
             'category' => $validated['category'] ?? null,
+            'sectionType' => $validated['sectionType'] ?? null,
         ];
 
         return response()->json($action->getResponse($params));
