@@ -909,6 +909,32 @@ const tagOptions = computed(() =>
     localTags.value.map((tag) => ({ label: tag.name, value: tag.id }))
 );
 
+// Tags not yet selected (for the add dropdown)
+const availableTagOptions = computed(() =>
+    tagOptions.value.filter((tag) => !form.tags.includes(tag.value))
+);
+
+// Get tag label by ID
+function getTagLabel(tagId: number): string | undefined {
+    const tag = localTags.value.find((t) => t.id === tagId);
+    return tag?.name;
+}
+
+// Remove a tag from selection
+function removeTag(tagId: number) {
+    const index = form.tags.indexOf(tagId);
+    if (index > -1) {
+        form.tags.splice(index, 1);
+    }
+}
+
+// Add a tag to selection
+function addTag(tagId: number | null) {
+    if (tagId && !form.tags.includes(tagId)) {
+        form.tags.push(tagId);
+    }
+}
+
 const sponsorOptions = computed(() =>
     props.sponsors.map((sponsor) => ({ label: sponsor.name, value: sponsor.id }))
 );
@@ -2025,7 +2051,7 @@ function openDiff() {
                                                     <!-- Section Items -->
                                                     <div class="p-2 space-y-1.5">
                                                         <div
-                                                            v-for="(item, itemIndex) in section.items"
+                                                            v-for="(item, itemIndex) in (section.items || [])"
                                                             :key="itemIndex"
                                                             class="flex gap-1.5"
                                                         >
@@ -2036,7 +2062,7 @@ function openDiff() {
                                                                 :disabled="isReadOnly"
                                                                 @update:model-value="(val: string) => {
                                                                     const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
-                                                                    const newItems = [...sections[sectionIndex].items];
+                                                                    const newItems = [...(sections[sectionIndex].items || [])];
                                                                     newItems[itemIndex] = val;
                                                                     sections[sectionIndex] = { ...sections[sectionIndex], items: newItems };
                                                                     form.custom_fields = { ...form.custom_fields, [field.name]: sections };
@@ -2050,7 +2076,7 @@ function openDiff() {
                                                                 :disabled="isReadOnly"
                                                                 @click="() => {
                                                                     const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
-                                                                    const newItems = [...sections[sectionIndex].items];
+                                                                    const newItems = [...(sections[sectionIndex].items || [])];
                                                                     newItems.splice(itemIndex, 1);
                                                                     sections[sectionIndex] = { ...sections[sectionIndex], items: newItems };
                                                                     form.custom_fields = { ...form.custom_fields, [field.name]: sections };
@@ -2072,7 +2098,7 @@ function openDiff() {
                                                                         const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
                                                                         sections[sectionIndex] = {
                                                                             ...sections[sectionIndex],
-                                                                            items: [...sections[sectionIndex].items, value.trim()]
+                                                                            items: [...(sections[sectionIndex].items || []), value.trim()]
                                                                         };
                                                                         form.custom_fields = { ...form.custom_fields, [field.name]: sections };
                                                                         clearGroupedItemInput(field.name, sectionIndex);
@@ -2091,7 +2117,7 @@ function openDiff() {
                                                                         const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
                                                                         sections[sectionIndex] = {
                                                                             ...sections[sectionIndex],
-                                                                            items: [...sections[sectionIndex].items, value.trim()]
+                                                                            items: [...(sections[sectionIndex].items || []), value.trim()]
                                                                         };
                                                                         form.custom_fields = { ...form.custom_fields, [field.name]: sections };
                                                                         clearGroupedItemInput(field.name, sectionIndex);
@@ -2163,56 +2189,78 @@ function openDiff() {
                                 </button>
                             </div>
 
-                            <!-- Tags (Medium-style inline) -->
-                            <div class="mt-6">
+                            <!-- Tags as Pills (Inline Searchable) -->
+                            <div class="mt-8">
                                 <div class="flex items-center gap-2 text-sm text-muted mb-3">
-                                    <UIcon name="i-lucide-tags" class="size-4" />
-                                    <span>Tags</span>
+                                    <UIcon name="i-lucide-tags" class="size-5" />
+                                    <span class="font-medium">Tags</span>
                                 </div>
-                                <USelectMenu
-                                    v-model="form.tags"
-                                    :items="tagOptions"
-                                    value-key="value"
-                                    multiple
-                                    placeholder="Add tags..."
-                                    searchable
-                                    :create-item="!isReadOnly"
-                                    variant="none"
-                                    size="sm"
-                                    :disabled="isReadOnly"
-                                    :ui="{ content: 'min-w-64' }"
-                                    class="text-highlighted"
-                                    @create="onCreateTag"
-                                />
+                                <!-- Tags container with pills -->
+                                <div class="w-full min-h-[46px] px-3 py-2 rounded-lg border border-default bg-default">
+                                    <div class="flex flex-wrap gap-2 items-center">
+                                        <!-- Selected Tags as Pills -->
+                                        <span
+                                            v-for="tagId in form.tags"
+                                            :key="tagId"
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium"
+                                        >
+                                            {{ getTagLabel(tagId) }}
+                                            <button
+                                                v-if="!isReadOnly"
+                                                type="button"
+                                                class="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                                                @click="removeTag(tagId)"
+                                            >
+                                                <UIcon name="i-lucide-x" class="size-3" />
+                                            </button>
+                                        </span>
+                                        <!-- Inline Select for adding tags -->
+                                        <USelectMenu
+                                            v-if="!isReadOnly"
+                                            :model-value="null"
+                                            :items="availableTagOptions"
+                                            value-key="value"
+                                            placeholder="Add tag..."
+                                            searchable
+                                            :search-input="{ placeholder: 'Search tags...' }"
+                                            create-item
+                                            variant="none"
+                                            size="sm"
+                                            class="min-w-24 flex-shrink-0"
+                                            :ui="{ base: 'px-0', content: 'w-56' }"
+                                            @update:model-value="addTag"
+                                            @create="onCreateTag"
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
-                            <!-- Additional Settings (subtle) -->
-                            <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
+                            <!-- Additional Settings -->
+                            <div class="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
                                 <!-- Sponsor (if available) -->
-                                <div v-if="sponsorOptions.length > 0" class="flex items-center gap-2">
-                                    <UIcon name="i-lucide-handshake" class="size-4 text-muted" />
+                                <div v-if="sponsorOptions.length > 0" class="flex items-center gap-3">
+                                    <UIcon name="i-lucide-handshake" class="size-5 text-muted" />
                                     <USelectMenu
                                         v-model="form.sponsor_id"
                                         :items="sponsorOptions"
                                         value-key="value"
                                         placeholder="Add sponsor"
                                         searchable
-                                        variant="none"
-                                        size="sm"
+                                        size="md"
                                         :disabled="isReadOnly"
-                                        :ui="{ content: 'min-w-48' }"
-                                        class="text-muted hover:text-highlighted transition-colors"
+                                        :ui="{ content: 'min-w-56' }"
+                                        class="min-w-48"
                                     />
                                 </div>
 
                                 <!-- Show Author Toggle -->
-                                <label class="flex items-center gap-2 cursor-pointer text-muted hover:text-highlighted transition-colors">
+                                <label class="flex items-center gap-3 cursor-pointer">
                                     <USwitch
                                         v-model="form.show_author"
-                                        size="sm"
+                                        size="lg"
                                         :disabled="isReadOnly"
                                     />
-                                    <span>Show author</span>
+                                    <span class="text-base font-medium">Show author</span>
                                 </label>
                             </div>
                         </div>

@@ -97,7 +97,7 @@ function addGroupedItem(name: string, sectionIndex: number, value: string) {
     const newSections = [...sections];
     newSections[sectionIndex] = {
         ...newSections[sectionIndex],
-        items: [...newSections[sectionIndex].items, value.trim()]
+        items: [...(newSections[sectionIndex].items || []), value.trim()]
     };
     setFieldValue(name, newSections);
 }
@@ -106,7 +106,7 @@ function addGroupedItem(name: string, sectionIndex: number, value: string) {
 function removeGroupedItem(name: string, sectionIndex: number, itemIndex: number) {
     const sections = getFieldValue<GroupedRepeaterSection[]>(name, []);
     const newSections = [...sections];
-    const newItems = [...newSections[sectionIndex].items];
+    const newItems = [...(newSections[sectionIndex].items || [])];
     newItems.splice(itemIndex, 1);
     newSections[sectionIndex] = { ...newSections[sectionIndex], items: newItems };
     setFieldValue(name, newSections);
@@ -116,7 +116,7 @@ function removeGroupedItem(name: string, sectionIndex: number, itemIndex: number
 function updateGroupedItem(name: string, sectionIndex: number, itemIndex: number, value: string) {
     const sections = getFieldValue<GroupedRepeaterSection[]>(name, []);
     const newSections = [...sections];
-    const newItems = [...newSections[sectionIndex].items];
+    const newItems = [...(newSections[sectionIndex].items || [])];
     newItems[itemIndex] = value;
     newSections[sectionIndex] = { ...newSections[sectionIndex], items: newItems };
     setFieldValue(name, newSections);
@@ -305,7 +305,7 @@ function getSelectItems(options?: string[]) {
                                 <!-- Section Items -->
                                 <div class="p-2 space-y-1.5">
                                     <div
-                                        v-for="(item, itemIndex) in section.items"
+                                        v-for="(item, itemIndex) in (section.items || [])"
                                         :key="itemIndex"
                                         class="flex gap-1.5"
                                     >
