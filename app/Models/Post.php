@@ -86,23 +86,86 @@ class Post extends Model implements HasMedia
     {
         static::creating(function (Post $post) {
             if (empty($post->slug)) {
-                $post->slug = static::generateUniqueSlug($post->title);
+                $post->slug = $post->generateUniqueSlugForPost();
+            }
+        });
+
+        static::updating(function (Post $post) {
+            // Regenerate slug if title changed from "Untitled" pattern
+            if ($post->isDirty('title') && $post->hasUntitledSlug()) {
+                $post->slug = $post->generateUniqueSlugForPost();
             }
         });
     }
 
-    public static function generateUniqueSlug(string $title): string
+    /**
+     * Check if the current slug is from an "Untitled" auto-generated title.
+     */
+    public function hasUntitledSlug(): bool
     {
-        $baseSlug = Str::slug($title);
-        $slug = $baseSlug ?: 'post';
-        $counter = 1;
+        return Str::startsWith($this->slug, 'untitled-');
+    }
 
-        while (static::withTrashed()->where('slug', $slug)->exists()) {
-            $slug = "{$baseSlug}-{$counter}";
+    /**
+     * Generate a unique slug for this post.
+     * Uses title, with category and featured tag as prefixes for uniqueness.
+     */
+    public function generateUniqueSlugForPost(): string
+    {
+        $title = $this->title;
+        $baseSlug = Str::slug($title);
+
+        if (empty($baseSlug)) {
+            $baseSlug = 'post';
+        }
+
+        // Try just the title slug first
+        if ($this->isSlugAvailable($baseSlug)) {
+            return $baseSlug;
+        }
+
+        // Try with category prefix
+        $category = $this->categories()->first();
+        if ($category) {
+            $categorySlug = $category->slug.'-'.$baseSlug;
+            if ($this->isSlugAvailable($categorySlug)) {
+                return $categorySlug;
+            }
+
+            // Try with category + featured tag prefix
+            if ($this->featured_tag_id) {
+                $featuredTag = $this->featuredTag;
+                if ($featuredTag) {
+                    $fullSlug = $category->slug.'-'.$featuredTag->slug.'-'.$baseSlug;
+                    if ($this->isSlugAvailable($fullSlug)) {
+                        return $fullSlug;
+                    }
+                }
+            }
+        }
+
+        // Fallback: append counter
+        $counter = 1;
+        while (! $this->isSlugAvailable("{$baseSlug}-{$counter}")) {
             $counter++;
         }
 
-        return $slug;
+        return "{$baseSlug}-{$counter}";
+    }
+
+    /**
+     * Check if a slug is available (not used by other posts).
+     */
+    protected function isSlugAvailable(string $slug): bool
+    {
+        $query = static::withTrashed()->where('slug', $slug);
+
+        // Exclude current post if it exists
+        if ($this->id) {
+            $query->where('id', '!=', $this->id);
+        }
+
+        return ! $query->exists();
     }
 
     // Relationships

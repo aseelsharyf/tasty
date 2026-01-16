@@ -333,14 +333,9 @@ class PostController extends Controller
     {
         $validated = $request->validated();
 
-        // Generate default title if not provided
-        $title = $validated['title'] ?? null;
-        if (empty($title)) {
-            $postTypeConfig = collect(Setting::getPostTypes())
-                ->firstWhere('slug', $validated['post_type']);
-            $typeName = $postTypeConfig['name'] ?? ucfirst($validated['post_type']);
-            $title = 'Untitled '.$typeName;
-        }
+        // Generate default title for database, but frontend will show empty field
+        $postType = $validated['post_type'];
+        $title = $validated['title'] ?? 'Untitled '.ucfirst($postType);
 
         $post = Post::create([
             'author_id' => Auth::id(),
