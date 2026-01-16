@@ -61,7 +61,7 @@
 
         {{-- Description/Summary --}}
         @if($description)
-            <p class="text-body-md text-blue-black {{ $isFeatured ? $textAlign : 'text-center' }} line-clamp-{{ $isFeatured ? '4' : '3' }}">{{ $description }}</p>
+            <p class="text-body-md text-blue-black {{ $isFeatured ? $textAlign : 'text-center' }} line-clamp-{{ $isFeatured ? '4' : '2' }}">{{ $description }}</p>
         @endif
 
         {{-- Author/date --}}
