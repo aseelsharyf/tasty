@@ -56,7 +56,7 @@
             @if($kicker && $showKicker)
                 <span class="text-h4 text-blue-black {{ $isFeatured ? $textAlign : 'text-center' }} uppercase">{{ $kicker }}</span>
             @endif
-            <h3 class="font-display text-[24px] leading-[1.1] tracking-[-0.04em] text-blue-black {{ $isFeatured ? $textAlign : 'text-center' }} line-clamp-2">{{ $title }}</h3>
+            <h3 class="text-h4 text-blue-black {{ $isFeatured ? $textAlign : 'text-center' }} line-clamp-2">{{ $title }}</h3>
         </a>
 
         {{-- Description/Summary --}}
