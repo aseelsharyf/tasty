@@ -65,10 +65,21 @@ class PostController extends Controller
         };
 
         // Role-based filtering:
-        // - Draft: Writers see only their own drafts, Editors/Admins see all
-        // - Copydesk: Editors/Admins see all posts in review, Writers see only their own
+        // - Draft: All users see only their own drafts
+        // - Copydesk: Only Editors/Admins can view (writers cannot access)
         // - Published: Everyone can see (read-only for non-authors/non-editors)
-        if (! $isEditorOrAdmin && in_array($status, ['draft', 'copydesk'])) {
+        // - Trashed: Users see only their own trashed posts, Editors/Admins see all
+        if ($status === 'draft') {
+            // Drafts always show only current user's posts
+            $query->where('author_id', $user->id);
+        } elseif ($status === 'copydesk') {
+            // Copydesk is only for editors/admins
+            if (! $isEditorOrAdmin) {
+                // Non-editors cannot see copydesk - return empty result
+                $query->whereRaw('1 = 0');
+            }
+        } elseif ($status === 'trashed' && ! $isEditorOrAdmin) {
+            // Non-editors can only see their own trashed posts
             $query->where('author_id', $user->id);
         }
 
@@ -146,24 +157,24 @@ class PostController extends Controller
         $baseQuery = fn () => Post::where('language_code', $language);
 
         if ($isEditorOrAdmin) {
-            // Editors and Admins see all posts
+            // Editors and Admins see all posts except drafts (always user-specific)
             $counts = [
                 'all' => $baseQuery()->withoutTrashed()->count(),
-                'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk'])->count(),
+                'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk'])->where('author_id', $user->id)->count(),
                 'copydesk' => $baseQuery()->inEditorialReview()->count(),
                 'published' => $baseQuery()->where('status', Post::STATUS_PUBLISHED)->count(),
                 'scheduled' => $baseQuery()->where('status', Post::STATUS_SCHEDULED)->count(),
                 'trashed' => $baseQuery()->onlyTrashed()->count(),
             ];
         } else {
-            // Writers see their own drafts/copydesk posts, but all published posts
+            // Writers see only their own drafts/trashed, all published, but no copydesk
             $counts = [
                 'all' => $baseQuery()->withoutTrashed()->where(function ($q) use ($user) {
                     $q->where('author_id', $user->id)
                         ->orWhere('status', Post::STATUS_PUBLISHED);
                 })->count(),
                 'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk'])->where('author_id', $user->id)->count(),
-                'copydesk' => $baseQuery()->inEditorialReview()->where('author_id', $user->id)->count(),
+                'copydesk' => 0, // Writers cannot see copydesk
                 'published' => $baseQuery()->where('status', Post::STATUS_PUBLISHED)->count(),
                 'scheduled' => $baseQuery()->where('status', Post::STATUS_SCHEDULED)->where('author_id', $user->id)->count(),
                 'trashed' => $baseQuery()->onlyTrashed()->where('author_id', $user->id)->count(),
@@ -645,6 +656,15 @@ class PostController extends Controller
 
     public function publish(string $language, Post $post): RedirectResponse
     {
+        /** @var User $user */
+        $user = Auth::user();
+        $isEditorOrAdmin = $user->hasAnyRole(['Admin', 'Editor', 'Developer']);
+
+        // Only editors/admins or the author can publish
+        if (! $isEditorOrAdmin && $post->author_id !== $user->id) {
+            abort(403, 'You are not authorized to publish this post.');
+        }
+
         $post->publish();
 
         return redirect()->back()
@@ -653,6 +673,15 @@ class PostController extends Controller
 
     public function unpublish(string $language, Post $post): RedirectResponse
     {
+        /** @var User $user */
+        $user = Auth::user();
+        $isEditorOrAdmin = $user->hasAnyRole(['Admin', 'Editor', 'Developer']);
+
+        // Only editors/admins or the author can unpublish
+        if (! $isEditorOrAdmin && $post->author_id !== $user->id) {
+            abort(403, 'You are not authorized to unpublish this post.');
+        }
+
         $post->unpublish();
 
         return redirect()->back()

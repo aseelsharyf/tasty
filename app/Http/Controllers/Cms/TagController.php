@@ -14,6 +14,41 @@ use Inertia\Response;
 
 class TagController extends Controller
 {
+    /**
+     * Search tags for autocomplete (JSON API)
+     */
+    public function search(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $search = $request->get('q', '');
+        $exclude = $request->get('exclude', []); // IDs to exclude (already selected)
+        $limit = min((int) $request->get('limit', 10), 50);
+
+        $query = Tag::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereTranslatedNameLike($search)
+                    ->orWhere('slug', 'like', "%{$search}%");
+            });
+        }
+
+        if (! empty($exclude)) {
+            $query->whereNotIn('id', (array) $exclude);
+        }
+
+        $tags = $query
+            ->orderByTranslatedName(app()->getLocale())
+            ->limit($limit)
+            ->get()
+            ->map(fn (Tag $tag) => [
+                'id' => $tag->id,
+                'name' => $tag->name,
+                'slug' => $tag->slug,
+            ]);
+
+        return response()->json($tags);
+    }
+
     public function index(Request $request): Response
     {
         $sortField = $request->get('sort', 'name');

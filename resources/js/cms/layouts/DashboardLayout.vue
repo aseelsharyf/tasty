@@ -118,10 +118,15 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => {
     ];
 
     if (can(['posts.view', 'posts.create', 'posts.edit-own'])) {
+        // Check if user is an editor/admin - they go to copydesk, others go to drafts
+        const userRoles = page.props.auth.user?.roles || [];
+        const isEditorOrAdmin = userRoles.some(role => ['Admin', 'Editor', 'Developer'].includes(role));
+        const defaultPostStatus = isEditorOrAdmin ? 'copydesk' : 'draft';
+
         // Generate language-specific post navigation
         const postChildren: NavigationMenuItem[] = languages.value.map((lang) => ({
             label: lang.name,
-            to: `/cms/posts/${lang.code}`,
+            to: `/cms/posts/${lang.code}?status=${defaultPostStatus}`,
             icon: lang.direction === 'rtl' ? 'i-lucide-align-right' : 'i-lucide-align-left',
             active: isActivePrefix(`/cms/posts/${lang.code}`),
         }));
@@ -129,15 +134,15 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => {
         // Fallback if languages haven't loaded yet
         if (postChildren.length === 0) {
             postChildren.push(
-                { label: 'English', to: '/cms/posts/en', icon: 'i-lucide-align-left', active: isActivePrefix('/cms/posts/en') },
-                { label: 'Dhivehi', to: '/cms/posts/dv', icon: 'i-lucide-align-right', active: isActivePrefix('/cms/posts/dv') },
+                { label: 'English', to: `/cms/posts/en?status=${defaultPostStatus}`, icon: 'i-lucide-align-left', active: isActivePrefix('/cms/posts/en') },
+                { label: 'Dhivehi', to: `/cms/posts/dv?status=${defaultPostStatus}`, icon: 'i-lucide-align-right', active: isActivePrefix('/cms/posts/dv') },
             );
         }
 
         items.push({
             label: 'Posts',
             icon: 'i-lucide-file-text',
-            to: `/cms/posts/${languages.value.find(l => l.is_default)?.code || 'en'}`,
+            to: `/cms/posts/${languages.value.find(l => l.is_default)?.code || 'en'}?status=${defaultPostStatus}`,
             active: isActivePrefix('/cms/posts'),
             open: isActivePrefix('/cms/posts'),
             children: postChildren,

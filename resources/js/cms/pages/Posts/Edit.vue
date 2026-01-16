@@ -935,11 +935,130 @@ function addTag(tagId: number | null) {
     }
 }
 
+// Custom tag input state
+const tagInputRef = ref<HTMLInputElement | null>(null);
+const tagSearchQuery = ref('');
+const showTagSuggestions = ref(false);
+const tagSuggestions = ref<{ id: number; name: string; slug: string }[]>([]);
+const isSearchingTags = ref(false);
+let tagSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+// Search tags via API with debounce
+async function searchTags(query: string) {
+    if (!query.trim()) {
+        tagSuggestions.value = [];
+        return;
+    }
+
+    isSearchingTags.value = true;
+    try {
+        const response = await axios.get('/cms/tags/search', {
+            params: {
+                q: query,
+                exclude: form.tags,
+                limit: 10,
+            },
+        });
+        tagSuggestions.value = response.data;
+    } catch (error) {
+        console.error('Failed to search tags:', error);
+        tagSuggestions.value = [];
+    } finally {
+        isSearchingTags.value = false;
+    }
+}
+
+// Debounced tag search
+function debouncedTagSearch(query: string) {
+    if (tagSearchDebounceTimer) {
+        clearTimeout(tagSearchDebounceTimer);
+    }
+    tagSearchDebounceTimer = setTimeout(() => {
+        searchTags(query);
+    }, 300);
+}
+
+// Check if the search query exactly matches an existing tag in suggestions
+const tagExistsInSuggestions = computed(() => {
+    const query = tagSearchQuery.value.toLowerCase().trim();
+    if (!query) return false;
+    return tagSuggestions.value.some((tag) => tag.name.toLowerCase() === query);
+});
+
+// Handle tag input
+function onTagInput() {
+    showTagSuggestions.value = true;
+    debouncedTagSearch(tagSearchQuery.value);
+}
+
+// Handle Enter key in tag input
+async function onTagEnter() {
+    const query = tagSearchQuery.value.trim();
+    if (!query) return;
+
+    // Check if it matches an existing tag in suggestions
+    const existingTag = tagSuggestions.value.find((tag) => tag.name.toLowerCase() === query.toLowerCase());
+
+    if (existingTag) {
+        selectTagSuggestion(existingTag.id, existingTag.name);
+    } else {
+        // Create new tag
+        await createAndAddTag();
+    }
+}
+
+// Handle backspace to remove last tag when input is empty
+function onTagBackspace() {
+    if (tagSearchQuery.value === '' && form.tags.length > 0) {
+        form.tags.pop();
+    }
+}
+
+// Handle blur on tag input
+function onTagInputBlur() {
+    // Delay to allow click on suggestions
+    setTimeout(() => {
+        showTagSuggestions.value = false;
+    }, 200);
+}
+
+// Select a tag from suggestions
+function selectTagSuggestion(tagId: number, tagName: string) {
+    addTag(tagId);
+    // Add to localTags so getTagLabel works
+    if (!localTags.value.find((t) => t.id === tagId)) {
+        localTags.value.push({ id: tagId, name: tagName, slug: '' });
+    }
+    // Clear input immediately
+    tagSearchQuery.value = '';
+    tagSuggestions.value = [];
+    showTagSuggestions.value = false;
+    // Focus after a small delay to ensure state is updated
+    nextTick(() => {
+        tagInputRef.value?.focus();
+    });
+}
+
+// Create and add a new tag
+async function createAndAddTag() {
+    const name = tagSearchQuery.value.trim();
+    if (!name) return;
+
+    const newTag = await createTag(name);
+    if (newTag) {
+        form.tags.push(newTag.id);
+        tagSearchQuery.value = '';
+        tagSuggestions.value = [];
+        showTagSuggestions.value = false;
+        tagInputRef.value?.focus();
+    }
+}
+
 const sponsorOptions = computed(() =>
     props.sponsors.map((sponsor) => ({ label: sponsor.name, value: sponsor.id }))
 );
 
-// Create a new tag inline (for multi-select tags)
+// Create a new tag inline (for multi-select tags) - kept for featured tag
 async function onCreateTag(name: string) {
     const newTag = await createTag(name);
     if (newTag) {
@@ -1699,22 +1818,34 @@ function openDiff() {
                             </div>
 
                             <!-- Workflow Actions (compact bar) -->
-                            <div v-if="availableTransitions.length > 0 && !isReadOnly" class="mb-6 flex flex-wrap items-center gap-2">
-                                <span class="text-xs text-muted">Actions:</span>
-                                <UButton
-                                    v-for="transition in availableTransitions"
-                                    :key="`${transition.from}-${transition.to}`"
-                                    size="xs"
-                                    :color="workflow.getStateColor(transition.to)"
-                                    variant="soft"
-                                    :loading="transitionLoading"
-                                    @click="performQuickTransition(transition)"
-                                >
-                                    <template #leading>
-                                        <UIcon name="i-lucide-arrow-right" class="size-3" />
-                                    </template>
-                                    {{ transition.label }}
-                                </UButton>
+                            <div class="mb-6 flex flex-wrap items-center gap-4">
+                                <div v-if="availableTransitions.length > 0 && !isReadOnly" class="flex flex-wrap items-center gap-2">
+                                    <span class="text-xs text-muted">Actions:</span>
+                                    <UButton
+                                        v-for="transition in availableTransitions"
+                                        :key="`${transition.from}-${transition.to}`"
+                                        size="xs"
+                                        :color="workflow.getStateColor(transition.to)"
+                                        variant="soft"
+                                        :loading="transitionLoading"
+                                        @click="performQuickTransition(transition)"
+                                    >
+                                        <template #leading>
+                                            <UIcon name="i-lucide-arrow-right" class="size-3" />
+                                        </template>
+                                        {{ transition.label }}
+                                    </UButton>
+                                </div>
+
+                                <!-- Show Author Toggle -->
+                                <label class="flex items-center gap-2 cursor-pointer ml-auto">
+                                    <USwitch
+                                        v-model="form.show_author"
+                                        size="sm"
+                                        :disabled="isReadOnly"
+                                    />
+                                    <span class="text-xs font-medium text-muted">Show author</span>
+                                </label>
                             </div>
 
                             <!-- Cover Image -->
@@ -2189,49 +2320,100 @@ function openDiff() {
                                 </button>
                             </div>
 
-                            <!-- Tags as Pills (Inline Searchable) -->
-                            <div class="mt-8">
-                                <div class="flex items-center gap-2 text-sm text-muted mb-3">
-                                    <UIcon name="i-lucide-tags" class="size-5" />
-                                    <span class="font-medium">Tags</span>
-                                </div>
-                                <!-- Tags container with pills -->
-                                <div class="w-full min-h-[46px] px-3 py-2 rounded-lg border border-default bg-default">
-                                    <div class="flex flex-wrap gap-2 items-center">
-                                        <!-- Selected Tags as Pills -->
+                            <!-- Tags Section -->
+                            <div class="mt-8 pb-52">
+                                <label class="block text-sm font-medium text-highlighted mb-2">Tags</label>
+
+                                <!-- Custom Tag Input -->
+                                <div class="space-y-3">
+                                    <!-- Tag Input with inline suggestions -->
+                                    <div v-if="!isReadOnly" class="relative z-10">
+                                        <div class="flex items-center gap-2 p-2 border border-muted rounded-lg bg-default focus-within:ring-2 focus-within:ring-primary/50 focus-within:border-primary transition-all">
+                                            <UIcon name="i-lucide-tag" class="size-4 text-muted shrink-0" />
+                                            <div class="flex-1 flex flex-wrap items-center gap-2">
+                                                <!-- Selected Tags as inline pills -->
+                                                <span
+                                                    v-for="tagId in form.tags"
+                                                    :key="tagId"
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded text-sm font-medium"
+                                                >
+                                                    {{ getTagLabel(tagId) }}
+                                                    <button
+                                                        type="button"
+                                                        class="hover:bg-primary/20 rounded p-0.5 transition-colors"
+                                                        @click="removeTag(tagId)"
+                                                    >
+                                                        <UIcon name="i-lucide-x" class="size-3" />
+                                                    </button>
+                                                </span>
+                                                <!-- Text input -->
+                                                <input
+                                                    ref="tagInputRef"
+                                                    v-model="tagSearchQuery"
+                                                    type="text"
+                                                    class="flex-1 min-w-[120px] bg-transparent border-none outline-none text-sm placeholder:text-muted"
+                                                    placeholder="Type to add tag..."
+                                                    @input="onTagInput"
+                                                    @keydown.enter.prevent="onTagEnter"
+                                                    @keydown.backspace="onTagBackspace"
+                                                    @focus="showTagSuggestions = true"
+                                                    @blur="onTagInputBlur"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <!-- Suggestions dropdown -->
+                                        <div
+                                            v-if="showTagSuggestions && (tagSuggestions.length > 0 || isSearchingTags || (tagSearchQuery.trim() && !tagExistsInSuggestions))"
+                                            class="absolute z-50 w-full mt-1 bg-default border border-muted rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                                        >
+                                            <!-- Loading state -->
+                                            <div v-if="isSearchingTags" class="px-3 py-2 text-sm text-muted flex items-center gap-2">
+                                                <UIcon name="i-lucide-loader-2" class="size-3.5 animate-spin" />
+                                                <span>Searching...</span>
+                                            </div>
+
+                                            <!-- Existing tags matching search -->
+                                            <button
+                                                v-for="tag in tagSuggestions"
+                                                :key="tag.id"
+                                                type="button"
+                                                class="w-full px-3 py-2 text-left text-sm hover:bg-muted/50 flex items-center gap-2 transition-colors"
+                                                @mousedown.prevent="selectTagSuggestion(tag.id, tag.name)"
+                                            >
+                                                <UIcon name="i-lucide-tag" class="size-3.5 text-muted" />
+                                                <span>{{ tag.name }}</span>
+                                            </button>
+
+                                            <!-- Create new tag option -->
+                                            <button
+                                                v-if="tagSearchQuery.trim() && !tagExistsInSuggestions && !isSearchingTags"
+                                                type="button"
+                                                class="w-full px-3 py-2 text-left text-sm hover:bg-muted/50 flex items-center gap-2 text-primary border-t border-muted transition-colors"
+                                                @mousedown.prevent="createAndAddTag"
+                                            >
+                                                <UIcon name="i-lucide-plus" class="size-3.5" />
+                                                <span>Create "{{ tagSearchQuery.trim() }}"</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Read-only: just show pills -->
+                                    <div v-else-if="form.tags.length > 0" class="flex flex-wrap gap-2">
                                         <span
                                             v-for="tagId in form.tags"
                                             :key="tagId"
-                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium"
                                         >
+                                            <UIcon name="i-lucide-tag" class="size-3.5" />
                                             {{ getTagLabel(tagId) }}
-                                            <button
-                                                v-if="!isReadOnly"
-                                                type="button"
-                                                class="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
-                                                @click="removeTag(tagId)"
-                                            >
-                                                <UIcon name="i-lucide-x" class="size-3" />
-                                            </button>
                                         </span>
-                                        <!-- Inline Select for adding tags -->
-                                        <USelectMenu
-                                            v-if="!isReadOnly"
-                                            :model-value="null"
-                                            :items="availableTagOptions"
-                                            value-key="value"
-                                            placeholder="Add tag..."
-                                            searchable
-                                            :search-input="{ placeholder: 'Search tags...' }"
-                                            create-item
-                                            variant="none"
-                                            size="sm"
-                                            class="min-w-24 flex-shrink-0"
-                                            :ui="{ base: 'px-0', content: 'w-56' }"
-                                            @update:model-value="addTag"
-                                            @create="onCreateTag"
-                                        />
                                     </div>
+
+                                    <!-- Empty State for read-only -->
+                                    <p v-else-if="isReadOnly" class="text-sm text-muted">
+                                        No tags added.
+                                    </p>
                                 </div>
                             </div>
 
@@ -2253,15 +2435,6 @@ function openDiff() {
                                     />
                                 </div>
 
-                                <!-- Show Author Toggle -->
-                                <label class="flex items-center gap-3 cursor-pointer">
-                                    <USwitch
-                                        v-model="form.show_author"
-                                        size="lg"
-                                        :disabled="isReadOnly"
-                                    />
-                                    <span class="text-base font-medium">Show author</span>
-                                </label>
                             </div>
                         </div>
                     </div>

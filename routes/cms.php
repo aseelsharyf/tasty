@@ -224,6 +224,7 @@ Route::middleware(['auth', 'cms'])->group(function () {
 
     // Tags Management
     Route::middleware('permission:tags.view')->group(function () {
+        Route::get('tags/search', [TagController::class, 'search'])->name('cms.tags.search');
         Route::resource('tags', TagController::class)->except(['show'])->names([
             'index' => 'cms.tags.index',
             'create' => 'cms.tags.create',

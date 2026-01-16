@@ -12,7 +12,25 @@ class UpdatePostRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('posts.edit');
+        $user = $this->user();
+        $post = $this->route('post');
+
+        // User has full edit permission
+        if ($user->can('posts.edit')) {
+            return true;
+        }
+
+        // User has edit-own permission and is the author
+        if ($user->can('posts.edit-own') && $post) {
+            // Handle both Post model and UUID string from route
+            $authorId = $post instanceof Post ? $post->author_id : Post::where('uuid', $post)->value('author_id');
+
+            if ($authorId && (int) $authorId === (int) $user->id) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

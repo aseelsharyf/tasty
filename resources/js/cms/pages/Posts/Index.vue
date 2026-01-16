@@ -30,6 +30,11 @@ interface PostType {
     icon?: string;
 }
 
+interface UserCapabilities {
+    isEditorOrAdmin: boolean;
+    userId: number;
+}
+
 const props = defineProps<{
     posts: PaginatedResponse<Post>;
     counts: PostCounts;
@@ -39,6 +44,7 @@ const props = defineProps<{
     language: LanguageInfo;
     languages: Language[];
     postTypes: PostType[];
+    userCapabilities: UserCapabilities;
 }>();
 
 const { can } = usePermission();
@@ -107,56 +113,67 @@ const deleteModalOpen = ref(false);
 const postToDelete = ref<Post | null>(null);
 
 // Navigation menu items for status tabs
-const statusLinks = computed<NavigationMenuItem[][]>(() => [[
-    {
-        label: 'All',
-        icon: 'i-lucide-layout-list',
-        badge: props.counts.all,
-        to: `/cms/posts/${currentLanguageCode.value}`,
-        active: currentStatus.value === 'all',
-        onSelect: () => changeStatus('all'),
-    },
-    {
-        label: 'Drafts',
-        icon: 'i-lucide-file-edit',
-        badge: props.counts.draft,
-        to: `/cms/posts/${currentLanguageCode.value}?status=draft`,
-        active: currentStatus.value === 'draft',
-        onSelect: () => changeStatus('draft'),
-    },
-    {
-        label: 'Copydesk',
-        icon: 'i-lucide-spell-check-2',
-        badge: props.counts.copydesk,
-        to: `/cms/posts/${currentLanguageCode.value}?status=copydesk`,
-        active: currentStatus.value === 'copydesk',
-        onSelect: () => changeStatus('copydesk'),
-    },
-    {
-        label: 'Published',
-        icon: 'i-lucide-globe',
-        badge: props.counts.published,
-        to: `/cms/posts/${currentLanguageCode.value}?status=published`,
-        active: currentStatus.value === 'published',
-        onSelect: () => changeStatus('published'),
-    },
-    {
-        label: 'Scheduled',
-        icon: 'i-lucide-calendar-clock',
-        badge: props.counts.scheduled,
-        to: `/cms/posts/${currentLanguageCode.value}?status=scheduled`,
-        active: currentStatus.value === 'scheduled',
-        onSelect: () => changeStatus('scheduled'),
-    },
-    {
-        label: 'Trash',
-        icon: 'i-lucide-trash',
-        badge: props.counts.trashed,
-        to: `/cms/posts/${currentLanguageCode.value}?status=trashed`,
-        active: currentStatus.value === 'trashed',
-        onSelect: () => changeStatus('trashed'),
-    },
-]]);
+const statusLinks = computed<NavigationMenuItem[][]>(() => {
+    const items: NavigationMenuItem[] = [
+        {
+            label: 'All',
+            icon: 'i-lucide-layout-list',
+            badge: props.counts.all,
+            to: `/cms/posts/${currentLanguageCode.value}`,
+            active: currentStatus.value === 'all',
+            onSelect: () => changeStatus('all'),
+        },
+        {
+            label: 'Drafts',
+            icon: 'i-lucide-file-edit',
+            badge: props.counts.draft,
+            to: `/cms/posts/${currentLanguageCode.value}?status=draft`,
+            active: currentStatus.value === 'draft',
+            onSelect: () => changeStatus('draft'),
+        },
+    ];
+
+    // Only show Copydesk tab for editors/admins
+    if (props.userCapabilities.isEditorOrAdmin) {
+        items.push({
+            label: 'Copydesk',
+            icon: 'i-lucide-spell-check-2',
+            badge: props.counts.copydesk,
+            to: `/cms/posts/${currentLanguageCode.value}?status=copydesk`,
+            active: currentStatus.value === 'copydesk',
+            onSelect: () => changeStatus('copydesk'),
+        });
+    }
+
+    items.push(
+        {
+            label: 'Published',
+            icon: 'i-lucide-globe',
+            badge: props.counts.published,
+            to: `/cms/posts/${currentLanguageCode.value}?status=published`,
+            active: currentStatus.value === 'published',
+            onSelect: () => changeStatus('published'),
+        },
+        {
+            label: 'Scheduled',
+            icon: 'i-lucide-calendar-clock',
+            badge: props.counts.scheduled,
+            to: `/cms/posts/${currentLanguageCode.value}?status=scheduled`,
+            active: currentStatus.value === 'scheduled',
+            onSelect: () => changeStatus('scheduled'),
+        },
+        {
+            label: 'Trash',
+            icon: 'i-lucide-trash',
+            badge: props.counts.trashed,
+            to: `/cms/posts/${currentLanguageCode.value}?status=trashed`,
+            active: currentStatus.value === 'trashed',
+            onSelect: () => changeStatus('trashed'),
+        },
+    );
+
+    return [items];
+});
 
 const postTypeOptions = computed(() => [
     { label: 'All Types', value: null },
@@ -310,12 +327,27 @@ function getPostTypeIcon(type: string) {
     return type === 'recipe' ? 'i-lucide-chef-hat' : 'i-lucide-file-text';
 }
 
+function canEditPost(post: Post): boolean {
+    const isAuthor = post.author?.id === props.userCapabilities.userId;
+    const isEditorOrAdmin = props.userCapabilities.isEditorOrAdmin;
+
+    // For published posts, only editors or the author can edit
+    if (post.status === 'published') {
+        return isEditorOrAdmin || isAuthor;
+    }
+
+    // For draft posts, user can edit if they have posts.edit or (posts.edit-own AND are the author)
+    return can('posts.edit') || (can('posts.edit-own') && isAuthor);
+}
+
 function getRowActions(post: Post) {
     const actions: any[][] = [];
+    const isAuthor = post.author?.id === props.userCapabilities.userId;
+    const canEditThisPost = props.userCapabilities.isEditorOrAdmin || isAuthor;
 
     if (post.deleted_at) {
         // Trashed post actions
-        if (can('posts.edit')) {
+        if (canEditThisPost && (can('posts.edit') || can('posts.edit-own'))) {
             actions.push([
                 {
                     label: 'Restore',
@@ -336,7 +368,10 @@ function getRowActions(post: Post) {
         }
     } else {
         // Normal post actions
-        if (can('posts.edit')) {
+        // For published posts, only editors or the author can edit/unpublish
+        const canEditPublished = post.status === 'published' ? canEditThisPost : true;
+
+        if (canEditPublished && (can('posts.edit') || (can('posts.edit-own') && isAuthor))) {
             const langCode = post.language_code || currentLanguageCode.value;
             actions.push([
                 {
@@ -347,7 +382,8 @@ function getRowActions(post: Post) {
             ]);
         }
 
-        if (can('posts.publish')) {
+        // Only editors or author can publish/unpublish
+        if (can('posts.publish') && canEditThisPost) {
             if (post.status === 'published') {
                 actions.push([
                     {
@@ -367,7 +403,7 @@ function getRowActions(post: Post) {
             }
         }
 
-        if (can('posts.delete')) {
+        if (can('posts.delete') && canEditThisPost) {
             actions.push([
                 {
                     label: 'Move to Trash',
@@ -625,7 +661,7 @@ function formatDate(dateStr: string) {
                                 <div class="flex items-center gap-1 shrink-0" @click.stop>
                                     <template v-if="post.deleted_at">
                                         <UButton
-                                            v-if="can('posts.edit')"
+                                            v-if="canEditPost(post)"
                                             icon="i-lucide-undo"
                                             color="neutral"
                                             variant="ghost"
@@ -645,7 +681,7 @@ function formatDate(dateStr: string) {
                                     </template>
                                     <template v-else>
                                         <UButton
-                                            v-if="can('posts.edit')"
+                                            v-if="canEditPost(post)"
                                             icon="i-lucide-pencil"
                                             color="neutral"
                                             variant="ghost"
@@ -654,7 +690,7 @@ function formatDate(dateStr: string) {
                                             @click="editPost(post)"
                                         />
                                         <UButton
-                                            v-if="can('posts.publish') && post.status !== 'published'"
+                                            v-if="can('posts.publish') && canEditPost(post) && post.status !== 'published'"
                                             icon="i-lucide-globe"
                                             color="success"
                                             variant="ghost"
@@ -663,7 +699,7 @@ function formatDate(dateStr: string) {
                                             @click="publishPost(post)"
                                         />
                                         <UButton
-                                            v-if="can('posts.publish') && post.status === 'published'"
+                                            v-if="can('posts.publish') && canEditPost(post) && post.status === 'published'"
                                             icon="i-lucide-eye-off"
                                             color="warning"
                                             variant="ghost"
