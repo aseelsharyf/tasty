@@ -17,5 +17,13 @@
         @if($description)
             <p class="text-body-md text-blue-black line-clamp-3">{{ $description }}</p>
         @endif
+        @if($showPrice && $price)
+            <div class="flex items-center gap-2">
+                @if($compareAtPrice)
+                    <span class="text-body-sm text-gray-500 line-through">{{ $compareAtPrice }}</span>
+                @endif
+                <span class="text-body-md font-semibold text-blue-black">{{ $price }}</span>
+            </div>
+        @endif
     </div>
 </a>

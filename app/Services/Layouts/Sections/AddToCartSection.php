@@ -62,7 +62,15 @@ class AddToCartSection extends AbstractSectionDefinition
 
     public function supportedActions(): array
     {
-        return []; // Products are manually configured, not fetched from posts
+        return ['recent']; // Support dynamic product loading
+    }
+
+    /**
+     * Indicate this section uses products, not posts.
+     */
+    public function contentType(): string
+    {
+        return 'product';
     }
 
     public function slotLabels(): array
@@ -75,40 +83,12 @@ class AddToCartSection extends AbstractSectionDefinition
         return $labels;
     }
 
+    /**
+     * Slot schema for static content (not used for products).
+     */
     public function slotSchema(): array
     {
-        return [
-            'title' => [
-                'type' => 'text',
-                'label' => 'Product Title',
-                'placeholder' => 'Enter product name',
-            ],
-            'description' => [
-                'type' => 'textarea',
-                'label' => 'Description',
-                'placeholder' => 'Enter product description',
-            ],
-            'image' => [
-                'type' => 'media',
-                'label' => 'Product Image',
-                'placeholder' => 'Select or enter image URL',
-            ],
-            'imageAlt' => [
-                'type' => 'text',
-                'label' => 'Image Alt Text',
-                'placeholder' => 'Describe the image',
-            ],
-            'tags' => [
-                'type' => 'tags',
-                'label' => 'Tags',
-                'placeholder' => 'e.g., PANTRY, APPLIANCE',
-            ],
-            'url' => [
-                'type' => 'text',
-                'label' => 'Product URL',
-                'placeholder' => 'Enter product link',
-            ],
-        ];
+        return [];
     }
 
     public function previewSchema(): array
@@ -123,5 +103,25 @@ class AddToCartSection extends AbstractSectionDefinition
                 ]],
             ],
         ];
+    }
+
+    /**
+     * Override default slots to use product mode.
+     *
+     * @return array<int, array{index: int, mode: string, productId: int|null}>
+     */
+    public function defaultSlots(): array
+    {
+        $slots = [];
+
+        for ($i = 0; $i < $this->slotCount(); $i++) {
+            $slots[] = [
+                'index' => $i,
+                'mode' => 'dynamic', // Use dynamic by default to load recent products
+                'productId' => null,
+            ];
+        }
+
+        return $slots;
     }
 }

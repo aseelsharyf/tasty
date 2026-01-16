@@ -71,6 +71,18 @@ class RolesAndPermissionsSeeder extends Seeder
             'sponsors.edit',
             'sponsors.delete',
 
+            // Product Categories
+            'product-categories.view',
+            'product-categories.create',
+            'product-categories.edit',
+            'product-categories.delete',
+
+            // Products
+            'products.view',
+            'products.create',
+            'products.edit',
+            'products.delete',
+
             // Menus
             'menus.view',
             'menus.create',
@@ -147,6 +159,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'sponsors.create',
             'sponsors.edit',
             'sponsors.delete',
+            'product-categories.view',
+            'product-categories.create',
+            'product-categories.edit',
+            'product-categories.delete',
+            'products.view',
+            'products.create',
+            'products.edit',
+            'products.delete',
             'menus.view',
             'menus.create',
             'menus.edit',
@@ -193,6 +213,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'sponsors.view',
             'sponsors.create',
             'sponsors.edit',
+            'product-categories.view',
+            'product-categories.create',
+            'product-categories.edit',
+            'products.view',
+            'products.create',
+            'products.edit',
             'comments.view',
             'comments.moderate',
             'comments.edit',

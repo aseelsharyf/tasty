@@ -14,6 +14,7 @@ class DevelopmentSeeder extends Seeder
      * - Pages (home, about, contact, etc.)
      * - Posts with versions and workflow states
      * - Comments on posts
+     * - Product categories and products
      */
     public function run(): void
     {
@@ -23,6 +24,7 @@ class DevelopmentSeeder extends Seeder
             MediaSeeder::class,
             PostSeeder::class,
             CommentSeeder::class,
+            ProductSeeder::class,
         ]);
 
         $this->command->info('Development data seeded successfully!');

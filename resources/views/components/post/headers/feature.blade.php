@@ -15,7 +15,7 @@
             <img
                 src="{{ $post->featured_image_url }}"
                 alt="{{ $post->title }}"
-                class="absolute inset-0 w-full h-full object-cover object-center"
+                class="absolute inset-0 w-full h-full object-cover object-top"
             />
         @else
             <div class="absolute inset-0 bg-tasty-blue-black/20"></div>

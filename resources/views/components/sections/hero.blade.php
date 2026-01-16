@@ -40,7 +40,7 @@
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"
-                    class="absolute inset-0 w-full h-full object-cover"
+                    class="absolute inset-0 w-full h-full object-cover object-top" 
                 >
             </div>
         @else

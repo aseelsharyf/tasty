@@ -486,7 +486,7 @@
             /* Always extend beyond viewport edges */
             width: max(1510px, 105vw);
             height: auto;
-            aspect-ratio: 1510 / 1058;
+            aspect-ratio: 1510 / 1210;
             max-width: 1970px;
         }
     }

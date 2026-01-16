@@ -223,6 +223,40 @@ const taxonomyNavItems = computed<NavigationMenuItem[]>(() => {
     return items;
 });
 
+const shopNavItems = computed<NavigationMenuItem[]>(() => {
+    const items: NavigationMenuItem[] = [];
+    const hasShopAccess = can('products.view') || can('product-categories.view');
+
+    if (hasShopAccess) {
+        items.push({
+            label: 'Shop',
+            type: 'label',
+        });
+    }
+
+    if (can('products.view')) {
+        items.push({
+            label: 'Products',
+            icon: 'i-lucide-package',
+            to: '/cms/products',
+            active: isActivePrefix('/cms/products'),
+            onSelect: () => { sidebarOpen.value = false; },
+        });
+    }
+
+    if (can('product-categories.view')) {
+        items.push({
+            label: 'Categories',
+            icon: 'i-lucide-boxes',
+            to: '/cms/product-categories',
+            active: isActivePrefix('/cms/product-categories'),
+            onSelect: () => { sidebarOpen.value = false; },
+        });
+    }
+
+    return items;
+});
+
 const layoutNavItems = computed<NavigationMenuItem[]>(() => {
     const items: NavigationMenuItem[] = [];
     const hasLayoutAccess = can('menus.view') || can('pages.view') || can('settings.view');
@@ -525,6 +559,22 @@ const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
         }
     }
 
+    // Add shop nav items
+    for (const item of shopNavItems.value) {
+        if (item.type === 'label') continue;
+        if (item.to) {
+            navItems.push({
+                label: item.label || '',
+                icon: item.icon as string,
+                to: item.to as string,
+                onSelect: () => {
+                    router.visit(item.to as string);
+                    searchOpen.value = false;
+                },
+            });
+        }
+    }
+
     // Add layout nav items (includes Homepage)
     for (const item of layoutNavItems.value) {
         if (item.type === 'label') continue;
@@ -713,6 +763,18 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
                         v-if="taxonomyNavItems.length > 0"
                         :collapsed="collapsed"
                         :items="taxonomyNavItems"
+                        orientation="vertical"
+                        highlight
+                        tooltip
+                        popover
+                        class="mt-4"
+                    />
+
+                    <!-- Shop Section -->
+                    <UNavigationMenu
+                        v-if="shopNavItems.length > 0"
+                        :collapsed="collapsed"
+                        :items="shopNavItems"
                         orientation="vertical"
                         highlight
                         tooltip

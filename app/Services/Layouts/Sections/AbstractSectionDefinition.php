@@ -157,6 +157,15 @@ abstract class AbstractSectionDefinition
     }
 
     /**
+     * Get the content type this section uses.
+     * Default is 'post', but can be overridden (e.g., 'product').
+     */
+    public function contentType(): string
+    {
+        return 'post';
+    }
+
+    /**
      * Get the default configuration values.
      *
      * @return array<string, mixed>
@@ -235,6 +244,7 @@ abstract class AbstractSectionDefinition
             'slotLabels' => $this->slotLabels(),
             'supportedActions' => $this->supportedActions(),
             'supportsDynamic' => $this->supportsDynamic(),
+            'contentType' => $this->contentType(),
             'defaultConfig' => $this->defaultConfig(),
             'defaultSlots' => $this->defaultSlots(),
             'defaultDataSource' => $this->defaultDataSource(),

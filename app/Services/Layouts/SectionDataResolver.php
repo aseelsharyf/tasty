@@ -46,7 +46,7 @@ class SectionDataResolver
      */
     protected function parseSlots(array $slots): array
     {
-        $manual = [];      // index => postId
+        $manual = [];      // index => postId or productId
         $static = [];      // index => content array
         $dynamicCount = 0;
 
@@ -56,6 +56,9 @@ class SectionDataResolver
 
             if ($mode === 'manual' && ! empty($slot['postId'])) {
                 $manual[$index] = $slot['postId'];
+            } elseif ($mode === 'manual' && ! empty($slot['productId'])) {
+                // Support productId for add-to-cart section
+                $manual[$index] = $slot['productId'];
             } elseif ($mode === 'static' && ! empty($slot['content'])) {
                 $static[$index] = $slot['content'];
             } else {
@@ -391,11 +394,11 @@ class SectionDataResolver
      */
     protected function resolveAddToCart(array $config, array $slotData): array
     {
-        // Add to Cart uses static content from slots
-        $products = [];
-        foreach ($slotData['static'] as $index => $content) {
-            if (! empty($content)) {
-                $products[$index] = $content;
+        // Extract product IDs from manual slots
+        $productIds = [];
+        foreach ($slotData['manual'] as $index => $productId) {
+            if (! empty($productId)) {
+                $productIds[] = $productId;
             }
         }
 
@@ -403,7 +406,8 @@ class SectionDataResolver
             'title' => $config['title'] ?? 'ADD TO CART',
             'description' => $config['description'] ?? 'Ingredients, tools, and staples we actually use.',
             'bgColor' => $config['bgColor'] ?? 'white',
-            'products' => $products,
+            'productIds' => $productIds,
+            'count' => $slotData['totalSlots'] ?: 6,
         ];
     }
 }

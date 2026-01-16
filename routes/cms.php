@@ -3,6 +3,7 @@
 use App\Http\Controllers\Cms\Api\FetchUrlController;
 use App\Http\Controllers\Cms\AuthController;
 use App\Http\Controllers\Cms\CategoryController;
+use App\Http\Controllers\Cms\CmsProductController;
 use App\Http\Controllers\Cms\CommentBanController;
 use App\Http\Controllers\Cms\CommentController;
 use App\Http\Controllers\Cms\DashboardController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Cms\PageController;
 use App\Http\Controllers\Cms\PostController;
 use App\Http\Controllers\Cms\PostEditLockController;
 use App\Http\Controllers\Cms\PostPreviewController;
+use App\Http\Controllers\Cms\ProductCategoryController;
 use App\Http\Controllers\Cms\ProfileController;
 use App\Http\Controllers\Cms\RoleController;
 use App\Http\Controllers\Cms\SeoSettingController;
@@ -244,6 +246,34 @@ Route::middleware(['auth', 'cms'])->group(function () {
             'destroy' => 'cms.sponsors.destroy',
         ]);
         Route::delete('sponsors/bulk', [SponsorController::class, 'bulkDestroy'])->name('cms.sponsors.bulk-destroy');
+    });
+
+    // Product Categories Management
+    Route::middleware('permission:products.view')->group(function () {
+        Route::resource('product-categories', ProductCategoryController::class)->except(['show'])->names([
+            'index' => 'cms.product-categories.index',
+            'create' => 'cms.product-categories.create',
+            'store' => 'cms.product-categories.store',
+            'edit' => 'cms.product-categories.edit',
+            'update' => 'cms.product-categories.update',
+            'destroy' => 'cms.product-categories.destroy',
+        ]);
+        Route::post('product-categories/reorder', [ProductCategoryController::class, 'reorder'])->name('cms.product-categories.reorder');
+        Route::delete('product-categories/bulk', [ProductCategoryController::class, 'bulkDestroy'])->name('cms.product-categories.bulk-destroy');
+    });
+
+    // Products Management
+    Route::middleware('permission:products.view')->group(function () {
+        Route::resource('products', CmsProductController::class)->except(['show'])->names([
+            'index' => 'cms.products.index',
+            'create' => 'cms.products.create',
+            'store' => 'cms.products.store',
+            'edit' => 'cms.products.edit',
+            'update' => 'cms.products.update',
+            'destroy' => 'cms.products.destroy',
+        ]);
+        Route::post('products/reorder', [CmsProductController::class, 'reorder'])->name('cms.products.reorder');
+        Route::delete('products/bulk', [CmsProductController::class, 'bulkDestroy'])->name('cms.products.bulk-destroy');
     });
 
     // Subscribers Management
