@@ -34,6 +34,8 @@ class Recipe extends Component
 
     public string $alignment;
 
+    public bool $showKicker;
+
     /**
      * Create a new component instance.
      *
@@ -54,9 +56,11 @@ class Recipe extends Component
         ?string $url = null,
         string $variant = 'default',
         string $alignment = 'center',
+        bool $showKicker = false,
     ) {
         $this->variant = $variant;
         $this->alignment = $alignment;
+        $this->showKicker = $showKicker;
 
         if ($post instanceof Post) {
             $this->image = $post->featured_image_url ?? '';

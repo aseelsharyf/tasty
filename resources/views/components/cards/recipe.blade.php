@@ -9,7 +9,7 @@
         'featured' => "w-full bg-[#F7F7F7] rounded-[12px] overflow-hidden flex flex-col {$alignItems} gap-8 pb-10",
         'grid' => 'w-full bg-[#F7F7F7] rounded-[12px] overflow-hidden flex flex-col items-center gap-8 pb-10',
         'mobile' => 'w-full bg-[#F7F7F7] rounded-[12px] overflow-hidden flex flex-col items-center gap-6 pb-8 shrink-0',
-        'scroll' => 'w-full h-full bg-[#F7F7F7] rounded-[12px] overflow-hidden flex flex-col items-center',
+        'scroll' => 'w-full bg-[#F7F7F7] rounded-[12px] overflow-hidden flex flex-col items-center',
         default => 'w-full bg-[#F7F7F7] rounded-[12px] overflow-hidden flex flex-col items-center gap-8 pb-10',
     };
 
@@ -53,7 +53,7 @@
     <div class="{{ $contentClass }}">
         {{-- Kicker & Title --}}
         <a href="{{ $url }}" class="hover:opacity-80 transition-opacity flex flex-col gap-2">
-            @if($kicker)
+            @if($kicker && $showKicker)
                 <span class="text-h4 text-blue-black {{ $isFeatured ? $textAlign : 'text-center' }} uppercase">{{ $kicker }}</span>
             @endif
             <h3 class="font-display text-[24px] leading-[1.1] tracking-[-0.04em] text-blue-black {{ $isFeatured ? $textAlign : 'text-center' }} line-clamp-2">{{ $title }}</h3>
