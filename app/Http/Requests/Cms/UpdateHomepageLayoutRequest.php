@@ -40,6 +40,11 @@ class UpdateHomepageLayoutRequest extends FormRequest
             'sections.*.slots.*.index' => ['required', 'integer', 'min:0'],
             'sections.*.slots.*.mode' => ['required', 'string', 'in:dynamic,manual,static'],
             'sections.*.slots.*.postId' => ['nullable', 'integer', 'exists:posts,id'],
+            'sections.*.slots.*.productId' => ['nullable', 'integer', 'exists:products,id'],
+            // Static content - allow any key-value pairs for flexible slot schemas
+            'sections.*.slots.*.content' => ['nullable', 'array'],
+            'sections.*.slots.*.content.*' => ['nullable', 'string', 'max:5000'],
+            // Legacy product fields
             'sections.*.slots.*.product' => ['nullable', 'array'],
             'sections.*.slots.*.product.title' => ['nullable', 'string', 'max:255'],
             'sections.*.slots.*.product.description' => ['nullable', 'string', 'max:1000'],

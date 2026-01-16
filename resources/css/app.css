@@ -575,4 +575,107 @@
             max-width: 1970px;
         }
     }
+
+    /* Feature 1 Image Section */
+    .feature-1-image-wrapper {
+        width: 100%;
+        max-width: 1880px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .feature-1-image-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        flex-shrink: 0;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+        /* Mobile: 100% width with aspect ratio */
+        width: 100%;
+        aspect-ratio: 432 / 322;
+        border-radius: 1500px 1500px 0 0;
+
+        /* Image as background */
+        background:
+            linear-gradient(
+                180deg,
+                rgba(255, 231, 98, 0) 60%,
+                rgba(255, 231, 98, 0.5) 80%,
+                var(--color-tasty-yellow) 100%
+            ),
+            var(--feature-1-image) lightgray 50% / cover no-repeat;
+    }
+
+    @media (min-width: 1024px) {
+        .feature-1-image-container {
+            width: max(1510px, 105vw);
+            height: auto;
+            aspect-ratio: 1510 / 1126;
+            border-radius: 5000px 5000px 0 0;
+            max-width: 1970px;
+        }
+    }
+
+    /* Feature 2 Section (featured-location style) */
+    .feature-2-wrapper {
+        width: 100%;
+        max-width: 1880px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .feature-2-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        flex-shrink: 0;
+        overflow: hidden;
+
+        /* Mobile: full width, 750px height */
+        width: 100%;
+        height: 750px;
+
+        /* Background image */
+        background: var(--feature-2-image) lightgray 50% / cover no-repeat;
+    }
+
+    @media (min-width: 1024px) {
+        .feature-2-container {
+            /* Always extend beyond viewport edges */
+            width: max(1510px, 105vw);
+            height: auto;
+            aspect-ratio: 1510 / 1210;
+            max-width: 1970px;
+        }
+    }
+
+    .feature-2-content {
+        position: relative;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 5000px 5000px 0 0;
+
+        /* Mobile: padding-based sizing */
+        padding: 96px 40px 64px 40px;
+
+        @media (min-width: 1024px) {
+            /* Desktop: fixed height 735px, centered content */
+            height: 735px;
+            padding: 110px 362px 0 362px;
+        }
+    }
 }

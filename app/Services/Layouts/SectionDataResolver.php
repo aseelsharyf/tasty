@@ -32,6 +32,8 @@ class SectionDataResolver
             'featured-person' => $this->resolveFeaturedPerson($config, $dataSource, $slotData),
             'featured-video' => $this->resolveFeaturedVideo($config, $dataSource, $slotData),
             'featured-location' => $this->resolveFeaturedLocation($config, $dataSource, $slotData),
+            'feature-1' => $this->resolveFeature1($config, $dataSource, $slotData),
+            'feature-2' => $this->resolveFeature2($config, $dataSource, $slotData),
             'newsletter' => $this->resolveNewsletter($config),
             'add-to-cart' => $this->resolveAddToCart($config, $slotData),
             default => [],
@@ -357,6 +359,70 @@ class SectionDataResolver
         ];
 
         // Featured location - single slot
+        if (isset($slotData['manual'][0])) {
+            $data['postId'] = $slotData['manual'][0];
+        } elseif (isset($slotData['static'][0])) {
+            $data['staticContent'] = $slotData['static'][0];
+        } else {
+            $data['action'] = $dataSource['action'] ?? 'recent';
+            $data['params'] = $this->buildParams($dataSource);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Resolve Feature 1 section data.
+     *
+     * @param  array<string, mixed>  $config
+     * @param  array<string, mixed>  $dataSource
+     * @param  array<string, mixed>  $slotData
+     * @return array<string, mixed>
+     */
+    protected function resolveFeature1(array $config, array $dataSource, array $slotData): array
+    {
+        $data = [
+            'tag1' => $config['tag1'] ?? 'TASTY FEATURE',
+            'tag2' => $config['tag2'] ?? '',
+            'bgColor' => $config['bgColor'] ?? 'yellow',
+            'textColor' => $config['textColor'] ?? 'blue-black',
+            'buttonVariant' => $config['buttonVariant'] ?? 'white',
+            'buttonText' => $config['buttonText'] ?? 'Read More',
+        ];
+
+        // Feature 1 - single slot
+        if (isset($slotData['manual'][0])) {
+            $data['postId'] = $slotData['manual'][0];
+        } elseif (isset($slotData['static'][0])) {
+            $data['staticContent'] = $slotData['static'][0];
+        } else {
+            $data['action'] = $dataSource['action'] ?? 'recent';
+            $data['params'] = $this->buildParams($dataSource);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Resolve Feature 2 section data.
+     *
+     * @param  array<string, mixed>  $config
+     * @param  array<string, mixed>  $dataSource
+     * @param  array<string, mixed>  $slotData
+     * @return array<string, mixed>
+     */
+    protected function resolveFeature2(array $config, array $dataSource, array $slotData): array
+    {
+        $data = [
+            'tag1' => $config['tag1'] ?? 'TASTY FEATURE',
+            'tag2' => $config['tag2'] ?? '',
+            'bgColor' => $config['bgColor'] ?? 'blue-black',
+            'textColor' => $config['textColor'] ?? 'white',
+            'buttonVariant' => $config['buttonVariant'] ?? 'yellow',
+            'buttonText' => $config['buttonText'] ?? 'Read More',
+        ];
+
+        // Feature 2 - single slot
         if (isset($slotData['manual'][0])) {
             $data['postId'] = $slotData['manual'][0];
         } elseif (isset($slotData['static'][0])) {

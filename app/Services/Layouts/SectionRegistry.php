@@ -4,6 +4,8 @@ namespace App\Services\Layouts;
 
 use App\Services\Layouts\Sections\AbstractSectionDefinition;
 use App\Services\Layouts\Sections\AddToCartSection;
+use App\Services\Layouts\Sections\Feature1Section;
+use App\Services\Layouts\Sections\Feature2Section;
 use App\Services\Layouts\Sections\FeaturedLocationSection;
 use App\Services\Layouts\Sections\FeaturedPersonSection;
 use App\Services\Layouts\Sections\FeaturedVideoSection;
@@ -39,6 +41,8 @@ class SectionRegistry
         $this->register(new FeaturedPersonSection);
         $this->register(new FeaturedVideoSection);
         $this->register(new FeaturedLocationSection);
+        $this->register(new Feature1Section);
+        $this->register(new Feature2Section);
         $this->register(new NewsletterSection);
         $this->register(new AddToCartSection);
     }

@@ -131,6 +131,32 @@
                 />
                 @break
 
+            @case('feature-1')
+                <x-sections.feature-1
+                    :postId="$section['data']['postId'] ?? null"
+                    :staticContent="$section['data']['staticContent'] ?? null"
+                    :tag1="$section['data']['tag1'] ?? 'TASTY FEATURE'"
+                    :tag2="$section['data']['tag2'] ?? ''"
+                    :bgColor="$section['data']['bgColor'] ?? 'yellow'"
+                    :textColor="$section['data']['textColor'] ?? 'blue-black'"
+                    :buttonVariant="$section['data']['buttonVariant'] ?? 'white'"
+                    :buttonText="$section['data']['buttonText'] ?? 'Read More'"
+                />
+                @break
+
+            @case('feature-2')
+                <x-sections.feature-2
+                    :postId="$section['data']['postId'] ?? null"
+                    :staticContent="$section['data']['staticContent'] ?? null"
+                    :tag1="$section['data']['tag1'] ?? 'TASTY FEATURE'"
+                    :tag2="$section['data']['tag2'] ?? ''"
+                    :bgColor="$section['data']['bgColor'] ?? 'blue-black'"
+                    :textColor="$section['data']['textColor'] ?? 'white'"
+                    :buttonVariant="$section['data']['buttonVariant'] ?? 'yellow'"
+                    :buttonText="$section['data']['buttonText'] ?? 'Read More'"
+                />
+                @break
+
             @case('newsletter')
                 <x-sections.newsletter
                     :title="$section['data']['title'] ?? 'COME HUNGRY, LEAVE INSPIRED. SIGN UP FOR TASTY UPDATES.'"
