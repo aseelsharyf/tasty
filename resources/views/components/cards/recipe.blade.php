@@ -14,7 +14,7 @@
     };
 
     $imageWrapperClass = match($variant) {
-        'featured' => 'block relative w-full h-[599px] max-lg:h-[400px] p-6 flex flex-col justify-end items-center',
+        'featured' => 'block relative w-full aspect-[4/5] p-6 flex flex-col justify-end items-center',
         'grid' => 'block relative w-full aspect-square p-6 flex flex-col justify-end items-center',
         'mobile' => 'block relative w-full aspect-square p-5 flex flex-col justify-end items-center',
         'scroll' => 'block relative w-full aspect-square p-5 flex flex-col justify-end items-center',
