@@ -113,7 +113,7 @@
 
                 {{-- Bottom Row: Recipe Cards Grid (3 items) --}}
                 @if($posts->isNotEmpty())
-                    <div class="grid grid-cols-3 gap-6 max-lg:grid-cols-2 max-sm:grid-cols-1">
+                    <div class="grid grid-cols-3 gap-6 max-lg:grid-cols-2 max-sm:grid-cols-1 items-start">
                         @foreach($posts->take(3) as $post)
                             <x-cards.recipe
                                 :post="$post"
