@@ -124,11 +124,9 @@ class MediaController extends Controller
             'file' => ['nullable', 'file', 'max:102400'], // 100MB max
             // Video embed
             'embed_url' => ['nullable', 'url'],
-            // Translatable fields
-            'title' => ['nullable', 'array'],
-            'title.*' => ['nullable', 'string', 'max:255'],
-            'caption' => ['nullable', 'array'],
-            'caption.*' => ['nullable', 'string', 'max:1000'],
+            // Translatable fields (can be array for full form or string for quick upload)
+            'title' => ['nullable'],
+            'caption' => ['nullable'],
             'description' => ['nullable', 'array'],
             'description.*' => ['nullable', 'string', 'max:5000'],
             'alt_text' => ['nullable', 'array'],
@@ -143,7 +141,34 @@ class MediaController extends Controller
             // Tags
             'tag_ids' => ['nullable', 'array'],
             'tag_ids.*' => ['integer', 'exists:tags,id'],
+            'tags' => ['nullable', 'string'], // Comma-separated tag names (for quick upload)
         ]);
+
+        // Handle simple string values for title/caption (quick upload from picker)
+        // Convert to array format for translatable fields
+        if (! empty($validated['title']) && is_string($validated['title'])) {
+            $validated['title'] = ['en' => $validated['title']];
+        }
+        if (! empty($validated['caption']) && is_string($validated['caption'])) {
+            $validated['caption'] = ['en' => $validated['caption']];
+        }
+
+        // Handle comma-separated tags string - find or create tags
+        if (! empty($validated['tags']) && empty($validated['tag_ids'])) {
+            $tagNames = array_map('trim', explode(',', $validated['tags']));
+            $tagIds = [];
+            foreach ($tagNames as $name) {
+                if (empty($name)) {
+                    continue;
+                }
+                $tag = Tag::firstOrCreate(
+                    ['slug' => Str::slug($name)],
+                    ['name' => ['en' => $name]]
+                );
+                $tagIds[] = $tag->id;
+            }
+            $validated['tag_ids'] = $tagIds;
+        }
 
         // Determine type
         if ($request->hasFile('file')) {
@@ -541,6 +566,16 @@ class MediaController extends Controller
         }
 
         return $result;
+    }
+
+    /**
+     * Get all tags for the media picker upload form.
+     */
+    public function tags(): JsonResponse
+    {
+        $tags = Tag::orderBy('name->en')->get(['id', 'name', 'slug']);
+
+        return response()->json($tags);
     }
 
     private function mapRoleToCreditRole(?string $roleName): ?string

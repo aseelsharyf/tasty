@@ -60,9 +60,9 @@
         </a>
 
         {{-- Description/Summary --}}
-        @if($description)
+        {{-- @if($description)
             <p class="text-body-md text-blue-black {{ $isFeatured ? $textAlign : 'text-center' }} line-clamp-{{ $isFeatured ? '4' : '2' }}">{{ $description }}</p>
-        @endif
+        @endif --}}
 
         {{-- Author/date --}}
         <div class="flex flex-wrap items-center {{ $isFeatured ? $justifyMeta : 'justify-center' }} gap-5 text-[14px] leading-[12px] uppercase text-blue-black">

@@ -357,6 +357,7 @@ Route::middleware(['auth', 'cms'])->group(function () {
     Route::middleware('permission:media.view')->group(function () {
         Route::get('media', [MediaController::class, 'index'])->name('cms.media.index');
         Route::get('media/picker', [MediaController::class, 'picker'])->name('cms.media.picker');
+        Route::get('media/tags', [MediaController::class, 'tags'])->name('cms.media.tags');
         Route::get('media/trashed', [MediaController::class, 'trashed'])->name('cms.media.trashed');
         Route::get('media/{media}', [MediaController::class, 'show'])->name('cms.media.show');
 
