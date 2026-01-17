@@ -41,6 +41,11 @@ class WorkflowService
     /**
      * Get the default workflow configuration.
      *
+     * Simplified workflow:
+     * - Writer: Draft -> CopyDesk (submit for review)
+     * - Editor: CopyDesk -> Reject (back to draft) OR Publish directly
+     * - Editor: Can write and publish directly, can always edit even published posts
+     *
      * @return array<string, mixed>
      */
     public function getDefaultWorkflowConfig(): array
@@ -49,22 +54,28 @@ class WorkflowService
             'name' => 'Default Editorial Workflow',
             'states' => [
                 ['key' => 'draft', 'label' => 'Draft', 'color' => 'gray', 'icon' => 'i-lucide-file-edit'],
-                ['key' => 'review', 'label' => 'Editorial Review', 'color' => 'yellow', 'icon' => 'i-lucide-eye'],
                 ['key' => 'copydesk', 'label' => 'Copy Desk', 'color' => 'blue', 'icon' => 'i-lucide-spell-check'],
-                ['key' => 'approved', 'label' => 'Approved', 'color' => 'green', 'icon' => 'i-lucide-check-circle'],
-                ['key' => 'rejected', 'label' => 'Needs Revision', 'color' => 'red', 'icon' => 'i-lucide-alert-circle'],
+                ['key' => 'review', 'label' => 'Copy Desk', 'color' => 'blue', 'icon' => 'i-lucide-spell-check'], // Legacy alias
+                ['key' => 'published', 'label' => 'Published', 'color' => 'green', 'icon' => 'i-lucide-globe'],
             ],
             'transitions' => [
-                ['from' => 'draft', 'to' => 'review', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Submit for Review'],
-                ['from' => 'review', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Send to Copy Desk'],
-                ['from' => 'review', 'to' => 'rejected', 'roles' => ['Editor', 'Admin'], 'label' => 'Request Revisions'],
-                ['from' => 'copydesk', 'to' => 'approved', 'roles' => ['Editor', 'Admin'], 'label' => 'Approve'],
-                ['from' => 'copydesk', 'to' => 'rejected', 'roles' => ['Editor', 'Admin'], 'label' => 'Request Revisions'],
-                ['from' => 'rejected', 'to' => 'review', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Resubmit'],
-                ['from' => 'approved', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
+                // Writer submits draft for review (goes directly to copydesk)
+                ['from' => 'draft', 'to' => 'copydesk', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Submit for Review'],
+                // Editor rejects back to draft
+                ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Request Revisions'],
+                // Editor publishes from copydesk
+                ['from' => 'copydesk', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
+                // Editor can publish directly from draft (skip copydesk)
+                ['from' => 'draft', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
+                // Unpublish back to draft
                 ['from' => 'published', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Unpublish'],
+                // Legacy: handle old 'review' status - treat same as copydesk
+                ['from' => 'review', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Send to Copy Desk'],
+                ['from' => 'review', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Request Revisions'],
+                ['from' => 'review', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
             ],
             'publish_roles' => ['Editor', 'Admin'],
+            'edit_published_roles' => ['Editor', 'Admin'],
         ];
     }
 

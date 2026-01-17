@@ -80,6 +80,7 @@ class UpdatePostRequest extends FormRequest
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:500'],
             'show_author' => ['nullable', 'boolean'],
+            'author_id' => ['nullable', 'integer', 'exists:users,id'],
         ];
     }
 

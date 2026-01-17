@@ -549,6 +549,14 @@ class PostController extends Controller
                 'heartbeatInterval' => PostEditLock::HEARTBEAT_INTERVAL_SECONDS * 1000, // in ms
             ],
             'templates' => PostTemplateRegistry::forSelect(),
+            // Authors list for author assignment (only if user has permission)
+            'authors' => $user->can('posts.assign-author')
+                ? User::whereHas('roles', fn ($q) => $q->whereIn('name', ['Admin', 'Developer', 'Editor', 'Writer']))
+                    ->orderBy('name')
+                    ->get()
+                    ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'avatar_url' => $u->avatar_url])
+                : [],
+            'canAssignAuthor' => $user->can('posts.assign-author'),
         ]);
     }
 
@@ -595,8 +603,8 @@ class PostController extends Controller
                 ->with('success', 'Draft saved. Changes will apply when published.');
         }
 
-        // Post is not published - update the post model directly
-        $post->update([
+        // Build update data
+        $updateData = [
             'title' => $validated['title'],
             'kicker' => $validated['kicker'] ?? null,
             'subtitle' => $validated['subtitle'] ?? null,
@@ -613,7 +621,15 @@ class PostController extends Controller
             'meta_title' => $validated['meta_title'] ?? null,
             'meta_description' => $validated['meta_description'] ?? null,
             'show_author' => $validated['show_author'] ?? $post->show_author,
-        ]);
+        ];
+
+        // Handle author assignment (only if user has permission)
+        if (isset($validated['author_id']) && $request->user()->can('posts.assign-author')) {
+            $updateData['author_id'] = $validated['author_id'];
+        }
+
+        // Post is not published - update the post model directly
+        $post->update($updateData);
 
         // Sync category and tags on the post model
         if (! empty($validated['category_id'])) {

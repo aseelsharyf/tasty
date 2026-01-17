@@ -39,6 +39,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'posts.edit-own',
             'posts.delete',
             'posts.publish',
+            'posts.assign-author', // Allows writing on behalf of another user
 
             // Pages
             'pages.view',
@@ -138,6 +139,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'posts.edit',
             'posts.delete',
             'posts.publish',
+            'posts.assign-author',
             'pages.view',
             'pages.create',
             'pages.edit',
@@ -198,6 +200,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'posts.edit',
             'posts.delete',
             'posts.publish',
+            'posts.assign-author',
             'pages.view',
             'pages.edit',
             'pages.publish',

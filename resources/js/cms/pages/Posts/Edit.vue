@@ -130,6 +130,12 @@ interface Sponsor {
     name: string;
 }
 
+interface Author {
+    id: number;
+    name: string;
+    avatar_url?: string | null;
+}
+
 const props = defineProps<{
     post: Post & {
         category_id: number | null;
@@ -154,6 +160,8 @@ const props = defineProps<{
     versionsList?: VersionListItem[];
     editLock: EditLockInfo;
     templates: TemplateOption[];
+    authors?: Author[];
+    canAssignAuthor?: boolean;
 }>();
 
 // Edit lock state
@@ -277,19 +285,32 @@ const isCurrentVersionActive = computed(() => {
     return currentVersionInfo.value?.is_active === true;
 });
 
-// Versions that can be edited: draft (not yet submitted) or rejected (sent back for revisions)
+// Check if user is an Editor or Admin (can always edit)
+const userRoles = computed(() => {
+    return (page.props.auth as any)?.user?.roles || [];
+});
+
+const isEditorOrAdmin = computed(() => {
+    return userRoles.value.includes('Editor') || userRoles.value.includes('Admin');
+});
+
+// Versions that can be edited: draft, copydesk (for editors), or rejected
 const isCurrentVersionEditable = computed(() => {
     const status = currentVersionInfo.value?.workflow_status;
+    // Editors can edit any version (draft, copydesk, even published)
+    if (isEditorOrAdmin.value) return true;
+    // Writers can only edit draft or rejected versions
     return status === 'draft' || status === 'rejected';
 });
 
-// Read-only if viewing the published/active version OR if the version is not editable OR if locked by someone else
+// Read-only if locked by someone else OR if non-editor viewing non-editable version
 const isReadOnly = computed(() => {
     // If locked by someone else, it's read-only
     if (isLockedByOther.value && !canTakeOver.value) return true;
-    // If viewing the active (published) version, it's read-only
+    // Editors can always edit - they edit the current version directly
+    if (isEditorOrAdmin.value) return false;
+    // For non-editors: read-only if viewing active version or non-editable version
     if (isCurrentVersionActive.value) return true;
-    // If the current version is not editable (in review, copydesk, approved, etc.), it's read-only
     if (!isCurrentVersionEditable.value) return true;
     return false;
 });
@@ -364,8 +385,8 @@ const toast = useToast();
 // Get the current workflow state from config (for badge styling)
 const currentWorkflowState = computed(() => workflow.getState(workflowStatus.value));
 
-// Available workflow transitions from current state
-const availableTransitions = computed(() => workflow.getAvailableTransitions(workflowStatus.value));
+// Available workflow transitions from current state (filtered by user roles)
+const availableTransitions = computed(() => workflow.getAvailableTransitions(workflowStatus.value, userRoles.value));
 
 // Workflow transition handling
 async function performQuickTransition(transition: { from: string; to: string; label: string }) {
@@ -498,6 +519,16 @@ const form = useForm({
     meta_title: props.post.meta_title || '',
     meta_description: props.post.meta_description || '',
     show_author: props.post.show_author ?? true,
+    author_id: props.post.author?.id ?? null,
+});
+
+// Authors list for selector
+const authorOptions = computed(() => {
+    return (props.authors || []).map(author => ({
+        label: author.name,
+        value: author.id,
+        avatar: author.avatar_url,
+    }));
 });
 
 // Get current post type config - either from props or find it from postTypes
@@ -1238,16 +1269,11 @@ function openUnpublishModal() {
     unpublishModalOpen.value = true;
 }
 
-// Quick unpublish - transitions to draft status
+// Quick unpublish - uses dedicated unpublish endpoint
 async function unpublishPost() {
-    if (!currentVersionUuid.value) {
-        toast.add({ title: 'Error', description: 'No version to unpublish', color: 'error' });
-        return;
-    }
-
     isUnpublishing.value = true;
     try {
-        const result = await workflow.transition(currentVersionUuid.value, 'draft');
+        const result = await workflow.unpublish('posts', props.post.uuid);
         if (result.success) {
             toast.add({ title: 'Unpublished', description: 'Post has been unpublished and moved to draft', color: 'success' });
             workflowStatus.value = 'draft';
@@ -1848,8 +1874,24 @@ function openDiff() {
                                     </UButton>
                                 </div>
 
+                                <!-- Author Selector (for users with assign-author permission) -->
+                                <div v-if="props.canAssignAuthor && authorOptions.length > 0" class="flex items-center gap-2 ml-auto">
+                                    <span class="text-xs text-muted">Author:</span>
+                                    <USelectMenu
+                                        v-model="form.author_id"
+                                        :items="authorOptions"
+                                        value-key="value"
+                                        placeholder="Select author"
+                                        size="xs"
+                                        :disabled="isReadOnly"
+                                        searchable
+                                        :search-input="{ placeholder: 'Search authors...' }"
+                                        class="w-40"
+                                    />
+                                </div>
+
                                 <!-- Show Author Toggle -->
-                                <label class="flex items-center gap-2 cursor-pointer ml-auto">
+                                <label class="flex items-center gap-2 cursor-pointer" :class="{ 'ml-auto': !props.canAssignAuthor }">
                                     <USwitch
                                         v-model="form.show_author"
                                         size="sm"

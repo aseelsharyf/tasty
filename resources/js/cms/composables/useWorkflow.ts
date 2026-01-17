@@ -75,10 +75,17 @@ export function useWorkflow(config: WorkflowConfig) {
     }
 
     /**
-     * Get available transitions from a given status
+     * Get available transitions from a given status for a user with specific roles
      */
-    function getAvailableTransitions(fromStatus: string): WorkflowTransition[] {
-        return config.transitions.filter(t => t.from === fromStatus);
+    function getAvailableTransitions(fromStatus: string, userRoles: string[] = []): WorkflowTransition[] {
+        return config.transitions.filter(t => {
+            // Must match the from status
+            if (t.from !== fromStatus) return false;
+            // If no user roles provided, return all transitions (for display purposes)
+            if (userRoles.length === 0) return true;
+            // Check if user has any of the required roles
+            return t.roles.some(role => userRoles.includes(role));
+        });
     }
 
     /**
@@ -124,6 +131,28 @@ export function useWorkflow(config: WorkflowConfig) {
         }
     }
 
+    /**
+     * Unpublish content directly (without workflow transition)
+     * This handles edge cases like legacy posts or inconsistent states
+     */
+    async function unpublish(
+        contentType: string,
+        contentUuid: string
+    ): Promise<{ success: boolean; error?: string }> {
+        loading.value = true;
+        try {
+            await axios.post(`/cms/workflow/${contentType}/${contentUuid}/unpublish`);
+            return { success: true };
+        } catch (error: any) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Failed to unpublish',
+            };
+        } finally {
+            loading.value = false;
+        }
+    }
+
     return {
         loading,
         getState,
@@ -133,6 +162,7 @@ export function useWorkflow(config: WorkflowConfig) {
         getAvailableTransitions,
         transition,
         revertToVersion,
+        unpublish,
     };
 }
 
