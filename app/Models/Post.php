@@ -52,6 +52,7 @@ class Post extends Model implements HasMedia
         'scheduled_at',
         'featured_image_id',
         'featured_media_id',
+        'featured_image_anchor',
         'featured_tag_id',
         'sponsor_id',
         'active_version_id',
@@ -75,6 +76,7 @@ class Post extends Model implements HasMedia
         return [
             'content' => 'array',
             'custom_fields' => 'array',
+            'featured_image_anchor' => 'array',
             'published_at' => 'datetime',
             'scheduled_at' => 'datetime',
             'allow_comments' => 'boolean',
@@ -437,6 +439,7 @@ class Post extends Model implements HasMedia
             'meta_title',
             'meta_description',
             'featured_media_id',
+            'featured_image_anchor',
             'custom_fields',
             'allow_comments',
         ];

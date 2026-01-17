@@ -15,6 +15,8 @@ class Recipe extends Component
 
     public ?string $blurhash;
 
+    public string $imagePosition;
+
     /** @var array<int, string> */
     public array $tags;
 
@@ -47,6 +49,7 @@ class Recipe extends Component
         ?string $image = null,
         ?string $imageAlt = null,
         ?string $blurhash = null,
+        ?string $imagePosition = null,
         ?array $tags = null,
         ?string $kicker = null,
         ?string $title = null,
@@ -63,9 +66,12 @@ class Recipe extends Component
         $this->showKicker = $showKicker;
 
         if ($post instanceof Post) {
+            $anchor = $post->featured_image_anchor ?? ['x' => 50, 'y' => 0];
+
             $this->image = $post->featured_image_url ?? '';
             $this->imageAlt = $post->title;
             $this->blurhash = $post->featured_image_blurhash;
+            $this->imagePosition = ($anchor['x'] ?? 50).'% '.($anchor['y'] ?? 50).'%';
             $this->tags = $this->extractTags($post);
             $this->kicker = $post->kicker ?? '';
             $this->title = $post->title;
@@ -77,6 +83,7 @@ class Recipe extends Component
             $this->image = $post['image'] ?? '';
             $this->imageAlt = $post['imageAlt'] ?? $post['title'] ?? '';
             $this->blurhash = $post['blurhash'] ?? null;
+            $this->imagePosition = $post['imagePosition'] ?? 'center';
             $this->tags = $post['tags'] ?? [];
             $this->kicker = $post['kicker'] ?? '';
             $this->title = $post['title'] ?? '';
@@ -88,6 +95,7 @@ class Recipe extends Component
             $this->image = '';
             $this->imageAlt = '';
             $this->blurhash = null;
+            $this->imagePosition = 'center';
             $this->tags = [];
             $this->kicker = '';
             $this->title = '';
@@ -106,6 +114,9 @@ class Recipe extends Component
         }
         if ($blurhash !== null) {
             $this->blurhash = $blurhash;
+        }
+        if ($imagePosition !== null) {
+            $this->imagePosition = $imagePosition;
         }
         if ($tags !== null) {
             $this->tags = $tags;

@@ -34,6 +34,12 @@ class PostPreviewController extends Controller
             $request->merge(['custom_fields' => json_decode($customFieldsInput, true) ?: []]);
         }
 
+        // Featured image anchor may come as JSON string
+        $anchorInput = $request->input('featured_image_anchor');
+        if (is_string($anchorInput)) {
+            $request->merge(['featured_image_anchor' => json_decode($anchorInput, true) ?: null]);
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string'],
             'subtitle' => ['nullable', 'string'],
@@ -42,6 +48,7 @@ class PostPreviewController extends Controller
             'template' => ['nullable', 'string'],
             'language_code' => ['nullable', 'string'],
             'featured_image_url' => ['nullable', 'string'],
+            'featured_image_anchor' => ['nullable', 'array'],
             'author' => ['nullable', 'array'],
             'show_author' => ['nullable'],
             'category' => ['nullable', 'string'],
@@ -94,6 +101,7 @@ class PostPreviewController extends Controller
             'custom_fields' => $customFields,
             'content' => $content,
             'template' => $template,
+            'featured_image_anchor' => $validated['featured_image_anchor'] ?? ['x' => 50, 'y' => 0],
         ]);
 
         // Override featured_image_url accessor by setting the attribute directly
@@ -228,9 +236,24 @@ class PostPreviewController extends Controller
             if ($version && $version->content_snapshot) {
                 $snapshot = $version->content_snapshot;
                 // Apply version snapshot to the model (without saving)
+                $post->title = $snapshot['title'] ?? $post->title;
+                $post->kicker = $snapshot['kicker'] ?? $post->kicker;
+                $post->subtitle = $snapshot['subtitle'] ?? $post->subtitle;
+                $post->excerpt = $snapshot['excerpt'] ?? $post->excerpt;
                 $post->content = $snapshot['content'] ?? $post->content;
                 $post->template = $snapshot['template'] ?? $post->template;
+                $post->meta_title = $snapshot['meta_title'] ?? $post->meta_title;
+                $post->meta_description = $snapshot['meta_description'] ?? $post->meta_description;
                 $post->show_author = $snapshot['show_author'] ?? $post->show_author;
+                $post->featured_image_anchor = $snapshot['featured_image_anchor'] ?? $post->featured_image_anchor;
+                $post->custom_fields = $snapshot['custom_fields'] ?? $post->custom_fields;
+
+                // Update featured media if different in snapshot
+                if (isset($snapshot['featured_media_id']) && $snapshot['featured_media_id'] !== $post->featured_media_id) {
+                    $post->featured_media_id = $snapshot['featured_media_id'];
+                    // Reload the featuredMedia relationship
+                    $post->load('featuredMedia');
+                }
             }
         }
 

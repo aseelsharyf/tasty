@@ -7,6 +7,7 @@ use App\Http\Requests\Cms\QuickDraftRequest;
 use App\Http\Requests\Cms\StorePostRequest;
 use App\Http\Requests\Cms\UpdatePostRequest;
 use App\Models\Category;
+use App\Models\ContentVersion;
 use App\Models\Language;
 use App\Models\Post;
 use App\Models\PostEditLock;
@@ -297,6 +298,7 @@ class PostController extends Controller
             'workflow_status' => 'draft',
             'scheduled_at' => $validated['scheduled_at'] ?? null,
             'featured_media_id' => $validated['featured_media_id'] ?? null,
+            'featured_image_anchor' => $validated['featured_image_anchor'] ?? ['x' => 50, 'y' => 0],
             'featured_tag_id' => $validated['featured_tag_id'] ?? null,
             'sponsor_id' => $validated['sponsor_id'] ?? null,
             'custom_fields' => $validated['custom_fields'] ?? null,
@@ -480,6 +482,7 @@ class PostController extends Controller
                 'meta_title' => $useSnapshot ? ($versionSnapshot['meta_title'] ?? $post->meta_title) : $post->meta_title,
                 'meta_description' => $useSnapshot ? ($versionSnapshot['meta_description'] ?? $post->meta_description) : $post->meta_description,
                 'featured_media_id' => $useSnapshot ? ($versionSnapshot['featured_media_id'] ?? $post->featured_media_id) : $post->featured_media_id,
+                'featured_image_anchor' => $useSnapshot ? ($versionSnapshot['featured_image_anchor'] ?? $post->featured_image_anchor ?? ['x' => 50, 'y' => 0]) : ($post->featured_image_anchor ?? ['x' => 50, 'y' => 0]),
                 // Metadata fields - always from post model
                 'status' => $post->status,
                 'workflow_status' => $currentVersion?->workflow_status ?? $post->workflow_status ?? 'draft',
@@ -569,14 +572,15 @@ class PostController extends Controller
             $validated['slug'] = Post::generateUniqueSlug($validated['title']);
         }
 
-        // Check if the post is currently published
-        // If published, we only update the draft version's snapshot - NOT the post model
-        // This prevents changes from affecting the live published content
+        // Check user role - editors/admins can update published posts directly
+        /** @var User $user */
+        $user = $request->user();
+        $isEditorOrAdmin = $user->hasAnyRole(['Admin', 'Editor', 'Developer']);
         $isPublished = $post->status === Post::STATUS_PUBLISHED;
 
-        if ($isPublished) {
-            // Post is published - only update the draft version's snapshot
-            // Build content snapshot from the validated data (not from post model)
+        // For non-editors on published posts, only update the draft version
+        if ($isPublished && ! $isEditorOrAdmin) {
+            // Post is published and user is not editor/admin - only update draft version
             $contentSnapshot = [
                 'title' => $validated['title'],
                 'kicker' => $validated['kicker'] ?? null,
@@ -587,6 +591,7 @@ class PostController extends Controller
                 'meta_title' => $validated['meta_title'] ?? null,
                 'meta_description' => $validated['meta_description'] ?? null,
                 'featured_media_id' => $validated['featured_media_id'] ?? null,
+                'featured_image_anchor' => $validated['featured_image_anchor'] ?? $post->featured_image_anchor ?? ['x' => 50, 'y' => 0],
                 'featured_tag_id' => $validated['featured_tag_id'] ?? null,
                 'sponsor_id' => $validated['sponsor_id'] ?? null,
                 'custom_fields' => $validated['custom_fields'] ?? null,
@@ -596,12 +601,16 @@ class PostController extends Controller
                 'tag_ids' => $validated['tags'] ?? [],
             ];
 
-            // Update only the draft version, not the post model
-            $post->updateDraftVersion($contentSnapshot);
+            $newVersion = $post->updateDraftVersion($contentSnapshot);
 
-            return redirect()->route('cms.posts.edit', ['language' => $language, 'post' => $post])
-                ->with('success', 'Draft saved. Changes will apply when published.');
+            return redirect()->route('cms.posts.edit', [
+                'language' => $language,
+                'post' => $post,
+                'version' => $newVersion?->uuid,
+            ])->with('success', 'Draft saved. Changes will apply when published.');
         }
+
+        // For editors/admins on published posts, update the post directly AND update active version
 
         // Build update data
         $updateData = [
@@ -615,6 +624,7 @@ class PostController extends Controller
             'template' => $validated['template'] ?? $post->template,
             'scheduled_at' => $validated['scheduled_at'] ?? null,
             'featured_media_id' => $validated['featured_media_id'] ?? null,
+            'featured_image_anchor' => $validated['featured_image_anchor'] ?? $post->featured_image_anchor ?? ['x' => 50, 'y' => 0],
             'featured_tag_id' => $validated['featured_tag_id'] ?? null,
             'sponsor_id' => $validated['sponsor_id'] ?? null,
             'custom_fields' => $validated['custom_fields'] ?? null,
@@ -628,7 +638,7 @@ class PostController extends Controller
             $updateData['author_id'] = $validated['author_id'];
         }
 
-        // Post is not published - update the post model directly
+        // Update the post model directly
         $post->update($updateData);
 
         // Sync category and tags on the post model
@@ -650,11 +660,36 @@ class PostController extends Controller
         // Build content snapshot for versioning
         $contentSnapshot = $post->buildContentSnapshot();
 
-        // Update existing draft version or create new one if needed
-        $post->updateDraftVersion($contentSnapshot);
+        // Create a new version
+        $newVersion = $post->createVersion($contentSnapshot, 'Saved by '.$user->name);
 
-        return redirect()->route('cms.posts.edit', ['language' => $language, 'post' => $post])
-            ->with('success', 'Post saved.');
+        // For editors/admins, if the post is published, also update the active version
+        if ($isEditorOrAdmin && $isPublished) {
+            // First, unmark ALL other versions as not active (only one can be active at a time)
+            ContentVersion::where('versionable_type', Post::class)
+                ->where('versionable_id', $post->id)
+                ->where('id', '!=', $newVersion->id)
+                ->update(['is_active' => false]);
+
+            // Mark the new version as active (published)
+            $newVersion->update([
+                'workflow_status' => 'published',
+                'is_active' => true,
+            ]);
+
+            // Update post to point to new active version
+            $post->update([
+                'active_version_id' => $newVersion->id,
+                'draft_version_id' => $newVersion->id,
+            ]);
+        }
+
+        // Redirect to the edit page with the new version UUID so the user sees their saved changes
+        return redirect()->route('cms.posts.edit', [
+            'language' => $language,
+            'post' => $post,
+            'version' => $newVersion->uuid,
+        ])->with('success', $isPublished ? 'Post updated and published.' : 'Post saved.');
     }
 
     public function destroy(string $language, Post $post): RedirectResponse

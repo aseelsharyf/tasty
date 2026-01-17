@@ -39,6 +39,7 @@
             :src="$image"
             :alt="$imageAlt"
             :blurhash="$blurhash"
+            :object-position="$imagePosition"
             class="absolute inset-0 w-full h-full rounded-t-[4px]"
             img-class="object-cover"
         />

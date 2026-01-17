@@ -6,8 +6,9 @@
                 :src="$image"
                 :alt="$imageAlt"
                 :blurhash="$blurhash"
+                :object-position="$imagePosition"
                 class="w-full h-full rounded max-xl:rounded-[4px]"
-                img-class="object-cover object-center"
+                img-class="object-cover"
             />
         </a>
     </div>

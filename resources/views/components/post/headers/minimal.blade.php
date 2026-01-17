@@ -8,6 +8,8 @@
     $category = $post->categories->first();
     $photographer = $post->getCustomField('photographer');
     $url = request()->url();
+    $anchor = $post->featured_image_anchor ?? ['x' => 50, 'y' => 0];
+    $objectPosition = ($anchor['x'] ?? 50) . '% ' . ($anchor['y'] ?? 50) . '%';
 @endphp
 
 <header class="w-full bg-tasty-yellow pt-[96px] md:pt-[112px]">
@@ -20,6 +22,7 @@
                         src="{{ $post->featured_image_url }}"
                         alt="{{ $post->title }}"
                         class="absolute inset-0 w-full h-full object-cover rounded-xl"
+                        style="object-position: {{ $objectPosition }}"
                     />
                 @else
                     <div class="absolute inset-0 bg-tasty-blue-black/10 rounded-xl"></div>

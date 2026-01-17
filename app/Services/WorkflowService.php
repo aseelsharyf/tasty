@@ -324,7 +324,7 @@ class WorkflowService
     }
 
     /**
-     * Revert to a previous version.
+     * Revert to a previous version (creates a new draft).
      */
     public function revertToVersion(ContentVersion $version): ContentVersion
     {
@@ -335,6 +335,45 @@ class WorkflowService
             $version->content_snapshot,
             "Reverted from version {$version->version_number}"
         );
+    }
+
+    /**
+     * Make a version the live (active) version for published content.
+     * Simply switches which version is active without creating duplicates.
+     */
+    public function makeVersionLive(ContentVersion $version): ContentVersion
+    {
+        $content = $version->versionable;
+
+        // Only allow this for published content
+        if ($content->status !== 'published') {
+            throw new \Exception('This operation is only available for published content');
+        }
+
+        return DB::transaction(function () use ($content, $version) {
+            // Deactivate ALL existing versions
+            ContentVersion::where('versionable_type', get_class($content))
+                ->where('versionable_id', $content->id)
+                ->update(['is_active' => false]);
+
+            // Activate this version and mark as published
+            $version->update([
+                'is_active' => true,
+                'workflow_status' => ContentVersion::STATUS_PUBLISHED,
+            ]);
+
+            // Apply the snapshot to the content
+            $this->applySnapshotToContent($content, $version->content_snapshot);
+
+            // Update content's version references
+            $content->update([
+                'active_version_id' => $version->id,
+                'draft_version_id' => $version->id,
+                'workflow_status' => ContentVersion::STATUS_PUBLISHED,
+            ]);
+
+            return $version->fresh();
+        });
     }
 
     /**

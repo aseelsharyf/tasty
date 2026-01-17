@@ -193,7 +193,7 @@ class WorkflowController extends Controller
     }
 
     /**
-     * Revert to a previous version.
+     * Revert to a previous version (creates a new draft).
      */
     public function revert(Request $request, ContentVersion $version): RedirectResponse|JsonResponse
     {
@@ -201,6 +201,37 @@ class WorkflowController extends Controller
             $newVersion = $this->workflowService->revertToVersion($version);
 
             $message = "Reverted to version {$version->version_number}";
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'version' => $newVersion,
+                ]);
+            }
+
+            return back()->with('success', $message);
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Make a version the live (active) version for published content.
+     */
+    public function makeLive(Request $request, ContentVersion $version): RedirectResponse|JsonResponse
+    {
+        try {
+            $newVersion = $this->workflowService->makeVersionLive($version);
+
+            $message = "Version {$version->version_number} is now live";
 
             if ($request->wantsJson()) {
                 return response()->json([

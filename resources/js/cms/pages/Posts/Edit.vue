@@ -7,6 +7,7 @@ import BlockEditor, { type MediaSelectCallback } from '../../components/BlockEdi
 import MediaPickerModal from '../../components/MediaPickerModal.vue';
 import NotificationDropdown from '../../components/NotificationDropdown.vue';
 import EditorialSlideover from '../../components/EditorialSlideover.vue';
+import ImageAnchorPicker from '../../components/ImageAnchorPicker.vue';
 import type { MediaBlockItem } from '../../editor-tools/MediaBlock';
 import { useSidebar } from '../../composables/useSidebar';
 import { useDhivehiKeyboard } from '../../composables/useDhivehiKeyboard';
@@ -145,6 +146,7 @@ const props = defineProps<{
         language_code: string;
         featured_media?: MediaItem | null;
         featured_media_id?: number | null;
+        featured_image_anchor?: { x: number; y: number } | null;
         workflow_status?: string;
         current_version_uuid?: string | null;
         template?: string;
@@ -266,6 +268,16 @@ watch(
     }
 );
 
+// Watch for current_version_uuid changes after save/redirect
+watch(
+    () => props.post.current_version_uuid,
+    (newVersionUuid) => {
+        if (newVersionUuid && newVersionUuid !== currentVersionUuid.value) {
+            currentVersionUuid.value = newVersionUuid;
+        }
+    }
+);
+
 // Check if the post itself is published (for UI indicators)
 const isPublished = computed(() => props.post.status === 'published');
 
@@ -283,6 +295,11 @@ const isCurrentVersionDraft = computed(() => {
 
 const isCurrentVersionActive = computed(() => {
     return currentVersionInfo.value?.is_active === true;
+});
+
+// Show "Make Live" button when viewing a non-active version on a published post
+const canMakeVersionLive = computed(() => {
+    return props.post.status === 'published' && !isCurrentVersionActive.value && currentVersionUuid.value;
 });
 
 // Check if user is an Editor or Admin (can always edit)
@@ -433,8 +450,38 @@ const versionDropdownItems = computed(() => {
             value: v.uuid,
             suffix,
             is_current: v.is_current,
+            is_active: v.is_active,
         };
     });
+});
+
+// Build dropdown items with "Make Live" action for non-active versions
+const versionDropdownMenuItems = computed(() => {
+    // Version list items
+    const versionItems = versionDropdownItems.value.map(v => ({
+        label: v.label + (v.suffix ? ` (${v.suffix})` : ''),
+        icon: v.is_current ? 'i-lucide-check' : (v.is_active ? 'i-lucide-globe' : 'i-lucide-git-branch'),
+        onSelect: () => switchToVersion(v.value),
+    }));
+
+    // Check if viewing a non-active version on a published post
+    const currentVersion = versionDropdownItems.value.find(v => v.is_current);
+    if (currentVersion && !currentVersion.is_active && props.post.status === 'published') {
+        // Put "Make Live" action at the TOP so it's always visible
+        return [
+            [
+                {
+                    label: 'Make this version live',
+                    icon: 'i-lucide-rocket',
+                    color: 'primary' as const,
+                    onSelect: () => openMakeLiveModal(currentVersion.value),
+                },
+            ],
+            versionItems,
+        ];
+    }
+
+    return [versionItems];
 });
 
 // Current version display label
@@ -452,6 +499,37 @@ function switchToVersion(versionUuid: string) {
     if (versionUuid === currentVersionUuid.value) return;
     const url = `/cms/posts/${props.post.language_code}/${props.post.uuid}/edit?version=${versionUuid}`;
     router.visit(url, { preserveState: false });
+}
+
+// Make a version the active/live version (revert)
+const revertingVersion = ref(false);
+const showMakeLiveModal = ref(false);
+const pendingMakeLiveVersionUuid = ref<string | null>(null);
+
+function openMakeLiveModal(versionUuid: string) {
+    pendingMakeLiveVersionUuid.value = versionUuid;
+    showMakeLiveModal.value = true;
+}
+
+async function confirmMakeVersionLive() {
+    if (revertingVersion.value || !pendingMakeLiveVersionUuid.value) return;
+
+    revertingVersion.value = true;
+    try {
+        await axios.post(`/cms/workflow/versions/${pendingMakeLiveVersionUuid.value}/make-live`);
+        showMakeLiveModal.value = false;
+        // Reload the page to get the new version
+        router.reload({ preserveState: false });
+    } catch (error: any) {
+        console.error('Failed to make version live:', error);
+        toast.add({
+            title: 'Error',
+            description: error.response?.data?.message || 'Failed to make this version live',
+            color: 'error',
+        });
+    } finally {
+        revertingVersion.value = false;
+    }
 }
 
 // Dhivehi keyboard for RTL content
@@ -515,6 +593,7 @@ const form = useForm({
     sponsor_id: props.post.sponsor_id ?? null,
     tags: props.post.tags || [],
     featured_media_id: props.post.featured_media_id ?? null,
+    featured_image_anchor: props.post.featured_image_anchor || { x: 50, y: 0 },
     custom_fields: (props.post.custom_fields || {}) as Record<string, unknown>,
     meta_title: props.post.meta_title || '',
     meta_description: props.post.meta_description || '',
@@ -803,6 +882,7 @@ watch(
         form.template,
         form.scheduled_at,
         form.featured_media_id,
+        form.featured_image_anchor,
         form.custom_fields,
         form.meta_title,
         form.meta_description,
@@ -1354,8 +1434,9 @@ async function publishApprovedVersion() {
 
 function openPreview() {
     // Open preview in new tab using CMS preview route
+    // Use the current version being edited, not the active (published) version
     const langCode = props.language?.code || props.post.language_code || 'en';
-    const versionParam = activeVersionUuid.value ? `?version=${activeVersionUuid.value}` : '';
+    const versionParam = currentVersionUuid.value ? `?version=${currentVersionUuid.value}` : '';
     window.open(`/cms/preview/${langCode}/${props.post.uuid}${versionParam}`, '_blank');
 }
 
@@ -1397,11 +1478,8 @@ function openDiff() {
                             <!-- Version Switcher Dropdown -->
                             <UDropdownMenu
                                 v-if="versionDropdownItems.length > 1"
-                                :items="versionDropdownItems.map(v => ({
-                                    label: v.label + (v.suffix ? ` (${v.suffix})` : ''),
-                                    icon: v.is_current ? 'i-lucide-check' : 'i-lucide-git-branch',
-                                    onSelect: () => switchToVersion(v.value),
-                                }))"
+                                :items="versionDropdownMenuItems"
+                                :ui="{ content: 'w-56', viewport: 'max-h-60' }"
                             >
                                 <UButton
                                     color="neutral"
@@ -1662,6 +1740,8 @@ function openDiff() {
                                 <input type="hidden" name="template" :value="form.template || 'default'" />
                                 <input type="hidden" name="language_code" :value="language?.code || 'en'" />
                                 <input type="hidden" name="featured_image_url" :value="selectedFeaturedMedia?.url || selectedFeaturedMedia?.thumbnail_url || ''" />
+                                <input type="hidden" name="featured_image_anchor" :value="JSON.stringify(form.featured_image_anchor || { x: 50, y: 0 })" />
+                                <input type="hidden" name="author[id]" :value="post.author?.id || ''" />
                                 <input type="hidden" name="author[name]" :value="post.author?.name || ''" />
                                 <input type="hidden" name="show_author" :value="form.show_author ? '1' : '0'" />
                                 <input type="hidden" name="category" :value="selectedCategoryName || ''" />
@@ -1771,6 +1851,33 @@ function openDiff() {
                                             <li v-for="(error, field) in form.errors" :key="field">• {{ error }}</li>
                                         </ul>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- Make Version Live Banner -->
+                            <div
+                                v-if="canMakeVersionLive"
+                                class="mb-6 p-4 rounded-lg bg-primary/5 border border-primary/20"
+                            >
+                                <div class="flex items-center justify-between gap-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="size-10 rounded-full flex items-center justify-center bg-primary/10">
+                                            <UIcon name="i-lucide-history" class="size-5 text-primary" />
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium">Viewing {{ currentVersionLabel }}</p>
+                                            <p class="text-xs text-muted">This is not the live version</p>
+                                        </div>
+                                    </div>
+                                    <UButton
+                                        color="primary"
+                                        size="sm"
+                                        :loading="revertingVersion"
+                                        @click="openMakeLiveModal(currentVersionUuid!)"
+                                    >
+                                        <UIcon name="i-lucide-rocket" class="size-4 mr-1" />
+                                        Make Live
+                                    </UButton>
                                 </div>
                             </div>
 
@@ -1901,29 +2008,38 @@ function openDiff() {
                                 </label>
                             </div>
 
-                            <!-- Cover Image -->
+                            <!-- Cover Image with Anchor Picker -->
                             <div class="mb-6">
-                                <div v-if="selectedFeaturedMedia" class="relative">
-                                    <img
-                                        :src="selectedFeaturedMedia.thumbnail_url || selectedFeaturedMedia.url || ''"
-                                        :alt="selectedFeaturedMedia.title || 'Cover'"
-                                        class="w-full h-64 object-cover rounded-lg"
+                                <div v-if="selectedFeaturedMedia" class="space-y-3">
+                                    <!-- Image with anchor picker overlay -->
+                                    <ImageAnchorPicker
+                                        v-model="form.featured_image_anchor"
+                                        :image-url="selectedFeaturedMedia.url || selectedFeaturedMedia.thumbnail_url"
+                                        :disabled="isReadOnly"
                                     />
-                                    <div v-if="!isReadOnly" class="absolute top-2 right-2 flex gap-1.5">
-                                        <UButton
-                                            color="neutral"
-                                            variant="solid"
-                                            icon="i-lucide-image-plus"
-                                            size="xs"
-                                            @click="openCoverPicker"
-                                        />
-                                        <UButton
-                                            color="neutral"
-                                            variant="solid"
-                                            icon="i-lucide-x"
-                                            size="xs"
-                                            @click="removeFeaturedMedia"
-                                        />
+                                    <!-- Actions -->
+                                    <div v-if="!isReadOnly" class="flex items-center justify-between">
+                                        <span class="text-xs text-muted">Click on the image to set the focal point</span>
+                                        <div class="flex gap-1.5">
+                                            <UButton
+                                                color="neutral"
+                                                variant="ghost"
+                                                icon="i-lucide-image-plus"
+                                                size="xs"
+                                                @click="openCoverPicker"
+                                            >
+                                                Change
+                                            </UButton>
+                                            <UButton
+                                                color="error"
+                                                variant="ghost"
+                                                icon="i-lucide-trash-2"
+                                                size="xs"
+                                                @click="removeFeaturedMedia"
+                                            >
+                                                Remove
+                                            </UButton>
+                                        </div>
                                     </div>
                                 </div>
                                 <button
@@ -2577,6 +2693,42 @@ function openDiff() {
                             <UButton color="error" :loading="isDeleting" @click="deletePost">
                                 <UIcon name="i-lucide-trash-2" class="size-4 mr-1" />
                                 Move to Trash
+                            </UButton>
+                        </div>
+                    </template>
+                </UCard>
+            </template>
+        </UModal>
+
+        <!-- Make Version Live Confirmation Modal -->
+        <UModal v-model:open="showMakeLiveModal">
+            <template #content>
+                <UCard>
+                    <template #header>
+                        <div class="flex items-center gap-2">
+                            <div class="size-10 rounded-full flex items-center justify-center bg-primary/10">
+                                <UIcon name="i-lucide-rocket" class="size-5 text-primary" />
+                            </div>
+                            <div>
+                                <h3 class="font-semibold">Make Version Live</h3>
+                                <p class="text-sm text-muted">Restore this version as the active version</p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <p class="text-sm">
+                        Are you sure you want to make <strong>{{ currentVersionLabel }}</strong> the live version?
+                        This will create a new version with this content and set it as the active published version.
+                    </p>
+
+                    <template #footer>
+                        <div class="flex justify-end gap-2">
+                            <UButton color="neutral" variant="ghost" @click="showMakeLiveModal = false">
+                                Cancel
+                            </UButton>
+                            <UButton color="primary" :loading="revertingVersion" @click="confirmMakeVersionLive">
+                                <UIcon name="i-lucide-rocket" class="size-4 mr-1" />
+                                Make Live
                             </UButton>
                         </div>
                     </template>

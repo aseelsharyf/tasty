@@ -441,10 +441,15 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::get('versions/{versionA}/compare/{versionB}', [WorkflowController::class, 'compare'])
             ->name('cms.workflow.compare');
 
-        // Revert to a previous version
+        // Revert to a previous version (creates new draft)
         Route::post('versions/{version}/revert', [WorkflowController::class, 'revert'])
             ->name('cms.workflow.revert')
             ->middleware('permission:workflow.revert');
+
+        // Make a version live (for published content)
+        Route::post('versions/{version}/make-live', [WorkflowController::class, 'makeLive'])
+            ->name('cms.workflow.make-live')
+            ->middleware('permission:workflow.publish');
 
         // Publish an approved version
         Route::post('versions/{version}/publish', [WorkflowController::class, 'publish'])

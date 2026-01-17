@@ -7,6 +7,7 @@
                 :src="$image"
                 :alt="$imageAlt"
                 :blurhash="$blurhash"
+                :object-position="$imagePosition"
                 class="w-full h-full"
                 img-class="object-cover"
             />
