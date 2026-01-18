@@ -96,6 +96,7 @@ class Setting extends Model
                 'icon' => 'i-lucide-chef-hat',
                 'is_default' => true,
                 'fields' => [
+                    ['name' => 'introduction', 'label' => 'Introduction', 'type' => 'textarea'],
                     ['name' => 'prep_time', 'label' => 'Prep Time', 'type' => 'number', 'suffix' => 'min'],
                     ['name' => 'cook_time', 'label' => 'Cook Time', 'type' => 'number', 'suffix' => 'min'],
                     ['name' => 'servings', 'label' => 'Servings', 'type' => 'number'],

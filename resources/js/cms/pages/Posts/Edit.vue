@@ -2072,6 +2072,7 @@ function openDiff() {
                                 ]"
                                 @keydown="onDhivehiKeyDown"
                             />
+                            <div class="border-t border-gray-200 dark:border-gray-700 my-4"></div>
 
                             <!-- Title -->
                             <textarea
@@ -2101,7 +2102,7 @@ function openDiff() {
                                     {{ 70 - form.title.length }}
                                 </span>
                             </div>
-
+                            <div class="border-t border-gray-200 dark:border-gray-700 my-4"></div>
 
                             <!-- Subtitle -->
                             <textarea
@@ -2121,7 +2122,7 @@ function openDiff() {
                                 @input="autoResizeSubtitle"
                                 @keydown="onDhivehiKeyDown"
                             />
-                            <div class="flex items-center justify-end mb-4 h-4">
+                            <div class="flex items-center justify-end mb-3 h-4">
                                 <span
                                     v-if="(form.subtitle?.length || 0) > 90"
                                     :class="['text-xs', (form.subtitle?.length || 0) > 120 ? 'text-error' : 'text-muted/60']"
@@ -2129,6 +2130,7 @@ function openDiff() {
                                     {{ 120 - (form.subtitle?.length || 0) }}
                                 </span>
                             </div>
+                            <div class="border-t border-gray-200 dark:border-gray-700 my-4"></div>
 
                             <!-- Excerpt / Deck -->
                             <textarea
@@ -2148,7 +2150,7 @@ function openDiff() {
                                 @input="autoResizeExcerpt"
                                 @keydown="onDhivehiKeyDown"
                             />
-                            <div class="flex items-center justify-end h-4 mb-8">
+                            <div class="flex items-center justify-end h-4 mb-3">
                                 <span
                                     v-if="(form.excerpt?.length || 0) > 120"
                                     :class="['text-xs', (form.excerpt?.length || 0) > 160 ? 'text-error' : 'text-muted/60']"
@@ -2157,10 +2159,34 @@ function openDiff() {
                                 </span>
                             </div>
 
+                            <!-- Introduction (Recipe only - right after excerpt) -->
+                            <template v-if="form.post_type === 'recipe'">
+                                <div class="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+                                <textarea
+                                    ref="introductionTextarea"
+                                    :value="(form.custom_fields?.introduction as string) ?? ''"
+                                    :placeholder="isRtl ? 'ރެސިޕީގެ ތައާރަފް ލިޔޭ...' : 'Write a longer introduction for this recipe...'"
+                                    rows="3"
+                                    :dir="textDirection"
+                                    :readonly="isReadOnly"
+                                    :class="[
+                                        'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 mb-3 resize-none',
+                                        textAlign,
+                                        isRtl ? 'font-dhivehi text-dhivehi-base leading-relaxed placeholder:font-dhivehi' : 'text-base leading-relaxed',
+                                        isReadOnly ? 'cursor-not-allowed opacity-70' : '',
+                                    ]"
+                                    @input="(e: Event) => form.custom_fields = { ...form.custom_fields, introduction: (e.target as HTMLTextAreaElement).value }"
+                                    @keydown="onDhivehiKeyDown"
+                                />
+                            </template>
+
+                            <!-- Separator before Content Editor -->
+                            <div class="border-t border-gray-200 dark:border-gray-700 my-4 mb-8"></div>
+
                             <!-- Content Editor -->
                             <BlockEditor
                                 v-model="form.content"
-                                placeholder="Tell your story..."
+                                :placeholder="form.post_type === 'recipe' ? 'Write the preparation steps...' : 'Tell your story...'"
                                 :rtl="isRtl"
                                 :dhivehi-enabled="dhivehiEnabled"
                                 :dhivehi-layout="dhivehiLayout"
@@ -2181,6 +2207,8 @@ function openDiff() {
                                 </div>
                                 <div class="space-y-4">
                                     <template v-for="field in currentPostType.fields" :key="field.name">
+                                        <!-- Skip introduction field - it's rendered separately above the content editor -->
+                                        <template v-if="field.name !== 'introduction'">
                                         <!-- Text Field -->
                                         <div v-if="field.type === 'text'">
                                             <label class="text-sm font-medium mb-1.5 block">{{ field.label }}</label>
@@ -2465,6 +2493,7 @@ function openDiff() {
                                                 </div>
                                             </div>
                                         </div>
+                                        </template>
                                     </template>
                                 </div>
                             </div>
