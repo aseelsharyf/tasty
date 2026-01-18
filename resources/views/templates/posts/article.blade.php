@@ -97,6 +97,11 @@
             </div>
         </div>
     @endif
+
+    {{-- Comments Section (only for public view, not preview) --}}
+    @if(!$isPreview)
+        <x-comments.section :post="$post" />
+    @endif
 </article>
 
 {{-- Related Posts (only for public view, not preview) --}}

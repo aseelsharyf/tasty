@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PostController;
@@ -41,6 +42,9 @@ Route::get('/search', [SearchController::class, 'index'])->name('search');
 Route::get('/api/search', [SearchController::class, 'suggestions'])->name(
     'search.suggestions',
 );
+
+// Comment routes
+Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
 
 // Product routes
 Route::get('/product', [ProductController::class, 'index'])->name('products.index');

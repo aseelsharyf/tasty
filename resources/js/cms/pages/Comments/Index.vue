@@ -575,7 +575,7 @@ function cardBulkAction(action: 'approve' | 'spam' | 'trash' | 'delete') {
                                             <span class="text-muted">on</span>
                                             <a
                                                 v-if="comment.post"
-                                                :href="`/cms/posts/${comment.post.slug}`"
+                                                :href="`/cms/posts/${comment.post.language_code}/${comment.post.uuid}/edit`"
                                                 class="text-primary hover:underline font-medium truncate max-w-xs"
                                                 @click.stop
                                             >

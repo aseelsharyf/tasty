@@ -522,6 +522,7 @@ class PostController extends Controller
                     'name' => $post->author->name,
                 ] : null,
                 'show_author' => $useSnapshot ? ($versionSnapshot['show_author'] ?? $post->show_author) : $post->show_author,
+                'allow_comments' => $useSnapshot ? ($versionSnapshot['allow_comments'] ?? $post->allow_comments) : $post->allow_comments,
                 'created_at' => $post->created_at,
                 'updated_at' => $post->updated_at,
                 'current_version_uuid' => $currentVersionUuid,

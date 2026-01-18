@@ -598,6 +598,7 @@ const form = useForm({
     meta_title: props.post.meta_title || '',
     meta_description: props.post.meta_description || '',
     show_author: props.post.show_author ?? true,
+    allow_comments: props.post.allow_comments ?? true,
     author_id: props.post.author?.id ?? null,
 });
 
@@ -2519,7 +2520,7 @@ function openDiff() {
                             </div>
 
                             <!-- Tags Section -->
-                            <div class="mt-8 pb-52">
+                            <div class="mt-8">
                                 <label class="block text-sm font-medium text-highlighted mb-2">Tags</label>
 
                                 <!-- Custom Tag Input -->
@@ -2633,6 +2634,15 @@ function openDiff() {
                                     />
                                 </div>
 
+                                <!-- Allow Comments Toggle -->
+                                <div class="flex items-center gap-3">
+                                    <UIcon name="i-lucide-message-circle" class="size-5 text-muted" />
+                                    <span class="text-sm text-muted">Comments</span>
+                                    <USwitch
+                                        v-model="form.allow_comments"
+                                        :disabled="isReadOnly"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>

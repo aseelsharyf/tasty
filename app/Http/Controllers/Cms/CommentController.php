@@ -15,7 +15,7 @@ class CommentController extends Controller
     public function index(Request $request): Response
     {
         $query = Comment::query()
-            ->with(['post:id,title,slug', 'user:id,name,email', 'parent:id,uuid,content,author_name,user_id', 'parent.user:id,name'])
+            ->with(['post:id,uuid,title,slug,language_code', 'user:id,name,email', 'parent:id,uuid,content,author_name,user_id', 'parent.user:id,name'])
             ->withCount('replies');
 
         // Filter by status
@@ -81,8 +81,10 @@ class CommentController extends Controller
                 'replies_count' => $comment->replies_count,
                 'post' => $comment->post ? [
                     'id' => $comment->post->id,
+                    'uuid' => $comment->post->uuid,
                     'title' => $comment->post->title,
                     'slug' => $comment->post->slug,
+                    'language_code' => $comment->post->language_code,
                 ] : null,
                 'parent' => $comment->parent ? [
                     'id' => $comment->parent->id,
@@ -103,7 +105,7 @@ class CommentController extends Controller
     {
         $query = Comment::query()
             ->pending()
-            ->with(['post:id,title,slug', 'user:id,name,email', 'parent:id,uuid,content,author_name,user_id', 'parent.user:id,name'])
+            ->with(['post:id,uuid,title,slug,language_code', 'user:id,name,email', 'parent:id,uuid,content,author_name,user_id', 'parent.user:id,name'])
             ->orderBy('created_at', 'asc');
 
         // Search
@@ -135,8 +137,10 @@ class CommentController extends Controller
                 'is_edited' => $comment->is_edited,
                 'post' => $comment->post ? [
                     'id' => $comment->post->id,
+                    'uuid' => $comment->post->uuid,
                     'title' => $comment->post->title,
                     'slug' => $comment->post->slug,
+                    'language_code' => $comment->post->language_code,
                 ] : null,
                 'parent' => $comment->parent ? [
                     'id' => $comment->parent->id,
@@ -154,7 +158,7 @@ class CommentController extends Controller
 
     public function show(Comment $comment): Response
     {
-        $comment->load(['post:id,title,slug', 'user:id,name,email', 'editor:id,name', 'parent', 'replies']);
+        $comment->load(['post:id,uuid,title,slug,language_code', 'user:id,name,email', 'editor:id,name', 'parent', 'replies']);
 
         return Inertia::render('Comments/Show', [
             'comment' => [
@@ -177,8 +181,10 @@ class CommentController extends Controller
                 ] : null,
                 'post' => $comment->post ? [
                     'id' => $comment->post->id,
+                    'uuid' => $comment->post->uuid,
                     'title' => $comment->post->title,
                     'slug' => $comment->post->slug,
+                    'language_code' => $comment->post->language_code,
                 ] : null,
                 'parent' => $comment->parent ? [
                     'id' => $comment->parent->id,
