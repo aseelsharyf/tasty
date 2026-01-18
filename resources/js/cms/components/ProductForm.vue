@@ -629,6 +629,7 @@ defineExpose({ reset, form });
                     :items="storeOptions"
                     placeholder="Select store..."
                     value-key="value"
+                    label-key="label"
                     class="w-full"
                     :disabled="form.processing"
                 />

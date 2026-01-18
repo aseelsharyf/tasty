@@ -34,7 +34,38 @@ interface ProductStore {
     name: string;
 }
 
+interface ProductData {
+    id: number;
+    uuid: string;
+    title: string;
+    title_translations: Record<string, string>;
+    slug: string;
+    description: string | null;
+    description_translations: Record<string, string>;
+    short_description: string | null;
+    short_description_translations: Record<string, string>;
+    brand: string | null;
+    product_category_id: number | null;
+    featured_tag_id: number | null;
+    featured_media_id: number | null;
+    featured_media: MediaItem | null;
+    price: number | null;
+    currency: string;
+    compare_at_price: number | null;
+    availability: string;
+    affiliate_url: string;
+    product_store_id: number | null;
+    is_active: boolean;
+    is_featured: boolean;
+    sku: string | null;
+    tag_ids: number[];
+    tags: Tag[];
+    image_ids: number[];
+    images: MediaItem[];
+}
+
 const props = defineProps<{
+    product: ProductData;
     categories: ProductCategory[];
     tags: Tag[];
     stores: ProductStore[];
@@ -42,44 +73,44 @@ const props = defineProps<{
 }>();
 
 const activeTab = ref(props.languages[0]?.code || 'en');
-const localTags = ref<Tag[]>([...props.tags]);
+const localTags = ref<Tag[]>([...props.tags, ...props.product.tags.filter(t => !props.tags.find(pt => pt.id === t.id))]);
 
-function initTranslations(): Record<string, string> {
-    const translations: Record<string, string> = {};
+function initTranslationsFromProduct(translations: Record<string, string>): Record<string, string> {
+    const result: Record<string, string> = {};
     props.languages.forEach(lang => {
-        translations[lang.code] = '';
+        result[lang.code] = translations[lang.code] || '';
     });
-    return translations;
+    return result;
 }
 
 const form = useForm({
-    title: initTranslations(),
-    description: initTranslations(),
-    short_description: initTranslations(),
-    slug: '',
-    brand: '',
-    product_category_id: null as number | null,
-    featured_tag_id: null as number | null,
-    featured_media_id: null as number | null,
-    price: null as number | null,
-    currency: 'USD',
-    compare_at_price: null as number | null,
-    availability: 'in_stock',
-    affiliate_url: '',
-    product_store_id: null as number | null,
-    is_active: true,
-    is_featured: false,
-    sku: '',
-    tag_ids: [] as number[],
-    image_ids: [] as number[],
+    title: initTranslationsFromProduct(props.product.title_translations || {}),
+    description: initTranslationsFromProduct(props.product.description_translations || {}),
+    short_description: initTranslationsFromProduct(props.product.short_description_translations || {}),
+    slug: props.product.slug || '',
+    brand: props.product.brand || '',
+    product_category_id: props.product.product_category_id,
+    featured_tag_id: props.product.featured_tag_id,
+    featured_media_id: props.product.featured_media_id,
+    price: props.product.price,
+    currency: props.product.currency || 'USD',
+    compare_at_price: props.product.compare_at_price,
+    availability: props.product.availability || 'in_stock',
+    affiliate_url: props.product.affiliate_url || '',
+    product_store_id: props.product.product_store_id,
+    is_active: props.product.is_active ?? true,
+    is_featured: props.product.is_featured ?? false,
+    sku: props.product.sku || '',
+    tag_ids: [...props.product.tag_ids],
+    image_ids: [...props.product.image_ids],
 });
 
 // Media picker
 const mediaPickerOpen = ref(false);
 const mediaPickerMultiple = ref(false);
 const mediaPickerPurpose = ref<'featured' | 'gallery'>('featured');
-const selectedFeaturedMedia = ref<MediaItem | null>(null);
-const selectedImages = ref<MediaItem[]>([]);
+const selectedFeaturedMedia = ref<MediaItem | null>(props.product.featured_media);
+const selectedImages = ref<MediaItem[]>([...props.product.images]);
 
 // Options
 const currencyOptions = [
@@ -116,7 +147,7 @@ const isCurrentRtl = computed(() => {
 const isDhivehi = computed(() => activeTab.value === 'dv');
 
 // Slug generation
-const slugManuallyEdited = ref(false);
+const slugManuallyEdited = ref(true); // Start as true for edit mode
 
 function slugify(text: string): string {
     return text
@@ -126,12 +157,6 @@ function slugify(text: string): string {
         .replace(/[\s_-]+/g, '-')
         .replace(/^-+|-+$/g, '');
 }
-
-watch(() => form.title[props.languages[0]?.code || 'en'], (newTitle) => {
-    if (!slugManuallyEdited.value && newTitle) {
-        form.slug = slugify(newTitle);
-    }
-});
 
 function onSlugInput() {
     slugManuallyEdited.value = true;
@@ -399,12 +424,12 @@ function submit() {
         sku: form.sku || null,
         tag_ids: form.tag_ids,
         image_ids: form.image_ids,
-    })).post('/cms/products', {
+    })).put(`/cms/products/${props.product.uuid}`, {
         preserveScroll: true,
         onSuccess: () => {
             toast.add({
-                title: 'Product created',
-                description: 'The product has been created successfully.',
+                title: 'Product updated',
+                description: 'The product has been updated successfully.',
                 icon: 'i-lucide-check-circle',
                 color: 'success',
             });
@@ -418,10 +443,10 @@ function goBack() {
 </script>
 
 <template>
-    <Head title="Create Product" />
+    <Head :title="`Edit: ${product.title}`" />
 
     <DashboardLayout>
-        <UDashboardPanel id="create-product" :ui="{ body: 'p-0 gap-0' }">
+        <UDashboardPanel id="edit-product" :ui="{ body: 'p-0 gap-0' }">
             <template #header>
                 <UDashboardNavbar>
                     <template #leading>
@@ -435,7 +460,7 @@ function goBack() {
                                 @click="goBack"
                             />
                             <div class="h-4 w-px bg-default" />
-                            <span class="text-sm text-muted">New Product</span>
+                            <span class="text-sm text-muted">Edit Product</span>
                         </div>
                     </template>
 
@@ -455,7 +480,7 @@ function goBack() {
                                 :loading="form.processing"
                                 @click="submit"
                             >
-                                Create Product
+                                Update Product
                             </UButton>
                         </div>
                     </template>
@@ -931,7 +956,7 @@ function goBack() {
                             :loading="form.processing"
                             @click="submit"
                         >
-                            Create Product
+                            Update Product
                         </UButton>
                     </div>
                 </div>

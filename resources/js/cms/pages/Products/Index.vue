@@ -2,7 +2,6 @@
 import { Head, router, Link } from '@inertiajs/vue3';
 import { ref, computed, h, resolveComponent } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
-import ProductEditSlideover from '../../components/ProductEditSlideover.vue';
 import { usePermission } from '../../composables/usePermission';
 import type { Language, PaginatedResponse } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
@@ -38,21 +37,6 @@ interface Product {
     translated_locales?: string[];
 }
 
-interface ProductWithTranslations extends Product {
-    title_translations?: Record<string, string>;
-    description_translations?: Record<string, string>;
-    product_category_id?: number | null;
-    featured_tag_id?: number | null;
-    featured_media_id?: number | null;
-    featured_media?: {
-        id: number;
-        url: string;
-        thumbnail_url?: string | null;
-        title?: string;
-    } | null;
-    tag_ids?: number[];
-}
-
 const props = defineProps<{
     products: PaginatedResponse<Product>;
     categories: ProductCategory[];
@@ -79,8 +63,6 @@ const search = ref(props.filters.search || '');
 const categoryFilter = ref(props.filters.category_id || 'all');
 const deleteModalOpen = ref(false);
 const productToDelete = ref<Product | null>(null);
-const editSlideoverOpen = ref(false);
-const productToEdit = ref<ProductWithTranslations | null>(null);
 const rowSelection = ref<Record<string, boolean>>({});
 const bulkDeleteModalOpen = ref(false);
 const bulkDeleting = ref(false);
@@ -167,31 +149,8 @@ function deleteProduct() {
     }
 }
 
-async function openEditSlideover(product: Product) {
-    try {
-        const response = await fetch(`/cms/products/${product.uuid}/edit`, {
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch product');
-
-        const data = await response.json();
-        productToEdit.value = data.props.product;
-        editSlideoverOpen.value = true;
-    } catch (error) {
-        console.error('Failed to load product for editing:', error);
-    }
-}
-
-function onEditClose(updated: boolean) {
-    editSlideoverOpen.value = false;
-    productToEdit.value = null;
-    if (updated) {
-        router.reload({ only: ['products'] });
-    }
+function editProduct(product: Product) {
+    router.visit(`/cms/products/${product.uuid}/edit`);
 }
 
 function sortBy(field: string) {
@@ -215,7 +174,7 @@ function getRowActions(row: Product) {
             {
                 label: 'Edit',
                 icon: 'i-lucide-pencil',
-                onSelect: () => openEditSlideover(row),
+                onSelect: () => editProduct(row),
             },
         ]);
     }
@@ -637,14 +596,5 @@ const columns: TableColumn<Product>[] = [
             </template>
         </UModal>
 
-        <!-- Edit Product Slideover -->
-        <ProductEditSlideover
-            v-model:open="editSlideoverOpen"
-            :product="productToEdit"
-            :languages="languages"
-            :categories="categories"
-            :tags="tags"
-            @close="onEditClose"
-        />
     </DashboardLayout>
 </template>
