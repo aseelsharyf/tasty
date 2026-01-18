@@ -18,7 +18,7 @@
             <img
                 src="{{ $storeLogo }}"
                 alt="{{ $storeName ?? 'Store' }}"
-                class="w-12 h-12 rounded-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
+                class="h-12 object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
             >
         @endif
 
