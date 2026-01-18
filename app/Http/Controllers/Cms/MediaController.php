@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -176,54 +177,79 @@ class MediaController extends Controller
             $mimeType = $file->getMimeType();
             $type = Str::startsWith($mimeType, 'video/') ? MediaItem::TYPE_VIDEO_LOCAL : MediaItem::TYPE_IMAGE;
 
-            $mediaItem = MediaItem::create([
-                'type' => $type,
-                'title' => $validated['title'] ?? null,
-                'caption' => $validated['caption'] ?? null,
-                'description' => $validated['description'] ?? null,
-                'alt_text' => $validated['alt_text'] ?? null,
-                'credit_user_id' => $validated['credit_user_id'] ?? null,
-                'credit_name' => $validated['credit_name'] ?? null,
-                'credit_url' => $validated['credit_url'] ?? null,
-                'credit_role' => $validated['credit_role'] ?? null,
-                'folder_id' => $validated['folder_id'] ?? null,
-                'uploaded_by' => Auth::id(),
-                'mime_type' => $mimeType,
-                'file_size' => $file->getSize(),
-            ]);
+            // Wrap in transaction so if media upload fails, the DB record is rolled back
+            try {
+                $mediaItem = DB::transaction(function () use ($validated, $file, $mimeType, $type) {
+                    $mediaItem = MediaItem::create([
+                        'type' => $type,
+                        'title' => $validated['title'] ?? null,
+                        'caption' => $validated['caption'] ?? null,
+                        'description' => $validated['description'] ?? null,
+                        'alt_text' => $validated['alt_text'] ?? null,
+                        'credit_user_id' => $validated['credit_user_id'] ?? null,
+                        'credit_name' => $validated['credit_name'] ?? null,
+                        'credit_url' => $validated['credit_url'] ?? null,
+                        'credit_role' => $validated['credit_role'] ?? null,
+                        'folder_id' => $validated['folder_id'] ?? null,
+                        'uploaded_by' => Auth::id(),
+                        'mime_type' => $mimeType,
+                        'file_size' => $file->getSize(),
+                    ]);
 
-            // Get dimensions and blurhash BEFORE uploading to S3 (while file is still local)
-            $updateData = [];
-            if ($type === MediaItem::TYPE_IMAGE) {
-                $tempPath = $file->getRealPath();
+                    // Get dimensions and blurhash BEFORE uploading to S3 (while file is still local)
+                    $updateData = [];
+                    if ($type === MediaItem::TYPE_IMAGE) {
+                        $tempPath = $file->getRealPath();
 
-                // Get dimensions from the local temp file
-                $dimensions = @getimagesize($tempPath);
-                if ($dimensions) {
-                    $updateData['width'] = $dimensions[0];
-                    $updateData['height'] = $dimensions[1];
+                        // Get dimensions from the local temp file
+                        $dimensions = @getimagesize($tempPath);
+                        if ($dimensions) {
+                            $updateData['width'] = $dimensions[0];
+                            $updateData['height'] = $dimensions[1];
+                        }
+
+                        // Generate blurhash from the local temp file (skip for unsupported formats like AVIF)
+                        try {
+                            $blurHashService = app(BlurHashService::class);
+                            $blurhash = $blurHashService->encode($tempPath);
+                            if ($blurhash) {
+                                $updateData['blurhash'] = $blurhash;
+                            }
+                        } catch (\Throwable $e) {
+                            // Skip blurhash if image format not supported by GD
+                        }
+                    }
+
+                    // Add media using Spatie (this uploads to S3)
+                    // If this fails (e.g., MIME type rejected), the transaction will rollback
+                    $spatieMedia = $mediaItem->addMediaFromRequest('file')
+                        ->toMediaCollection('default');
+
+                    // Update with dimensions/blurhash that were calculated before upload
+                    if (! empty($updateData)) {
+                        $mediaItem->update($updateData);
+                    }
+
+                    // Sync tags
+                    if (! empty($validated['tag_ids'])) {
+                        $mediaItem->tags()->sync($validated['tag_ids']);
+                    }
+
+                    return $mediaItem;
+                });
+            } catch (\Throwable $e) {
+                $errorMessage = $e->getMessage();
+
+                // Make error message more user-friendly
+                if (str_contains($errorMessage, 'not accepted into the collection')) {
+                    $errorMessage = 'This file type is not supported. Please upload a JPG, PNG, GIF, WebP, or SVG image.';
                 }
 
-                // Generate blurhash from the local temp file
-                $blurHashService = app(BlurHashService::class);
-                $blurhash = $blurHashService->encode($tempPath);
-                if ($blurhash) {
-                    $updateData['blurhash'] = $blurhash;
+                if ($request->wantsJson()) {
+                    return response()->json(['message' => $errorMessage], 422);
                 }
-            }
 
-            // Add media using Spatie (this uploads to S3)
-            $spatieMedia = $mediaItem->addMediaFromRequest('file')
-                ->toMediaCollection('default');
-
-            // Update with dimensions/blurhash that were calculated before upload
-            if (! empty($updateData)) {
-                $mediaItem->update($updateData);
-            }
-
-            // Sync tags
-            if (! empty($validated['tag_ids'])) {
-                $mediaItem->tags()->sync($validated['tag_ids']);
+                return redirect()->back()->with('error', $errorMessage);
             }
         } elseif (! empty($validated['embed_url'])) {
             $embedInfo = MediaItem::parseEmbedUrl($validated['embed_url']);
