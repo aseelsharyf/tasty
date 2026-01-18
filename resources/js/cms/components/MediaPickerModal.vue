@@ -283,6 +283,10 @@ function handleDragOver(e: DragEvent) {
     e.preventDefault();
 }
 
+function triggerFileInput() {
+    fileInputRef.value?.click();
+}
+
 function handleFileSelect(e: Event) {
     const target = e.target as HTMLInputElement;
     const files = Array.from(target.files || []);
@@ -764,7 +768,7 @@ function closeModal() {
                                 class="flex-1 relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer group border-primary/30 bg-primary/5 hover:border-primary hover:bg-primary/10"
                                 @drop="handleDrop"
                                 @dragover="handleDragOver"
-                                @click="fileInputRef?.click()"
+                                @click="triggerFileInput"
                             >
                                 <div class="flex flex-col items-center justify-center h-full">
                                     <div class="size-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -820,7 +824,7 @@ function closeModal() {
                                         <button
                                             type="button"
                                             class="absolute top-2 right-2 z-10 px-2 py-1 rounded-md bg-black/50 text-white text-xs font-medium hover:bg-black/70 transition-colors flex items-center gap-1"
-                                            @click="fileInputRef?.click()"
+                                            @click="triggerFileInput"
                                         >
                                             <UIcon name="i-lucide-replace" class="size-3" />
                                             Change
@@ -914,7 +918,7 @@ function closeModal() {
                                     : 'border-primary/30 bg-primary/5 hover:border-primary hover:bg-primary/10'"
                                 @drop="handleDrop"
                                 @dragover="handleDragOver"
-                                @click="fileInputRef?.click()"
+                                @click="triggerFileInput"
                             >
                                 <div class="flex flex-col items-center">
                                     <div class="size-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
