@@ -74,13 +74,56 @@
  */
 
 /* Heading Utilities */
-.text-h1-hero {
-    font-family: var(--font-display);
-    font-size: 80px;
-    line-height: 70px;
-    letter-spacing: -3.2px;
-    text-transform: uppercase;
-    font-feature-settings: "dlig" on;
+@layer utilities {
+    .text-h1-hero {
+        font-family: var(--font-display);
+        font-size: 80px;
+        line-height: 70px;
+        letter-spacing: -3.2px;
+        text-transform: uppercase;
+        font-feature-settings: "dlig" on;
+    }
+
+    .text-h1 {
+        font-family: var(--font-display);
+        font-size: 48px;
+        line-height: 42px;
+        letter-spacing: -1.92px;
+        text-transform: uppercase;
+        font-feature-settings: "dlig" on;
+    }
+
+    .text-h2 {
+        font-family: var(--font-display);
+        font-size: 36px;
+        line-height: 40px;
+        letter-spacing: -1.44px;
+        font-feature-settings: "dlig" on;
+    }
+
+    .text-h3 {
+        font-family: var(--font-display);
+        font-size: 28px;
+        line-height: 32px;
+        letter-spacing: -1.12px;
+        font-feature-settings: "dlig" on;
+    }
+
+    .text-h4 {
+        font-family: var(--font-display);
+        font-size: 24px;
+        line-height: 28px;
+        letter-spacing: -0.96px;
+        font-feature-settings: "dlig" on;
+    }
+
+    .text-h5 {
+        font-family: var(--font-display);
+        font-size: 20px;
+        line-height: 24px;
+        letter-spacing: -0.8px;
+        font-feature-settings: "dlig" on;
+    }
 }
 
 @media (min-width: 1024px) {
@@ -89,82 +132,31 @@
         line-height: 160px;
         letter-spacing: -8px;
     }
-}
 
-.text-h1 {
-    font-family: var(--font-display);
-    font-size: 48px;
-    line-height: 42px;
-    letter-spacing: -1.92px;
-    text-transform: uppercase;
-    font-feature-settings: "dlig" on;
-}
-
-@media (min-width: 1024px) {
     .text-h1 {
         font-size: 100px;
         line-height: 86px;
         letter-spacing: -4px;
     }
-}
 
-.text-h2 {
-    font-family: var(--font-display);
-    font-size: 36px;
-    line-height: 40px;
-    letter-spacing: -1.44px;
-    font-feature-settings: "dlig" on;
-}
-
-@media (min-width: 1024px) {
     .text-h2 {
         font-size: 64px;
         line-height: 66px;
         letter-spacing: -2.56px;
     }
-}
 
-.text-h3 {
-    font-family: var(--font-display);
-    font-size: 28px;
-    line-height: 32px;
-    letter-spacing: -1.12px;
-    font-feature-settings: "dlig" on;
-}
-
-@media (min-width: 1024px) {
     .text-h3 {
         font-size: 48px;
         line-height: 48px;
         letter-spacing: -1.92px;
     }
-}
 
-.text-h4 {
-    font-family: var(--font-display);
-    font-size: 24px;
-    line-height: 28px;
-    letter-spacing: -0.96px;
-    font-feature-settings: "dlig" on;
-}
-
-@media (min-width: 1024px) {
     .text-h4 {
         font-size: 32px;
         line-height: 38px;
         letter-spacing: -1.28px;
     }
-}
 
-.text-h5 {
-    font-family: var(--font-display);
-    font-size: 20px;
-    line-height: 24px;
-    letter-spacing: -0.8px;
-    font-feature-settings: "dlig" on;
-}
-
-@media (min-width: 1024px) {
     .text-h5 {
         font-size: 24px;
         line-height: 24px;
