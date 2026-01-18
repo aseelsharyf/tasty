@@ -8,6 +8,7 @@ use App\Http\Requests\Cms\UpdateProductRequest;
 use App\Models\Language;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductStore;
 use App\Models\Tag;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -29,7 +30,7 @@ class CmsProductController extends Controller
 
         $query = Product::query()
             ->withCount('clicks')
-            ->with(['featuredMedia', 'category', 'featuredTag', 'tags']);
+            ->with(['featuredMedia', 'category', 'store', 'featuredTag', 'tags']);
 
         // Search
         if ($request->filled('search')) {
@@ -70,6 +71,9 @@ class CmsProductController extends Controller
         // Get tags for product form
         $tags = Tag::orderByTranslatedName(app()->getLocale())->get();
 
+        // Get stores for filter
+        $stores = ProductStore::active()->ordered()->get();
+
         $products = $query->paginate(20)
             ->withQueryString()
             ->through(fn (Product $product) => [
@@ -82,7 +86,11 @@ class CmsProductController extends Controller
                 'formatted_price' => $product->formatted_price,
                 'currency' => $product->currency,
                 'affiliate_url' => $product->affiliate_url,
-                'affiliate_source' => $product->affiliate_source,
+                'product_store_id' => $product->product_store_id,
+                'store' => $product->store ? [
+                    'id' => $product->store->id,
+                    'name' => $product->store->name,
+                ] : null,
                 'featured_image_url' => $product->featured_image_url,
                 'is_active' => $product->is_active,
                 'order' => $product->order,
@@ -109,6 +117,10 @@ class CmsProductController extends Controller
                 'id' => $tag->id,
                 'name' => $tag->name,
             ]),
+            'stores' => $stores->map(fn ($store) => [
+                'id' => $store->id,
+                'name' => $store->name,
+            ]),
             'filters' => $request->only(['search', 'sort', 'direction', 'is_active', 'category_id']),
             'languages' => $activeLanguages->map(fn ($lang) => [
                 'code' => $lang->code,
@@ -124,6 +136,7 @@ class CmsProductController extends Controller
         $languages = Language::active()->ordered()->get();
         $categories = ProductCategory::active()->ordered()->get();
         $tags = Tag::orderByTranslatedName(app()->getLocale())->get();
+        $stores = ProductStore::active()->ordered()->get();
 
         return Inertia::render('Products/Create', [
             'categories' => $categories->map(fn ($cat) => [
@@ -133,6 +146,10 @@ class CmsProductController extends Controller
             'tags' => $tags->map(fn ($tag) => [
                 'id' => $tag->id,
                 'name' => $tag->name,
+            ]),
+            'stores' => $stores->map(fn ($store) => [
+                'id' => $store->id,
+                'name' => $store->name,
             ]),
             'languages' => $languages->map(fn ($lang) => [
                 'code' => $lang->code,
@@ -159,6 +176,12 @@ class CmsProductController extends Controller
             $description = empty($description) ? null : $description;
         }
 
+        $shortDescription = $validated['short_description'] ?? null;
+        if (is_array($shortDescription)) {
+            $shortDescription = array_filter($shortDescription, fn ($v) => $v !== null && $v !== '');
+            $shortDescription = empty($shortDescription) ? null : $shortDescription;
+        }
+
         // Get max order for the category
         $maxOrder = Product::where('product_category_id', $validated['product_category_id'])
             ->max('order') ?? 0;
@@ -167,14 +190,18 @@ class CmsProductController extends Controller
             'title' => $title,
             'slug' => $validated['slug'] ?? null,
             'description' => $description,
+            'short_description' => $shortDescription,
+            'brand' => $validated['brand'] ?? null,
             'product_category_id' => $validated['product_category_id'],
+            'product_store_id' => $validated['product_store_id'] ?? null,
             'featured_tag_id' => $validated['featured_tag_id'] ?? null,
             'featured_media_id' => $validated['featured_media_id'] ?? null,
             'price' => $validated['price'] ?? null,
             'currency' => $validated['currency'] ?? 'USD',
+            'availability' => $validated['availability'] ?? 'in_stock',
             'affiliate_url' => $validated['affiliate_url'],
-            'affiliate_source' => $validated['affiliate_source'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
+            'is_featured' => $validated['is_featured'] ?? false,
             'order' => $maxOrder + 1,
             'sku' => $validated['sku'] ?? null,
             'compare_at_price' => $validated['compare_at_price'] ?? null,
@@ -185,16 +212,26 @@ class CmsProductController extends Controller
             $product->tags()->sync($validated['tag_ids']);
         }
 
+        // Sync images
+        if (isset($validated['image_ids'])) {
+            $imageData = [];
+            foreach ($validated['image_ids'] as $order => $imageId) {
+                $imageData[$imageId] = ['order' => $order];
+            }
+            $product->images()->sync($imageData);
+        }
+
         return redirect()->route('cms.products.index')
             ->with('success', 'Product created successfully.');
     }
 
     public function edit(Request $request, Product $product): Response|JsonResponse
     {
-        $product->load(['featuredMedia', 'category', 'featuredTag', 'tags']);
+        $product->load(['featuredMedia', 'category', 'store', 'featuredTag', 'tags', 'images']);
         $activeLanguages = Language::active()->ordered()->get();
         $categories = ProductCategory::active()->ordered()->get();
         $tags = Tag::orderByTranslatedName(app()->getLocale())->get();
+        $stores = ProductStore::active()->ordered()->get();
 
         $productData = [
             'id' => $product->id,
@@ -204,6 +241,9 @@ class CmsProductController extends Controller
             'slug' => $product->slug,
             'description' => $product->description,
             'description_translations' => $product->getTranslations('description'),
+            'short_description' => $product->short_description,
+            'short_description_translations' => $product->getTranslations('short_description'),
+            'brand' => $product->brand,
             'product_category_id' => $product->product_category_id,
             'category' => $product->category ? [
                 'id' => $product->category->id,
@@ -223,15 +263,28 @@ class CmsProductController extends Controller
             'price' => $product->price,
             'currency' => $product->currency,
             'compare_at_price' => $product->compare_at_price,
+            'availability' => $product->availability,
             'affiliate_url' => $product->affiliate_url,
-            'affiliate_source' => $product->affiliate_source,
+            'product_store_id' => $product->product_store_id,
+            'store' => $product->store ? [
+                'id' => $product->store->id,
+                'name' => $product->store->name,
+            ] : null,
             'is_active' => $product->is_active,
+            'is_featured' => $product->is_featured,
             'order' => $product->order,
             'sku' => $product->sku,
             'tag_ids' => $product->tags->pluck('id')->toArray(),
             'tags' => $product->tags->map(fn ($tag) => [
                 'id' => $tag->id,
                 'name' => $tag->name,
+            ])->toArray(),
+            'image_ids' => $product->images->pluck('id')->toArray(),
+            'images' => $product->images->map(fn ($image) => [
+                'id' => $image->id,
+                'url' => $image->url,
+                'thumbnail_url' => $image->thumbnail_url,
+                'title' => $image->title,
             ])->toArray(),
             'clicks_count' => $product->clicks()->count(),
             'created_at' => $product->created_at,
@@ -256,6 +309,10 @@ class CmsProductController extends Controller
                         'id' => $tag->id,
                         'name' => $tag->name,
                     ]),
+                    'stores' => $stores->map(fn ($store) => [
+                        'id' => $store->id,
+                        'name' => $store->name,
+                    ]),
                     'languages' => $languageData,
                 ],
             ]);
@@ -270,6 +327,10 @@ class CmsProductController extends Controller
             'tags' => $tags->map(fn ($tag) => [
                 'id' => $tag->id,
                 'name' => $tag->name,
+            ]),
+            'stores' => $stores->map(fn ($store) => [
+                'id' => $store->id,
+                'name' => $store->name,
             ]),
             'languages' => $languageData,
         ]);
@@ -291,25 +352,44 @@ class CmsProductController extends Controller
             $description = empty($description) ? null : $description;
         }
 
+        $shortDescription = $validated['short_description'] ?? $product->getTranslations('short_description');
+        if (is_array($shortDescription)) {
+            $shortDescription = array_filter($shortDescription, fn ($v) => $v !== null && $v !== '');
+            $shortDescription = empty($shortDescription) ? null : $shortDescription;
+        }
+
         $product->update([
             'title' => $title,
             'slug' => $validated['slug'] ?? $product->slug,
             'description' => $description,
+            'short_description' => $shortDescription,
+            'brand' => array_key_exists('brand', $validated) ? $validated['brand'] : $product->brand,
             'product_category_id' => $validated['product_category_id'] ?? $product->product_category_id,
             'featured_tag_id' => array_key_exists('featured_tag_id', $validated) ? $validated['featured_tag_id'] : $product->featured_tag_id,
             'featured_media_id' => $validated['featured_media_id'] ?? $product->featured_media_id,
             'price' => $validated['price'] ?? $product->price,
             'currency' => $validated['currency'] ?? $product->currency,
             'compare_at_price' => $validated['compare_at_price'] ?? $product->compare_at_price,
+            'availability' => $validated['availability'] ?? $product->availability,
             'affiliate_url' => $validated['affiliate_url'] ?? $product->affiliate_url,
-            'affiliate_source' => $validated['affiliate_source'] ?? $product->affiliate_source,
+            'product_store_id' => array_key_exists('product_store_id', $validated) ? $validated['product_store_id'] : $product->product_store_id,
             'is_active' => $validated['is_active'] ?? $product->is_active,
+            'is_featured' => $validated['is_featured'] ?? $product->is_featured,
             'sku' => $validated['sku'] ?? $product->sku,
         ]);
 
         // Sync tags
         if (isset($validated['tag_ids'])) {
             $product->tags()->sync($validated['tag_ids']);
+        }
+
+        // Sync images
+        if (isset($validated['image_ids'])) {
+            $imageData = [];
+            foreach ($validated['image_ids'] as $order => $imageId) {
+                $imageData[$imageId] = ['order' => $order];
+            }
+            $product->images()->sync($imageData);
         }
 
         return redirect()->route('cms.products.index')

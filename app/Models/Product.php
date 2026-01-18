@@ -18,7 +18,7 @@ class Product extends Model
     use HasFactory, HasTranslations, HasUuid, SoftDeletes;
 
     /** @var array<int, string> */
-    public array $translatable = ['title', 'description'];
+    public array $translatable = ['title', 'description', 'short_description'];
 
     /** @var array<int, string> */
     protected $fillable = [
@@ -26,14 +26,18 @@ class Product extends Model
         'title',
         'slug',
         'description',
+        'short_description',
+        'brand',
         'product_category_id',
+        'product_store_id',
         'featured_tag_id',
         'featured_media_id',
         'price',
         'currency',
+        'availability',
         'affiliate_url',
-        'affiliate_source',
         'is_active',
+        'is_featured',
         'order',
         'sku',
         'stock_quantity',
@@ -54,6 +58,7 @@ class Product extends Model
             'price' => 'decimal:2',
             'compare_at_price' => 'decimal:2',
             'is_active' => 'boolean',
+            'is_featured' => 'boolean',
             'track_inventory' => 'boolean',
             'order' => 'integer',
             'stock_quantity' => 'integer',
@@ -126,6 +131,11 @@ class Product extends Model
         return $this->belongsTo(ProductCategory::class, 'product_category_id');
     }
 
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(ProductStore::class, 'product_store_id');
+    }
+
     public function featuredMedia(): BelongsTo
     {
         return $this->belongsTo(MediaItem::class, 'featured_media_id');
@@ -141,9 +151,41 @@ class Product extends Model
         return $this->belongsToMany(Tag::class);
     }
 
+    public function images(): BelongsToMany
+    {
+        return $this->belongsToMany(MediaItem::class, 'product_images')
+            ->withPivot('order')
+            ->orderByPivot('order')
+            ->withTimestamps();
+    }
+
     public function clicks(): HasMany
     {
         return $this->hasMany(ProductClick::class);
+    }
+
+    /**
+     * Scope to filter only featured products.
+     */
+    public function scopeFeatured(Builder $query): Builder
+    {
+        return $query->where('is_featured', true);
+    }
+
+    /**
+     * Scope to filter by availability.
+     */
+    public function scopeAvailable(Builder $query, string $availability = 'in_stock'): Builder
+    {
+        return $query->where('availability', $availability);
+    }
+
+    /**
+     * Get all image URLs for product grids.
+     */
+    public function getImageUrlsAttribute(): array
+    {
+        return $this->images->pluck('url')->toArray();
     }
 
     public function getFeaturedImageUrlAttribute(): ?string

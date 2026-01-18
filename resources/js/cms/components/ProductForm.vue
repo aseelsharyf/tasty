@@ -26,6 +26,11 @@ interface Tag {
     name: string;
 }
 
+interface ProductStore {
+    id: number;
+    name: string;
+}
+
 interface ProductWithTranslations {
     id?: number;
     uuid?: string;
@@ -33,7 +38,10 @@ interface ProductWithTranslations {
     title_translations?: Record<string, string>;
     description?: string;
     description_translations?: Record<string, string>;
+    short_description?: string;
+    short_description_translations?: Record<string, string>;
     slug?: string;
+    brand?: string | null;
     product_category_id?: number | null;
     featured_tag_id?: number | null;
     featured_media_id?: number | null;
@@ -41,11 +49,15 @@ interface ProductWithTranslations {
     price?: number | null;
     currency?: string;
     compare_at_price?: number | null;
+    availability?: string;
     affiliate_url?: string;
-    affiliate_source?: string | null;
+    product_store_id?: number | null;
     is_active?: boolean;
+    is_featured?: boolean;
     sku?: string | null;
     tag_ids?: number[];
+    image_ids?: number[];
+    images?: MediaItem[];
 }
 
 const props = withDefaults(defineProps<{
@@ -53,10 +65,12 @@ const props = withDefaults(defineProps<{
     languages: Language[];
     categories: ProductCategory[];
     tags?: Tag[];
+    stores?: ProductStore[];
     mode?: 'create' | 'edit';
 }>(), {
     mode: 'create',
     tags: () => [],
+    stores: () => [],
 });
 
 const emit = defineEmits<{
@@ -83,31 +97,53 @@ function initDescriptionTranslations(): Record<string, string> {
     return translations;
 }
 
+function initShortDescriptionTranslations(): Record<string, string> {
+    const translations: Record<string, string> = {};
+    props.languages.forEach(lang => {
+        translations[lang.code] = props.product?.short_description_translations?.[lang.code] || '';
+    });
+    return translations;
+}
+
 const form = useForm({
     title: initTitleTranslations(),
     description: initDescriptionTranslations(),
+    short_description: initShortDescriptionTranslations(),
     slug: props.product?.slug || '',
+    brand: props.product?.brand || '',
     product_category_id: props.product?.product_category_id || null as number | null,
     featured_tag_id: props.product?.featured_tag_id || null as number | null,
     featured_media_id: props.product?.featured_media_id || null as number | null,
     price: props.product?.price || null as number | null,
     currency: props.product?.currency || 'USD',
     compare_at_price: props.product?.compare_at_price || null as number | null,
+    availability: props.product?.availability || 'in_stock',
     affiliate_url: props.product?.affiliate_url || '',
-    affiliate_source: props.product?.affiliate_source || '',
+    product_store_id: props.product?.product_store_id || null as number | null,
     is_active: props.product?.is_active ?? true,
+    is_featured: props.product?.is_featured ?? false,
     sku: props.product?.sku || '',
     tag_ids: props.product?.tag_ids || [] as number[],
+    image_ids: props.product?.image_ids || [] as number[],
 });
 
 const selectedMedia = ref<MediaItem | null>(props.product?.featured_media || null);
 const mediaPickerOpen = ref(false);
+const selectedImages = ref<MediaItem[]>(props.product?.images || []);
+const imagesPickerOpen = ref(false);
 
 const currencyOptions = [
     { value: 'USD', label: 'USD ($)' },
-    { value: 'EUR', label: 'EUR (\u20AC)' },
-    { value: 'GBP', label: 'GBP (\u00A3)' },
+    { value: 'EUR', label: 'EUR (€)' },
+    { value: 'GBP', label: 'GBP (£)' },
     { value: 'MVR', label: 'MVR' },
+];
+
+const availabilityOptions = [
+    { value: 'in_stock', label: 'In Stock' },
+    { value: 'out_of_stock', label: 'Out of Stock' },
+    { value: 'pre_order', label: 'Pre-Order' },
+    { value: 'discontinued', label: 'Discontinued' },
 ];
 
 const categoryOptions = computed(() =>
@@ -116,6 +152,10 @@ const categoryOptions = computed(() =>
 
 const tagOptions = computed(() =>
     props.tags.map(t => ({ value: t.id, label: t.name }))
+);
+
+const storeOptions = computed(() =>
+    props.stores.map(s => ({ value: s.id, label: s.name }))
 );
 
 watch(() => form.title[props.languages[0]?.code || 'en'], (newTitle) => {
@@ -149,6 +189,16 @@ function removeMedia() {
     form.featured_media_id = null;
 }
 
+function onImagesSelect(media: MediaItem[]) {
+    selectedImages.value = [...selectedImages.value, ...media];
+    form.image_ids = selectedImages.value.map(m => m.id);
+}
+
+function removeImage(index: number) {
+    selectedImages.value.splice(index, 1);
+    form.image_ids = selectedImages.value.map(m => m.id);
+}
+
 function onSubmit() {
     const titleData = Object.fromEntries(
         Object.entries(form.title).filter(([_, v]) => v?.trim())
@@ -156,22 +206,30 @@ function onSubmit() {
     const descriptionData = Object.fromEntries(
         Object.entries(form.description).filter(([_, v]) => v?.trim())
     );
+    const shortDescriptionData = Object.fromEntries(
+        Object.entries(form.short_description).filter(([_, v]) => v?.trim())
+    );
 
     form.transform(() => ({
         title: titleData,
         description: descriptionData,
+        short_description: shortDescriptionData,
         slug: form.slug,
+        brand: form.brand || null,
         product_category_id: form.product_category_id,
         featured_tag_id: form.featured_tag_id,
         featured_media_id: form.featured_media_id,
         price: form.price,
         currency: form.currency,
         compare_at_price: form.compare_at_price,
+        availability: form.availability,
         affiliate_url: form.affiliate_url,
-        affiliate_source: form.affiliate_source || null,
+        product_store_id: form.product_store_id,
         is_active: form.is_active,
+        is_featured: form.is_featured,
         sku: form.sku || null,
         tag_ids: form.tag_ids,
+        image_ids: form.image_ids,
     }));
 
     if (isEditing.value && props.product?.uuid) {
@@ -213,20 +271,26 @@ function reset() {
     props.languages.forEach(lang => {
         form.title[lang.code] = '';
         form.description[lang.code] = '';
+        form.short_description[lang.code] = '';
     });
     form.slug = '';
+    form.brand = '';
     form.product_category_id = null;
     form.featured_tag_id = null;
     form.featured_media_id = null;
     form.price = null;
     form.currency = 'USD';
     form.compare_at_price = null;
+    form.availability = 'in_stock';
     form.affiliate_url = '';
-    form.affiliate_source = '';
+    form.product_store_id = null;
     form.is_active = true;
+    form.is_featured = false;
     form.sku = '';
     form.tag_ids = [];
+    form.image_ids = [];
     selectedMedia.value = null;
+    selectedImages.value = [];
     form.clearErrors();
     activeTab.value = props.languages[0]?.code || 'en';
 }
@@ -236,20 +300,26 @@ watch(() => props.product, (newProduct) => {
         props.languages.forEach(lang => {
             form.title[lang.code] = newProduct.title_translations?.[lang.code] || '';
             form.description[lang.code] = newProduct.description_translations?.[lang.code] || '';
+            form.short_description[lang.code] = newProduct.short_description_translations?.[lang.code] || '';
         });
         form.slug = newProduct.slug || '';
+        form.brand = newProduct.brand || '';
         form.product_category_id = newProduct.product_category_id || null;
         form.featured_tag_id = newProduct.featured_tag_id || null;
         form.featured_media_id = newProduct.featured_media_id || null;
         form.price = newProduct.price || null;
         form.currency = newProduct.currency || 'USD';
         form.compare_at_price = newProduct.compare_at_price || null;
+        form.availability = newProduct.availability || 'in_stock';
         form.affiliate_url = newProduct.affiliate_url || '';
-        form.affiliate_source = newProduct.affiliate_source || '';
+        form.product_store_id = newProduct.product_store_id || null;
         form.is_active = newProduct.is_active ?? true;
+        form.is_featured = newProduct.is_featured ?? false;
         form.sku = newProduct.sku || '';
         form.tag_ids = newProduct.tag_ids || [];
+        form.image_ids = newProduct.image_ids || [];
         selectedMedia.value = newProduct.featured_media || null;
+        selectedImages.value = newProduct.images || [];
     }
 }, { immediate: true, deep: true });
 
@@ -305,9 +375,9 @@ defineExpose({ reset, form });
             </nav>
         </div>
 
-        <!-- Title Input -->
+        <!-- Product Name Input -->
         <UFormField
-            :label="languages.length > 1 ? `Title (${languages.find(l => l.code === activeTab)?.native_name || activeTab})` : 'Title'"
+            :label="languages.length > 1 ? `Product Name (${languages.find(l => l.code === activeTab)?.native_name || activeTab})` : 'Product Name'"
             name="title"
             :error="form.errors[`title.${activeTab}`] || form.errors.title"
             required
@@ -324,26 +394,42 @@ defineExpose({ reset, form });
             <UInput
                 v-else
                 v-model="form.title[activeTab]"
-                :placeholder="languages.length > 1 ? `Enter product title in ${languages.find(l => l.code === activeTab)?.name}` : 'e.g., Organic Olive Oil'"
+                :placeholder="languages.length > 1 ? `Enter product name in ${languages.find(l => l.code === activeTab)?.name}` : 'e.g., Organic Olive Oil'"
                 class="w-full"
                 :dir="isCurrentRtl ? 'rtl' : 'ltr'"
                 :disabled="form.processing"
             />
         </UFormField>
 
-        <!-- Description Input -->
+        <!-- Product Description Input -->
         <UFormField
-            :label="languages.length > 1 ? `Description (${languages.find(l => l.code === activeTab)?.native_name || activeTab})` : 'Description'"
+            :label="languages.length > 1 ? `Product Description (${languages.find(l => l.code === activeTab)?.native_name || activeTab})` : 'Product Description'"
             name="description"
             :error="form.errors[`description.${activeTab}`] || form.errors.description"
         >
             <UTextarea
                 v-model="form.description[activeTab]"
-                :placeholder="languages.length > 1 ? `Enter description in ${languages.find(l => l.code === activeTab)?.name}` : 'Product description...'"
+                :placeholder="languages.length > 1 ? `Enter product description in ${languages.find(l => l.code === activeTab)?.name}` : 'Product description...'"
                 class="w-full"
                 :dir="isCurrentRtl ? 'rtl' : 'ltr'"
                 :disabled="form.processing"
                 :rows="3"
+            />
+        </UFormField>
+
+        <!-- Short Description Input -->
+        <UFormField
+            :label="languages.length > 1 ? `Short Description (${languages.find(l => l.code === activeTab)?.native_name || activeTab})` : 'Short Description'"
+            name="short_description"
+            :error="form.errors[`short_description.${activeTab}`] || form.errors.short_description"
+            help="A brief summary displayed in product cards"
+        >
+            <UInput
+                v-model="form.short_description[activeTab]"
+                :placeholder="languages.length > 1 ? `Enter short description in ${languages.find(l => l.code === activeTab)?.name}` : 'Brief product summary...'"
+                class="w-full"
+                :dir="isCurrentRtl ? 'rtl' : 'ltr'"
+                :disabled="form.processing"
             />
         </UFormField>
 
@@ -359,6 +445,20 @@ defineExpose({ reset, form });
                 <UInput
                     v-model="form.slug"
                     placeholder="organic-olive-oil"
+                    class="w-full"
+                    :disabled="form.processing"
+                />
+            </UFormField>
+
+            <!-- Brand -->
+            <UFormField
+                label="Brand"
+                name="brand"
+                :error="form.errors.brand"
+            >
+                <UInput
+                    v-model="form.brand"
+                    placeholder="e.g., Nestlé"
                     class="w-full"
                     :disabled="form.processing"
                 />
@@ -486,6 +586,21 @@ defineExpose({ reset, form });
                 />
             </UFormField>
 
+            <!-- Availability -->
+            <UFormField
+                label="Availability"
+                name="availability"
+                :error="form.errors.availability"
+            >
+                <USelectMenu
+                    v-model="form.availability"
+                    :items="availabilityOptions"
+                    value-key="value"
+                    class="w-full"
+                    :disabled="form.processing"
+                />
+            </UFormField>
+
             <!-- Affiliate URL -->
             <UFormField
                 label="Affiliate URL"
@@ -502,16 +617,18 @@ defineExpose({ reset, form });
                 />
             </UFormField>
 
-            <!-- Affiliate Source -->
+            <!-- Store -->
             <UFormField
-                label="Affiliate Source"
-                name="affiliate_source"
-                :error="form.errors.affiliate_source"
-                help="e.g., Amazon, eBay, Partner Store"
+                label="Store"
+                name="product_store_id"
+                :error="form.errors.product_store_id"
+                help="Select the store where this product is available"
             >
-                <UInput
-                    v-model="form.affiliate_source"
-                    placeholder="Amazon"
+                <USelectMenu
+                    v-model="form.product_store_id"
+                    :items="storeOptions"
+                    placeholder="Select store..."
+                    value-key="value"
                     class="w-full"
                     :disabled="form.processing"
                 />
@@ -532,6 +649,49 @@ defineExpose({ reset, form });
                 />
             </UFormField>
 
+            <!-- Product Images -->
+            <UFormField
+                label="Product Images"
+                name="image_ids"
+                :error="form.errors.image_ids"
+                help="Additional product images (gallery)"
+            >
+                <div v-if="selectedImages.length > 0" class="space-y-2 mb-3">
+                    <div
+                        v-for="(image, index) in selectedImages"
+                        :key="image.id"
+                        class="flex items-center gap-4 p-2 border border-default rounded-lg bg-elevated/50"
+                    >
+                        <img
+                            :src="image.thumbnail_url || image.url || ''"
+                            :alt="image.title || 'Product image'"
+                            class="size-12 object-contain rounded bg-white"
+                        >
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-highlighted truncate">
+                                {{ image.title || `Image ${index + 1}` }}
+                            </p>
+                        </div>
+                        <UButton
+                            color="error"
+                            variant="ghost"
+                            icon="i-lucide-x"
+                            size="xs"
+                            @click="removeImage(index)"
+                        />
+                    </div>
+                </div>
+                <UButton
+                    color="neutral"
+                    variant="outline"
+                    icon="i-lucide-images"
+                    :disabled="form.processing"
+                    @click="imagesPickerOpen = true"
+                >
+                    Add Images
+                </UButton>
+            </UFormField>
+
             <!-- Active Status -->
             <UFormField
                 label="Status"
@@ -546,6 +706,21 @@ defineExpose({ reset, form });
                     </template>
                 </USwitch>
             </UFormField>
+
+            <!-- Featured -->
+            <UFormField
+                label="Featured Product"
+                name="is_featured"
+            >
+                <USwitch
+                    v-model="form.is_featured"
+                    :disabled="form.processing"
+                >
+                    <template #label>
+                        {{ form.is_featured ? 'Featured' : 'Not Featured' }}
+                    </template>
+                </USwitch>
+            </UFormField>
         </template>
 
         <MediaPickerModal
@@ -553,6 +728,13 @@ defineExpose({ reset, form });
             type="images"
             :multiple="false"
             @select="onMediaSelect"
+        />
+
+        <MediaPickerModal
+            v-model:open="imagesPickerOpen"
+            type="images"
+            :multiple="true"
+            @select="onImagesSelect"
         />
 
         <div class="flex justify-end gap-2 pt-6">

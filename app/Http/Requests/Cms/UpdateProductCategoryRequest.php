@@ -17,6 +17,8 @@ class UpdateProductCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
+        $categoryId = $this->route('productCategory')?->id;
+
         return [
             'name' => ['required'],
             'name.*' => ['nullable', 'string', 'max:255'],
@@ -28,6 +30,17 @@ class UpdateProductCategoryRequest extends FormRequest
             ],
             'description' => ['nullable'],
             'description.*' => ['nullable', 'string', 'max:1000'],
+            'parent_id' => [
+                'nullable',
+                'integer',
+                'exists:product_categories,id',
+                // Prevent setting self as parent
+                function ($attribute, $value, $fail) use ($categoryId) {
+                    if ($value && $categoryId && (int) $value === $categoryId) {
+                        $fail('A category cannot be its own parent.');
+                    }
+                },
+            ],
             'featured_media_id' => ['nullable', 'integer', 'exists:media_items,id'],
             'is_active' => ['nullable', 'boolean'],
         ];

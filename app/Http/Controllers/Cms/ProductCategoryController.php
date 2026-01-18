@@ -25,7 +25,7 @@ class ProductCategoryController extends Controller
             $sortField = 'order';
         }
 
-        $query = ProductCategory::query()->withCount('products')->with('featuredMedia');
+        $query = ProductCategory::query()->withCount('products')->with(['featuredMedia', 'parent']);
 
         // Search
         if ($request->filled('search')) {
@@ -60,6 +60,8 @@ class ProductCategoryController extends Controller
                 'name' => $category->name,
                 'slug' => $category->slug,
                 'description' => $category->description,
+                'parent_id' => $category->parent_id,
+                'parent_name' => $category->parent?->name,
                 'featured_image_url' => $category->featured_image_url,
                 'is_active' => $category->is_active,
                 'order' => $category->order,
@@ -68,8 +70,19 @@ class ProductCategoryController extends Controller
                 'translated_locales' => array_keys($category->getTranslations('name')),
             ]);
 
+        // Get all categories for parent dropdown (excluding children to prevent circular references)
+        $parentCategories = ProductCategory::whereNull('parent_id')
+            ->active()
+            ->ordered()
+            ->get()
+            ->map(fn ($cat) => [
+                'id' => $cat->id,
+                'name' => $cat->name,
+            ]);
+
         return Inertia::render('ProductCategories/Index', [
             'categories' => $categories,
+            'parentCategories' => $parentCategories,
             'filters' => $request->only(['search', 'sort', 'direction', 'is_active']),
             'languages' => $activeLanguages->map(fn ($lang) => [
                 'code' => $lang->code,
@@ -117,6 +130,7 @@ class ProductCategoryController extends Controller
             'name' => $name,
             'slug' => $validated['slug'] ?? null,
             'description' => $description,
+            'parent_id' => $validated['parent_id'] ?? null,
             'featured_media_id' => $validated['featured_media_id'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
             'order' => $maxOrder + 1,
@@ -139,6 +153,7 @@ class ProductCategoryController extends Controller
             'slug' => $productCategory->slug,
             'description' => $productCategory->description,
             'description_translations' => $productCategory->getTranslations('description'),
+            'parent_id' => $productCategory->parent_id,
             'featured_media_id' => $productCategory->featured_media_id,
             'featured_media' => $productCategory->featuredMedia ? [
                 'id' => $productCategory->featuredMedia->id,
@@ -158,11 +173,23 @@ class ProductCategoryController extends Controller
             'direction' => $lang->direction,
         ]);
 
+        // Get parent categories (exclude self and its children)
+        $parentCategories = ProductCategory::whereNull('parent_id')
+            ->where('id', '!=', $productCategory->id)
+            ->active()
+            ->ordered()
+            ->get()
+            ->map(fn ($cat) => [
+                'id' => $cat->id,
+                'name' => $cat->name,
+            ]);
+
         if ($request->wantsJson()) {
             return response()->json([
                 'props' => [
                     'category' => $categoryData,
                     'languages' => $languageData,
+                    'parentCategories' => $parentCategories,
                 ],
             ]);
         }
@@ -170,6 +197,7 @@ class ProductCategoryController extends Controller
         return Inertia::render('ProductCategories/Edit', [
             'category' => $categoryData,
             'languages' => $languageData,
+            'parentCategories' => $parentCategories,
         ]);
     }
 
@@ -193,6 +221,7 @@ class ProductCategoryController extends Controller
             'name' => $name,
             'slug' => $validated['slug'] ?? $productCategory->slug,
             'description' => $description,
+            'parent_id' => array_key_exists('parent_id', $validated) ? $validated['parent_id'] : $productCategory->parent_id,
             'featured_media_id' => $validated['featured_media_id'] ?? $productCategory->featured_media_id,
             'is_active' => $validated['is_active'] ?? $productCategory->is_active,
         ]);

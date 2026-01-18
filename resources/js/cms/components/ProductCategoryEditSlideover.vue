@@ -17,15 +17,22 @@ interface ProductCategoryWithTranslations {
     description?: string;
     description_translations?: Record<string, string>;
     slug?: string;
+    parent_id?: number | null;
     featured_media_id?: number | null;
     featured_media?: MediaItem | null;
     is_active?: boolean;
     order?: number;
 }
 
+interface ParentCategory {
+    id: number;
+    name: string;
+}
+
 const props = defineProps<{
     category: ProductCategoryWithTranslations | null;
     languages: Language[];
+    parentCategories?: ParentCategory[];
 }>();
 
 const emit = defineEmits<{
@@ -67,6 +74,7 @@ watch(() => props.category, (newCategory) => {
                 ref="formRef"
                 :category="categoryData"
                 :languages="languages"
+                :parent-categories="parentCategories"
                 mode="edit"
                 @success="onSuccess"
                 @cancel="onCancel"

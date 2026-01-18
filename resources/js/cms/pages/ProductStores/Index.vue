@@ -2,55 +2,45 @@
 import { Head, router } from '@inertiajs/vue3';
 import { ref, computed, h, resolveComponent } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
-import ProductCategoryCreateSlideover from '../../components/ProductCategoryCreateSlideover.vue';
-import ProductCategoryEditSlideover from '../../components/ProductCategoryEditSlideover.vue';
+import ProductStoreCreateSlideover from '../../components/ProductStoreCreateSlideover.vue';
+import ProductStoreEditSlideover from '../../components/ProductStoreEditSlideover.vue';
 import { usePermission } from '../../composables/usePermission';
-import type { Language, PaginatedResponse } from '../../types';
+import type { PaginatedResponse } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
-interface ProductCategory {
+interface MediaItem {
+    id: number;
+    url: string;
+    title?: string;
+}
+
+interface ProductStore {
     id: number;
     uuid: string;
     name: string;
-    slug: string;
-    description?: string | null;
-    parent_id?: number | null;
-    parent_name?: string | null;
-    featured_image_url?: string | null;
+    business_type?: string | null;
+    address?: string | null;
+    location_label?: string | null;
+    hotline?: string | null;
+    contact_email?: string | null;
+    website_url?: string | null;
+    logo_url?: string | null;
+    logo_media_id?: number | null;
+    logo?: MediaItem | null;
     is_active: boolean;
     order: number;
     products_count: number;
     created_at: string;
-    translated_locales?: string[];
-}
-
-interface ProductCategoryWithTranslations extends ProductCategory {
-    name_translations?: Record<string, string>;
-    description_translations?: Record<string, string>;
-    parent_id?: number | null;
-    featured_media_id?: number | null;
-    featured_media?: {
-        id: number;
-        url: string;
-        title?: string;
-    } | null;
-}
-
-interface ParentCategory {
-    id: number;
-    name: string;
 }
 
 const props = defineProps<{
-    categories: PaginatedResponse<ProductCategory>;
-    parentCategories: ParentCategory[];
+    stores: PaginatedResponse<ProductStore>;
     filters: {
         search?: string;
         sort?: string;
         direction?: 'asc' | 'desc';
         is_active?: boolean;
     };
-    languages: Language[];
 }>();
 
 const { can } = usePermission();
@@ -63,11 +53,10 @@ const UAvatar = resolveComponent('UAvatar');
 
 const search = ref(props.filters.search || '');
 const deleteModalOpen = ref(false);
-const categoryToDelete = ref<ProductCategory | null>(null);
+const storeToDelete = ref<ProductStore | null>(null);
 const createSlideoverOpen = ref(false);
 const editSlideoverOpen = ref(false);
-const categoryToEdit = ref<ProductCategoryWithTranslations | null>(null);
-const editParentCategories = ref<ParentCategory[]>([]);
+const storeToEdit = ref<ProductStore | null>(null);
 const rowSelection = ref<Record<string, boolean>>({});
 const bulkDeleteModalOpen = ref(false);
 const bulkDeleting = ref(false);
@@ -81,9 +70,15 @@ const selectedCount = computed(() => {
 const selectedIds = computed(() => {
     return Object.entries(rowSelection.value)
         .filter(([_, selected]) => selected)
-        .map(([index]) => props.categories.data[parseInt(index)]?.id)
+        .map(([index]) => props.stores.data[parseInt(index)]?.id)
         .filter(Boolean);
 });
+
+const businessTypeLabels: Record<string, string> = {
+    retail: 'Retail',
+    distributor: 'Distributor',
+    restaurant: 'Restaurant',
+};
 
 function clearSelection() {
     rowSelection.value = {};
@@ -97,7 +92,7 @@ function bulkDelete() {
     if (selectedIds.value.length === 0) return;
 
     bulkDeleting.value = true;
-    router.delete('/cms/product-categories/bulk', {
+    router.delete('/cms/product-stores/bulk', {
         data: { ids: selectedIds.value },
         onSuccess: () => {
             bulkDeleteModalOpen.value = false;
@@ -110,7 +105,7 @@ function bulkDelete() {
 }
 
 function onSearch() {
-    router.get('/cms/product-categories', {
+    router.get('/cms/product-stores', {
         search: search.value || undefined,
         sort: props.filters.sort,
         direction: props.filters.direction,
@@ -125,53 +120,52 @@ function clearSearch() {
     onSearch();
 }
 
-function confirmDelete(category: ProductCategory) {
-    categoryToDelete.value = category;
+function confirmDelete(store: ProductStore) {
+    storeToDelete.value = store;
     deleteModalOpen.value = true;
 }
 
-function deleteCategory() {
-    if (categoryToDelete.value) {
-        router.delete(`/cms/product-categories/${categoryToDelete.value.uuid}`, {
+function deleteStore() {
+    if (storeToDelete.value) {
+        router.delete(`/cms/product-stores/${storeToDelete.value.uuid}`, {
             onSuccess: () => {
                 deleteModalOpen.value = false;
-                categoryToDelete.value = null;
+                storeToDelete.value = null;
             },
         });
     }
 }
 
-async function openEditSlideover(category: ProductCategory) {
+async function openEditSlideover(store: ProductStore) {
     try {
-        const response = await fetch(`/cms/product-categories/${category.uuid}/edit`, {
+        const response = await fetch(`/cms/product-stores/${store.uuid}/edit`, {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
             },
         });
 
-        if (!response.ok) throw new Error('Failed to fetch category');
+        if (!response.ok) throw new Error('Failed to fetch client');
 
         const data = await response.json();
-        categoryToEdit.value = data.props.category;
-        editParentCategories.value = data.props.parentCategories || [];
+        storeToEdit.value = data.props.store;
         editSlideoverOpen.value = true;
     } catch (error) {
-        console.error('Failed to load category for editing:', error);
+        console.error('Failed to load client for editing:', error);
     }
 }
 
 function onEditClose(updated: boolean) {
     editSlideoverOpen.value = false;
-    categoryToEdit.value = null;
+    storeToEdit.value = null;
     if (updated) {
-        router.reload({ only: ['categories'] });
+        router.reload({ only: ['stores'] });
     }
 }
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get('/cms/product-categories', {
+    router.get('/cms/product-stores', {
         search: search.value || undefined,
         sort: field,
         direction: newDirection,
@@ -181,10 +175,10 @@ function sortBy(field: string) {
     });
 }
 
-function getRowActions(row: ProductCategory) {
+function getRowActions(row: ProductStore) {
     const actions: any[][] = [];
 
-    if (can('products.edit')) {
+    if (can('product-stores.edit')) {
         actions.push([
             {
                 label: 'Edit',
@@ -194,7 +188,7 @@ function getRowActions(row: ProductCategory) {
         ]);
     }
 
-    if (can('products.delete')) {
+    if (can('product-stores.delete')) {
         actions.push([
             {
                 label: 'Delete',
@@ -208,30 +202,7 @@ function getRowActions(row: ProductCategory) {
     return actions;
 }
 
-// Helper to render translation status badges
-function renderTranslationStatus(translatedLocales: string[] | undefined) {
-    if (!translatedLocales || props.languages.length <= 1) return null;
-
-    return h('div', { class: 'flex items-center gap-1' },
-        props.languages.map(lang => {
-            const isTranslated = translatedLocales.includes(lang.code);
-            return h(
-                'span',
-                {
-                    class: `inline-flex items-center justify-center size-5 text-[10px] font-medium rounded ${
-                        isTranslated
-                            ? 'bg-success/10 text-success'
-                            : 'bg-muted/20 text-muted'
-                    }`,
-                    title: isTranslated ? `${lang.name} translation available` : `No ${lang.name} translation`,
-                },
-                lang.code.toUpperCase()
-            );
-        })
-    );
-}
-
-const columns: TableColumn<ProductCategory>[] = [
+const columns: TableColumn<ProductStore>[] = [
     {
         id: 'select',
         header: ({ table }) => h(UCheckbox, {
@@ -253,7 +224,7 @@ const columns: TableColumn<ProductCategory>[] = [
             class: 'flex items-center gap-1 hover:text-highlighted',
             onClick: () => sortBy('name'),
         }, [
-            'Category',
+            'Client',
             props.filters.sort === 'name' && h(
                 'span',
                 { class: 'i-lucide-' + (props.filters.direction === 'asc' ? 'chevron-up' : 'chevron-down') }
@@ -262,36 +233,39 @@ const columns: TableColumn<ProductCategory>[] = [
         cell: ({ row }) => {
             return h('div', { class: 'flex items-center gap-3' }, [
                 h(UAvatar, {
-                    src: row.original.featured_image_url || undefined,
+                    src: row.original.logo_url || undefined,
                     alt: row.original.name,
                     size: 'sm',
-                    icon: 'i-lucide-folder',
+                    icon: 'i-lucide-building-2',
                     class: 'bg-elevated',
                 }),
                 h('div', {}, [
                     h('div', { class: 'font-medium text-highlighted' }, row.original.name),
-                    row.original.description && h('p', {
-                        class: 'text-xs text-muted truncate max-w-48',
-                    }, row.original.description),
+                    row.original.location_label && h('p', {
+                        class: 'text-xs text-muted',
+                    }, row.original.location_label),
                 ]),
             ]);
         },
     },
     {
-        accessorKey: 'slug',
-        header: 'Slug',
+        accessorKey: 'business_type',
+        header: 'Type',
         cell: ({ row }) => {
-            return h('span', { class: 'text-muted font-mono text-sm' }, row.original.slug);
+            if (!row.original.business_type) return h('span', { class: 'text-muted' }, '-');
+            return h(
+                UBadge,
+                { color: 'neutral', variant: 'subtle' },
+                () => businessTypeLabels[row.original.business_type!] || row.original.business_type
+            );
         },
     },
     {
-        accessorKey: 'parent_name',
-        header: 'Parent',
+        accessorKey: 'hotline',
+        header: 'Hotline',
         cell: ({ row }) => {
-            if (!row.original.parent_name) {
-                return h('span', { class: 'text-muted' }, '—');
-            }
-            return h('span', { class: 'text-sm' }, row.original.parent_name);
+            if (!row.original.hotline) return h('span', { class: 'text-muted' }, '-');
+            return h('span', { class: 'text-muted font-mono text-sm' }, row.original.hotline);
         },
     },
     {
@@ -329,25 +303,6 @@ const columns: TableColumn<ProductCategory>[] = [
         },
     },
     {
-        accessorKey: 'order',
-        header: () => h('button', {
-            class: 'flex items-center gap-1 hover:text-highlighted',
-            onClick: () => sortBy('order'),
-        }, [
-            'Order',
-            props.filters.sort === 'order' && h(
-                'span',
-                { class: 'i-lucide-' + (props.filters.direction === 'asc' ? 'chevron-up' : 'chevron-down') }
-            ),
-        ]),
-        cell: ({ row }) => h('span', { class: 'text-muted' }, row.original.order),
-    },
-    {
-        id: 'translations',
-        header: 'Translations',
-        cell: ({ row }) => renderTranslationStatus(row.original.translated_locales),
-    },
-    {
         id: 'actions',
         cell: ({ row }) => {
             const actions = getRowActions(row.original);
@@ -377,27 +332,25 @@ const columns: TableColumn<ProductCategory>[] = [
 </script>
 
 <template>
-    <Head title="Product Categories" />
+    <Head title="Clients" />
 
     <DashboardLayout>
-        <UDashboardPanel id="product-categories">
+        <UDashboardPanel id="product-stores">
             <template #header>
-                <UDashboardNavbar title="Product Categories">
+                <UDashboardNavbar title="Clients">
                     <template #leading>
                         <UDashboardSidebarCollapse />
                     </template>
 
                     <template #right>
-                        <ProductCategoryCreateSlideover
-                            v-if="can('products.create')"
+                        <ProductStoreCreateSlideover
+                            v-if="can('product-stores.create')"
                             v-model:open="createSlideoverOpen"
-                            :languages="languages"
-                            :parent-categories="parentCategories"
                         >
                             <UButton icon="i-lucide-plus">
-                                Add Category
+                                Add Client
                             </UButton>
-                        </ProductCategoryCreateSlideover>
+                        </ProductStoreCreateSlideover>
                     </template>
                 </UDashboardNavbar>
             </template>
@@ -407,7 +360,7 @@ const columns: TableColumn<ProductCategory>[] = [
                     <div class="flex items-center gap-2">
                         <UInput
                             v-model="search"
-                            placeholder="Search categories..."
+                            placeholder="Search clients..."
                             icon="i-lucide-search"
                             :ui="{ base: 'w-64' }"
                             @keyup.enter="onSearch"
@@ -422,7 +375,7 @@ const columns: TableColumn<ProductCategory>[] = [
                     </div>
 
                     <span class="text-sm text-muted">
-                        {{ categories.total }} {{ categories.total !== 1 ? 'categories' : 'category' }}
+                        {{ stores.total }} {{ stores.total !== 1 ? 'clients' : 'client' }}
                     </span>
                 </div>
 
@@ -434,7 +387,7 @@ const columns: TableColumn<ProductCategory>[] = [
                     <div class="flex items-center gap-2">
                         <UIcon name="i-lucide-check-square" class="size-5 text-primary" />
                         <span class="text-sm font-medium">
-                            {{ selectedCount }} {{ selectedCount === 1 ? 'category' : 'categories' }} selected
+                            {{ selectedCount }} {{ selectedCount === 1 ? 'client' : 'clients' }} selected
                         </span>
                     </div>
                     <div class="flex items-center gap-2">
@@ -447,7 +400,7 @@ const columns: TableColumn<ProductCategory>[] = [
                             Clear
                         </UButton>
                         <UButton
-                            v-if="can('products.delete')"
+                            v-if="can('product-stores.delete')"
                             color="error"
                             variant="soft"
                             size="sm"
@@ -462,7 +415,7 @@ const columns: TableColumn<ProductCategory>[] = [
                 <UTable
                     ref="table"
                     v-model:row-selection="rowSelection"
-                    :data="categories.data"
+                    :data="stores.data"
                     :columns="columns"
                     :ui="{
                         base: 'table-fixed border-separate border-spacing-0',
@@ -475,30 +428,30 @@ const columns: TableColumn<ProductCategory>[] = [
                 />
 
                 <!-- Pagination -->
-                <div v-if="categories.last_page > 1" class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-4">
+                <div v-if="stores.last_page > 1" class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-4">
                     <div class="text-sm text-muted">
                         {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
-                        {{ categories.total }} row(s) selected.
+                        {{ stores.total }} row(s) selected.
                     </div>
                     <UPagination
-                        :page="categories.current_page"
-                        :total="categories.total"
-                        :items-per-page="categories.per_page"
-                        @update:page="(page) => router.get('/cms/product-categories', { ...filters, page }, { preserveState: true })"
+                        :page="stores.current_page"
+                        :total="stores.total"
+                        :items-per-page="stores.per_page"
+                        @update:page="(page) => router.get('/cms/product-stores', { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 
                 <!-- Empty State -->
-                <div v-if="categories.data.length === 0" class="text-center py-12 text-muted">
-                    <UIcon name="i-lucide-folder" class="size-12 mx-auto mb-4 opacity-50" />
-                    <p>No product categories found.</p>
+                <div v-if="stores.data.length === 0" class="text-center py-12 text-muted">
+                    <UIcon name="i-lucide-building-2" class="size-12 mx-auto mb-4 opacity-50" />
+                    <p>No clients found.</p>
                     <UButton
-                        v-if="can('products.create')"
+                        v-if="can('product-stores.create')"
                         class="mt-4"
                         variant="outline"
                         @click="createSlideoverOpen = true"
                     >
-                        Create your first category
+                        Add your first client
                     </UButton>
                 </div>
             </template>
@@ -513,12 +466,12 @@ const columns: TableColumn<ProductCategory>[] = [
                             <UIcon name="i-lucide-alert-triangle" class="size-6 text-error" />
                         </div>
                         <div>
-                            <h3 class="text-lg font-semibold text-highlighted">Delete Category</h3>
+                            <h3 class="text-lg font-semibold text-highlighted">Delete Client</h3>
                             <p class="mt-2 text-sm text-muted">
-                                Are you sure you want to delete <strong class="text-highlighted">{{ categoryToDelete?.name }}</strong>?
+                                Are you sure you want to delete <strong class="text-highlighted">{{ storeToDelete?.name }}</strong>?
                             </p>
-                            <p v-if="categoryToDelete?.products_count" class="mt-1 text-sm text-warning">
-                                This category has {{ categoryToDelete.products_count }} products.
+                            <p v-if="storeToDelete?.products_count" class="mt-1 text-sm text-warning">
+                                This client has {{ storeToDelete.products_count }} products.
                             </p>
                         </div>
                     </div>
@@ -533,7 +486,7 @@ const columns: TableColumn<ProductCategory>[] = [
                         </UButton>
                         <UButton
                             color="error"
-                            @click="deleteCategory"
+                            @click="deleteStore"
                         >
                             Delete
                         </UButton>
@@ -551,13 +504,13 @@ const columns: TableColumn<ProductCategory>[] = [
                             <UIcon name="i-lucide-alert-triangle" class="size-6 text-error" />
                         </div>
                         <div>
-                            <h3 class="text-lg font-semibold text-highlighted">Delete {{ selectedCount }} Categories</h3>
+                            <h3 class="text-lg font-semibold text-highlighted">Delete {{ selectedCount }} Clients</h3>
                             <p class="mt-2 text-sm text-muted">
-                                Are you sure you want to delete <strong class="text-highlighted">{{ selectedCount }}</strong> selected categories?
+                                Are you sure you want to delete <strong class="text-highlighted">{{ selectedCount }}</strong> selected clients?
                                 This action cannot be undone.
                             </p>
                             <p class="mt-1 text-sm text-warning">
-                                Categories with associated products cannot be deleted.
+                                Clients with associated products cannot be deleted.
                             </p>
                         </div>
                     </div>
@@ -576,19 +529,17 @@ const columns: TableColumn<ProductCategory>[] = [
                             :loading="bulkDeleting"
                             @click="bulkDelete"
                         >
-                            Delete {{ selectedCount }} Categories
+                            Delete {{ selectedCount }} Clients
                         </UButton>
                     </div>
                 </UCard>
             </template>
         </UModal>
 
-        <!-- Edit Category Slideover -->
-        <ProductCategoryEditSlideover
+        <!-- Edit Store Slideover -->
+        <ProductStoreEditSlideover
             v-model:open="editSlideoverOpen"
-            :category="categoryToEdit"
-            :languages="languages"
-            :parent-categories="editParentCategories"
+            :store="storeToEdit"
             @close="onEditClose"
         />
     </DashboardLayout>

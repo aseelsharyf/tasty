@@ -19,6 +19,7 @@ use App\Http\Controllers\Cms\PostController;
 use App\Http\Controllers\Cms\PostEditLockController;
 use App\Http\Controllers\Cms\PostPreviewController;
 use App\Http\Controllers\Cms\ProductCategoryController;
+use App\Http\Controllers\Cms\ProductStoreController;
 use App\Http\Controllers\Cms\ProfileController;
 use App\Http\Controllers\Cms\RoleController;
 use App\Http\Controllers\Cms\SeoSettingController;
@@ -261,6 +262,20 @@ Route::middleware(['auth', 'cms'])->group(function () {
         ]);
         Route::post('product-categories/reorder', [ProductCategoryController::class, 'reorder'])->name('cms.product-categories.reorder');
         Route::delete('product-categories/bulk', [ProductCategoryController::class, 'bulkDestroy'])->name('cms.product-categories.bulk-destroy');
+    });
+
+    // Product Stores Management
+    Route::middleware('permission:products.view')->group(function () {
+        Route::resource('product-stores', ProductStoreController::class)->except(['show'])->names([
+            'index' => 'cms.product-stores.index',
+            'create' => 'cms.product-stores.create',
+            'store' => 'cms.product-stores.store',
+            'edit' => 'cms.product-stores.edit',
+            'update' => 'cms.product-stores.update',
+            'destroy' => 'cms.product-stores.destroy',
+        ]);
+        Route::post('product-stores/reorder', [ProductStoreController::class, 'reorder'])->name('cms.product-stores.reorder');
+        Route::delete('product-stores/bulk', [ProductStoreController::class, 'bulkDestroy'])->name('cms.product-stores.bulk-destroy');
     });
 
     // Products Management

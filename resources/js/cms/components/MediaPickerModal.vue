@@ -403,6 +403,7 @@ async function uploadAll() {
     isUploading.value = true;
     uploadErrors.value = [];
     const uploadedItems: MediaItem[] = [];
+    const failedFileIndices: number[] = [];
 
     for (let i = 0; i < uploadFiles.value.length; i++) {
         const uploadFile = uploadFiles.value[i];
@@ -426,7 +427,22 @@ async function uploadAll() {
             });
 
             if (!response.ok) {
-                throw new Error(`Failed to upload ${uploadFile.file.name}`);
+                // Try to get error message from response
+                let errorMessage = `Failed to upload ${uploadFile.file.name}`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData.message) {
+                        errorMessage = `${uploadFile.file.name}: ${errorData.message}`;
+                    } else if (errorData.errors) {
+                        const firstError = Object.values(errorData.errors)[0];
+                        if (Array.isArray(firstError) && firstError[0]) {
+                            errorMessage = `${uploadFile.file.name}: ${firstError[0]}`;
+                        }
+                    }
+                } catch {
+                    // Ignore JSON parse errors
+                }
+                throw new Error(errorMessage);
             }
 
             const result = await response.json();
@@ -440,13 +456,23 @@ async function uploadAll() {
             uploadProgress.value[uploadFile.file.name] = 100;
         } catch (error: any) {
             uploadErrors.value.push(error.message || `Failed to upload ${uploadFile.file.name}`);
+            failedFileIndices.push(i);
         }
     }
 
     isUploading.value = false;
-    uploadFiles.value = [];
-    uploadProgress.value = {};
-    validationErrors.value = {};
+
+    // Only clear successfully uploaded files, keep failed ones
+    if (failedFileIndices.length > 0 && failedFileIndices.length < uploadFiles.value.length) {
+        // Some succeeded, some failed - keep only failed files
+        uploadFiles.value = uploadFiles.value.filter((_, index) => failedFileIndices.includes(index));
+    } else if (failedFileIndices.length === 0) {
+        // All succeeded - clear everything
+        uploadFiles.value = [];
+        uploadProgress.value = {};
+        validationErrors.value = {};
+    }
+    // If all failed, keep all files so user can retry
 
     // If uploads succeeded and no errors, auto-confirm selection for better UX
     if (uploadedItems.length > 0 && uploadErrors.value.length === 0) {
@@ -455,13 +481,17 @@ async function uploadAll() {
             confirmSelection();
             return;
         }
+
+        // Reload media to show uploaded items
+        await loadMedia();
+
+        // Switch to browse tab to show the uploaded items
+        activeTab.value = 'browse';
+    } else if (uploadedItems.length > 0 && uploadErrors.value.length > 0) {
+        // Partial success - reload media but stay on upload tab to show errors
+        await loadMedia();
     }
-
-    // Reload media to show uploaded items
-    await loadMedia();
-
-    // Switch to browse tab to show the uploaded items
-    activeTab.value = 'browse';
+    // If all failed, stay on upload tab with errors visible
 }
 
 function formatFileSize(bytes: number): string {

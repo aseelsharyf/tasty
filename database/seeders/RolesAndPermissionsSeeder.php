@@ -84,6 +84,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'products.edit',
             'products.delete',
 
+            // Product Stores
+            'product-stores.view',
+            'product-stores.create',
+            'product-stores.edit',
+            'product-stores.delete',
+
             // Menus
             'menus.view',
             'menus.create',
@@ -169,6 +175,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'products.create',
             'products.edit',
             'products.delete',
+            'product-stores.view',
+            'product-stores.create',
+            'product-stores.edit',
+            'product-stores.delete',
             'menus.view',
             'menus.create',
             'menus.edit',
@@ -222,6 +232,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'products.view',
             'products.create',
             'products.edit',
+            'product-stores.view',
+            'product-stores.create',
+            'product-stores.edit',
             'comments.view',
             'comments.moderate',
             'comments.edit',

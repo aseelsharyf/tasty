@@ -14,6 +14,11 @@ interface MediaItem {
     is_image?: boolean;
 }
 
+interface ParentCategory {
+    id: number;
+    name: string;
+}
+
 interface ProductCategoryWithTranslations {
     id?: number;
     uuid?: string;
@@ -22,6 +27,7 @@ interface ProductCategoryWithTranslations {
     description?: string;
     description_translations?: Record<string, string>;
     slug?: string;
+    parent_id?: number | null;
     featured_media_id?: number | null;
     featured_media?: MediaItem | null;
     is_active?: boolean;
@@ -31,9 +37,11 @@ interface ProductCategoryWithTranslations {
 const props = withDefaults(defineProps<{
     category?: ProductCategoryWithTranslations;
     languages: Language[];
+    parentCategories?: ParentCategory[];
     mode?: 'create' | 'edit';
 }>(), {
     mode: 'create',
+    parentCategories: () => [],
 });
 
 const emit = defineEmits<{
@@ -64,12 +72,21 @@ const form = useForm({
     name: initNameTranslations(),
     description: initDescriptionTranslations(),
     slug: props.category?.slug || '',
+    parent_id: props.category?.parent_id || null as number | null,
     featured_media_id: props.category?.featured_media_id || null as number | null,
     is_active: props.category?.is_active ?? true,
 });
 
 const selectedMedia = ref<MediaItem | null>(props.category?.featured_media || null);
 const mediaPickerOpen = ref(false);
+
+// Format parent categories for select menu
+const parentCategoryOptions = computed(() => {
+    return props.parentCategories.map(cat => ({
+        label: cat.name,
+        value: cat.id,
+    }));
+});
 
 watch(() => form.name[props.languages[0]?.code || 'en'], (newName) => {
     if (props.mode === 'create' && newName) {
@@ -114,6 +131,7 @@ function onSubmit() {
         name: nameData,
         description: descriptionData,
         slug: form.slug,
+        parent_id: form.parent_id,
         featured_media_id: form.featured_media_id,
         is_active: form.is_active,
     }));
@@ -145,6 +163,7 @@ function reset() {
         form.description[lang.code] = '';
     });
     form.slug = '';
+    form.parent_id = null;
     form.featured_media_id = null;
     form.is_active = true;
     selectedMedia.value = null;
@@ -159,6 +178,7 @@ watch(() => props.category, (newCategory) => {
             form.description[lang.code] = newCategory.description_translations?.[lang.code] || '';
         });
         form.slug = newCategory.slug || '';
+        form.parent_id = newCategory.parent_id || null;
         form.featured_media_id = newCategory.featured_media_id || null;
         form.is_active = newCategory.is_active ?? true;
         selectedMedia.value = newCategory.featured_media || null;
@@ -256,6 +276,25 @@ defineExpose({ reset, form });
                 :dir="isCurrentRtl ? 'rtl' : 'ltr'"
                 :disabled="form.processing"
                 rows="3"
+            />
+        </UFormField>
+
+        <!-- Parent Category (only show on primary language tab) -->
+        <UFormField
+            v-if="activeTab === languages[0]?.code && parentCategoryOptions.length > 0"
+            label="Parent Category"
+            name="parent_id"
+            :error="form.errors.parent_id"
+            help="Leave empty for a top-level category"
+        >
+            <USelectMenu
+                v-model="form.parent_id"
+                :items="parentCategoryOptions"
+                value-key="value"
+                placeholder="Select parent category (optional)"
+                class="w-full"
+                :disabled="form.processing"
+                nullable
             />
         </UFormField>
 

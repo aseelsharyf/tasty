@@ -24,6 +24,7 @@ class ProductCategory extends Model
         'name',
         'slug',
         'description',
+        'parent_id',
         'featured_media_id',
         'is_active',
         'order',
@@ -98,9 +99,35 @@ class ProductCategory extends Model
         return $this->hasMany(Product::class);
     }
 
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(ProductCategory::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(ProductCategory::class, 'parent_id');
+    }
+
     public function featuredMedia(): BelongsTo
     {
         return $this->belongsTo(MediaItem::class, 'featured_media_id');
+    }
+
+    /**
+     * Check if this category is a root category.
+     */
+    public function isRoot(): bool
+    {
+        return $this->parent_id === null;
+    }
+
+    /**
+     * Check if this category has subcategories.
+     */
+    public function hasChildren(): bool
+    {
+        return $this->children()->exists();
     }
 
     public function getProductsCountAttribute(): int

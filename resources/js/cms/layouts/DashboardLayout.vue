@@ -259,6 +259,16 @@ const shopNavItems = computed<NavigationMenuItem[]>(() => {
         });
     }
 
+    if (can('products.view')) {
+        items.push({
+            label: 'Clients',
+            icon: 'i-lucide-building-2',
+            to: '/cms/product-stores',
+            active: isActivePrefix('/cms/product-stores'),
+            onSelect: () => { sidebarOpen.value = false; },
+        });
+    }
+
     return items;
 });
 

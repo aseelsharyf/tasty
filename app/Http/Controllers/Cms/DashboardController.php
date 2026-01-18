@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Cms;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Models\Setting;
 use App\Models\User;
 use App\Services\UserStatsService;
 use Illuminate\Support\Facades\Auth;
@@ -67,6 +68,8 @@ class DashboardController extends Controller
                 'updated_at' => $post->updated_at,
                 'days_old' => $post->updated_at->diffInDays(now()),
             ]),
+            'postTypes' => $this->getPostTypes(),
+            'defaultLanguage' => $this->getDefaultLanguage(),
         ]);
     }
 
@@ -117,6 +120,8 @@ class DashboardController extends Controller
             'stats' => $stats,
             'pendingReview' => $pendingReview,
             'recentActivity' => $recentActivity,
+            'postTypes' => $this->getPostTypes(),
+            'defaultLanguage' => $this->getDefaultLanguage(),
         ]);
     }
 
@@ -135,5 +140,25 @@ class DashboardController extends Controller
         } else {
             return "Good evening, {$name}!";
         }
+    }
+
+    /**
+     * Get post types for quick-draft dropdown.
+     */
+    protected function getPostTypes(): array
+    {
+        return collect(Setting::getPostTypes())->map(fn ($type) => [
+            'value' => $type['slug'],
+            'label' => $type['name'],
+            'icon' => $type['icon'] ?? null,
+        ])->values()->all();
+    }
+
+    /**
+     * Get default language code.
+     */
+    protected function getDefaultLanguage(): string
+    {
+        return config('localization.default_language', 'en');
     }
 }

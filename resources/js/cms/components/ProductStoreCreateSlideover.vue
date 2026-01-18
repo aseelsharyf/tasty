@@ -1,24 +1,13 @@
 <script setup lang="ts">
 import { watch, ref } from 'vue';
-import ProductCategoryForm from './ProductCategoryForm.vue';
-import type { Language } from '../types';
-
-interface ParentCategory {
-    id: number;
-    name: string;
-}
-
-defineProps<{
-    languages: Language[];
-    parentCategories?: ParentCategory[];
-}>();
+import ProductStoreForm from './ProductStoreForm.vue';
 
 const emit = defineEmits<{
     (e: 'close', created: boolean): void;
 }>();
 
 const open = defineModel<boolean>('open', { default: false });
-const formRef = ref<InstanceType<typeof ProductCategoryForm> | null>(null);
+const formRef = ref<InstanceType<typeof ProductStoreForm> | null>(null);
 
 function onSuccess() {
     open.value = false;
@@ -41,16 +30,14 @@ watch(open, (isOpen) => {
 <template>
     <USlideover
         v-model:open="open"
-        title="Create Product Category"
-        description="Add a new product category to organize your products."
+        title="Add Client"
+        description="Add a new client/store for products."
     >
         <slot />
 
         <template #body>
-            <ProductCategoryForm
+            <ProductStoreForm
                 ref="formRef"
-                :languages="languages"
-                :parent-categories="parentCategories"
                 mode="create"
                 @success="onSuccess"
                 @cancel="onCancel"

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductStore;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -37,17 +38,24 @@ class ProductFactory extends Factory
         ];
         $title = fake()->randomElement($titles);
 
+        $brands = ['Lodge', 'Le Creuset', 'KitchenAid', 'Vitamix', 'OXO', 'Staub', 'All-Clad', 'Ninja', null];
+        $availabilities = ['in_stock', 'in_stock', 'in_stock', 'out_of_stock', 'pre_order', 'discontinued'];
+
         return [
             'uuid' => fake()->uuid(),
             'title' => ['en' => $title],
             'slug' => Str::slug($title).'-'.fake()->unique()->randomNumber(4),
             'description' => ['en' => fake()->paragraph()],
+            'short_description' => ['en' => fake()->sentence()],
+            'brand' => fake()->optional(0.7)->randomElement($brands),
             'product_category_id' => ProductCategory::factory(),
+            'product_store_id' => ProductStore::factory(),
             'price' => fake()->randomFloat(2, 10, 500),
             'currency' => 'USD',
+            'availability' => fake()->randomElement($availabilities),
             'affiliate_url' => fake()->url(),
-            'affiliate_source' => fake()->randomElement(['Amazon', 'Partner Store', 'Direct', null]),
             'is_active' => true,
+            'is_featured' => fake()->boolean(20),
             'order' => fake()->numberBetween(0, 10),
         ];
     }
@@ -57,9 +65,49 @@ class ProductFactory extends Factory
         return $this->state(fn () => ['is_active' => false]);
     }
 
+    public function featured(): static
+    {
+        return $this->state(fn () => ['is_featured' => true]);
+    }
+
+    public function inStock(): static
+    {
+        return $this->state(fn () => ['availability' => 'in_stock']);
+    }
+
+    public function outOfStock(): static
+    {
+        return $this->state(fn () => ['availability' => 'out_of_stock']);
+    }
+
+    public function preOrder(): static
+    {
+        return $this->state(fn () => ['availability' => 'pre_order']);
+    }
+
+    public function discontinued(): static
+    {
+        return $this->state(fn () => ['availability' => 'discontinued']);
+    }
+
     public function forCategory(ProductCategory $category): static
     {
         return $this->state(fn () => ['product_category_id' => $category->id]);
+    }
+
+    public function forStore(ProductStore $store): static
+    {
+        return $this->state(fn () => ['product_store_id' => $store->id]);
+    }
+
+    public function withoutStore(): static
+    {
+        return $this->state(fn () => ['product_store_id' => null]);
+    }
+
+    public function withBrand(string $brand): static
+    {
+        return $this->state(fn () => ['brand' => $brand]);
     }
 
     public function withPrice(float $price): static

@@ -22,6 +22,7 @@ class StoreProductCategoryRequest extends FormRequest
             'slug' => ['nullable', 'string', 'max:255', 'unique:product_categories,slug'],
             'description' => ['nullable'],
             'description.*' => ['nullable', 'string', 'max:1000'],
+            'parent_id' => ['nullable', 'integer', 'exists:product_categories,id'],
             'featured_media_id' => ['nullable', 'integer', 'exists:media_items,id'],
             'is_active' => ['nullable', 'boolean'],
         ];

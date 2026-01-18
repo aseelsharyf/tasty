@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
 import DashboardLayout from '../layouts/DashboardLayout.vue';
 import type { DropdownMenuItem } from '@nuxt/ui';
 
@@ -9,6 +10,7 @@ interface RecentPost {
     title: string;
     status: string;
     post_type: string;
+    language_code?: string;
     author: {
         name: string;
         avatar_url?: string | null;
@@ -16,7 +18,13 @@ interface RecentPost {
     created_at: string;
 }
 
-defineProps<{
+interface PostType {
+    value: string;
+    label: string;
+    icon?: string;
+}
+
+const props = defineProps<{
     stats: {
         users: number;
         posts: number;
@@ -30,15 +38,70 @@ defineProps<{
         tags: number;
     };
     recentPosts: RecentPost[];
+    postTypes?: PostType[];
+    defaultLanguage?: string;
 }>();
+
+// Create post functionality
+const isCreatingPost = ref(false);
+
+function getCsrfToken(): string {
+    const cookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('XSRF-TOKEN='));
+    return cookie ? decodeURIComponent(cookie.split('=')[1]) : '';
+}
+
+async function createPostOfType(postType: string) {
+    if (isCreatingPost.value) return;
+
+    isCreatingPost.value = true;
+
+    try {
+        const response = await fetch('/cms/posts/quick-draft', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-XSRF-TOKEN': getCsrfToken(),
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                post_type: postType,
+                language_code: props.defaultLanguage || 'en',
+            }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.redirect) {
+            router.visit(data.redirect);
+        }
+    } catch (e) {
+        console.error('Create post error:', e);
+    } finally {
+        isCreatingPost.value = false;
+    }
+}
+
+// Post type menu items for dropdown
+const postTypeMenuItems = computed<DropdownMenuItem[][]>(() => {
+    const types = props.postTypes || [
+        { value: 'article', label: 'Article' },
+        { value: 'recipe', label: 'Recipe' },
+    ];
+
+    return [
+        types.map((type) => ({
+            label: type.label,
+            icon: type.icon || (type.value === 'recipe' ? 'i-lucide-chef-hat' : 'i-lucide-file-text'),
+            disabled: isCreatingPost.value,
+            onSelect: () => createPostOfType(type.value),
+        })),
+    ];
+});
 
 const quickActions: DropdownMenuItem[][] = [
     [
-        {
-            label: 'New Post',
-            icon: 'i-lucide-file-plus',
-            to: '/cms/posts/en',
-        },
         {
             label: 'New User',
             icon: 'i-lucide-user-plus',
@@ -209,17 +272,19 @@ function formatDate(dateString: string): string {
                         variant="outline"
                     >
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <Link href="/cms/posts/en">
+                            <UDropdownMenu :items="postTypeMenuItems">
                                 <UButton
                                     color="neutral"
                                     variant="soft"
                                     icon="i-lucide-file-plus"
+                                    trailing-icon="i-lucide-chevron-down"
                                     block
+                                    :loading="isCreatingPost"
                                     class="justify-start"
                                 >
                                     New Post
                                 </UButton>
-                            </Link>
+                            </UDropdownMenu>
                             <Link href="/cms/users/create">
                                 <UButton
                                     color="neutral"

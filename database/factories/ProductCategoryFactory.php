@@ -28,6 +28,7 @@ class ProductCategoryFactory extends Factory
             'name' => ['en' => $name],
             'slug' => Str::slug($name).'-'.fake()->unique()->randomNumber(4),
             'description' => ['en' => fake()->sentence()],
+            'parent_id' => null,
             'is_active' => true,
             'order' => fake()->numberBetween(0, 10),
         ];
@@ -36,5 +37,15 @@ class ProductCategoryFactory extends Factory
     public function inactive(): static
     {
         return $this->state(fn () => ['is_active' => false]);
+    }
+
+    public function asChild(ProductCategory $parent): static
+    {
+        return $this->state(fn () => ['parent_id' => $parent->id]);
+    }
+
+    public function withParent(): static
+    {
+        return $this->state(fn () => ['parent_id' => ProductCategory::factory()]);
     }
 }
