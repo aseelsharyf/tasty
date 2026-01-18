@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { PreviewSchema, PreviewSchemaArea, HomepageSectionSlot, PostSearchResult } from '../../types';
+import type { PreviewSchema, PreviewSchemaArea, HomepageSectionSlot, PostSearchResult, ProductSearchResult } from '../../types';
 
 const props = defineProps<{
     schema: PreviewSchema;
@@ -8,6 +8,7 @@ const props = defineProps<{
     slots?: HomepageSectionSlot[];
     config?: Record<string, unknown>;
     postCache?: Record<number, PostSearchResult>;
+    productCache?: Record<number, ProductSearchResult>;
     interactive?: boolean;
 }>();
 
@@ -123,10 +124,21 @@ function getSlotData(slotIndex: number | undefined) {
     return props.slots[slotIndex] || null;
 }
 
-function getPostForSlot(slotIndex: number | undefined): PostSearchResult | null {
+function getPostForSlot(slotIndex: number | undefined): PostSearchResult | ProductSearchResult | null {
     const slot = getSlotData(slotIndex);
-    if (!slot || !slot.postId || !props.postCache) return null;
-    return props.postCache[slot.postId] || null;
+    if (!slot) return null;
+
+    // Check for product first (for product sections like add-to-cart)
+    if (slot.productId && props.productCache) {
+        return props.productCache[slot.productId] || null;
+    }
+
+    // Then check for post
+    if (slot.postId && props.postCache) {
+        return props.postCache[slot.postId] || null;
+    }
+
+    return null;
 }
 
 function getSlotImage(slotIndex: number | undefined): string | null {

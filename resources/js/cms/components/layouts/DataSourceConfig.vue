@@ -11,6 +11,7 @@ const props = defineProps<{
     action: string;
     params: Record<string, unknown>;
     supportedActions: string[];
+    contentType?: string; // 'post' or 'product'
 }>();
 
 const emit = defineEmits<{
@@ -23,13 +24,26 @@ const categories = ref<TaxonomyItem[]>([]);
 const loadingTags = ref(false);
 const loadingCategories = ref(false);
 
+// Determine if this is a product section
+const isProductSection = computed(() => props.contentType === 'product');
+
 const actionOptions = computed(() => {
-    const labels: Record<string, string> = {
+    // Different labels for posts vs products
+    const postLabels: Record<string, string> = {
         recent: 'Recent Posts',
         trending: 'Trending Posts',
         byTag: 'Posts by Tag',
         byCategory: 'Posts by Category',
     };
+
+    const productLabels: Record<string, string> = {
+        recent: 'Recent Products',
+        trending: 'Trending Products',
+        byTag: 'Products by Tag',
+        byCategory: 'Products by Category',
+    };
+
+    const labels = isProductSection.value ? productLabels : postLabels;
 
     return props.supportedActions.map(action => ({
         label: labels[action] || action,
@@ -178,16 +192,16 @@ const categoryOptions = computed(() =>
                 <UIcon name="i-lucide-info" class="size-4 text-muted shrink-0 mt-0.5" />
                 <p class="text-xs text-muted">
                     <template v-if="action === 'recent'">
-                        Shows the most recently published posts, sorted by publication date.
+                        Shows the most recently {{ isProductSection ? 'added products' : 'published posts' }}, sorted by {{ isProductSection ? 'creation' : 'publication' }} date.
                     </template>
                     <template v-else-if="action === 'trending'">
-                        Shows posts based on engagement metrics and popularity.
+                        Shows {{ isProductSection ? 'products' : 'posts' }} based on engagement metrics and popularity.
                     </template>
                     <template v-else-if="action === 'byTag'">
-                        Shows posts that have any of the selected tags.
+                        Shows {{ isProductSection ? 'products' : 'posts' }} that have any of the selected tags.
                     </template>
                     <template v-else-if="action === 'byCategory'">
-                        Shows posts from any of the selected categories.
+                        Shows {{ isProductSection ? 'products' : 'posts' }} from any of the selected categories.
                     </template>
                 </p>
             </div>

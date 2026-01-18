@@ -7,6 +7,7 @@ use App\Http\Requests\Cms\UpdateHomepageLayoutRequest;
 use App\Http\Requests\Cms\UpdatePageLayoutRequest;
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\Product;
 use App\Models\Tag;
 use App\Services\Layouts\HomepageConfigurationService;
 use App\Services\Layouts\SectionCategoryMappingService;
@@ -298,6 +299,101 @@ class LayoutController extends Controller
         return response()->json([
             'categories' => $flatten($categories),
         ]);
+    }
+
+    /**
+     * Search products for slot assignment.
+     */
+    public function searchProducts(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'query' => ['nullable', 'string', 'max:255'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
+        ]);
+
+        $query = Product::query()
+            ->with(['featuredMedia', 'category'])
+            ->active()
+            ->ordered();
+
+        if (! empty($validated['query'])) {
+            $searchTerm = $validated['query'];
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('title', 'like', "%{$searchTerm}%")
+                    ->orWhere('brand', 'like', "%{$searchTerm}%")
+                    ->orWhere('short_description', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        $products = $query->limit($validated['limit'] ?? 20)->get();
+
+        return response()->json([
+            'products' => $products->map(fn (Product $product) => [
+                'id' => $product->id,
+                'title' => $product->title,
+                'brand' => $product->brand,
+                'shortDescription' => $product->short_description,
+                'image' => $product->featured_image_url,
+                'category' => $product->category?->name,
+                'price' => $product->formatted_price,
+                'availability' => $product->availability,
+            ]),
+        ]);
+    }
+
+    /**
+     * Get a single product for display.
+     */
+    public function getProduct(Product $product): JsonResponse
+    {
+        $product->load(['featuredMedia', 'category']);
+
+        return response()->json([
+            'product' => [
+                'id' => $product->id,
+                'title' => $product->title,
+                'brand' => $product->brand,
+                'shortDescription' => $product->short_description,
+                'image' => $product->featured_image_url,
+                'category' => $product->category?->name,
+                'price' => $product->formatted_price,
+                'availability' => $product->availability,
+            ],
+        ]);
+    }
+
+    /**
+     * Get multiple products by IDs for batch loading.
+     */
+    public function getProductsBatch(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'string'],
+        ]);
+
+        $ids = array_filter(array_map('intval', explode(',', $validated['ids'])));
+
+        if (empty($ids)) {
+            return response()->json([]);
+        }
+
+        $products = Product::query()
+            ->with(['featuredMedia', 'category'])
+            ->whereIn('id', $ids)
+            ->get();
+
+        return response()->json(
+            $products->map(fn (Product $product) => [
+                'id' => $product->id,
+                'title' => $product->title,
+                'brand' => $product->brand,
+                'shortDescription' => $product->short_description,
+                'image' => $product->featured_image_url,
+                'category' => $product->category?->name,
+                'price' => $product->formatted_price,
+                'availability' => $product->availability,
+            ])
+        );
     }
 
     /**

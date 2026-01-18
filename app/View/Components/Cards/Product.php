@@ -28,6 +28,10 @@ class Product extends Component
 
     public bool $showPrice;
 
+    public ?string $storeLogo;
+
+    public ?string $storeName;
+
     /**
      * Create a new component instance.
      *
@@ -45,6 +49,8 @@ class Product extends Component
         ?string $price = null,
         ?string $compareAtPrice = null,
         bool $showPrice = true,
+        ?string $storeLogo = null,
+        ?string $storeName = null,
     ) {
         $this->showPrice = $showPrice;
         if ($product instanceof ProductModel) {
@@ -66,6 +72,9 @@ class Product extends Component
             $this->compareAtPrice = $product->compare_at_price
                 ? number_format((float) $product->compare_at_price, 2).' '.$product->currency
                 : null;
+            // Store info
+            $this->storeLogo = $product->store?->logo_url;
+            $this->storeName = $product->store?->name;
         } elseif (is_array($product)) {
             $this->image = $product['image'] ?? '';
             $this->imageAlt = $product['imageAlt'] ?? $product['title'] ?? '';
@@ -76,6 +85,8 @@ class Product extends Component
             $this->url = $product['url'] ?? '#';
             $this->price = $product['price'] ?? null;
             $this->compareAtPrice = $product['compareAtPrice'] ?? null;
+            $this->storeLogo = $product['storeLogo'] ?? null;
+            $this->storeName = $product['storeName'] ?? null;
         } else {
             $this->image = '';
             $this->imageAlt = '';
@@ -85,6 +96,8 @@ class Product extends Component
             $this->url = '#';
             $this->price = null;
             $this->compareAtPrice = null;
+            $this->storeLogo = null;
+            $this->storeName = null;
         }
 
         // Allow individual prop overrides
@@ -111,6 +124,12 @@ class Product extends Component
         }
         if ($compareAtPrice !== null) {
             $this->compareAtPrice = $compareAtPrice;
+        }
+        if ($storeLogo !== null) {
+            $this->storeLogo = $storeLogo;
+        }
+        if ($storeName !== null) {
+            $this->storeName = $storeName;
         }
     }
 

@@ -52,7 +52,7 @@ class AddToCart extends Component
         // Load products
         if (count($productIds) > 0) {
             // Load specific products by ID
-            $this->products = Product::with(['featuredMedia', 'category', 'featuredTag'])
+            $this->products = Product::with(['featuredMedia', 'category', 'featuredTag', 'store.logo'])
                 ->active()
                 ->whereIn('id', $productIds)
                 ->get()
@@ -60,7 +60,7 @@ class AddToCart extends Component
                 ->values();
         } else {
             // Load recent active products
-            $query = Product::with(['featuredMedia', 'category', 'featuredTag'])
+            $query = Product::with(['featuredMedia', 'category', 'featuredTag', 'store.logo'])
                 ->active()
                 ->ordered();
 

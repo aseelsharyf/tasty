@@ -413,6 +413,9 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::get('homepage/search-posts', [LayoutController::class, 'searchPosts'])->name('cms.layouts.homepage.search-posts');
         Route::get('homepage/posts/{post}', [LayoutController::class, 'getPost'])->name('cms.layouts.homepage.get-post');
         Route::get('homepage/posts-batch', [LayoutController::class, 'getPostsBatch'])->name('cms.layouts.homepage.posts-batch');
+        Route::get('homepage/search-products', [LayoutController::class, 'searchProducts'])->name('cms.layouts.homepage.search-products');
+        Route::get('homepage/products/{product}', [LayoutController::class, 'getProduct'])->name('cms.layouts.homepage.get-product');
+        Route::get('homepage/products-batch', [LayoutController::class, 'getProductsBatch'])->name('cms.layouts.homepage.products-batch');
         Route::get('homepage/tags', [LayoutController::class, 'getTags'])->name('cms.layouts.homepage.tags');
         Route::get('homepage/categories', [LayoutController::class, 'getCategories'])->name('cms.layouts.homepage.categories');
         Route::get('section-types', [LayoutController::class, 'getSectionTypes'])->name('cms.layouts.section-types');

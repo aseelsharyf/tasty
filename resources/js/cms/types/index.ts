@@ -370,6 +370,7 @@ export interface HomepageSectionSlot {
     index: number;
     mode: 'dynamic' | 'manual' | 'static';
     postId: number | null;
+    productId?: number | null;
     product?: HomepageProduct;
     content?: Record<string, string>;
 }
@@ -426,6 +427,7 @@ export interface SectionTypeDefinition {
     slotCount: number;
     minSlots: number;
     maxSlots: number;
+    contentType: string; // 'post' or 'product'
     configSchema: Record<string, SectionTypeConfigField>;
     slotSchema: Record<string, SectionTypeConfigField>;
     slotLabels: Record<number, string>;
@@ -446,4 +448,15 @@ export interface PostSearchResult {
     category?: string;
     postType: string;
     publishedAt?: string;
+}
+
+export interface ProductSearchResult {
+    id: number;
+    title: string;
+    brand?: string;
+    shortDescription?: string;
+    image?: string;
+    category?: string;
+    price?: string;
+    availability?: string;
 }

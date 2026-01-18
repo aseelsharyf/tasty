@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, Link } from '@inertiajs/vue3';
 import { ref, computed, h, resolveComponent } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
-import ProductCreateSlideover from '../../components/ProductCreateSlideover.vue';
 import ProductEditSlideover from '../../components/ProductEditSlideover.vue';
 import { usePermission } from '../../composables/usePermission';
 import type { Language, PaginatedResponse } from '../../types';
@@ -80,7 +79,6 @@ const search = ref(props.filters.search || '');
 const categoryFilter = ref(props.filters.category_id || 'all');
 const deleteModalOpen = ref(false);
 const productToDelete = ref<Product | null>(null);
-const createSlideoverOpen = ref(false);
 const editSlideoverOpen = ref(false);
 const productToEdit = ref<ProductWithTranslations | null>(null);
 const rowSelection = ref<Record<string, boolean>>({});
@@ -185,13 +183,6 @@ async function openEditSlideover(product: Product) {
         editSlideoverOpen.value = true;
     } catch (error) {
         console.error('Failed to load product for editing:', error);
-    }
-}
-
-function onCreateClose(created: boolean) {
-    createSlideoverOpen.value = false;
-    if (created) {
-        router.reload({ only: ['products'] });
     }
 }
 
@@ -445,18 +436,15 @@ const columns: TableColumn<Product>[] = [
                     </template>
 
                     <template #right>
-                        <ProductCreateSlideover
+                        <UButton
                             v-if="can('products.create')"
-                            v-model:open="createSlideoverOpen"
-                            :languages="languages"
-                            :categories="categories"
-                            :tags="tags"
-                            @close="onCreateClose"
+                            icon="i-lucide-plus"
+                            as="a"
+                            href="/cms/products/create"
+                            @click.prevent="router.visit('/cms/products/create')"
                         >
-                            <UButton icon="i-lucide-plus">
-                                Add Product
-                            </UButton>
-                        </ProductCreateSlideover>
+                            Add Product
+                        </UButton>
                     </template>
                 </UDashboardNavbar>
             </template>
@@ -563,7 +551,9 @@ const columns: TableColumn<Product>[] = [
                         v-if="can('products.create')"
                         class="mt-4"
                         variant="outline"
-                        @click="createSlideoverOpen = true"
+                        as="a"
+                        href="/cms/products/create"
+                        @click.prevent="router.visit('/cms/products/create')"
                     >
                         Create your first product
                     </UButton>

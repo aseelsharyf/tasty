@@ -3,9 +3,10 @@ import { ref, computed, onMounted, watch } from 'vue';
 import draggable from 'vuedraggable';
 import DataSourceConfig from './DataSourceConfig.vue';
 import PostPickerModal from './PostPickerModal.vue';
+import ProductPickerModal from './ProductPickerModal.vue';
 import SectionPreview from './SectionPreview.vue';
 import MediaPickerModal from '../MediaPickerModal.vue';
-import type { HomepageSection, SectionTypeDefinition, HomepageSectionSlot, PostSearchResult, LayoutContext } from '../../types';
+import type { HomepageSection, SectionTypeDefinition, HomepageSectionSlot, PostSearchResult, ProductSearchResult, LayoutContext } from '../../types';
 
 const props = defineProps<{
     modelValue: HomepageSection[];
@@ -39,6 +40,10 @@ const editingSlotIndex = ref<number | null>(null);
 const editingSectionId = ref<string | null>(null);
 const editingSectionType = ref<string | null>(null);
 const postCache = ref<Record<number, PostSearchResult>>({});
+
+// Product picker state
+const showProductPicker = ref(false);
+const productCache = ref<Record<number, ProductSearchResult>>({});
 
 // Media picker state
 const showMediaPicker = ref(false);
@@ -248,16 +253,24 @@ function getSectionDescription(section: HomepageSection): string {
     if (!type) return '';
 
     const parts: string[] = [];
+    const isProduct = type.contentType === 'product';
 
     // Show data source action
     if (type.supportedActions.length > 0 && section.dataSource.action) {
-        const actionLabels: Record<string, string> = {
+        const postLabels: Record<string, string> = {
             recent: 'Recent posts',
             trending: 'Trending posts',
             byTag: `Tag: ${section.dataSource.params?.slug || 'any'}`,
             byCategory: `Category: ${section.dataSource.params?.slug || 'any'}`,
         };
-        parts.push(actionLabels[section.dataSource.action] || section.dataSource.action);
+        const productLabels: Record<string, string> = {
+            recent: 'Recent products',
+            trending: 'Trending products',
+            byTag: `Tag: ${section.dataSource.params?.slug || 'any'}`,
+            byCategory: `Category: ${section.dataSource.params?.slug || 'any'}`,
+        };
+        const labels = isProduct ? productLabels : postLabels;
+        parts.push(labels[section.dataSource.action] || section.dataSource.action);
     }
 
     // Show slot count
@@ -337,11 +350,23 @@ function cycleSlotMode(section: HomepageSection, slotIndex: number) {
     });
 }
 
-function openPostPicker(sectionId: string, slotIndex: number, sectionType: string) {
+function openPicker(sectionId: string, slotIndex: number, sectionType: string) {
     editingSectionId.value = sectionId;
     editingSlotIndex.value = slotIndex;
     editingSectionType.value = sectionType;
-    showPostPicker.value = true;
+
+    // Check if this section uses products
+    const type = getSectionType(sectionType);
+    if (type?.contentType === 'product') {
+        showProductPicker.value = true;
+    } else {
+        showPostPicker.value = true;
+    }
+}
+
+// Legacy function name for compatibility
+function openPostPicker(sectionId: string, slotIndex: number, sectionType: string) {
+    openPicker(sectionId, slotIndex, sectionType);
 }
 
 function selectPost(post: PostSearchResult) {
@@ -351,9 +376,25 @@ function selectPost(post: PostSearchResult) {
     if (!section) return;
 
     postCache.value[post.id] = post;
-    updateSlot(section, editingSlotIndex.value, { mode: 'manual', postId: post.id });
+    updateSlot(section, editingSlotIndex.value, { mode: 'manual', postId: post.id, productId: null });
 
     showPostPicker.value = false;
+    editingSectionId.value = null;
+    editingSlotIndex.value = null;
+    editingSectionType.value = null;
+}
+
+function selectProduct(product: ProductSearchResult) {
+    if (editingSectionId.value === null || editingSlotIndex.value === null) return;
+
+    const section = sections.value.find(s => s.id === editingSectionId.value);
+    if (!section) return;
+
+    // Create a new cache object to ensure reactivity
+    productCache.value = { ...productCache.value, [product.id]: product };
+    updateSlot(section, editingSlotIndex.value, { mode: 'manual', postId: null, productId: product.id });
+
+    showProductPicker.value = false;
     editingSectionId.value = null;
     editingSlotIndex.value = null;
     editingSectionType.value = null;
@@ -626,13 +667,14 @@ function handlePreviewSlotClick(section: HomepageSection, slotIndex: number) {
                     <div class="p-4 space-y-4">
                         <!-- Row 1: Interactive Preview -->
                         <div v-if="getSectionType(section.type)?.slotCount > 0" class="max-w-md">
-                            <p class="text-xs text-muted mb-2">Click on a slot to assign a post</p>
+                            <p class="text-xs text-muted mb-2">Click on a slot to assign a {{ getSectionType(section.type)?.contentType === 'product' ? 'product' : 'post' }}</p>
                             <SectionPreview
                                 :schema="getSectionType(section.type)!.previewSchema"
                                 :section-type="section.type"
                                 :slots="getSlotsWithDynamicPreview(section)"
                                 :config="section.config"
                                 :post-cache="getSectionPostCache(section)"
+                                :product-cache="productCache"
                                 :interactive="true"
                                 @slot-click="(idx) => handlePreviewSlotClick(section, idx)"
                             />
@@ -900,6 +942,7 @@ function handlePreviewSlotClick(section: HomepageSection, slotIndex: number) {
                                             :action="section.dataSource.action"
                                             :params="section.dataSource.params"
                                             :supported-actions="getSectionType(section.type)!.supportedActions"
+                                            :content-type="getSectionType(section.type)?.contentType"
                                             @update:data-source="(v) => updateSection(section, { dataSource: v })"
                                         />
                                     </div>
@@ -1045,6 +1088,12 @@ function handlePreviewSlotClick(section: HomepageSection, slotIndex: number) {
             :excluded-post-ids="excludedPostIds"
             :section-type="editingSectionType ?? undefined"
             @select="selectPost"
+        />
+
+        <!-- Product Picker Modal -->
+        <ProductPickerModal
+            v-model:open="showProductPicker"
+            @select="selectProduct"
         />
 
         <!-- Media Picker Modal -->

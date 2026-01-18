@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import PostPickerModal from './PostPickerModal.vue';
-import type { HomepageSectionSlot, PostSearchResult } from '../../types';
+import ProductPickerModal from './ProductPickerModal.vue';
+import type { HomepageSectionSlot, PostSearchResult, ProductSearchResult } from '../../types';
 
 const props = defineProps<{
     modelValue: HomepageSectionSlot[];
     slotCount: number;
     sectionType: string;
+    contentType?: string; // 'post' or 'product'
 }>();
 
 const emit = defineEmits<{
@@ -18,19 +20,29 @@ const slots = computed({
     set: (value) => emit('update:modelValue', value),
 });
 
+// Determine if this section uses products instead of posts
+const isProductSection = computed(() => props.contentType === 'product');
+
 // Post picker state
 const showPostPicker = ref(false);
+const showProductPicker = ref(false);
 const editingSlotIndex = ref<number | null>(null);
 
-// Cache for loaded post data
+// Cache for loaded post/product data
 const postCache = ref<Record<number, PostSearchResult>>({});
+const productCache = ref<Record<number, ProductSearchResult>>({});
 
 // Ensure we have the correct number of slots
 watch(() => props.slotCount, (count) => {
     if (slots.value.length < count) {
         const newSlots = [...slots.value];
         for (let i = slots.value.length; i < count; i++) {
-            newSlots.push({ index: i, mode: 'dynamic', postId: null });
+            newSlots.push({
+                index: i,
+                mode: 'dynamic',
+                postId: null,
+                productId: null,
+            });
         }
         emit('update:modelValue', newSlots);
     }
@@ -44,14 +56,19 @@ function toggleSlotMode(index: number) {
             ...slot,
             mode: slot.mode === 'dynamic' ? 'manual' : 'dynamic',
             postId: null,
+            productId: null,
         };
         emit('update:modelValue', newSlots);
     }
 }
 
-function openPostPicker(index: number) {
+function openPicker(index: number) {
     editingSlotIndex.value = index;
-    showPostPicker.value = true;
+    if (isProductSection.value) {
+        showProductPicker.value = true;
+    } else {
+        showPostPicker.value = true;
+    }
 }
 
 function selectPost(post: PostSearchResult) {
@@ -62,6 +79,7 @@ function selectPost(post: PostSearchResult) {
         ...newSlots[editingSlotIndex.value],
         mode: 'manual',
         postId: post.id,
+        productId: null,
     };
 
     // Cache the post data
@@ -72,13 +90,45 @@ function selectPost(post: PostSearchResult) {
     editingSlotIndex.value = null;
 }
 
+function selectProduct(product: ProductSearchResult) {
+    if (editingSlotIndex.value === null) return;
+
+    const newSlots = [...slots.value];
+    newSlots[editingSlotIndex.value] = {
+        ...newSlots[editingSlotIndex.value],
+        mode: 'manual',
+        postId: null,
+        productId: product.id,
+    };
+
+    // Cache the product data
+    productCache.value[product.id] = product;
+
+    emit('update:modelValue', newSlots);
+    showProductPicker.value = false;
+    editingSlotIndex.value = null;
+}
+
 function clearSlot(index: number) {
     const newSlots = [...slots.value];
     newSlots[index] = {
         ...newSlots[index],
         postId: null,
+        productId: null,
     };
     emit('update:modelValue', newSlots);
+}
+
+// Get the ID for display (postId or productId depending on section type)
+function getSlotItemId(slot: HomepageSectionSlot): number | null {
+    return isProductSection.value ? slot.productId ?? null : slot.postId ?? null;
+}
+
+// Get cached item data
+function getCachedItem(slot: HomepageSectionSlot) {
+    const itemId = getSlotItemId(slot);
+    if (!itemId) return null;
+    return isProductSection.value ? productCache.value[itemId] : postCache.value[itemId];
 }
 
 function getSlotLabel(index: number): string {
@@ -99,7 +149,7 @@ function getSlotLabel(index: number): string {
     <div class="space-y-4">
         <div class="p-4 bg-muted/30 rounded-lg">
             <p class="text-sm text-muted">
-                Each slot can be filled dynamically (from the data source) or manually (by selecting a specific post).
+                Each slot can be filled dynamically (from the data source) or manually (by selecting a specific {{ isProductSection ? 'product' : 'post' }}).
             </p>
         </div>
 
@@ -131,35 +181,38 @@ function getSlotLabel(index: number): string {
 
                 <!-- Manual Mode -->
                 <div v-else>
-                    <!-- No post selected -->
-                    <div v-if="!slot.postId" class="flex items-center gap-3">
+                    <!-- No item selected -->
+                    <div v-if="!getSlotItemId(slot)" class="flex items-center gap-3">
                         <button
                             type="button"
                             class="flex-1 p-3 border-2 border-dashed border-default rounded-lg text-muted hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
-                            @click="openPostPicker(index)"
+                            @click="openPicker(index)"
                         >
                             <UIcon name="i-lucide-plus" class="size-4" />
-                            <span class="text-sm">Select Post</span>
+                            <span class="text-sm">Select {{ isProductSection ? 'Product' : 'Post' }}</span>
                         </button>
                     </div>
 
-                    <!-- Post selected -->
+                    <!-- Item selected -->
                     <div v-else class="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                         <img
-                            v-if="postCache[slot.postId]?.image"
-                            :src="postCache[slot.postId]?.image"
-                            :alt="postCache[slot.postId]?.title"
+                            v-if="getCachedItem(slot)?.image"
+                            :src="getCachedItem(slot)?.image"
+                            :alt="getCachedItem(slot)?.title"
                             class="size-12 rounded-lg object-cover shrink-0"
                         />
                         <div v-else class="size-12 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
-                            <UIcon name="i-lucide-image" class="size-5 text-muted" />
+                            <UIcon :name="isProductSection ? 'i-lucide-package' : 'i-lucide-image'" class="size-5 text-muted" />
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="font-medium text-highlighted truncate">
-                                {{ postCache[slot.postId]?.title || `Post #${slot.postId}` }}
+                                {{ getCachedItem(slot)?.title || (isProductSection ? `Product #${getSlotItemId(slot)}` : `Post #${getSlotItemId(slot)}`) }}
                             </p>
-                            <p v-if="postCache[slot.postId]?.category" class="text-xs text-muted">
-                                {{ postCache[slot.postId]?.category }}
+                            <p v-if="getCachedItem(slot)?.category" class="text-xs text-muted">
+                                {{ getCachedItem(slot)?.category }}
+                            </p>
+                            <p v-if="isProductSection && getCachedItem(slot)?.price" class="text-xs text-primary font-medium">
+                                {{ getCachedItem(slot)?.price }}
                             </p>
                         </div>
                         <div class="flex items-center gap-1">
@@ -168,7 +221,7 @@ function getSlotLabel(index: number): string {
                                 color="neutral"
                                 variant="ghost"
                                 size="xs"
-                                @click="openPostPicker(index)"
+                                @click="openPicker(index)"
                             />
                             <UButton
                                 icon="i-lucide-x"
@@ -188,6 +241,12 @@ function getSlotLabel(index: number): string {
             v-model:open="showPostPicker"
             :section-type="sectionType"
             @select="selectPost"
+        />
+
+        <!-- Product Picker Modal -->
+        <ProductPickerModal
+            v-model:open="showProductPicker"
+            @select="selectProduct"
         />
     </div>
 </template>

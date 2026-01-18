@@ -253,6 +253,7 @@ function getColorOptions() {
                             v-model:action="localDataSource.action"
                             v-model:params="localDataSource.params"
                             :supported-actions="sectionType.supportedActions"
+                            :content-type="sectionType.contentType"
                         />
                     </div>
 
@@ -262,6 +263,7 @@ function getColorOptions() {
                             v-model="localSlots"
                             :slot-count="sectionType.slotCount"
                             :section-type="section.type"
+                            :content-type="sectionType.contentType"
                         />
                     </div>
                 </div>
