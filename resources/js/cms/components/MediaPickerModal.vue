@@ -817,7 +817,7 @@ function closeModal() {
                                         <!-- Change image button -->
                                         <button
                                             type="button"
-                                            class="absolute top-2 right-2 px-2 py-1 rounded-md bg-black/50 text-white text-xs font-medium hover:bg-black/70 transition-colors flex items-center gap-1"
+                                            class="absolute top-2 right-2 z-10 px-2 py-1 rounded-md bg-black/50 text-white text-xs font-medium hover:bg-black/70 transition-colors flex items-center gap-1"
                                             @click="fileInputRef?.click()"
                                         >
                                             <UIcon name="i-lucide-replace" class="size-3" />

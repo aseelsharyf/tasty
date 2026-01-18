@@ -139,6 +139,7 @@ class MediaItem extends Model implements HasMedia
                 'image/png',
                 'image/gif',
                 'image/webp',
+                'image/avif',
                 'image/svg+xml',
                 'video/mp4',
                 'video/quicktime',
