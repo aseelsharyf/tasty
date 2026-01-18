@@ -781,17 +781,19 @@ function closeModal() {
                                         <span>{{ type === 'images' ? 'Images only' : type === 'videos' ? 'Videos only' : 'Images and videos supported' }}</span>
                                     </div>
                                 </div>
-                                <input
-                                    ref="fileInputRef"
-                                    type="file"
-                                    class="hidden"
-                                    :accept="type === 'images' ? 'image/*' : type === 'videos' ? 'video/*' : 'image/*,video/*'"
-                                    @change="handleFileSelect"
-                                />
                             </div>
 
+                            <!-- Hidden file input - always in DOM so Change button works -->
+                            <input
+                                ref="fileInputRef"
+                                type="file"
+                                class="hidden"
+                                :accept="type === 'images' ? 'image/*' : type === 'videos' ? 'video/*' : 'image/*,video/*'"
+                                @change="handleFileSelect"
+                            />
+
                             <!-- File selected - show preview and form -->
-                            <div v-else class="flex-1 flex flex-col">
+                            <div v-if="uploadFiles.length > 0" class="flex-1 flex flex-col">
                                 <div
                                     v-for="(uploadFile, index) in uploadFiles"
                                     :key="index"
