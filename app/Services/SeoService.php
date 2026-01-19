@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Category;
 use App\Models\Page;
 use App\Models\Post;
+use App\Models\ProductCategory;
+use App\Models\ProductStore;
 use App\Models\SeoSetting;
 use App\Models\Tag;
 use Artesaos\SEOTools\Facades\JsonLd;
@@ -14,6 +16,12 @@ use Artesaos\SEOTools\Facades\TwitterCard;
 
 class SeoService
 {
+    public function __construct(
+        protected ?OgImageService $ogImageService = null
+    ) {
+        $this->ogImageService = $ogImageService ?? app(OgImageService::class);
+    }
+
     /**
      * Set SEO for the homepage.
      */
@@ -62,8 +70,11 @@ class SeoService
     {
         $title = $post->meta_title ?: $post->title;
         $description = $post->meta_description ?: $post->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($post->content ?? ''), 160);
-        $image = $post->featured_image_url;
         $url = route('post.show', ['category' => $post->categories->first()?->slug ?? 'uncategorized', 'post' => $post->slug]);
+
+        // Try to get generated OG image, fallback to featured image
+        $ogImage = $this->ogImageService->getUrlForPost($post);
+        $image = $ogImage ?? $post->featured_image_url;
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -325,5 +336,94 @@ class SeoService
             $nextUrl = $baseUrl.'?page='.($currentPage + 1);
             SEOMeta::addMeta('next', $nextUrl, 'rel');
         }
+    }
+
+    /**
+     * Set SEO for the products index page.
+     */
+    public function setProductsIndex(): void
+    {
+        $title = 'Products';
+        $description = 'Discover ingredients, tools, and staples we actually use and recommend.';
+        $url = route('products.index');
+
+        SEOMeta::setTitle($title);
+        SEOMeta::setDescription($description);
+        SEOMeta::setCanonical($url);
+
+        OpenGraph::setTitle($title);
+        OpenGraph::setDescription($description);
+        OpenGraph::setType('website');
+        OpenGraph::setUrl($url);
+
+        TwitterCard::setTitle($title);
+        TwitterCard::setDescription($description);
+
+        JsonLd::setTitle($title);
+        JsonLd::setDescription($description);
+        JsonLd::setType('CollectionPage');
+        JsonLd::setUrl($url);
+    }
+
+    /**
+     * Set SEO for a product category page.
+     */
+    public function setProductCategory(ProductCategory $category): void
+    {
+        $title = $category->name.' Products';
+        $description = $category->description ?: "Browse all {$category->name} products we recommend.";
+        $url = route('products.category', $category);
+
+        SEOMeta::setTitle($title);
+        SEOMeta::setDescription($description);
+        SEOMeta::setCanonical($url);
+
+        OpenGraph::setTitle($title);
+        OpenGraph::setDescription($description);
+        OpenGraph::setType('website');
+        OpenGraph::setUrl($url);
+
+        TwitterCard::setTitle($title);
+        TwitterCard::setDescription($description);
+
+        JsonLd::setTitle($title);
+        JsonLd::setDescription($description);
+        JsonLd::setType('CollectionPage');
+        JsonLd::setUrl($url);
+    }
+
+    /**
+     * Set SEO for a product store page.
+     */
+    public function setProductStore(ProductStore $store): void
+    {
+        $title = $store->name.' Products';
+        $description = "Browse all products from {$store->name}.";
+        $url = route('products.store', $store);
+
+        SEOMeta::setTitle($title);
+        SEOMeta::setDescription($description);
+        SEOMeta::setCanonical($url);
+
+        OpenGraph::setTitle($title);
+        OpenGraph::setDescription($description);
+        OpenGraph::setType('website');
+        OpenGraph::setUrl($url);
+
+        if ($store->logo_url) {
+            OpenGraph::addImage($store->logo_url);
+        }
+
+        TwitterCard::setTitle($title);
+        TwitterCard::setDescription($description);
+
+        if ($store->logo_url) {
+            TwitterCard::setImage($store->logo_url);
+        }
+
+        JsonLd::setTitle($title);
+        JsonLd::setDescription($description);
+        JsonLd::setType('CollectionPage');
+        JsonLd::setUrl($url);
     }
 }

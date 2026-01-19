@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProductController;
@@ -45,6 +46,9 @@ Route::get('/api/search', [SearchController::class, 'suggestions'])->name(
 
 // Comment routes
 Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
+
+// OG Image preview (for debugging)
+Route::get('/og-preview/{post:slug}', [OgImageController::class, 'preview'])->name('og.preview');
 
 // Product routes
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');

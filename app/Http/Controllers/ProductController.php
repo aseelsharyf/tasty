@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductClick;
 use App\Models\ProductStore;
+use App\Services\SeoService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -13,11 +14,17 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
+    public function __construct(
+        protected SeoService $seo
+    ) {}
+
     /**
      * Display all products with category filters.
      */
     public function index(): View
     {
+        $this->seo->setProductsIndex();
+
         $categories = ProductCategory::query()
             ->active()
             ->ordered()
@@ -42,6 +49,8 @@ class ProductController extends Controller
     public function byStore(ProductStore $store): View
     {
         abort_unless($store->is_active, 404);
+
+        $this->seo->setProductStore($store);
 
         $products = $store->products()
             ->active()
@@ -95,6 +104,8 @@ class ProductController extends Controller
     public function byCategory(ProductCategory $category): View
     {
         abort_unless($category->is_active, 404);
+
+        $this->seo->setProductCategory($category);
 
         $categories = ProductCategory::query()
             ->active()
