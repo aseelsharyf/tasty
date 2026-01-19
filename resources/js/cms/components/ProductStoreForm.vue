@@ -16,6 +16,7 @@ interface ProductStore {
     id?: number;
     uuid?: string;
     name?: string;
+    slug?: string | null;
     business_type?: string | null;
     address?: string | null;
     location_label?: string | null;
@@ -51,6 +52,7 @@ const businessTypeOptions = [
 
 const form = useForm({
     name: props.store?.name || '',
+    slug: props.store?.slug || '',
     business_type: props.store?.business_type || null as string | null,
     address: props.store?.address || '',
     location_label: props.store?.location_label || '',
@@ -100,6 +102,7 @@ function onCancel() {
 
 function reset() {
     form.name = '';
+    form.slug = '';
     form.business_type = null;
     form.address = '';
     form.location_label = '';
@@ -115,6 +118,7 @@ function reset() {
 watch(() => props.store, (newStore) => {
     if (newStore) {
         form.name = newStore.name || '';
+        form.slug = newStore.slug || '';
         form.business_type = newStore.business_type || null;
         form.address = newStore.address || '';
         form.location_label = newStore.location_label || '';
@@ -146,6 +150,21 @@ defineExpose({ reset, form });
             <UInput
                 v-model="form.name"
                 placeholder="e.g., Sosun Fihaara"
+                class="w-full"
+                :disabled="form.processing"
+            />
+        </UFormField>
+
+        <!-- Slug -->
+        <UFormField
+            label="Slug"
+            name="slug"
+            :error="form.errors.slug"
+            help="URL-friendly identifier. Leave empty to auto-generate from name."
+        >
+            <UInput
+                v-model="form.slug"
+                placeholder="e.g., sosun-fihaara"
                 class="w-full"
                 :disabled="form.processing"
             />

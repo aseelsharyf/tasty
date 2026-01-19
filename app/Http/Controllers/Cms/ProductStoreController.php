@@ -85,6 +85,7 @@ class ProductStoreController extends Controller
 
         ProductStore::create([
             'name' => $validated['name'],
+            'slug' => $validated['slug'] ?? null,
             'business_type' => $validated['business_type'] ?? null,
             'address' => $validated['address'] ?? null,
             'location_label' => $validated['location_label'] ?? null,
@@ -108,6 +109,7 @@ class ProductStoreController extends Controller
             'id' => $productStore->id,
             'uuid' => $productStore->uuid,
             'name' => $productStore->name,
+            'slug' => $productStore->slug,
             'business_type' => $productStore->business_type,
             'address' => $productStore->address,
             'location_label' => $productStore->location_label,
@@ -145,6 +147,7 @@ class ProductStoreController extends Controller
 
         $productStore->update([
             'name' => $validated['name'],
+            'slug' => $validated['slug'] ?: $productStore->slug,
             'business_type' => $validated['business_type'] ?? $productStore->business_type,
             'address' => $validated['address'] ?? $productStore->address,
             'location_label' => $validated['location_label'] ?? $productStore->location_label,
