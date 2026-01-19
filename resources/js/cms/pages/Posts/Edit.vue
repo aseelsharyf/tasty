@@ -2656,6 +2656,7 @@ function openDiff() {
             v-model:open="mediaPickerOpen"
             :type="mediaPickerType"
             :multiple="mediaPickerMultiple"
+            default-category="media"
             @select="handleMediaSelect"
             @update:open="handleMediaPickerClose"
         />

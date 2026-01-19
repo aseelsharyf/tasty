@@ -297,6 +297,8 @@ class SettingsController extends Controller
         return Inertia::render('Settings/Media', [
             'cropPresets' => Setting::getCropPresets(),
             'defaultCropPresets' => Setting::getDefaultCropPresets(),
+            'mediaCategories' => Setting::getMediaCategories(),
+            'defaultMediaCategories' => Setting::getDefaultMediaCategories(),
         ]);
     }
 
@@ -308,9 +310,13 @@ class SettingsController extends Controller
             'crop_presets.*.label' => ['required', 'string', 'max:100'],
             'crop_presets.*.width' => ['required', 'integer', 'min:10', 'max:4000'],
             'crop_presets.*.height' => ['required', 'integer', 'min:10', 'max:4000'],
+            'media_categories' => ['required', 'array'],
+            'media_categories.*.slug' => ['required', 'string', 'max:50', 'regex:/^[a-z_]+$/'],
+            'media_categories.*.label' => ['required', 'string', 'max:100'],
         ]);
 
         Setting::setCropPresets($validated['crop_presets']);
+        Setting::setMediaCategories($validated['media_categories']);
 
         return redirect()->route('cms.settings.media')
             ->with('success', 'Media settings updated successfully.');

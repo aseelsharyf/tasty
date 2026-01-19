@@ -11,7 +11,7 @@ class Feature2Section extends AbstractSectionDefinition
 
     public function name(): string
     {
-        return 'Feature 2';
+        return 'Feature Curve Plus';
     }
 
     public function description(): string

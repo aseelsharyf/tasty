@@ -189,6 +189,43 @@ class Setting extends Model
     }
 
     /**
+     * Get default media categories.
+     *
+     * @return array<int, array{slug: string, label: string}>
+     */
+    public static function getDefaultMediaCategories(): array
+    {
+        return [
+            ['slug' => 'media', 'label' => 'Media'],
+            ['slug' => 'sponsors', 'label' => 'Sponsors'],
+            ['slug' => 'avatars', 'label' => 'Avatars'],
+            ['slug' => 'clients', 'label' => 'Clients'],
+            ['slug' => 'products', 'label' => 'Products'],
+            ['slug' => 'others', 'label' => 'Others'],
+        ];
+    }
+
+    /**
+     * Get media categories from settings with fallback to defaults.
+     *
+     * @return array<int, array{slug: string, label: string}>
+     */
+    public static function getMediaCategories(): array
+    {
+        return static::get('media.categories', static::getDefaultMediaCategories());
+    }
+
+    /**
+     * Save media categories to settings.
+     *
+     * @param  array<int, array{slug: string, label: string}>  $categories
+     */
+    public static function setMediaCategories(array $categories): void
+    {
+        static::set('media.categories', $categories, 'media');
+    }
+
+    /**
      * Get the default workflow configuration.
      *
      * Simplified workflow:

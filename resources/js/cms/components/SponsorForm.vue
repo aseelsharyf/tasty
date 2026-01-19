@@ -332,6 +332,7 @@ defineExpose({ reset, form });
             v-model:open="mediaPickerOpen"
             type="images"
             :multiple="false"
+            default-category="sponsors"
             @select="onMediaSelect"
         />
 

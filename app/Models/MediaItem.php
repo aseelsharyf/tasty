@@ -33,11 +33,25 @@ class MediaItem extends Model implements HasMedia
 
     public const ROLE_OTHER = 'other';
 
+    // Default media categories
+    public const CATEGORY_MEDIA = 'media';
+
+    public const CATEGORY_SPONSORS = 'sponsors';
+
+    public const CATEGORY_AVATARS = 'avatars';
+
+    public const CATEGORY_CLIENTS = 'clients';
+
+    public const CATEGORY_PRODUCTS = 'products';
+
+    public const CATEGORY_OTHERS = 'others';
+
     /** @var array<string> */
     public array $translatable = ['title', 'caption', 'description', 'alt_text'];
 
     protected $fillable = [
         'type',
+        'category',
         'embed_url',
         'embed_provider',
         'embed_video_id',
@@ -231,6 +245,14 @@ class MediaItem extends Model implements HasMedia
         return $query->where('folder_id', $folderId);
     }
 
+    /**
+     * Scope to filter by category.
+     */
+    public function scopeInCategory(Builder $query, string $category): Builder
+    {
+        return $query->where('category', $category);
+    }
+
     // =========================================================================
     // Accessors
     // =========================================================================
@@ -371,6 +393,54 @@ class MediaItem extends Model implements HasMedia
             self::ROLE_ILLUSTRATOR => 'Illustrator',
             self::ROLE_OTHER => 'Other',
         ];
+    }
+
+    /**
+     * Get default media categories.
+     *
+     * @return array<int, array{slug: string, label: string}>
+     */
+    public static function getDefaultCategories(): array
+    {
+        return [
+            ['slug' => self::CATEGORY_MEDIA, 'label' => 'Media'],
+            ['slug' => self::CATEGORY_SPONSORS, 'label' => 'Sponsors'],
+            ['slug' => self::CATEGORY_AVATARS, 'label' => 'Avatars'],
+            ['slug' => self::CATEGORY_CLIENTS, 'label' => 'Clients'],
+            ['slug' => self::CATEGORY_PRODUCTS, 'label' => 'Products'],
+            ['slug' => self::CATEGORY_OTHERS, 'label' => 'Others'],
+        ];
+    }
+
+    /**
+     * Get media categories from settings with fallback to defaults.
+     *
+     * @return array<int, array{slug: string, label: string}>
+     */
+    public static function getCategories(): array
+    {
+        return Setting::get('media.categories', self::getDefaultCategories());
+    }
+
+    /**
+     * Parse category from filename based on configured categories.
+     * Returns 'media' as default if no match found.
+     */
+    public static function parseCategoryFromFilename(string $filename): string
+    {
+        $filename = strtolower($filename);
+        $categories = self::getCategories();
+
+        foreach ($categories as $category) {
+            $slug = strtolower($category['slug']);
+            // Check if filename contains the category slug
+            if (str_contains($filename, $slug)) {
+                return $category['slug'];
+            }
+        }
+
+        // Default to 'media' category
+        return self::CATEGORY_MEDIA;
     }
 
     /**

@@ -23,6 +23,11 @@ interface User {
     role: string | null;
 }
 
+interface MediaCategory {
+    slug: string;
+    label: string;
+}
+
 interface UploadFile {
     id: string;
     file: File;
@@ -30,6 +35,7 @@ interface UploadFile {
     progress: number;
     status: 'pending' | 'uploading' | 'success' | 'error';
     error: string | null;
+    category: string;
 }
 
 const props = defineProps<{
@@ -38,6 +44,8 @@ const props = defineProps<{
     languages: Language[];
     users: User[];
     creditRoles: Record<string, string>;
+    mediaCategories: MediaCategory[];
+    defaultCategory?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -59,6 +67,7 @@ const isDragging = ref(false);
 // Embed URL
 const embedUrl = ref('');
 const embedError = ref<string | null>(null);
+const embedCategory = ref(props.defaultCategory || 'media');
 
 // Common fields
 const selectedTagIds = ref<number[]>([]);
@@ -102,6 +111,30 @@ const creditRoleOptions = computed(() => {
     }));
 });
 
+// Media category options
+const categoryOptions = computed(() => {
+    return props.mediaCategories.map(cat => ({
+        value: cat.slug,
+        label: cat.label,
+    }));
+});
+
+// Get the effective default category
+function getDefaultCategory(): string {
+    return props.defaultCategory || 'media';
+}
+
+// Parse category from filename
+function parseCategoryFromFilename(filename: string): string {
+    const lowerFilename = filename.toLowerCase();
+    for (const category of props.mediaCategories) {
+        if (lowerFilename.includes(category.slug.toLowerCase())) {
+            return category.slug;
+        }
+    }
+    return getDefaultCategory();
+}
+
 // File handling
 function handleFileSelect(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -132,6 +165,7 @@ function addFiles(files: File[]) {
             progress: 0,
             status: 'pending',
             error: null,
+            category: parseCategoryFromFilename(file.name),
         };
 
         // Generate preview for images
@@ -182,6 +216,7 @@ async function uploadAll() {
 
         const formData = new FormData();
         formData.append('file', uploadFile.file);
+        formData.append('category', uploadFile.category);
 
         // Add tags
         for (const tagId of selectedTagIds.value) {
@@ -252,6 +287,7 @@ async function uploadEmbed() {
 
     const formData = new FormData();
     formData.append('embed_url', embedUrl.value);
+    formData.append('category', embedCategory.value);
 
     // Add tags
     for (const tagId of selectedTagIds.value) {
@@ -309,6 +345,7 @@ function resetForm() {
     uploadFiles.value = [];
     embedUrl.value = '';
     embedError.value = null;
+    embedCategory.value = getDefaultCategory();
     selectedTagIds.value = [];
     creditType.value = 'external';
     creditUserId.value = '';
@@ -330,6 +367,13 @@ function closeSlideover() {
 watch(isOpen, (open) => {
     if (!open) {
         resetForm();
+    }
+});
+
+// Update embed category when default category changes
+watch(() => props.defaultCategory, (newCategory) => {
+    if (newCategory && uploadFiles.value.length === 0) {
+        embedCategory.value = newCategory;
     }
 });
 
@@ -464,7 +508,20 @@ const errorCount = computed(() => uploadFiles.value.filter(f => f.status === 'er
                                     <!-- Info -->
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-medium truncate">{{ file.file.name }}</p>
-                                        <p class="text-xs text-muted">{{ formatFileSize(file.file.size) }}</p>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="text-xs text-muted">{{ formatFileSize(file.file.size) }}</span>
+                                            <USelectMenu
+                                                v-if="file.status === 'pending'"
+                                                v-model="file.category"
+                                                :items="categoryOptions"
+                                                value-key="value"
+                                                size="xs"
+                                                class="w-24"
+                                            />
+                                            <UBadge v-else size="xs" color="neutral" variant="subtle">
+                                                {{ categoryOptions.find(c => c.value === file.category)?.label || file.category }}
+                                            </UBadge>
+                                        </div>
                                         <p v-if="file.error" class="text-xs text-error">{{ file.error }}</p>
                                     </div>
 
@@ -512,6 +569,15 @@ const errorCount = computed(() => uploadFiles.value.filter(f => f.status === 'er
                             <template #hint>
                                 <span class="text-xs text-muted">Supports YouTube and Vimeo</span>
                             </template>
+                        </UFormField>
+
+                        <UFormField label="Category">
+                            <USelectMenu
+                                v-model="embedCategory"
+                                :items="categoryOptions"
+                                value-key="value"
+                                class="w-full"
+                            />
                         </UFormField>
                     </template>
 

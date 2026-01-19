@@ -1100,6 +1100,7 @@ function handlePreviewSlotClick(section: HomepageSection, slotIndex: number) {
         <MediaPickerModal
             v-model:open="showMediaPicker"
             type="images"
+            default-category="media"
             @select="handleMediaSelect"
         />
     </div>

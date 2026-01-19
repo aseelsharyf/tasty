@@ -968,6 +968,7 @@ function goBack() {
             v-model:open="mediaPickerOpen"
             type="images"
             :multiple="mediaPickerMultiple"
+            default-category="products"
             @select="handleMediaSelect"
         />
     </DashboardLayout>

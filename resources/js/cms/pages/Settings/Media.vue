@@ -10,17 +10,72 @@ interface CropPreset {
     height: number;
 }
 
+interface MediaCategory {
+    slug: string;
+    label: string;
+}
+
 const props = defineProps<{
     cropPresets: CropPreset[];
     defaultCropPresets: CropPreset[];
+    mediaCategories: MediaCategory[];
+    defaultMediaCategories: MediaCategory[];
 }>();
 
 const form = useForm({
     crop_presets: [...props.cropPresets],
+    media_categories: [...props.mediaCategories],
 });
 
 const editingIndex = ref<number | null>(null);
 const editingPreset = ref<CropPreset | null>(null);
+
+// Media Categories
+const editingCategoryIndex = ref<number | null>(null);
+const editingCategory = ref<MediaCategory | null>(null);
+
+function addCategory() {
+    form.media_categories.push({
+        slug: '',
+        label: '',
+    });
+    editingCategoryIndex.value = form.media_categories.length - 1;
+    editingCategory.value = { ...form.media_categories[editingCategoryIndex.value] };
+}
+
+function editCategory(index: number) {
+    editingCategoryIndex.value = index;
+    editingCategory.value = { ...form.media_categories[index] };
+}
+
+function saveCategory() {
+    if (editingCategoryIndex.value !== null && editingCategory.value) {
+        form.media_categories[editingCategoryIndex.value] = { ...editingCategory.value };
+    }
+    editingCategoryIndex.value = null;
+    editingCategory.value = null;
+}
+
+function cancelCategoryEdit() {
+    // Remove if it was a new empty category
+    if (editingCategoryIndex.value !== null && !form.media_categories[editingCategoryIndex.value].slug) {
+        form.media_categories.splice(editingCategoryIndex.value, 1);
+    }
+    editingCategoryIndex.value = null;
+    editingCategory.value = null;
+}
+
+function removeCategory(index: number) {
+    if (confirm('Remove this category?')) {
+        form.media_categories.splice(index, 1);
+    }
+}
+
+function resetCategoriesToDefaults() {
+    if (confirm('Reset to default media categories? This will remove any custom categories.')) {
+        form.media_categories = [...props.defaultMediaCategories];
+    }
+}
 
 function addPreset() {
     form.crop_presets.push({
@@ -271,13 +326,139 @@ const aspectRatio = computed(() => {
                         </UButton>
                     </UPageCard>
 
+                    <!-- Media Categories Section -->
+                    <UPageCard
+                        title="Media Categories"
+                        description="Define categories to organize your media library. Categories can be used to filter media and are auto-detected from filenames during upload."
+                        variant="naked"
+                        orientation="horizontal"
+                        class="mb-4"
+                    >
+                        <div class="flex gap-2 w-fit lg:ms-auto">
+                            <UButton
+                                label="Reset to Defaults"
+                                color="neutral"
+                                variant="ghost"
+                                icon="i-lucide-rotate-ccw"
+                                @click="resetCategoriesToDefaults"
+                            />
+                        </div>
+                    </UPageCard>
+
+                    <UPageCard variant="subtle">
+                        <!-- Categories List -->
+                        <div class="space-y-3">
+                            <div
+                                v-for="(category, index) in form.media_categories"
+                                :key="index"
+                                class="flex items-center justify-between gap-4 p-3 rounded-lg border border-default bg-default/50"
+                            >
+                                <template v-if="editingCategoryIndex === index && editingCategory">
+                                    <!-- Edit Mode -->
+                                    <div class="flex-1 grid grid-cols-2 gap-3">
+                                        <UInput
+                                            v-model="editingCategory.slug"
+                                            placeholder="category_slug"
+                                            size="sm"
+                                        >
+                                            <template #leading>
+                                                <span class="text-xs text-muted">Slug</span>
+                                            </template>
+                                        </UInput>
+                                        <UInput
+                                            v-model="editingCategory.label"
+                                            placeholder="Display Label"
+                                            size="sm"
+                                        >
+                                            <template #leading>
+                                                <span class="text-xs text-muted">Label</span>
+                                            </template>
+                                        </UInput>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <UButton
+                                            icon="i-lucide-check"
+                                            color="success"
+                                            variant="ghost"
+                                            size="xs"
+                                            @click="saveCategory"
+                                        />
+                                        <UButton
+                                            icon="i-lucide-x"
+                                            color="neutral"
+                                            variant="ghost"
+                                            size="xs"
+                                            @click="cancelCategoryEdit"
+                                        />
+                                    </div>
+                                </template>
+
+                                <template v-else>
+                                    <!-- View Mode -->
+                                    <div class="flex items-center gap-4">
+                                        <div class="shrink-0 rounded border border-default bg-muted/30 flex items-center justify-center size-10">
+                                            <UIcon name="i-lucide-folder" class="size-4 text-muted" />
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-highlighted">
+                                                {{ category.label }}
+                                            </p>
+                                            <p class="text-xs text-muted">
+                                                {{ category.slug }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <UButton
+                                            icon="i-lucide-pencil"
+                                            color="neutral"
+                                            variant="ghost"
+                                            size="xs"
+                                            @click="editCategory(index)"
+                                        />
+                                        <UButton
+                                            icon="i-lucide-trash"
+                                            color="error"
+                                            variant="ghost"
+                                            size="xs"
+                                            @click="removeCategory(index)"
+                                        />
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Empty State -->
+                            <div
+                                v-if="form.media_categories.length === 0"
+                                class="text-center py-8 text-muted"
+                            >
+                                <UIcon name="i-lucide-folder" class="size-12 mx-auto mb-4 opacity-50" />
+                                <p>No media categories defined.</p>
+                                <p class="text-sm">Add a category to organize your media library.</p>
+                            </div>
+                        </div>
+
+                        <USeparator class="my-4" />
+
+                        <!-- Add Button -->
+                        <UButton
+                            icon="i-lucide-plus"
+                            color="neutral"
+                            variant="soft"
+                            block
+                            @click="addCategory"
+                        >
+                            Add Media Category
+                        </UButton>
+                    </UPageCard>
+
                     <!-- Info -->
                     <UAlert
                         color="info"
                         variant="subtle"
                         icon="i-lucide-info"
-                        title="About Crop Presets"
-                        description="Crop presets define the image variations that are automatically generated when images are uploaded. The 'name' is used as an identifier in code, while the 'label' is shown in the UI. Changing these settings will only affect newly uploaded images."
+                        title="About Media Settings"
+                        description="Crop presets define image variations generated during upload. Media categories help organize your library and are auto-detected from filenames (e.g., 'sponsor_logo.png' will be categorized as 'Sponsors'). Changes only affect newly uploaded media."
                     />
                 </div>
             </template>

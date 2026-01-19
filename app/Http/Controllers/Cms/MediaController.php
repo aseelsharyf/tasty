@@ -7,6 +7,7 @@ use App\Models\Language;
 use App\Models\MediaFolder;
 use App\Models\MediaItem;
 use App\Models\MediaItemCrop;
+use App\Models\Setting;
 use App\Models\Tag;
 use App\Models\User;
 use App\Services\BlurHashService;
@@ -47,6 +48,11 @@ class MediaController extends Controller
             }
         }
 
+        // Filter by category
+        if ($request->filled('category')) {
+            $query->where('category', $request->get('category'));
+        }
+
         // Search (includes tag names)
         if ($request->filled('search')) {
             $search = $request->get('search');
@@ -78,13 +84,27 @@ class MediaController extends Controller
 
         $media = $query->paginate(24)->withQueryString();
 
-        // Get counts
+        // Get media categories for building counts
+        $mediaCategories = Setting::getMediaCategories();
+
+        // Get counts - overall and per category
         $counts = [
             'all' => MediaItem::withoutTrashed()->count(),
             'images' => MediaItem::withoutTrashed()->images()->count(),
             'videos' => MediaItem::withoutTrashed()->videos()->count(),
             'trashed' => MediaItem::onlyTrashed()->count(),
+            'by_category' => [],
         ];
+
+        // Build category counts with type breakdown
+        foreach ($mediaCategories as $category) {
+            $categorySlug = $category['slug'];
+            $counts['by_category'][$categorySlug] = [
+                'all' => MediaItem::withoutTrashed()->where('category', $categorySlug)->count(),
+                'images' => MediaItem::withoutTrashed()->where('category', $categorySlug)->images()->count(),
+                'videos' => MediaItem::withoutTrashed()->where('category', $categorySlug)->videos()->count(),
+            ];
+        }
 
         // Get folders tree
         $folders = MediaFolder::tree()->map(fn ($folder) => $this->formatFolderForTree($folder));
@@ -114,7 +134,8 @@ class MediaController extends Controller
             'users' => $users,
             'tags' => $tags,
             'creditRoles' => MediaItem::getCreditRoles(),
-            'filters' => $request->only(['type', 'folder', 'search', 'sort', 'direction', 'tags']),
+            'mediaCategories' => $mediaCategories,
+            'filters' => $request->only(['type', 'folder', 'search', 'sort', 'direction', 'tags', 'category']),
         ]);
     }
 
@@ -125,6 +146,8 @@ class MediaController extends Controller
             'file' => ['nullable', 'file', 'max:102400'], // 100MB max
             // Video embed
             'embed_url' => ['nullable', 'url'],
+            // Category
+            'category' => ['nullable', 'string', 'max:50'],
             // Translatable fields (can be array for full form or string for quick upload)
             'title' => ['nullable'],
             'caption' => ['nullable'],
@@ -177,11 +200,15 @@ class MediaController extends Controller
             $mimeType = $file->getMimeType();
             $type = Str::startsWith($mimeType, 'video/') ? MediaItem::TYPE_VIDEO_LOCAL : MediaItem::TYPE_IMAGE;
 
+            // Determine category - use provided or parse from filename
+            $category = $validated['category'] ?? MediaItem::parseCategoryFromFilename($file->getClientOriginalName());
+
             // Wrap in transaction so if media upload fails, the DB record is rolled back
             try {
-                $mediaItem = DB::transaction(function () use ($validated, $file, $mimeType, $type) {
+                $mediaItem = DB::transaction(function () use ($validated, $file, $mimeType, $type, $category) {
                     $mediaItem = MediaItem::create([
                         'type' => $type,
+                        'category' => $category,
                         'title' => $validated['title'] ?? null,
                         'caption' => $validated['caption'] ?? null,
                         'description' => $validated['description'] ?? null,
@@ -264,6 +291,7 @@ class MediaController extends Controller
 
             $mediaItem = MediaItem::create([
                 'type' => MediaItem::TYPE_VIDEO_EMBED,
+                'category' => $validated['category'] ?? MediaItem::CATEGORY_MEDIA,
                 'embed_url' => $validated['embed_url'],
                 'embed_provider' => $embedInfo['provider'],
                 'embed_video_id' => $embedInfo['video_id'],
@@ -331,6 +359,7 @@ class MediaController extends Controller
     public function update(Request $request, MediaItem $media): RedirectResponse
     {
         $validated = $request->validate([
+            'category' => ['nullable', 'string', 'max:50'],
             'title' => ['nullable', 'array'],
             'title.*' => ['nullable', 'string', 'max:255'],
             'caption' => ['nullable', 'array'],
@@ -450,6 +479,11 @@ class MediaController extends Controller
             }
         }
 
+        // Filter by category
+        if ($request->filled('category')) {
+            $query->where('category', $request->get('category'));
+        }
+
         // Search (includes tag names)
         if ($request->filled('search')) {
             $search = $request->get('search');
@@ -530,6 +564,7 @@ class MediaController extends Controller
             'id' => $item->id,
             'uuid' => $item->uuid,
             'type' => $item->type,
+            'category' => $item->category,
             'url' => $item->url,
             'thumbnail_url' => $item->thumbnail_url,
             'embed_url' => $item->embed_url,
@@ -602,6 +637,14 @@ class MediaController extends Controller
         $tags = Tag::orderBy('name->en')->get(['id', 'name', 'slug']);
 
         return response()->json($tags);
+    }
+
+    /**
+     * Get all media categories.
+     */
+    public function categories(): JsonResponse
+    {
+        return response()->json(Setting::getMediaCategories());
     }
 
     private function mapRoleToCreditRole(?string $roleName): ?string

@@ -208,6 +208,7 @@ defineExpose({ reset, form });
             v-model:open="mediaPickerOpen"
             type="images"
             :multiple="false"
+            default-category="clients"
             @select="onMediaSelect"
         />
 

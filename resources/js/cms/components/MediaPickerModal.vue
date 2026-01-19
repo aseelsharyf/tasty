@@ -60,17 +60,26 @@ interface Tag {
     slug: string;
 }
 
+interface MediaCategory {
+    slug: string;
+    label: string;
+}
+
 const props = withDefaults(defineProps<{
     open: boolean;
     type?: 'all' | 'images' | 'videos';
     multiple?: boolean;
     selected?: MediaItem[];
     allowUpload?: boolean;
+    defaultCategory?: string;
+    mediaCategories?: MediaCategory[];
 }>(), {
     type: 'all',
     multiple: false,
     selected: () => [],
     allowUpload: true,
+    defaultCategory: 'media',
+    mediaCategories: () => [],
 });
 
 const emit = defineEmits<{
@@ -86,6 +95,8 @@ const isOpen = computed({
 // State
 const search = ref('');
 const filterType = ref(props.type === 'all' ? '' : props.type);
+const filterCategory = ref(props.defaultCategory || '');
+const uploadCategory = ref(props.defaultCategory || 'media');
 const media = ref<PaginatedResponse<MediaItem>>({
     data: [],
     current_page: 1,
@@ -107,15 +118,19 @@ watch(isOpen, (open) => {
         // Reset all state when modal opens
         search.value = '';
         filterType.value = props.type === 'all' ? '' : props.type;
+        filterCategory.value = props.defaultCategory || '';
+        uploadCategory.value = props.defaultCategory || 'media';
         selectedItems.value = new Set(props.selected.map(i => i.uuid));
         allSelectedItems.value = new Map(props.selected.map(i => [i.uuid, i]));
         activeTab.value = 'browse';
         uploadFiles.value = [];
+        uploadFileKey.value = 0;
         uploadErrors.value = [];
         validationErrors.value = {};
         hasUploadedMedia.value = false;
         loadMedia();
         loadTags(); // Load tags for upload form
+        loadCategories(); // Load categories for filter
     }
 });
 
@@ -131,12 +146,17 @@ watch(filterType, () => {
     loadMedia();
 });
 
+watch(filterCategory, () => {
+    loadMedia();
+});
+
 async function loadMedia(page = 1) {
     isLoading.value = true;
 
     const params = new URLSearchParams();
     if (search.value) params.set('search', search.value);
     if (filterType.value) params.set('type', filterType.value);
+    if (filterCategory.value) params.set('category', filterCategory.value);
     params.set('page', String(page));
 
     try {
@@ -191,6 +211,7 @@ interface UploadFile {
 }
 
 const uploadFiles = ref<UploadFile[]>([]);
+const uploadFileKey = ref(0); // Counter to force re-render when file changes
 const isUploading = ref(false);
 const uploadProgress = ref<Record<string, number>>({});
 const uploadErrors = ref<string[]>([]);
@@ -217,6 +238,36 @@ async function loadTags() {
     }
     isLoadingTags.value = false;
 }
+
+// Categories for filter
+const availableCategories = ref<MediaCategory[]>([]);
+
+async function loadCategories() {
+    // Use props if provided, otherwise fetch from API
+    if (props.mediaCategories && props.mediaCategories.length > 0) {
+        availableCategories.value = props.mediaCategories;
+        return;
+    }
+    try {
+        const response = await fetch('/cms/media/categories', {
+            headers: { 'Accept': 'application/json' },
+        });
+        if (response.ok) {
+            availableCategories.value = await response.json();
+        }
+    } catch (error) {
+        console.error('Failed to load categories:', error);
+    }
+}
+
+// Category options for filter select
+const categoryOptions = computed(() => {
+    const options = [{ value: '', label: 'All Categories' }];
+    for (const cat of availableCategories.value) {
+        options.push({ value: cat.slug, label: cat.label });
+    }
+    return options;
+});
 
 // Tag options for select menu
 const tagOptions = computed(() => {
@@ -267,10 +318,128 @@ async function onCreateTag(name: string, uploadFileIndex: number) {
     }
 }
 
-// Check if upload form is ready (all required fields filled)
+// Pill-style tag input state
+const tagInputRefs = ref<HTMLInputElement[]>([]);
+const tagSearchQuery = ref('');
+const showTagSuggestions = ref(false);
+const activeTagFileIndex = ref<number | null>(null);
+const tagSuggestions = ref<{ id: number; name: string; slug: string }[]>([]);
+const isSearchingTags = ref(false);
+let tagSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+// Get tag label by ID
+function getTagLabel(tagId: number): string {
+    const tag = availableTags.value.find(t => t.id === tagId);
+    if (!tag) return String(tagId);
+    return typeof tag.name === 'string' ? tag.name : (tag.name?.en || tag.slug);
+}
+
+// Remove tag from file
+function removeTagFromFile(fileIndex: number, tagId: number) {
+    const file = uploadFiles.value[fileIndex];
+    if (file) {
+        const idx = file.tag_ids.indexOf(tagId);
+        if (idx > -1) {
+            file.tag_ids.splice(idx, 1);
+        }
+    }
+}
+
+// Add tag to file
+function addTagToFile(fileIndex: number, tagId: number) {
+    const file = uploadFiles.value[fileIndex];
+    if (file && !file.tag_ids.includes(tagId)) {
+        file.tag_ids.push(tagId);
+    }
+    tagSearchQuery.value = '';
+    tagSuggestions.value = [];
+    showTagSuggestions.value = false;
+}
+
+// Search tags via API
+async function searchTagsApi(query: string) {
+    if (!query.trim()) {
+        tagSuggestions.value = [];
+        return;
+    }
+
+    const fileIndex = activeTagFileIndex.value;
+    const excludeIds = fileIndex !== null ? uploadFiles.value[fileIndex]?.tag_ids || [] : [];
+
+    isSearchingTags.value = true;
+    try {
+        const params = new URLSearchParams({
+            q: query,
+            limit: '10',
+        });
+        excludeIds.forEach(id => params.append('exclude[]', String(id)));
+
+        const response = await fetch(`/cms/tags/search?${params.toString()}`, {
+            headers: { 'Accept': 'application/json' },
+        });
+        if (response.ok) {
+            tagSuggestions.value = await response.json();
+        }
+    } catch (error) {
+        console.error('Failed to search tags:', error);
+        tagSuggestions.value = [];
+    } finally {
+        isSearchingTags.value = false;
+    }
+}
+
+// Debounced tag search
+function debouncedSearchTags() {
+    if (tagSearchDebounceTimer) {
+        clearTimeout(tagSearchDebounceTimer);
+    }
+    tagSearchDebounceTimer = setTimeout(() => {
+        searchTagsApi(tagSearchQuery.value);
+    }, 200);
+}
+
+// Select first suggestion or create tag on Enter
+function selectFirstSuggestion(fileIndex: number) {
+    if (tagSuggestions.value.length > 0) {
+        addTagToFile(fileIndex, tagSuggestions.value[0].id);
+    } else if (tagSearchQuery.value.trim()) {
+        createAndAddTag(fileIndex);
+    }
+}
+
+// Create new tag and add to file
+async function createAndAddTag(fileIndex: number) {
+    const name = tagSearchQuery.value.trim();
+    if (!name) return;
+
+    const newTag = await createTag(name);
+    if (newTag) {
+        addTagToFile(fileIndex, newTag.id);
+    }
+}
+
+// Handle backspace to remove last tag
+function onTagBackspace(fileIndex: number) {
+    if (tagSearchQuery.value === '') {
+        const file = uploadFiles.value[fileIndex];
+        if (file && file.tag_ids.length > 0) {
+            file.tag_ids.pop();
+        }
+    }
+}
+
+// Handle blur on tag input
+function onTagInputBlur() {
+    // Delay hiding suggestions to allow click events to fire
+    setTimeout(() => {
+        showTagSuggestions.value = false;
+        activeTagFileIndex.value = null;
+    }, 200);
+}
+
+// Check if upload form is ready (just need a file selected)
 const canUpload = computed(() => {
-    if (uploadFiles.value.length === 0) return false;
-    return uploadFiles.value.every(f => f.caption.trim().length > 0 && f.tag_ids.length > 0);
+    return uploadFiles.value.length > 0;
 });
 
 function handleDrop(e: DragEvent) {
@@ -343,7 +512,12 @@ async function addFiles(files: File[]) {
     if (props.multiple) {
         uploadFiles.value = [...uploadFiles.value, ...newUploadFiles];
     } else {
+        // Clear previous errors and validation when replacing file
+        uploadErrors.value = [];
+        validationErrors.value = {};
         uploadFiles.value = newUploadFiles;
+        // Increment key to force Vue to re-render the preview
+        uploadFileKey.value++;
     }
 }
 
@@ -370,132 +544,75 @@ function getCsrfToken(): string {
 }
 
 function validateUploadFiles(): boolean {
+    // Caption and tags are now optional, so always valid
     validationErrors.value = {};
-    let isValid = true;
-
-    uploadFiles.value.forEach((uploadFile, index) => {
-        const errors: { title?: string; caption?: string; tags?: string } = {};
-
-        // Caption is required
-        if (!uploadFile.caption.trim()) {
-            errors.caption = 'Caption is required';
-            isValid = false;
-        }
-
-        // At least 1 tag is required
-        if (uploadFile.tag_ids.length === 0) {
-            errors.tags = 'At least one tag is required';
-            isValid = false;
-        }
-
-        if (Object.keys(errors).length > 0) {
-            validationErrors.value[index] = errors;
-        }
-    });
-
-    return isValid;
+    return true;
 }
 
 async function uploadAll() {
-    if (uploadFiles.value.length === 0) return;
-
-    // Validate all files have title and description
-    if (!validateUploadFiles()) {
-        return;
-    }
+    // Only upload the first file (single file mode)
+    const uploadFile = uploadFiles.value[0];
+    if (!uploadFile) return;
 
     isUploading.value = true;
     uploadErrors.value = [];
-    const uploadedItems: MediaItem[] = [];
-    const failedFileIndices: number[] = [];
 
-    for (let i = 0; i < uploadFiles.value.length; i++) {
-        const uploadFile = uploadFiles.value[i];
-        const formData = new FormData();
-        formData.append('file', uploadFile.file);
-        formData.append('title', uploadFile.title.trim());
-        formData.append('caption', uploadFile.caption.trim());
-        // Send tag_ids as array
-        uploadFile.tag_ids.forEach(tagId => {
-            formData.append('tag_ids[]', String(tagId));
+    const formData = new FormData();
+    formData.append('file', uploadFile.file);
+    formData.append('title', uploadFile.title.trim());
+    formData.append('caption', uploadFile.caption.trim());
+    // Include category from upload form
+    formData.append('category', uploadCategory.value || props.defaultCategory || 'media');
+    // Send tag_ids as array
+    uploadFile.tag_ids.forEach(tagId => {
+        formData.append('tag_ids[]', String(tagId));
+    });
+
+    try {
+        const response = await fetch('/cms/media', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-XSRF-TOKEN': getCsrfToken(),
+                'Accept': 'application/json',
+            },
         });
 
-        try {
-            const response = await fetch('/cms/media', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-XSRF-TOKEN': getCsrfToken(),
-                    'Accept': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                // Try to get error message from response
-                let errorMessage = `Failed to upload ${uploadFile.file.name}`;
-                try {
-                    const errorData = await response.json();
-                    if (errorData.message) {
-                        errorMessage = `${uploadFile.file.name}: ${errorData.message}`;
-                    } else if (errorData.errors) {
-                        const firstError = Object.values(errorData.errors)[0];
-                        if (Array.isArray(firstError) && firstError[0]) {
-                            errorMessage = `${uploadFile.file.name}: ${firstError[0]}`;
-                        }
+        if (!response.ok) {
+            // Try to get error message from response
+            let errorMessage = `Failed to upload ${uploadFile.file.name}`;
+            try {
+                const errorData = await response.json();
+                if (errorData.message) {
+                    errorMessage = `${uploadFile.file.name}: ${errorData.message}`;
+                } else if (errorData.errors) {
+                    const firstError = Object.values(errorData.errors)[0];
+                    if (Array.isArray(firstError) && firstError[0]) {
+                        errorMessage = `${uploadFile.file.name}: ${firstError[0]}`;
                     }
-                } catch {
-                    // Ignore JSON parse errors
                 }
-                throw new Error(errorMessage);
+            } catch {
+                // Ignore JSON parse errors
             }
-
-            const result = await response.json();
-            if (result.media) {
-                uploadedItems.push(result.media);
-                // Auto-select uploaded item and add to allSelectedItems
-                selectedItems.value.add(result.media.uuid);
-                allSelectedItems.value.set(result.media.uuid, result.media);
-                hasUploadedMedia.value = true; // Track that we have successful uploads
-            }
-            uploadProgress.value[uploadFile.file.name] = 100;
-        } catch (error: any) {
-            uploadErrors.value.push(error.message || `Failed to upload ${uploadFile.file.name}`);
-            failedFileIndices.push(i);
-        }
-    }
-
-    isUploading.value = false;
-
-    // Only clear successfully uploaded files, keep failed ones
-    if (failedFileIndices.length > 0 && failedFileIndices.length < uploadFiles.value.length) {
-        // Some succeeded, some failed - keep only failed files
-        uploadFiles.value = uploadFiles.value.filter((_, index) => failedFileIndices.includes(index));
-    } else if (failedFileIndices.length === 0) {
-        // All succeeded - clear everything
-        uploadFiles.value = [];
-        uploadProgress.value = {};
-        validationErrors.value = {};
-    }
-    // If all failed, keep all files so user can retry
-
-    // If uploads succeeded and no errors, auto-confirm selection for better UX
-    if (uploadedItems.length > 0 && uploadErrors.value.length === 0) {
-        // In single mode, just confirm immediately after upload
-        if (!props.multiple) {
-            confirmSelection();
-            return;
+            throw new Error(errorMessage);
         }
 
-        // Reload media to show uploaded items
-        await loadMedia();
-
-        // Switch to browse tab to show the uploaded items
-        activeTab.value = 'browse';
-    } else if (uploadedItems.length > 0 && uploadErrors.value.length > 0) {
-        // Partial success - reload media but stay on upload tab to show errors
-        await loadMedia();
+        const result = await response.json();
+        if (result.media) {
+            hasUploadedMedia.value = true;
+            // Clear upload state
+            uploadFiles.value = [];
+            uploadProgress.value = {};
+            validationErrors.value = {};
+            // Emit the uploaded item and close modal
+            emit('select', [result.media]);
+            isOpen.value = false;
+        }
+    } catch (error: any) {
+        uploadErrors.value.push(error.message || `Failed to upload ${uploadFile.file.name}`);
+    } finally {
+        isUploading.value = false;
     }
-    // If all failed, stay on upload tab with errors visible
 }
 
 function formatFileSize(bytes: number): string {
@@ -650,17 +767,36 @@ function closeModal() {
                                 v-model="search"
                                 placeholder="Search media..."
                                 icon="i-lucide-search"
-                                class="w-64"
+                                class="w-48"
                             />
 
-                            <USelectMenu
+                            <select
+                                v-if="categoryOptions.length > 1"
+                                v-model="filterCategory"
+                                class="px-3 py-1.5 text-sm rounded-md border border-default bg-default text-highlighted focus:outline-none focus:ring-2 focus:ring-primary"
+                            >
+                                <option
+                                    v-for="option in categoryOptions"
+                                    :key="option.value"
+                                    :value="option.value"
+                                >
+                                    {{ option.label }}
+                                </option>
+                            </select>
+
+                            <select
                                 v-if="type === 'all'"
                                 v-model="filterType"
-                                :items="typeOptions"
-                                value-key="value"
-                                placeholder="All Media"
-                                class="w-40"
-                            />
+                                class="px-3 py-1.5 text-sm rounded-md border border-default bg-default text-highlighted focus:outline-none focus:ring-2 focus:ring-primary"
+                            >
+                                <option
+                                    v-for="option in typeOptions"
+                                    :key="option.value"
+                                    :value="option.value"
+                                >
+                                    {{ option.label }}
+                                </option>
+                            </select>
 
                             <span class="ml-auto text-sm text-muted">
                                 {{ media.total }} item{{ media.total !== 1 ? 's' : '' }}
@@ -760,324 +896,213 @@ function closeModal() {
 
                     <!-- Upload Tab -->
                     <div v-show="activeTab === 'upload'" class="h-full flex flex-col">
-                        <!-- Single File Mode: Show drop zone if no file, else show form -->
-                        <template v-if="!multiple">
-                            <!-- No file selected - show drop zone -->
+                        <!-- Hidden file input - key forces new input when file changes -->
+                        <input
+                            :key="'file-input-' + uploadFileKey"
+                            ref="fileInputRef"
+                            type="file"
+                            class="hidden"
+                            :accept="type === 'images' ? 'image/*' : type === 'videos' ? 'video/*' : 'image/*,video/*'"
+                            @change="handleFileSelect"
+                        />
+
+                        <!-- No file selected - show drop zone -->
+                        <div
+                            v-if="uploadFiles.length === 0"
+                            class="flex-1 relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer group border-primary/30 bg-primary/5 hover:border-primary hover:bg-primary/10"
+                            @drop="handleDrop"
+                            @dragover="handleDragOver"
+                            @click="triggerFileInput"
+                        >
+                            <div class="flex flex-col items-center justify-center h-full">
+                                <div class="size-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <UIcon name="i-lucide-cloud-upload" class="size-8 text-primary" />
+                                </div>
+                                <p class="text-highlighted font-semibold text-lg mb-1">
+                                    Drop file here
+                                </p>
+                                <p class="text-sm text-muted mb-3">
+                                    or <span class="text-primary font-medium">browse from your computer</span>
+                                </p>
+                                <div class="flex items-center gap-2 text-xs text-muted">
+                                    <UIcon :name="type === 'videos' ? 'i-lucide-film' : 'i-lucide-image'" class="size-3.5" />
+                                    <span>{{ type === 'images' ? 'Images only' : type === 'videos' ? 'Videos only' : 'Images and videos supported' }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- File selected - show preview and form (single file only) -->
+                        <div v-else-if="uploadFiles.length > 0" :key="uploadFileKey" class="flex-1 flex flex-col min-h-0">
+                            <!-- Large Preview - clickable to change -->
                             <div
-                                v-if="uploadFiles.length === 0"
-                                class="flex-1 relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer group border-primary/30 bg-primary/5 hover:border-primary hover:bg-primary/10"
+                                class="relative rounded-xl bg-muted/10 border-2 border-dashed border-default overflow-hidden mb-4 cursor-pointer group hover:border-primary/50 transition-colors"
+                                @click="triggerFileInput"
                                 @drop="handleDrop"
                                 @dragover="handleDragOver"
-                                @click="triggerFileInput"
                             >
-                                <div class="flex flex-col items-center justify-center h-full">
-                                    <div class="size-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                        <UIcon name="i-lucide-cloud-upload" class="size-8 text-primary" />
+                                <div class="aspect-video max-h-56 flex items-center justify-center bg-muted/5">
+                                    <img
+                                        v-if="uploadFiles[0].preview"
+                                        :key="uploadFiles[0].preview"
+                                        :src="uploadFiles[0].preview"
+                                        :alt="uploadFiles[0].file.name"
+                                        class="max-w-full max-h-full object-contain"
+                                    />
+                                    <div v-else class="flex flex-col items-center justify-center gap-2 py-8">
+                                        <UIcon
+                                            :name="uploadFiles[0].file.type.startsWith('image/') ? 'i-lucide-image' : 'i-lucide-film'"
+                                            class="size-12 text-muted"
+                                        />
+                                        <span class="text-sm text-muted">Processing preview...</span>
                                     </div>
-                                    <p class="text-highlighted font-semibold text-lg mb-1">
-                                        Drop files here
-                                    </p>
-                                    <p class="text-sm text-muted mb-3">
-                                        or <span class="text-primary font-medium">browse from your computer</span>
-                                    </p>
-                                    <div class="flex items-center gap-2 text-xs text-muted">
-                                        <UIcon :name="type === 'videos' ? 'i-lucide-film' : 'i-lucide-image'" class="size-3.5" />
-                                        <span>{{ type === 'images' ? 'Images only' : type === 'videos' ? 'Videos only' : 'Images and videos supported' }}</span>
+                                </div>
+                                <!-- Change overlay on hover -->
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <div class="flex items-center gap-2 text-white font-medium">
+                                        <UIcon name="i-lucide-replace" class="size-5" />
+                                        <span>Click to change</span>
                                     </div>
+                                </div>
+                                <!-- File info badge -->
+                                <div class="absolute bottom-2 left-2 px-2 py-1 rounded-md bg-black/60 text-white text-xs flex items-center gap-1.5">
+                                    <UIcon name="i-lucide-file" class="size-3" />
+                                    <span class="truncate max-w-[200px]">{{ uploadFiles[0].file.name }}</span>
+                                    <span class="text-white/70">{{ formatFileSize(uploadFiles[0].file.size) }}</span>
                                 </div>
                             </div>
 
-                            <!-- Hidden file input - always in DOM so Change button works -->
-                            <input
-                                ref="fileInputRef"
-                                type="file"
-                                class="hidden"
-                                :accept="type === 'images' ? 'image/*' : type === 'videos' ? 'video/*' : 'image/*,video/*'"
-                                @change="handleFileSelect"
-                            />
+                            <!-- Scrollable Form Fields -->
+                            <div class="flex-1 overflow-y-auto min-h-0 space-y-4">
+                                <!-- Category Field -->
+                                <UFormField label="Category">
+                                    <select
+                                        v-model="uploadCategory"
+                                        class="w-full px-3 py-1.5 text-sm rounded-md border border-default bg-default text-highlighted focus:outline-none focus:ring-2 focus:ring-primary"
+                                        :disabled="isUploading"
+                                    >
+                                        <option
+                                            v-for="option in categoryOptions.filter(o => o.value)"
+                                            :key="option.value"
+                                            :value="option.value"
+                                        >
+                                            {{ option.label }}
+                                        </option>
+                                    </select>
+                                </UFormField>
 
-                            <!-- File selected - show preview and form -->
-                            <div v-if="uploadFiles.length > 0" class="flex-1 flex flex-col">
-                                <div
-                                    v-for="(uploadFile, index) in uploadFiles"
-                                    :key="index"
-                                    class="flex-1 flex flex-col"
-                                >
-                                    <!-- Large Preview with change button -->
-                                    <div class="relative rounded-xl bg-muted/10 border border-default overflow-hidden mb-4">
-                                        <div class="aspect-video max-h-48 flex items-center justify-center">
-                                            <img
-                                                v-if="uploadFile.preview"
-                                                :src="uploadFile.preview"
-                                                :alt="uploadFile.file.name"
-                                                class="max-w-full max-h-full object-contain"
-                                            />
-                                            <div v-else class="flex flex-col items-center justify-center gap-2 py-8">
-                                                <UIcon
-                                                    :name="uploadFile.file.type.startsWith('image/') ? 'i-lucide-image' : 'i-lucide-film'"
-                                                    class="size-12 text-muted"
+                                <!-- Caption Field -->
+                                <UFormField label="Caption">
+                                    <UTextarea
+                                        v-model="uploadFiles[0].caption"
+                                        placeholder="Describe this image..."
+                                        :rows="2"
+                                        :disabled="isUploading"
+                                        class="w-full"
+                                    />
+                                </UFormField>
+
+                                <!-- Tags Field - Pill Input Style -->
+                                <UFormField label="Tags">
+                                    <div class="relative">
+                                        <div class="flex items-center gap-2 p-2 border border-muted rounded-lg bg-default focus-within:ring-2 focus-within:ring-primary/50 focus-within:border-primary transition-all">
+                                            <UIcon name="i-lucide-tag" class="size-4 text-muted shrink-0" />
+                                            <div class="flex-1 flex flex-wrap items-center gap-1.5">
+                                                <!-- Selected Tags as inline pills -->
+                                                <span
+                                                    v-for="tagId in uploadFiles[0].tag_ids"
+                                                    :key="tagId"
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded text-sm font-medium"
+                                                >
+                                                    {{ getTagLabel(tagId) }}
+                                                    <button
+                                                        type="button"
+                                                        class="hover:text-primary/70"
+                                                        :disabled="isUploading"
+                                                        @click.stop="removeTagFromFile(0, tagId)"
+                                                    >
+                                                        <UIcon name="i-lucide-x" class="size-3" />
+                                                    </button>
+                                                </span>
+                                                <!-- Tag search input -->
+                                                <input
+                                                    ref="tagInputRefs"
+                                                    v-model="tagSearchQuery"
+                                                    type="text"
+                                                    class="flex-1 min-w-[100px] bg-transparent border-none outline-none text-sm placeholder:text-muted"
+                                                    placeholder="Type to search or create tags..."
+                                                    :disabled="isUploading"
+                                                    @focus="showTagSuggestions = true; activeTagFileIndex = 0"
+                                                    @blur="onTagInputBlur"
+                                                    @input="debouncedSearchTags"
+                                                    @keydown.enter.prevent="selectFirstSuggestion(0)"
+                                                    @keydown.backspace="onTagBackspace(0)"
                                                 />
-                                                <span class="text-sm text-muted">Processing preview...</span>
                                             </div>
                                         </div>
-                                        <!-- Change image button -->
-                                        <button
-                                            type="button"
-                                            class="absolute top-2 right-2 z-10 px-2 py-1 rounded-md bg-black/50 text-white text-xs font-medium hover:bg-black/70 transition-colors flex items-center gap-1"
-                                            @click="triggerFileInput"
+
+                                        <!-- Tag suggestions dropdown -->
+                                        <div
+                                            v-if="showTagSuggestions && activeTagFileIndex === 0 && (tagSuggestions.length > 0 || tagSearchQuery.trim())"
+                                            class="absolute z-50 w-full mt-1 bg-default border border-default rounded-lg shadow-lg max-h-48 overflow-y-auto"
                                         >
-                                            <UIcon name="i-lucide-replace" class="size-3" />
-                                            Change
-                                        </button>
-                                        <!-- File info badge -->
-                                        <div class="absolute bottom-2 left-2 px-2 py-1 rounded-md bg-black/50 text-white text-xs flex items-center gap-1.5">
-                                            <UIcon name="i-lucide-file" class="size-3" />
-                                            <span class="truncate max-w-[200px]">{{ uploadFile.file.name }}</span>
-                                            <span class="text-white/70">{{ formatFileSize(uploadFile.file.size) }}</span>
+                                            <!-- Loading -->
+                                            <div v-if="isSearchingTags" class="px-3 py-2 text-sm text-muted flex items-center gap-2">
+                                                <UIcon name="i-lucide-loader-2" class="size-3.5 animate-spin" />
+                                                <span>Searching...</span>
+                                            </div>
+
+                                            <!-- Existing tags matching search -->
+                                            <button
+                                                v-for="tag in tagSuggestions"
+                                                :key="tag.id"
+                                                type="button"
+                                                class="w-full px-3 py-2 text-left text-sm hover:bg-muted/50 flex items-center gap-2 transition-colors"
+                                                @mousedown.prevent="addTagToFile(0, tag.id)"
+                                            >
+                                                <UIcon name="i-lucide-tag" class="size-3.5 text-muted" />
+                                                {{ tag.name }}
+                                            </button>
+
+                                            <!-- Create new tag option -->
+                                            <button
+                                                v-if="tagSearchQuery.trim() && !tagSuggestions.some(t => t.name.toLowerCase() === tagSearchQuery.toLowerCase())"
+                                                type="button"
+                                                class="w-full px-3 py-2 text-left text-sm hover:bg-muted/50 flex items-center gap-2 text-primary transition-colors border-t border-default"
+                                                @mousedown.prevent="createAndAddTag(0)"
+                                            >
+                                                <UIcon name="i-lucide-plus" class="size-3.5" />
+                                                Create "{{ tagSearchQuery.trim() }}"
+                                            </button>
                                         </div>
                                     </div>
-
-                                    <!-- Form Fields -->
-                                    <div class="space-y-4 flex-1">
-                                        <!-- Caption Field (Required) -->
-                                        <UFormField label="Caption" required>
-                                            <UTextarea
-                                                v-model="uploadFile.caption"
-                                                placeholder="Enter a caption for this image (required)"
-                                                :rows="2"
-                                                :disabled="isUploading"
-                                                :color="validationErrors[index]?.caption ? 'error' : undefined"
-                                                class="w-full"
-                                            />
-                                        </UFormField>
-
-                                        <!-- Title Field (Optional) -->
-                                        <UFormField label="Title" hint="Optional">
-                                            <UInput
-                                                v-model="uploadFile.title"
-                                                placeholder="Enter a title for this media"
-                                                :disabled="isUploading"
-                                                class="w-full"
-                                            />
-                                        </UFormField>
-
-                                        <!-- Tags Field (Required) -->
-                                        <UFormField label="Tags" required>
-                                            <USelectMenu
-                                                v-model="uploadFile.tag_ids"
-                                                :items="tagOptions"
-                                                value-key="value"
-                                                placeholder="Select at least one tag..."
-                                                multiple
-                                                create-item
-                                                :loading="isLoadingTags"
-                                                :disabled="isUploading"
-                                                :highlight="!!validationErrors[index]?.tags"
-                                                color="error"
-                                                class="w-full"
-                                                @create="(name: string) => onCreateTag(name, index)"
-                                            />
-                                            <p v-if="validationErrors[index]?.tags" class="mt-1 text-xs text-error">
-                                                {{ validationErrors[index].tags }}
-                                            </p>
-                                        </UFormField>
-                                    </div>
-
-                                    <!-- Upload Errors -->
-                                    <div v-if="uploadErrors.length > 0" class="mt-4 p-3 rounded-lg bg-error/10 border border-error/20">
-                                        <div v-for="(error, errIndex) in uploadErrors" :key="errIndex" class="text-sm text-error">
-                                            {{ error }}
-                                        </div>
-                                    </div>
-
-                                    <!-- Upload Button -->
-                                    <div class="mt-4 pt-4 border-t border-default">
-                                        <UButton
-                                            color="primary"
-                                            :loading="isUploading"
-                                            :disabled="!canUpload"
-                                            class="w-full justify-center"
-                                            size="lg"
-                                            @click="uploadAll"
-                                        >
-                                            <UIcon name="i-lucide-cloud-upload" class="size-5 mr-2" />
-                                            Upload & Select
-                                        </UButton>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-
-                        <!-- Multiple Files Mode: Original UI -->
-                        <template v-else>
-                            <!-- Drop Zone -->
-                            <div
-                                class="relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer group"
-                                :class="uploadFiles.length > 0
-                                    ? 'border-default bg-muted/5 hover:border-primary/50'
-                                    : 'border-primary/30 bg-primary/5 hover:border-primary hover:bg-primary/10'"
-                                @drop="handleDrop"
-                                @dragover="handleDragOver"
-                                @click="triggerFileInput"
-                            >
-                                <div class="flex flex-col items-center">
-                                    <div class="size-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                        <UIcon name="i-lucide-cloud-upload" class="size-8 text-primary" />
-                                    </div>
-                                    <p class="text-highlighted font-semibold text-lg mb-1">
-                                        {{ uploadFiles.length > 0 ? 'Add more files' : 'Drop files here' }}
-                                    </p>
-                                    <p class="text-sm text-muted mb-3">
-                                        or <span class="text-primary font-medium">browse from your computer</span>
-                                    </p>
-                                    <div class="flex items-center gap-2 text-xs text-muted">
-                                        <UIcon :name="type === 'videos' ? 'i-lucide-film' : 'i-lucide-image'" class="size-3.5" />
-                                        <span>{{ type === 'images' ? 'Images only' : type === 'videos' ? 'Videos only' : 'Images and videos supported' }}</span>
-                                    </div>
-                                </div>
-                                <input
-                                    ref="fileInputRef"
-                                    type="file"
-                                    class="hidden"
-                                    :accept="type === 'images' ? 'image/*' : type === 'videos' ? 'video/*' : 'image/*,video/*'"
-                                    multiple
-                                    @change="handleFileSelect"
-                                />
+                                </UFormField>
                             </div>
 
-                            <!-- Upload Errors -->
-                            <div v-if="uploadErrors.length > 0" class="mt-4 p-3 rounded-lg bg-error/10 border border-error/20">
-                                <div v-for="(error, index) in uploadErrors" :key="index" class="text-sm text-error">
-                                    {{ error }}
+                            <!-- Fixed Bottom Section -->
+                            <div class="shrink-0">
+                                <!-- Upload Errors -->
+                                <div v-if="uploadErrors.length > 0" class="mt-4 p-3 rounded-lg bg-error/10 border border-error/20">
+                                    <div v-for="(error, errIndex) in uploadErrors" :key="errIndex" class="text-sm text-error">
+                                        {{ error }}
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- File List -->
-                            <div v-if="uploadFiles.length > 0" class="mt-6 flex-1 overflow-y-auto">
-                                <div class="flex items-center justify-between mb-4">
-                                    <h3 class="text-sm font-medium text-highlighted">
-                                        {{ uploadFiles.length }} file{{ uploadFiles.length !== 1 ? 's' : '' }} ready to upload
-                                    </h3>
+                                <!-- Upload Button -->
+                                <div class="mt-4 pt-4 border-t border-default">
                                     <UButton
-                                        v-if="uploadFiles.length > 1"
-                                        variant="ghost"
-                                        color="neutral"
-                                        size="xs"
-                                        @click="uploadFiles = []"
+                                        color="primary"
+                                        :loading="isUploading"
+                                        :disabled="!canUpload"
+                                        class="w-full justify-center"
+                                        size="lg"
+                                        @click="uploadAll"
                                     >
-                                        Clear all
+                                        <UIcon name="i-lucide-cloud-upload" class="size-5 mr-2" />
+                                        Upload & Select
                                     </UButton>
                                 </div>
-
-                                <div class="space-y-3">
-                                    <div
-                                        v-for="(uploadFile, index) in uploadFiles"
-                                        :key="index"
-                                        class="group relative rounded-xl border bg-[var(--ui-bg)] shadow-sm transition-all"
-                                        :class="validationErrors[index] ? 'border-error/50' : 'border-default hover:border-primary/30'"
-                                    >
-                                        <!-- Remove Button -->
-                                        <button
-                                            type="button"
-                                            class="absolute -top-2 -right-2 z-10 size-6 rounded-full bg-default border border-default shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-error hover:border-error hover:text-white"
-                                            :disabled="isUploading"
-                                            @click="removeFile(index)"
-                                        >
-                                            <UIcon name="i-lucide-x" class="size-3.5" />
-                                        </button>
-
-                                        <div class="flex gap-4 p-4">
-                                            <!-- Large Preview -->
-                                            <div class="shrink-0 w-32 h-24 rounded-lg bg-muted/20 overflow-hidden border border-default">
-                                                <img
-                                                    v-if="uploadFile.preview"
-                                                    :src="uploadFile.preview"
-                                                    :alt="uploadFile.file.name"
-                                                    class="w-full h-full object-cover"
-                                                />
-                                                <div v-else class="w-full h-full flex flex-col items-center justify-center gap-1">
-                                                    <UIcon
-                                                        :name="uploadFile.file.type.startsWith('image/') ? 'i-lucide-image' : 'i-lucide-film'"
-                                                        class="size-8 text-muted"
-                                                    />
-                                                    <span class="text-[10px] text-muted">Processing...</span>
-                                                </div>
-                                            </div>
-
-                                            <!-- Form Fields -->
-                                            <div class="flex-1 min-w-0 space-y-3">
-                                                <!-- File name badge -->
-                                                <div class="flex items-center gap-2">
-                                                    <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/30 text-xs text-muted max-w-full">
-                                                        <UIcon name="i-lucide-file" class="size-3 shrink-0" />
-                                                        <span class="truncate">{{ uploadFile.file.name }}</span>
-                                                        <span class="shrink-0 text-muted/70">{{ formatFileSize(uploadFile.file.size) }}</span>
-                                                    </span>
-                                                </div>
-
-                                                <!-- Caption Field -->
-                                                <UTextarea
-                                                    v-model="uploadFile.caption"
-                                                    placeholder="Caption (required)"
-                                                    :rows="2"
-                                                    :disabled="isUploading"
-                                                    :color="validationErrors[index]?.caption ? 'error' : undefined"
-                                                />
-
-                                                <!-- Title Field -->
-                                                <UInput
-                                                    v-model="uploadFile.title"
-                                                    placeholder="Title (optional)"
-                                                    :disabled="isUploading"
-                                                />
-
-                                                <!-- Tags Field (Required) -->
-                                                <USelectMenu
-                                                    v-model="uploadFile.tag_ids"
-                                                    :items="tagOptions"
-                                                    value-key="value"
-                                                    placeholder="Select at least one tag..."
-                                                    multiple
-                                                    create-item
-                                                    :loading="isLoadingTags"
-                                                    :disabled="isUploading"
-                                                    :highlight="!!validationErrors[index]?.tags"
-                                                    color="error"
-                                                    @create="(name: string) => onCreateTag(name, index)"
-                                                />
-
-                                                <!-- Validation Errors -->
-                                                <div v-if="validationErrors[index]" class="text-xs text-error space-y-1">
-                                                    <p v-if="validationErrors[index]?.caption" class="flex items-center gap-1">
-                                                        <UIcon name="i-lucide-alert-circle" class="size-3" />
-                                                        Caption is required
-                                                    </p>
-                                                    <p v-if="validationErrors[index]?.tags" class="flex items-center gap-1">
-                                                        <UIcon name="i-lucide-alert-circle" class="size-3" />
-                                                        At least one tag is required
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
-
-                            <!-- Upload Button -->
-                            <div v-if="uploadFiles.length > 0" class="mt-4 pt-4 border-t border-default">
-                                <UButton
-                                    color="primary"
-                                    :loading="isUploading"
-                                    :disabled="!canUpload"
-                                    class="w-full justify-center"
-                                    size="lg"
-                                    @click="uploadAll"
-                                >
-                                    <UIcon name="i-lucide-cloud-upload" class="size-5 mr-2" />
-                                    Upload {{ uploadFiles.length }} file{{ uploadFiles.length !== 1 ? 's' : '' }}
-                                </UButton>
-                            </div>
-                        </template>
+                        </div>
                     </div>
                 </div>
 
