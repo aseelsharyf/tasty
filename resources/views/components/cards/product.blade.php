@@ -1,6 +1,6 @@
-<a href="{{ $url }}" class="group flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-10 h-full max-lg:h-auto">
-    {{-- Image container: flexible height, white bg, contain --}}
-    <div class="relative flex-1 min-h-[300px] max-lg:min-h-[250px] bg-white rounded-lg flex items-end justify-center p-6 mb-8">
+<a href="{{ $url }}" class="group flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-8 w-[426px] aspect-[426/626] max-lg:w-full max-lg:aspect-auto max-lg:h-auto">
+    {{-- Image container: fixed proportion of card height --}}
+    <div class="relative h-[55%] max-lg:h-[250px] bg-white rounded-lg flex items-end justify-center p-6 mb-6">
         <img
             src="{{ $image }}"
             alt="{{ $imageAlt }}"
@@ -12,13 +12,13 @@
     </div>
 
     {{-- Content --}}
-    <div class="flex flex-col items-center gap-6 px-10 max-lg:px-6 text-center">
+    <div class="flex flex-col items-center gap-4 px-8 max-lg:px-6 text-center flex-1">
         {{-- Store Logo --}}
         @if($storeLogo)
             <img
                 src="{{ $storeLogo }}"
                 alt="{{ $storeName ?? 'Store' }}"
-                class="max-w-[80px] max-h-[40px] object-contain grayscale group-hover:grayscale-0 transition-all duration-300"
+                class="max-w-[80px] max-h-[32px] object-contain grayscale group-hover:grayscale-0 transition-all duration-300"
             >
         @endif
 
