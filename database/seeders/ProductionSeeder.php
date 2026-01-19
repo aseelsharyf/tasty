@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Category;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -20,7 +19,7 @@ class ProductionSeeder extends Seeder
      * - Workflow configuration
      * - Navigation menus
      * - Default post types
-     * - Basic categories structure
+     * - Full category hierarchy
      * - Sample users (one per role)
      */
     public function run(): void
@@ -31,10 +30,10 @@ class ProductionSeeder extends Seeder
             LanguageSeeder::class,
             WorkflowSeeder::class,
             MenuSeeder::class,
+            CategorySeeder::class,
         ]);
 
         $this->seedPostTypes();
-        $this->seedCategories();
         $this->seedUsers();
     }
 
@@ -45,58 +44,6 @@ class ProductionSeeder extends Seeder
     {
         Setting::setPostTypes(Setting::getDefaultPostTypes());
         $this->command->info('Default post types seeded.');
-    }
-
-    /**
-     * Seed basic categories for production.
-     */
-    protected function seedCategories(): void
-    {
-        $categories = [
-            [
-                'name' => ['en' => 'Feature', 'dv' => 'ފީޗަރ'],
-                'slug' => 'feature',
-                'description' => ['en' => 'Featured stories and highlights'],
-            ],
-            [
-                'name' => ['en' => 'People', 'dv' => 'މީހުން'],
-                'slug' => 'people',
-                'description' => ['en' => 'Stories about chefs and food personalities'],
-            ],
-            [
-                'name' => ['en' => 'Review', 'dv' => 'ރިވިއު'],
-                'slug' => 'review',
-                'description' => ['en' => 'Restaurant and food reviews'],
-            ],
-            [
-                'name' => ['en' => 'Recipe', 'dv' => 'ރެސިޕީ'],
-                'slug' => 'recipe',
-                'description' => ['en' => 'Recipes and cooking guides'],
-            ],
-            [
-                'name' => ['en' => 'News', 'dv' => 'ޚަބަރު'],
-                'slug' => 'news',
-                'description' => ['en' => 'Food industry news and updates'],
-            ],
-            [
-                'name' => ['en' => 'Travel', 'dv' => 'ދަތުރު'],
-                'slug' => 'travel',
-                'description' => ['en' => 'Food-focused travel guides'],
-            ],
-        ];
-
-        $order = 1;
-        foreach ($categories as $categoryData) {
-            Category::firstOrCreate(
-                ['slug' => $categoryData['slug']],
-                [
-                    ...$categoryData,
-                    'order' => $order++,
-                ]
-            );
-        }
-
-        $this->command->info('Basic categories seeded.');
     }
 
     /**
