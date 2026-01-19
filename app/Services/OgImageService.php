@@ -47,8 +47,8 @@ class OgImageService
 
             $image = Image::read($imageContents);
 
-            // Resize and crop to OG dimensions
-            $image->cover($this->width, $this->height);
+            // Resize and crop to OG dimensions, respecting focal point
+            $this->coverWithFocalPoint($image, $post->featured_image_anchor);
 
             // Create gradient overlay using GD
             $this->applyGradientOverlay($image);
@@ -65,6 +65,47 @@ class OgImageService
 
             return null;
         }
+    }
+
+    /**
+     * Cover image to target dimensions respecting focal point.
+     *
+     * @param  array{x: float, y: float}|null  $focalPoint
+     */
+    protected function coverWithFocalPoint(\Intervention\Image\Interfaces\ImageInterface $image, ?array $focalPoint): void
+    {
+        $origWidth = $image->width();
+        $origHeight = $image->height();
+
+        // Calculate scale to cover target dimensions
+        $scaleX = $this->width / $origWidth;
+        $scaleY = $this->height / $origHeight;
+        $scale = max($scaleX, $scaleY);
+
+        // Scale image to cover
+        $scaledWidth = (int) round($origWidth * $scale);
+        $scaledHeight = (int) round($origHeight * $scale);
+        $image->resize($scaledWidth, $scaledHeight);
+
+        // Default focal point: center horizontally, top vertically
+        $focalX = $focalPoint['x'] ?? 0.5;
+        $focalY = $focalPoint['y'] ?? 0.0;
+
+        // Calculate crop offset based on focal point
+        // The focal point should remain visible, ideally centered in the crop
+        $maxOffsetX = $scaledWidth - $this->width;
+        $maxOffsetY = $scaledHeight - $this->height;
+
+        // Position the crop so focal point is as centered as possible
+        $offsetX = (int) round(($focalX * $scaledWidth) - ($this->width / 2));
+        $offsetY = (int) round(($focalY * $scaledHeight) - ($this->height / 2));
+
+        // Clamp offsets to valid range
+        $offsetX = max(0, min($maxOffsetX, $offsetX));
+        $offsetY = max(0, min($maxOffsetY, $offsetY));
+
+        // Crop to final dimensions
+        $image->crop($this->width, $this->height, $offsetX, $offsetY);
     }
 
     /**
