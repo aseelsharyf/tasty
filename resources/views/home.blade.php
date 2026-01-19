@@ -127,7 +127,15 @@
                     :action="$section['data']['action'] ?? 'recent'"
                     :params="$section['data']['params'] ?? []"
                     :tag1="$section['data']['tag1'] ?? 'TASTY FEATURE'"
+                    :tag2="$section['data']['tag2'] ?? ''"
                     :bgColor="$section['data']['bgColor'] ?? 'yellow'"
+                    :textColor="$section['data']['textColor'] ?? 'blue-black'"
+                    :buttonVariant="$section['data']['buttonVariant'] ?? 'white'"
+                    :buttonText="$section['data']['buttonText'] ?? 'Read More'"
+                    :totalSlots="$section['data']['totalSlots'] ?? 0"
+                    :manualPostIds="$section['data']['manualPostIds'] ?? []"
+                    :staticSlots="$section['data']['staticSlots'] ?? []"
+                    :dynamicCount="$section['data']['dynamicCount'] ?? 0"
                 />
                 @break
 
@@ -154,6 +162,22 @@
                     :textColor="$section['data']['textColor'] ?? 'white'"
                     :buttonVariant="$section['data']['buttonVariant'] ?? 'yellow'"
                     :buttonText="$section['data']['buttonText'] ?? 'Read More'"
+                />
+                @break
+
+            @case('carousel')
+                <x-sections.carousel
+                    :bgColor="$section['data']['bgColor'] ?? 'yellow'"
+                    :showDividers="$section['data']['showDividers'] ?? true"
+                    :dividerColor="$section['data']['dividerColor'] ?? 'white'"
+                    :paddingTop="$section['data']['paddingTop'] ?? 'medium'"
+                    :paddingBottom="$section['data']['paddingBottom'] ?? 'medium'"
+                    :action="$section['data']['action'] ?? 'recent'"
+                    :params="$section['data']['params'] ?? []"
+                    :totalSlots="$section['data']['totalSlots'] ?? 0"
+                    :manualPostIds="$section['data']['manualPostIds'] ?? []"
+                    :staticContent="$section['data']['staticContent'] ?? []"
+                    :dynamicCount="$section['data']['dynamicCount'] ?? 0"
                 />
                 @break
 

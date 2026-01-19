@@ -2,31 +2,31 @@
 
 namespace App\Services\Layouts\Sections;
 
-class SpreadSection extends AbstractSectionDefinition
+class CarouselSection extends AbstractSectionDefinition
 {
     public function type(): string
     {
-        return 'spread';
+        return 'carousel';
     }
 
     public function name(): string
     {
-        return 'The Spread';
+        return 'Carousel';
     }
 
     public function description(): string
     {
-        return 'Horizontal scroll carousel of posts with optional intro card.';
+        return 'Horizontal scroll carousel of posts without intro card.';
     }
 
     public function icon(): string
     {
-        return 'i-lucide-columns-3';
+        return 'i-lucide-gallery-horizontal';
     }
 
     public function slotCount(): int
     {
-        return 6; // Default to 6 slots
+        return 5;
     }
 
     public function minSlots(): int
@@ -42,46 +42,10 @@ class SpreadSection extends AbstractSectionDefinition
     public function configSchema(): array
     {
         return [
-            'showIntro' => [
-                'type' => 'toggle',
-                'label' => 'Show Intro Card',
-                'default' => true,
-            ],
-            'introImage' => [
-                'type' => 'media',
-                'label' => 'Intro Image',
-                'default' => '',
-            ],
-            'introImageAlt' => [
-                'type' => 'text',
-                'label' => 'Intro Image Alt Text',
-                'default' => '',
-            ],
-            'titleSmall' => [
-                'type' => 'text',
-                'label' => 'Small Title',
-                'default' => 'The',
-            ],
-            'titleLarge' => [
-                'type' => 'text',
-                'label' => 'Large Title',
-                'default' => 'SPREAD',
-            ],
-            'description' => [
-                'type' => 'textarea',
-                'label' => 'Description',
-                'default' => '',
-            ],
             'bgColor' => [
                 'type' => 'color',
                 'label' => 'Background Color',
                 'default' => 'yellow',
-            ],
-            'mobileLayout' => [
-                'type' => 'select',
-                'label' => 'Mobile Layout',
-                'default' => 'scroll',
-                'options' => ['scroll', 'grid'],
             ],
             'showDividers' => [
                 'type' => 'toggle',
@@ -94,10 +58,17 @@ class SpreadSection extends AbstractSectionDefinition
                 'default' => 'white',
                 'options' => ['white', 'gray'],
             ],
-            'count' => [
-                'type' => 'number',
-                'label' => 'Number of Posts',
-                'default' => 4,
+            'paddingTop' => [
+                'type' => 'select',
+                'label' => 'Top Padding',
+                'default' => 'medium',
+                'options' => ['none', 'small', 'medium', 'large'],
+            ],
+            'paddingBottom' => [
+                'type' => 'select',
+                'label' => 'Bottom Padding',
+                'default' => 'medium',
+                'options' => ['none', 'small', 'medium', 'large'],
             ],
         ];
     }
@@ -120,14 +91,14 @@ class SpreadSection extends AbstractSectionDefinition
     public function previewSchema(): array
     {
         return [
-            'layout' => 'intro-scroll',
+            'layout' => 'scroll',
             'areas' => [
-                ['id' => 'intro', 'label' => 'Intro', 'width' => '1/4', 'height' => 'full'],
-                ['id' => 'cards', 'label' => '', 'width' => '3/4', 'height' => 'full', 'scroll' => 'horizontal', 'children' => [
+                ['id' => 'cards', 'label' => '', 'width' => 'full', 'height' => 'full', 'scroll' => 'horizontal', 'children' => [
                     ['id' => 'slot-0', 'label' => '1', 'slotIndex' => 0],
                     ['id' => 'slot-1', 'label' => '2', 'slotIndex' => 1],
                     ['id' => 'slot-2', 'label' => '3', 'slotIndex' => 2],
                     ['id' => 'slot-3', 'label' => '4', 'slotIndex' => 3],
+                    ['id' => 'slot-4', 'label' => '5', 'slotIndex' => 4],
                 ]],
             ],
         ];

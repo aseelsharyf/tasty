@@ -55,5 +55,26 @@
             </div>
         </div>
     </div>
+
+    {{-- Carousel of additional posts below --}}
+    @if($carouselPosts->isNotEmpty())
+        <div class="w-full {{ $bgColorClass }} pb-16 max-lg:pb-10" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+            <div class="scroll-container pb-8 max-lg:pb-6 container-main">
+                <div class="flex items-start px-10 min-w-max max-lg:px-5 max-lg:gap-8">
+                    @foreach($carouselPosts as $carouselPost)
+                        <div class="flex items-start shrink-0 {{ $loop->last ? '' : '' }}">
+                            <x-cards.spread
+                                :post="$carouselPost"
+                                :reversed="$loop->even"
+                            />
+                            @if(!$loop->last)
+                                <div class="w-px h-[600px] bg-white shrink-0 max-lg:hidden"></div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    @endif
 </section>
 @endif

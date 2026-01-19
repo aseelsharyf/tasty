@@ -464,7 +464,8 @@
         max-width: 1880px;
         margin: 0 auto;
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        align-items: center;
         overflow: hidden;
     }
 

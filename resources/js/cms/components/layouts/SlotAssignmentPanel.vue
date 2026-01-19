@@ -7,6 +7,8 @@ import type { HomepageSectionSlot, PostSearchResult, ProductSearchResult } from 
 const props = defineProps<{
     modelValue: HomepageSectionSlot[];
     slotCount: number;
+    minSlots?: number;
+    maxSlots?: number;
     sectionType: string;
     contentType?: string; // 'post' or 'product'
 }>();
@@ -18,6 +20,20 @@ const emit = defineEmits<{
 const slots = computed({
     get: () => props.modelValue,
     set: (value) => emit('update:modelValue', value),
+});
+
+// Compute actual min/max (fallback to slotCount if not provided)
+const minSlotCount = computed(() => props.minSlots ?? props.slotCount);
+const maxSlotCount = computed(() => props.maxSlots ?? 0); // 0 = unlimited
+
+// Can add/remove slots?
+const canAddSlot = computed(() => {
+    if (maxSlotCount.value === 0) return true; // unlimited
+    return slots.value.length < maxSlotCount.value;
+});
+
+const canRemoveSlot = computed(() => {
+    return slots.value.length > minSlotCount.value;
 });
 
 // Determine if this section uses products instead of posts
@@ -32,11 +48,11 @@ const editingSlotIndex = ref<number | null>(null);
 const postCache = ref<Record<number, PostSearchResult>>({});
 const productCache = ref<Record<number, ProductSearchResult>>({});
 
-// Ensure we have the correct number of slots
-watch(() => props.slotCount, (count) => {
-    if (slots.value.length < count) {
+// Ensure we have at least minimum slots on mount
+watch(() => minSlotCount.value, (minCount) => {
+    if (slots.value.length < minCount) {
         const newSlots = [...slots.value];
-        for (let i = slots.value.length; i < count; i++) {
+        for (let i = slots.value.length; i < minCount; i++) {
             newSlots.push({
                 index: i,
                 mode: 'dynamic',
@@ -47,6 +63,30 @@ watch(() => props.slotCount, (count) => {
         emit('update:modelValue', newSlots);
     }
 }, { immediate: true });
+
+function addSlot() {
+    if (!canAddSlot.value) return;
+
+    const newSlots = [...slots.value];
+    newSlots.push({
+        index: newSlots.length,
+        mode: 'dynamic',
+        postId: null,
+        productId: null,
+    });
+    emit('update:modelValue', newSlots);
+}
+
+function removeSlot(index: number) {
+    if (!canRemoveSlot.value) return;
+
+    const newSlots = slots.value.filter((_, i) => i !== index);
+    // Re-index slots
+    newSlots.forEach((slot, i) => {
+        slot.index = i;
+    });
+    emit('update:modelValue', newSlots);
+}
 
 function toggleSlotMode(index: number) {
     const slot = slots.value[index];
@@ -147,10 +187,22 @@ function getSlotLabel(index: number): string {
 
 <template>
     <div class="space-y-4">
-        <div class="p-4 bg-muted/30 rounded-lg">
+        <!-- Header with slot count info -->
+        <div class="flex items-center justify-between">
             <p class="text-sm text-muted">
-                Each slot can be filled dynamically (from the data source) or manually (by selecting a specific {{ isProductSection ? 'product' : 'post' }}).
+                {{ slots.length }} {{ slots.length === 1 ? 'slot' : 'slots' }}
+                <span v-if="maxSlotCount > 0" class="text-muted/70">(max {{ maxSlotCount }})</span>
             </p>
+            <UButton
+                v-if="canAddSlot"
+                icon="i-lucide-plus"
+                color="primary"
+                variant="soft"
+                size="xs"
+                @click="addSlot"
+            >
+                Add Slot
+            </UButton>
         </div>
 
         <div class="space-y-3">
@@ -161,14 +213,24 @@ function getSlotLabel(index: number): string {
             >
                 <div class="flex items-center justify-between mb-3">
                     <span class="font-medium text-highlighted">{{ getSlotLabel(index) }}</span>
-                    <UButton
-                        :color="slot.mode === 'manual' ? 'primary' : 'neutral'"
-                        variant="soft"
-                        size="xs"
-                        @click="toggleSlotMode(index)"
-                    >
-                        {{ slot.mode === 'manual' ? 'Manual' : 'Dynamic' }}
-                    </UButton>
+                    <div class="flex items-center gap-2">
+                        <UButton
+                            :color="slot.mode === 'manual' ? 'primary' : 'neutral'"
+                            variant="soft"
+                            size="xs"
+                            @click="toggleSlotMode(index)"
+                        >
+                            {{ slot.mode === 'manual' ? 'Manual' : 'Dynamic' }}
+                        </UButton>
+                        <UButton
+                            v-if="canRemoveSlot"
+                            icon="i-lucide-trash-2"
+                            color="error"
+                            variant="ghost"
+                            size="xs"
+                            @click="removeSlot(index)"
+                        />
+                    </div>
                 </div>
 
                 <!-- Dynamic Mode -->

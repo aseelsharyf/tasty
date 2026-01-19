@@ -262,6 +262,8 @@ function getColorOptions() {
                         <SlotAssignmentPanel
                             v-model="localSlots"
                             :slot-count="sectionType.slotCount"
+                            :min-slots="sectionType.minSlots"
+                            :max-slots="sectionType.maxSlots"
                             :section-type="section.type"
                             :content-type="sectionType.contentType"
                         />

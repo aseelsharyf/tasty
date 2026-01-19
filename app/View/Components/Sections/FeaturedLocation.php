@@ -12,6 +12,7 @@ use App\View\Components\Sections\Concerns\TracksUsedPosts;
 use App\View\Concerns\ResolvesColors;
 use Closure;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Illuminate\View\Component;
 
 class FeaturedLocation extends Component
@@ -58,6 +59,9 @@ class FeaturedLocation extends Component
 
     public string $buttonVariant;
 
+    /** @var Collection<int, Post|array<string, mixed>> */
+    public Collection $carouselPosts;
+
     /** @var array<string, class-string> */
     protected array $actions = [
         'recent' => GetRecentPosts::class,
@@ -86,6 +90,10 @@ class FeaturedLocation extends Component
      * @param  string  $textColor  Text color (Tailwind utility name like 'blue-black')
      * @param  string  $buttonVariant  Button variant (white, yellow)
      * @param  array<string, mixed>|null  $staticContent  Static content from CMS
+     * @param  int  $totalSlots  Total number of slots from CMS
+     * @param  array<int, int>  $manualPostIds  Index => postId for manual slots
+     * @param  array<int, array<string, mixed>>  $staticSlots  Index => content for static slots
+     * @param  int  $dynamicCount  Number of dynamic slots to fill
      */
     public function __construct(
         Post|array|null $post = null,
@@ -105,6 +113,10 @@ class FeaturedLocation extends Component
         string $textColor = 'blue-black',
         string $buttonVariant = 'white',
         ?array $staticContent = null,
+        int $totalSlots = 0,
+        array $manualPostIds = [],
+        array $staticSlots = [],
+        int $dynamicCount = 0,
     ) {
         // Initialize post tracker to prevent duplicates across sections
         $this->initPostTracker();
@@ -115,6 +127,26 @@ class FeaturedLocation extends Component
         $this->bgColorStyle = $bgResolved['style'];
         $this->textColor = $textColor;
         $this->buttonVariant = $buttonVariant;
+
+        // Initialize carousel posts
+        $this->carouselPosts = collect();
+
+        // New hybrid slot mode from CMS
+        if ($totalSlots > 0 || count($manualPostIds) > 0 || count($staticSlots) > 0) {
+            $this->resolveHybridSlots(
+                totalSlots: $totalSlots,
+                manualPostIds: $manualPostIds,
+                staticSlots: $staticSlots,
+                dynamicCount: $dynamicCount,
+                action: $action,
+                params: $params,
+            );
+
+            // Apply overrides for featured post
+            $this->applyOverrides($image, $imageAlt, $kicker, $title, $tag1, $tag2, $description, $buttonText, $buttonUrl);
+
+            return;
+        }
 
         // Static content from CMS
         if ($staticContent !== null) {
@@ -153,7 +185,24 @@ class FeaturedLocation extends Component
             }
         }
 
-        // Allow individual prop overrides
+        // Apply overrides
+        $this->applyOverrides($image, $imageAlt, $kicker, $title, $tag1, $tag2, $description, $buttonText, $buttonUrl);
+    }
+
+    /**
+     * Apply individual prop overrides.
+     */
+    protected function applyOverrides(
+        ?string $image,
+        ?string $imageAlt,
+        ?string $kicker,
+        ?string $title,
+        ?string $tag1,
+        ?string $tag2,
+        ?string $description,
+        ?string $buttonText,
+        ?string $buttonUrl,
+    ): void {
         if ($image !== null) {
             $this->image = $image;
         }
@@ -181,6 +230,93 @@ class FeaturedLocation extends Component
         if ($buttonUrl !== null) {
             $this->buttonUrl = $buttonUrl;
         }
+    }
+
+    /**
+     * Resolve hybrid slots with mix of manual, static, and dynamic content.
+     *
+     * @param  array<int, int>  $manualPostIds
+     * @param  array<int, array<string, mixed>>  $staticSlots
+     * @param  array<string, mixed>  $params
+     */
+    protected function resolveHybridSlots(
+        int $totalSlots,
+        array $manualPostIds,
+        array $staticSlots,
+        int $dynamicCount,
+        string $action,
+        array $params,
+    ): void {
+        // Fetch manual posts and filter by allowed categories
+        $manualPosts = collect();
+        $validManualIds = array_filter(array_values($manualPostIds));
+
+        if (count($validManualIds) > 0) {
+            $manualPosts = Post::with(['author', 'categories', 'tags'])
+                ->whereIn('id', $validManualIds)
+                ->get();
+
+            $manualPosts = $this->filterAllowedPosts($manualPosts)->keyBy('id');
+        }
+
+        // Calculate how many dynamic posts we need
+        $validManualCount = $manualPosts->count();
+        $staticCount = count($staticSlots);
+        $neededDynamicCount = $totalSlots - $validManualCount - $staticCount;
+
+        // Fetch dynamic posts if needed
+        $dynamicPosts = collect();
+        if ($neededDynamicCount > 0) {
+            $actionClass = $this->actions[$action] ?? GetRecentPosts::class;
+            $actionInstance = new $actionClass;
+
+            $excludeIds = $this->getExcludeIds($validManualIds);
+
+            $result = $actionInstance->execute([
+                'page' => 1,
+                'perPage' => $neededDynamicCount,
+                'excludeIds' => $excludeIds,
+                'sectionType' => $this->sectionType(),
+                ...$params,
+            ]);
+
+            $dynamicPosts = collect($result->items());
+        }
+
+        // Build final slot array
+        $slots = [];
+        $dynamicIndex = 0;
+
+        for ($i = 0; $i < $totalSlots; $i++) {
+            if (isset($manualPostIds[$i]) && $manualPosts->has($manualPostIds[$i])) {
+                $slots[$i] = $manualPosts->get($manualPostIds[$i]);
+            } elseif (isset($staticSlots[$i])) {
+                $slots[$i] = $staticSlots[$i];
+            } else {
+                $slots[$i] = $dynamicPosts->get($dynamicIndex);
+                $dynamicIndex++;
+            }
+        }
+
+        $allSlots = collect($slots)->filter()->values();
+
+        // First slot is featured, rest are carousel
+        $featuredSlot = $allSlots->shift();
+
+        if ($featuredSlot instanceof Post) {
+            $this->post = $featuredSlot;
+            $this->populateFromPost($featuredSlot);
+            $this->markPostUsed($featuredSlot);
+        } elseif (is_array($featuredSlot)) {
+            $this->post = $featuredSlot;
+            $this->populateFromArray($featuredSlot);
+        } else {
+            $this->setDefaults();
+        }
+
+        // Remaining slots become carousel posts
+        $this->carouselPosts = $allSlots;
+        $this->markPostsUsed($this->carouselPosts);
     }
 
     /**

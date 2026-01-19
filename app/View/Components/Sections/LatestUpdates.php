@@ -181,26 +181,34 @@ class LatestUpdates extends Component
     ): void {
         // Fetch manual posts and filter by allowed categories
         $manualPosts = collect();
-        if (count($manualPostIds) > 0) {
+        $validManualIds = array_filter(array_values($manualPostIds)); // Remove null values
+
+        if (count($validManualIds) > 0) {
             $manualPosts = Post::with(['author', 'categories', 'tags'])
-                ->whereIn('id', array_values($manualPostIds))
+                ->whereIn('id', $validManualIds)
                 ->get();
 
             $manualPosts = $this->filterAllowedPosts($manualPosts)->keyBy('id');
         }
 
+        // Calculate how many dynamic posts we need:
+        // totalSlots - valid manual posts - static content slots
+        $validManualCount = $manualPosts->count();
+        $staticCount = count($staticContent);
+        $neededDynamicCount = $totalSlots - $validManualCount - $staticCount;
+
         // Fetch dynamic posts if needed
         $dynamicPosts = collect();
-        if ($dynamicCount > 0) {
+        if ($neededDynamicCount > 0) {
             $actionClass = $this->actions[$action] ?? GetRecentPosts::class;
             $actionInstance = new $actionClass;
 
             // Exclude manual posts AND posts used by other sections
-            $excludeIds = $this->getExcludeIds(array_values($manualPostIds));
+            $excludeIds = $this->getExcludeIds($validManualIds);
 
             $result = $actionInstance->execute([
                 'page' => 1,
-                'perPage' => $dynamicCount,
+                'perPage' => $neededDynamicCount,
                 'excludeIds' => $excludeIds,
                 'sectionType' => $this->sectionType(),
                 ...$params,
@@ -214,17 +222,14 @@ class LatestUpdates extends Component
         $dynamicIndex = 0;
 
         for ($i = 0; $i < $totalSlots; $i++) {
-            if (isset($manualPostIds[$i])) {
-                // Manual post for this slot (only if allowed)
-                $post = $manualPosts->get($manualPostIds[$i]);
-                if ($post) {
-                    $slots[$i] = $post;
-                }
+            if (isset($manualPostIds[$i]) && $manualPosts->has($manualPostIds[$i])) {
+                // Manual post for this slot (valid post exists)
+                $slots[$i] = $manualPosts->get($manualPostIds[$i]);
             } elseif (isset($staticContent[$i])) {
                 // Static content for this slot
                 $slots[$i] = $staticContent[$i];
             } else {
-                // Dynamic post for this slot
+                // Dynamic post for this slot (or fallback for invalid manual)
                 $slots[$i] = $dynamicPosts->get($dynamicIndex);
                 $dynamicIndex++;
             }

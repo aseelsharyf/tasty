@@ -4,6 +4,7 @@ namespace App\Services\Layouts;
 
 use App\Services\Layouts\Sections\AbstractSectionDefinition;
 use App\Services\Layouts\Sections\AddToCartSection;
+use App\Services\Layouts\Sections\CarouselSection;
 use App\Services\Layouts\Sections\Feature1Section;
 use App\Services\Layouts\Sections\Feature2Section;
 use App\Services\Layouts\Sections\FeaturedLocationSection;
@@ -36,6 +37,7 @@ class SectionRegistry
         $this->register(new HeroSection);
         $this->register(new LatestUpdatesSection);
         $this->register(new SpreadSection);
+        $this->register(new CarouselSection);
         $this->register(new ReviewSection);
         $this->register(new RecipeSection);
         $this->register(new FeaturedPersonSection);

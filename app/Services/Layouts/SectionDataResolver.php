@@ -32,6 +32,7 @@ class SectionDataResolver
             'featured-person' => $this->resolveFeaturedPerson($config, $dataSource, $slotData),
             'featured-video' => $this->resolveFeaturedVideo($config, $dataSource, $slotData),
             'featured-location' => $this->resolveFeaturedLocation($config, $dataSource, $slotData),
+            'carousel' => $this->resolveCarousel($config, $dataSource, $slotData),
             'feature-1' => $this->resolveFeature1($config, $dataSource, $slotData),
             'feature-2' => $this->resolveFeature2($config, $dataSource, $slotData),
             'newsletter' => $this->resolveNewsletter($config),
@@ -356,19 +357,42 @@ class SectionDataResolver
             'textColor' => $config['textColor'] ?? 'blue-black',
             'buttonVariant' => $config['buttonVariant'] ?? 'white',
             'buttonText' => $config['buttonText'] ?? 'Read More',
+            // Data source for dynamic slots
+            'action' => $dataSource['action'] ?? 'recent',
+            'params' => $this->buildParams($dataSource),
+            // Slot configuration for multi-slot support
+            'totalSlots' => $slotData['totalSlots'],
+            'manualPostIds' => $slotData['manual'],
+            'staticSlots' => $slotData['static'],
+            'dynamicCount' => $slotData['dynamicCount'],
         ];
 
-        // Featured location - single slot
-        if (isset($slotData['manual'][0])) {
-            $data['postId'] = $slotData['manual'][0];
-        } elseif (isset($slotData['static'][0])) {
-            $data['staticContent'] = $slotData['static'][0];
-        } else {
-            $data['action'] = $dataSource['action'] ?? 'recent';
-            $data['params'] = $this->buildParams($dataSource);
-        }
-
         return $data;
+    }
+
+    /**
+     * Resolve Carousel section data.
+     *
+     * @param  array<string, mixed>  $config
+     * @param  array<string, mixed>  $dataSource
+     * @param  array<string, mixed>  $slotData
+     * @return array<string, mixed>
+     */
+    protected function resolveCarousel(array $config, array $dataSource, array $slotData): array
+    {
+        return [
+            'bgColor' => $config['bgColor'] ?? 'yellow',
+            'showDividers' => $config['showDividers'] ?? true,
+            'dividerColor' => $config['dividerColor'] ?? 'white',
+            'paddingTop' => $config['paddingTop'] ?? 'medium',
+            'paddingBottom' => $config['paddingBottom'] ?? 'medium',
+            'action' => $dataSource['action'] ?? 'recent',
+            'params' => $this->buildParams($dataSource),
+            'totalSlots' => $slotData['totalSlots'],
+            'manualPostIds' => $slotData['manual'],
+            'staticContent' => $slotData['static'],
+            'dynamicCount' => $slotData['dynamicCount'],
+        ];
     }
 
     /**

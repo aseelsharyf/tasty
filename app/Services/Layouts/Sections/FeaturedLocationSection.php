@@ -26,12 +26,17 @@ class FeaturedLocationSection extends AbstractSectionDefinition
 
     public function slotCount(): int
     {
+        return 6; // 1 featured + 5 carousel posts
+    }
+
+    public function minSlots(): int
+    {
         return 1;
     }
 
     public function maxSlots(): int
     {
-        return 1; // Featured location always has exactly 1 slot
+        return 12;
     }
 
     public function configSchema(): array
@@ -80,7 +85,12 @@ class FeaturedLocationSection extends AbstractSectionDefinition
 
     public function slotLabels(): array
     {
-        return [0 => 'Featured Location'];
+        $labels = [0 => 'Featured Location'];
+        for ($i = 1; $i < $this->maxSlots(); $i++) {
+            $labels[$i] = 'Card '.$i;
+        }
+
+        return $labels;
     }
 
     public function slotSchema(): array
@@ -117,9 +127,16 @@ class FeaturedLocationSection extends AbstractSectionDefinition
     public function previewSchema(): array
     {
         return [
-            'layout' => 'single',
+            'layout' => 'featured-carousel',
             'areas' => [
-                ['id' => 'slot-0', 'label' => 'Featured Location', 'width' => 'full', 'height' => 'full', 'slotIndex' => 0],
+                ['id' => 'slot-0', 'label' => 'Featured', 'width' => 'full', 'height' => '2/3', 'slotIndex' => 0],
+                ['id' => 'carousel', 'label' => 'Carousel', 'width' => 'full', 'height' => '1/3', 'scroll' => 'horizontal', 'children' => [
+                    ['id' => 'slot-1', 'label' => '1', 'slotIndex' => 1],
+                    ['id' => 'slot-2', 'label' => '2', 'slotIndex' => 2],
+                    ['id' => 'slot-3', 'label' => '3', 'slotIndex' => 3],
+                    ['id' => 'slot-4', 'label' => '4', 'slotIndex' => 4],
+                    ['id' => 'slot-5', 'label' => '5', 'slotIndex' => 5],
+                ]],
             ],
         ];
     }
