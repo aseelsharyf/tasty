@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class ProductStore extends Model
 {
@@ -18,6 +19,7 @@ class ProductStore extends Model
     protected $fillable = [
         'uuid',
         'name',
+        'slug',
         'business_type',
         'address',
         'location_label',
@@ -28,6 +30,29 @@ class ProductStore extends Model
         'is_active',
         'order',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (ProductStore $store) {
+            if (empty($store->slug)) {
+                $store->slug = static::generateUniqueSlug($store->name);
+            }
+        });
+    }
+
+    public static function generateUniqueSlug(string $name): string
+    {
+        $baseSlug = Str::slug($name);
+        $slug = $baseSlug ?: 'store';
+        $counter = 1;
+
+        while (static::withTrashed()->where('slug', $slug)->exists()) {
+            $slug = "{$baseSlug}-{$counter}";
+            $counter++;
+        }
+
+        return $slug;
+    }
 
     /** @var array<int, string> */
     protected $appends = ['products_count', 'logo_url'];

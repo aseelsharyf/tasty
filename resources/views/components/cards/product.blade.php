@@ -15,11 +15,24 @@
     <div class="flex flex-col items-center gap-4 px-8 max-lg:px-6 text-center flex-1">
         {{-- Store Logo --}}
         @if($storeLogo)
-            <img
-                src="{{ $storeLogo }}"
-                alt="{{ $storeName ?? 'Store' }}"
-                class="max-w-[80px] max-h-[32px] object-contain grayscale group-hover:grayscale-0 transition-all duration-300"
-            >
+            @if($storeUrl)
+                <span
+                    class="relative z-10 cursor-pointer"
+                    onclick="event.preventDefault(); event.stopPropagation(); window.location.href='{{ $storeUrl }}';"
+                >
+                    <img
+                        src="{{ $storeLogo }}"
+                        alt="{{ $storeName ?? 'Store' }}"
+                        class="max-w-[80px] max-h-[32px] object-contain grayscale hover:grayscale-0 transition-all duration-300"
+                    >
+                </span>
+            @else
+                <img
+                    src="{{ $storeLogo }}"
+                    alt="{{ $storeName ?? 'Store' }}"
+                    class="max-w-[80px] max-h-[32px] object-contain grayscale group-hover:grayscale-0 transition-all duration-300"
+                >
+            @endif
         @endif
 
         <h3 class="text-h4 text-blue-black line-clamp-2">{{ $title }}</h3>

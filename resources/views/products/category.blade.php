@@ -7,8 +7,10 @@
         <div class="w-full max-w-[1440px] mx-auto px-10 pt-16 pb-32 max-lg:px-5 max-lg:pt-10 max-lg:pb-16 flex flex-col gap-16 max-lg:gap-10">
             {{-- Header --}}
             <div class="flex flex-col gap-5 items-center text-center text-blue-black w-full max-w-[660px] mx-auto">
-                <h1 class="text-h1 uppercase">{{ $currentCategory?->name ?? 'Products' }}</h1>
-                <p class="text-body-md">{{ $currentCategory?->description ?? 'Ingredients, tools, and staples we actually use.' }}</p>
+                <h1 class="text-h1 uppercase">{{ $currentCategory->name }}</h1>
+                @if($currentCategory->description)
+                    <p class="text-body-md">{{ $currentCategory->description }}</p>
+                @endif
             </div>
 
             {{-- Category Filters --}}
@@ -16,14 +18,14 @@
                 <div class="flex flex-wrap justify-center gap-3">
                     <a
                         href="{{ route('products.index') }}"
-                        class="px-4 py-2 rounded-full text-sm font-medium transition-colors {{ !$currentCategory ? 'bg-blue-black text-white' : 'bg-off-white text-blue-black hover:bg-gray-200' }}"
+                        class="px-4 py-2 rounded-full text-sm font-medium transition-colors bg-off-white text-blue-black hover:bg-gray-200"
                     >
                         All
                     </a>
                     @foreach($categories as $category)
                         <a
                             href="{{ route('products.category', $category) }}"
-                            class="px-4 py-2 rounded-full text-sm font-medium transition-colors {{ $currentCategory?->id === $category->id ? 'bg-blue-black text-white' : 'bg-off-white text-blue-black hover:bg-gray-200' }}"
+                            class="px-4 py-2 rounded-full text-sm font-medium transition-colors {{ $currentCategory->id === $category->id ? 'bg-blue-black text-white' : 'bg-off-white text-blue-black hover:bg-gray-200' }}"
                         >
                             {{ $category->name }}
                         </a>
@@ -47,7 +49,7 @@
                 @endif
             @else
                 <div class="text-center text-gray-500 py-16">
-                    <p class="text-body-lg">No products found.</p>
+                    <p class="text-body-lg">No products found in this category.</p>
                 </div>
             @endif
         </div>

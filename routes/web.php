@@ -47,9 +47,11 @@ Route::get('/api/search', [SearchController::class, 'suggestions'])->name(
 Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
 
 // Product routes
-Route::get('/product', [ProductController::class, 'index'])->name('products.index');
-Route::get('/product/go/{product:slug}', [ProductController::class, 'redirect'])->name('products.redirect');
-Route::get('/product/{category:slug}', [ProductController::class, 'byCategory'])->name('products.category');
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/go/{product:slug}', [ProductController::class, 'redirect'])->name('products.redirect');
+Route::get('/products/category/{category:slug}', [ProductController::class, 'byCategory'])->name('products.category');
+Route::get('/products/{store:slug}', [ProductController::class, 'byStore'])->name('products.store');
+Route::get('/products/{store:slug}/load-more', [ProductController::class, 'loadMore'])->name('products.store.loadMore');
 
 // Post routes (category/post pattern for SEO)
 Route::get('/{category}/{post}', [PostController::class, 'show'])

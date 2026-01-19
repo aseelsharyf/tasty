@@ -32,6 +32,8 @@ class Product extends Component
 
     public ?string $storeName;
 
+    public ?string $storeUrl;
+
     /**
      * Create a new component instance.
      *
@@ -51,6 +53,7 @@ class Product extends Component
         bool $showPrice = true,
         ?string $storeLogo = null,
         ?string $storeName = null,
+        ?string $storeUrl = null,
     ) {
         $this->showPrice = $showPrice;
         if ($product instanceof ProductModel) {
@@ -75,6 +78,7 @@ class Product extends Component
             // Store info
             $this->storeLogo = $product->store?->logo_url;
             $this->storeName = $product->store?->name;
+            $this->storeUrl = $product->store?->slug ? route('products.store', $product->store->slug) : null;
         } elseif (is_array($product)) {
             $this->image = $product['image'] ?? '';
             $this->imageAlt = $product['imageAlt'] ?? $product['title'] ?? '';
@@ -87,6 +91,7 @@ class Product extends Component
             $this->compareAtPrice = $product['compareAtPrice'] ?? null;
             $this->storeLogo = $product['storeLogo'] ?? null;
             $this->storeName = $product['storeName'] ?? null;
+            $this->storeUrl = $product['storeUrl'] ?? null;
         } else {
             $this->image = '';
             $this->imageAlt = '';
@@ -98,6 +103,7 @@ class Product extends Component
             $this->compareAtPrice = null;
             $this->storeLogo = null;
             $this->storeName = null;
+            $this->storeUrl = null;
         }
 
         // Allow individual prop overrides
@@ -130,6 +136,9 @@ class Product extends Component
         }
         if ($storeName !== null) {
             $this->storeName = $storeName;
+        }
+        if ($storeUrl !== null) {
+            $this->storeUrl = $storeUrl;
         }
     }
 
