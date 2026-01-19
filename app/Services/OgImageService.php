@@ -12,6 +12,14 @@ class OgImageService
 
     protected int $height = 630;
 
+    protected string $disk;
+
+    public function __construct()
+    {
+        // Use the same disk as media library for CDN support
+        $this->disk = config('media-library.disk_name', 'public');
+    }
+
     /**
      * Generate an OG image for a post.
      */
@@ -22,20 +30,13 @@ class OgImageService
         }
 
         $filename = 'og-images/posts/'.$post->slug.'.png';
-        $fullPath = storage_path('app/public/'.$filename);
 
         // Check if OG image already exists and is newer than the post
-        if (Storage::disk('public')->exists($filename)) {
-            $ogImageTime = Storage::disk('public')->lastModified($filename);
+        if (Storage::disk($this->disk)->exists($filename)) {
+            $ogImageTime = Storage::disk($this->disk)->lastModified($filename);
             if ($ogImageTime > $post->updated_at->timestamp) {
-                return Storage::disk('public')->url($filename);
+                return Storage::disk($this->disk)->url($filename);
             }
-        }
-
-        // Ensure directory exists
-        $directory = dirname($fullPath);
-        if (! is_dir($directory)) {
-            mkdir($directory, 0755, true);
         }
 
         try {
@@ -56,10 +57,11 @@ class OgImageService
             // Add logo at bottom left
             $this->addLogo($image);
 
-            // Save the image
-            $image->toPng()->save($fullPath);
+            // Save to disk (works with both local and cloud storage)
+            $pngData = $image->toPng()->toString();
+            Storage::disk($this->disk)->put($filename, $pngData, 'public');
 
-            return Storage::disk('public')->url($filename);
+            return Storage::disk($this->disk)->url($filename);
         } catch (\Exception $e) {
             report($e);
 
@@ -181,8 +183,8 @@ class OgImageService
         $filename = 'og-images/posts/'.$post->slug.'.png';
 
         // Check if already exists
-        if (Storage::disk('public')->exists($filename)) {
-            return Storage::disk('public')->url($filename);
+        if (Storage::disk($this->disk)->exists($filename)) {
+            return Storage::disk($this->disk)->url($filename);
         }
 
         // Generate new one
@@ -195,6 +197,6 @@ class OgImageService
     public function deleteForPost(Post $post): void
     {
         $filename = 'og-images/posts/'.$post->slug.'.png';
-        Storage::disk('public')->delete($filename);
+        Storage::disk($this->disk)->delete($filename);
     }
 }

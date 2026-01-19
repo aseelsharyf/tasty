@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use App\Services\OgImageService;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 
 class OgImageController extends Controller
 {
@@ -20,11 +21,12 @@ class OgImageController extends Controller
             abort(404, 'Could not generate OG image for this post');
         }
 
-        // Read the generated image and return it directly
+        // Read the generated image from the configured disk
+        $disk = config('media-library.disk_name', 'public');
         $filename = 'og-images/posts/'.$post->slug.'.png';
-        $path = storage_path('app/public/'.$filename);
+        $contents = Storage::disk($disk)->get($filename);
 
-        return response(file_get_contents($path), 200, [
+        return response($contents, 200, [
             'Content-Type' => 'image/png',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
         ]);
