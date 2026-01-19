@@ -31,21 +31,19 @@
 @endphp
 
 <section class="w-full flex justify-center relative z-0">
-    <div class="flex w-full max-w-[1880px] min-h-[854px] lg:min-h-[864px]
+    <div class="flex w-full max-w-[1880px] lg:min-h-[864px]
         max-lg:flex-col max-lg:items-start max-lg:w-full">
         {{-- Hero Image --}}
         @if($manual)
-            <div class="block relative w-full lg:w-1/2 flex-1 lg:flex-none lg:h-auto overflow-hidden
-                max-lg:min-h-[400px]">
+            <div class="hero-image-container block relative w-full lg:w-1/2 lg:flex-none overflow-hidden">
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"
-                    class="absolute inset-0 w-full h-full object-cover object-top" 
+                    class="absolute inset-0 w-full h-full object-cover object-top"
                 >
             </div>
         @else
-            <a href="{{ $heroUrl }}" class="block relative w-full lg:w-1/2 flex-1 lg:flex-none lg:h-auto overflow-hidden
-                max-lg:min-h-[400px]">
+            <a href="{{ $heroUrl }}" class="hero-image-container block relative w-full lg:w-1/2 lg:flex-none overflow-hidden">
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"

@@ -33,7 +33,7 @@ class CommentController extends Controller
             'parent_id' => ['nullable', 'integer', 'exists:comments,id'],
             'content' => ['required', 'string', 'min:3', 'max:5000'],
             'author_name' => ['required_without:user_id', 'nullable', 'string', 'max:100'],
-            'author_email' => ['required_without:user_id', 'nullable', 'email', 'max:255'],
+            'author_email' => ['nullable', 'email', 'max:255'],
         ]);
 
         // Verify the post exists and allows comments

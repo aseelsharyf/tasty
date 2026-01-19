@@ -13,7 +13,7 @@
 <header class="w-full max-w-[1880px] mx-auto">
     <div class="flex flex-col lg:flex-row min-h-[854px] lg:min-h-[864px]">
         {{-- Image Section (Left) --}}
-        <div class="w-full lg:w-[65%] flex-1 lg:flex-none lg:h-auto relative">
+        <div class="hero-image-container w-full lg:w-[65%] lg:flex-none relative">
             @if($post->featured_image_url)
                 <img
                     src="{{ $post->featured_image_url }}"

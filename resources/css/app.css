@@ -433,6 +433,18 @@
 
 /* Section and Layout Components */
 @layer components {
+    /* Hero Image Container - 80% viewport on mobile */
+    .hero-image-container {
+        min-height: 80svh;
+    }
+
+    @media (min-width: 1024px) {
+        .hero-image-container {
+            min-height: 0;
+            height: auto;
+        }
+    }
+
     /* Responsive Review/Product Card Grid */
     .review-grid {
         display: grid;

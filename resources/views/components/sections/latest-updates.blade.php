@@ -29,6 +29,9 @@
                 {{-- Title & Description --}}
                 <div class="flex flex-col gap-4 items-center text-center text-blue-black w-full max-w-[450px]">
                     <div class="flex flex-col items-center">
+                        @if($titleSmall)
+                            <span class="font-display text-[48px] leading-[1.1] tracking-[-0.04em] uppercase max-xl:text-[24px]">{{ $titleSmall }}</span>
+                        @endif
                         <h2 class="font-display text-[72px] leading-[1] tracking-[-0.04em] uppercase max-xl:text-[36px]">{{ $titleLarge }}</h2>
                     </div>
                     <p class="text-body-md">{{ $description }}</p>

@@ -52,6 +52,11 @@ class ProductSeeder extends Seeder
      */
     private function createStores()
     {
+        // Get client logos from media
+        $clientLogos = MediaItem::images()
+            ->where('category', 'clients')
+            ->get();
+
         $storesData = [
             [
                 'name' => 'Amazon',
@@ -115,10 +120,14 @@ class ProductSeeder extends Seeder
             ],
         ];
 
-        foreach ($storesData as $data) {
+        foreach ($storesData as $index => $data) {
+            // Assign a logo if available
+            $logo = $clientLogos->isNotEmpty() ? $clientLogos->get($index % $clientLogos->count()) : null;
+
             ProductStore::create(array_merge($data, [
                 'uuid' => fake()->uuid(),
                 'is_active' => true,
+                'logo_media_id' => $logo?->id,
             ]));
         }
 

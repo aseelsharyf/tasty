@@ -30,22 +30,24 @@
 
         {{-- Recipe Metadata Pills (only show if any values exist) --}}
         @if($hasMetadata)
-            <div class="flex justify-center items-center gap-8 py-6 border-t border-b border-tasty-blue-black/10 mb-12 {{ $isRtl ? 'flex-row-reverse' : '' }}">
-                @if($prepTime)
-                    <span class="text-body text-tasty-blue-black/60">
-                        {{ $isRtl ? 'ތައްޔާރުކުރާ ވަގުތު' : 'Prep' }}: {{ $prepTime }} {{ $isRtl ? 'މިނެޓް' : 'min' }}
-                    </span>
-                @endif
-                @if($cookTime)
-                    <span class="text-body text-tasty-blue-black/60">
-                        {{ $isRtl ? 'ކައްކާ ވަގުތު' : 'Cook' }}: {{ $cookTime }} {{ $isRtl ? 'މިނެޓް' : 'min' }}
-                    </span>
-                @endif
-                @if($servings)
-                    <span class="text-body text-tasty-blue-black/60">
-                        {{ $isRtl ? 'ޚިދުމަތް' : 'Serves' }}: {{ $servings }}
-                    </span>
-                @endif
+            <div class="flex justify-center mb-12">
+                <div class="inline-flex items-center gap-6 px-8 py-4 bg-white rounded-full shadow-sm {{ $isRtl ? 'flex-row-reverse' : '' }}">
+                    @if($prepTime)
+                        <span class="text-body text-tasty-blue-black/70">
+                            {{ $isRtl ? 'ތައްޔާރުކުރާ ވަގުތު' : 'Prep' }}: {{ $prepTime }} {{ $isRtl ? 'މިނެޓް' : 'min' }}
+                        </span>
+                    @endif
+                    @if($cookTime)
+                        <span class="text-body text-tasty-blue-black/70">
+                            {{ $isRtl ? 'ކައްކާ ވަގުތު' : 'Cook' }}: {{ $cookTime }} {{ $isRtl ? 'މިނެޓް' : 'min' }}
+                        </span>
+                    @endif
+                    @if($servings)
+                        <span class="text-body text-tasty-blue-black/70">
+                            {{ $isRtl ? 'ޚިދުމަތް' : 'Serves' }}: {{ $servings }}
+                        </span>
+                    @endif
+                </div>
             </div>
         @endif
 

@@ -119,16 +119,15 @@
                     </template>
                 </div>
 
-                {{-- Email --}}
+                {{-- Email (optional) --}}
                 <div>
                     <label for="{{ $formId }}-email" class="block text-sm font-medium text-tasty-blue-black mb-1.5">
-                        Email <span class="text-red-500">*</span>
+                        Email <span class="text-tasty-blue-black/50 font-normal">(optional)</span>
                     </label>
                     <input
                         type="email"
                         id="{{ $formId }}-email"
                         x-model="email"
-                        required
                         class="w-full px-4 py-3 rounded-lg border border-tasty-blue-black/20 focus:border-tasty-blue-black focus:ring-1 focus:ring-tasty-blue-black outline-none transition-colors text-tasty-blue-black placeholder:text-tasty-blue-black/40"
                         placeholder="your@email.com"
                         :class="{ 'border-red-500': errors.author_email }"
@@ -172,23 +171,23 @@
         </div>
 
         {{-- Submit Button --}}
-        <div class="flex items-center justify-between gap-4">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             @if($isReply)
                 <button
                     type="button"
-                    class="text-sm text-tasty-blue-black/60 hover:text-tasty-blue-black transition-colors"
+                    class="text-sm text-tasty-blue-black/60 hover:text-tasty-blue-black transition-colors order-2 sm:order-1"
                     onclick="this.closest('[id^=reply-form-]').classList.add('hidden')"
                 >
                     Cancel
                 </button>
             @else
-                <p class="text-xs text-tasty-blue-black/50">Comments are moderated before appearing.</p>
+                <p class="text-xs text-tasty-blue-black/50 order-2 sm:order-1">Comments are moderated before appearing.</p>
             @endif
 
             <button
                 type="submit"
                 :disabled="submitting || !content.trim()"
-                class="inline-flex items-center gap-2 px-6 py-3 bg-tasty-blue-black text-white text-sm font-medium rounded-full hover:bg-tasty-blue-black/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                class="order-1 sm:order-2 inline-flex items-center justify-center gap-2 px-6 py-3 bg-tasty-blue-black text-white text-sm font-medium rounded-full hover:bg-tasty-blue-black/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
                 <span x-show="!submitting">{{ $isReply ? 'Post Reply' : 'Post Comment' }}</span>
                 <span x-show="submitting" class="inline-flex items-center gap-2">
