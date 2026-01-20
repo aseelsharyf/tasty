@@ -21,6 +21,7 @@ use App\Http\Controllers\Cms\PostPreviewController;
 use App\Http\Controllers\Cms\ProductCategoryController;
 use App\Http\Controllers\Cms\ProductStoreController;
 use App\Http\Controllers\Cms\ProfileController;
+use App\Http\Controllers\Cms\RecipeSubmissionController;
 use App\Http\Controllers\Cms\RoleController;
 use App\Http\Controllers\Cms\SeoSettingController;
 use App\Http\Controllers\Cms\SettingsController;
@@ -428,6 +429,17 @@ Route::middleware(['auth', 'cms'])->group(function () {
         // Tag layouts
         Route::get('tags/{tag}', [LayoutController::class, 'tagLayout'])->name('cms.layouts.tag');
         Route::put('tags/{tag}', [LayoutController::class, 'updateTagLayout'])->name('cms.layouts.tag.update');
+    });
+
+    // Recipe Submissions Management
+    Route::middleware('permission:posts.view')->prefix('recipe-submissions')->group(function () {
+        Route::get('/', [RecipeSubmissionController::class, 'index'])->name('cms.recipe-submissions.index');
+        Route::get('/{submission}', [RecipeSubmissionController::class, 'show'])->name('cms.recipe-submissions.show');
+        Route::post('/{submission}/approve', [RecipeSubmissionController::class, 'approve'])->name('cms.recipe-submissions.approve');
+        Route::post('/{submission}/reject', [RecipeSubmissionController::class, 'reject'])->name('cms.recipe-submissions.reject');
+        Route::post('/{submission}/convert', [RecipeSubmissionController::class, 'convertToPost'])->name('cms.recipe-submissions.convert');
+        Route::delete('/{submission}', [RecipeSubmissionController::class, 'destroy'])->name('cms.recipe-submissions.destroy');
+        Route::post('/bulk', [RecipeSubmissionController::class, 'bulkAction'])->name('cms.recipe-submissions.bulk');
     });
 
     // Workflow Routes

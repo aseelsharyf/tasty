@@ -30,6 +30,7 @@ class StorePageRequest extends FormRequest
             'layout' => ['required', 'string', Rule::in(array_keys(Page::getLayouts()))],
             'status' => ['required', 'string', Rule::in(array_keys(Page::getStatuses()))],
             'is_blade' => ['boolean'],
+            'editor_mode' => ['nullable', 'string', Rule::in(['code', 'markdown'])],
             'author_id' => ['nullable', 'integer', 'exists:users,id'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:500'],

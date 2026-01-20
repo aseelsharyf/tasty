@@ -8,7 +8,9 @@ use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RecipeSubmissionController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\TagController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +49,30 @@ Route::get('/api/search', [SearchController::class, 'suggestions'])->name(
 // Comment routes
 Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
 
+// Social Authentication routes
+Route::get('/auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');
+Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+Route::post('/auth/logout', [SocialAuthController::class, 'logout'])->name('auth.logout');
+Route::get('/api/auth/user', [SocialAuthController::class, 'user'])->name('api.auth.user');
+Route::post('/api/auth/profile', [SocialAuthController::class, 'updateProfile'])->name('api.auth.profile.update');
+Route::post('/api/auth/profile/remove-avatar', [SocialAuthController::class, 'removeAvatar'])->name('api.auth.profile.remove-avatar');
+
+// Debug route - remove in production
+Route::get('/auth/debug', function () {
+    $user = auth()->user();
+
+    return response()->json([
+        'authenticated' => auth()->check(),
+        'user' => $user ? [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'google_id' => $user->google_id,
+        ] : null,
+        'session_id' => session()->getId(),
+    ]);
+});
+
 // OG Image preview (for debugging)
 Route::get('/og-preview/{post:slug}', [OgImageController::class, 'preview'])->name('og.preview');
 
@@ -56,6 +82,13 @@ Route::get('/products/go/{product:slug}', [ProductController::class, 'redirect']
 Route::get('/products/category/{category:slug}', [ProductController::class, 'byCategory'])->name('products.category');
 Route::get('/products/{store:slug}', [ProductController::class, 'byStore'])->name('products.store');
 Route::get('/products/{store:slug}/load-more', [ProductController::class, 'loadMore'])->name('products.store.loadMore');
+
+// Recipe submission routes
+Route::get('/submit-recipe', [RecipeSubmissionController::class, 'create'])->name('recipes.submit');
+Route::post('/submit-recipe', [RecipeSubmissionController::class, 'store'])->name('recipes.submit.store');
+Route::get('/submit-recipe/success', [RecipeSubmissionController::class, 'success'])->name('recipes.submit.success');
+Route::get('/api/ingredients', [RecipeSubmissionController::class, 'apiIngredients'])->name('api.ingredients');
+Route::get('/api/units', [RecipeSubmissionController::class, 'apiUnits'])->name('api.units');
 
 // Post routes (category/post pattern for SEO)
 Route::get('/{category}/{post}', [PostController::class, 'show'])

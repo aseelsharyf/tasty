@@ -5,6 +5,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.vue';
 
 const toast = useToast();
 import CodeEditor from '../../components/CodeEditor.vue';
+import MarkdownEditor from '../../components/MarkdownEditor.vue';
 import DhivehiInput from '../../components/DhivehiInput.vue';
 import type { Page, Author, Language } from '../../types';
 
@@ -12,6 +13,7 @@ interface PageData extends Page {
     content?: string | null;
     meta_title?: string | null;
     meta_description?: string | null;
+    editor_mode?: 'code' | 'markdown';
 }
 
 const props = defineProps<{
@@ -27,6 +29,7 @@ const activeTab = ref<'content' | 'settings' | 'preview'>('content');
 const deleteModalOpen = ref(false);
 const previewKey = ref(0);
 const previewSize = ref<'desktop' | 'tablet' | 'mobile'>('desktop');
+const editorMode = ref<'code' | 'markdown'>(props.page.editor_mode || 'code');
 
 const previewSizes = {
     desktop: { width: '100%', label: 'Desktop', icon: 'i-lucide-monitor' },
@@ -45,6 +48,16 @@ const form = useForm({
     meta_title: props.page.meta_title || '',
     meta_description: props.page.meta_description || '',
     published_at: props.page.published_at || '',
+    editor_mode: props.page.editor_mode || 'code',
+});
+
+// Sync editor mode with form
+watch(editorMode, (newMode) => {
+    form.editor_mode = newMode;
+    // When switching to markdown, disable blade rendering
+    if (newMode === 'markdown') {
+        form.is_blade = false;
+    }
 });
 
 // Watch for form errors and show toast
@@ -265,14 +278,46 @@ const statusBadgeColor = computed(() => {
                             </div>
                         </div>
 
+                        <!-- Editor Mode Toggle -->
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm font-medium text-highlighted">Content</div>
+                            <div class="flex items-center gap-2 p-1 rounded-lg bg-elevated border border-default">
+                                <UButton
+                                    icon="i-lucide-file-text"
+                                    :color="editorMode === 'markdown' ? 'primary' : 'neutral'"
+                                    :variant="editorMode === 'markdown' ? 'soft' : 'ghost'"
+                                    size="xs"
+                                    @click="editorMode = 'markdown'"
+                                >
+                                    Markdown
+                                </UButton>
+                                <UButton
+                                    icon="i-lucide-code"
+                                    :color="editorMode === 'code' ? 'primary' : 'neutral'"
+                                    :variant="editorMode === 'code' ? 'soft' : 'ghost'"
+                                    size="xs"
+                                    @click="editorMode = 'code'"
+                                >
+                                    Code
+                                </UButton>
+                            </div>
+                        </div>
+
                         <UFormField
-                            label="Content"
                             name="content"
                             :error="form.errors.content"
-                            help="Write your page content using HTML or Blade syntax"
+                            :help="editorMode === 'markdown' ? 'Write your page content using Markdown syntax' : 'Write your page content using HTML or Blade syntax'"
                             class="w-full max-w-full overflow-hidden"
                         >
+                            <MarkdownEditor
+                                v-if="editorMode === 'markdown'"
+                                v-model="form.content"
+                                placeholder="Write your page content here..."
+                                height="500px"
+                                :disabled="form.processing"
+                            />
                             <CodeEditor
+                                v-else
                                 v-model="form.content"
                                 language="blade"
                                 placeholder="<!-- Enter your page content here -->"
@@ -281,7 +326,7 @@ const statusBadgeColor = computed(() => {
                             />
                         </UFormField>
 
-                        <div class="flex items-center gap-4">
+                        <div v-if="editorMode === 'code'" class="flex items-center gap-4">
                             <UCheckbox
                                 v-model="form.is_blade"
                                 label="Enable Blade rendering"
@@ -289,6 +334,13 @@ const statusBadgeColor = computed(() => {
                             />
                             <span class="text-sm text-muted" v-pre>
                                 When enabled, Blade directives like @if, @foreach, {{ $variable }} will be processed
+                            </span>
+                        </div>
+
+                        <div v-if="editorMode === 'markdown'" class="flex items-center gap-2 p-3 rounded-lg bg-info/10 border border-info/20">
+                            <UIcon name="i-lucide-info" class="size-4 text-info shrink-0" />
+                            <span class="text-sm text-muted">
+                                Markdown content will be converted to HTML when the page is rendered. This is ideal for simple pages without complex layouts.
                             </span>
                         </div>
                     </div>

@@ -168,6 +168,7 @@ class PageController extends Controller
             'layout' => $page->layout,
             'status' => $page->status,
             'is_blade' => $page->is_blade,
+            'editor_mode' => $page->editor_mode ?? 'code',
             'author_id' => $page->author_id,
             'meta_title' => $page->getRawOriginal('meta_title'),
             'meta_description' => $page->meta_description,

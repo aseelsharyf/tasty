@@ -31,12 +31,23 @@ const props = defineProps<{
 
 const activeTab = computed(() => props.tab || 'general');
 
+// Main settings pages navigation
+const mainNav = computed<NavigationMenuItem[][]>(() => [[
+    { label: 'General', icon: 'i-lucide-settings', to: '/cms/settings/general', active: true },
+    { label: 'Media', icon: 'i-lucide-image', to: '/cms/settings/media' },
+    { label: 'Post Types', icon: 'i-lucide-file-text', to: '/cms/settings/post-types' },
+    { label: 'Workflows', icon: 'i-lucide-git-branch', to: '/cms/settings/workflows' },
+    { label: 'Languages', icon: 'i-lucide-globe', to: '/cms/settings/languages' },
+    { label: 'SEO Pages', icon: 'i-lucide-search', to: '/cms/seo-settings' },
+]]);
+
+// Sub-tabs for general settings
 const links = computed<NavigationMenuItem[][]>(() => [[
-    { label: 'General', icon: 'i-lucide-settings', to: '/cms/settings/general', active: activeTab.value === 'general' },
-    { label: 'SEO & Meta', icon: 'i-lucide-search', to: '/cms/settings/seo', active: activeTab.value === 'seo' },
-    { label: 'OpenGraph', icon: 'i-lucide-share-2', to: '/cms/settings/opengraph', active: activeTab.value === 'opengraph' },
-    { label: 'Favicons', icon: 'i-lucide-image', to: '/cms/settings/favicons', active: activeTab.value === 'favicons' },
-    { label: 'Social Links', icon: 'i-lucide-globe', to: '/cms/settings/social', active: activeTab.value === 'social' },
+    { label: 'Site Info', to: '/cms/settings/general', active: activeTab.value === 'general' },
+    { label: 'SEO & Meta', to: '/cms/settings/seo', active: activeTab.value === 'seo' },
+    { label: 'OpenGraph', to: '/cms/settings/opengraph', active: activeTab.value === 'opengraph' },
+    { label: 'Favicons', to: '/cms/settings/favicons', active: activeTab.value === 'favicons' },
+    { label: 'Social Links', to: '/cms/settings/social', active: activeTab.value === 'social' },
 ]]);
 
 const form = useForm({
@@ -168,7 +179,11 @@ const socialLinks = [
                 </UDashboardNavbar>
 
                 <UDashboardToolbar>
-                    <UNavigationMenu :items="links" highlight class="-mx-1 flex-1" />
+                    <UNavigationMenu :items="mainNav" highlight class="-mx-1 flex-1 overflow-x-auto" />
+                </UDashboardToolbar>
+
+                <UDashboardToolbar class="border-t-0 bg-elevated/50">
+                    <UNavigationMenu :items="links" highlight variant="pill" class="-mx-1 flex-1" />
                 </UDashboardToolbar>
             </template>
 

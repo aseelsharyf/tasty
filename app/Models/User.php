@@ -27,6 +27,8 @@ class User extends Authenticatable implements HasMedia
         'email',
         'password',
         'username',
+        'google_id',
+        'avatar',
     ];
 
     /**

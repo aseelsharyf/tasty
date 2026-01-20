@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
+use League\CommonMark\CommonMarkConverter;
+use League\CommonMark\Exception\CommonMarkException;
 
 class Page extends Model
 {
@@ -20,6 +22,10 @@ class Page extends Model
 
     public const STATUS_PUBLISHED = 'published';
 
+    public const EDITOR_MODE_CODE = 'code';
+
+    public const EDITOR_MODE_MARKDOWN = 'markdown';
+
     protected $fillable = [
         'uuid',
         'language_code',
@@ -29,6 +35,7 @@ class Page extends Model
         'layout',
         'status',
         'is_blade',
+        'editor_mode',
         'author_id',
         'meta_title',
         'meta_description',
@@ -96,8 +103,16 @@ class Page extends Model
     }
 
     /**
+     * Check if this page uses Markdown editor.
+     */
+    public function usesMarkdown(): bool
+    {
+        return $this->editor_mode === self::EDITOR_MODE_MARKDOWN;
+    }
+
+    /**
      * Render the page content.
-     * If is_blade is true, compiles the content as Blade template.
+     * Handles both Blade templates and Markdown content.
      */
     public function renderContent(): string
     {
@@ -105,6 +120,22 @@ class Page extends Model
             return '';
         }
 
+        // Handle markdown content
+        if ($this->usesMarkdown()) {
+            try {
+                $converter = new CommonMarkConverter([
+                    'html_input' => 'allow',
+                    'allow_unsafe_links' => false,
+                ]);
+
+                return $converter->convert($this->content)->getContent();
+            } catch (CommonMarkException $e) {
+                // If markdown parsing fails, return content as-is
+                return $this->content;
+            }
+        }
+
+        // Handle Blade content
         if ($this->usesBlade()) {
             return Blade::render($this->content, [
                 'page' => $this,

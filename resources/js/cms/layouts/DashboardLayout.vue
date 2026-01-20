@@ -354,12 +354,23 @@ const layoutNavItems = computed<NavigationMenuItem[]>(() => {
 
 const engagementNavItems = computed<NavigationMenuItem[]>(() => {
     const items: NavigationMenuItem[] = [];
-    const hasEngagementAccess = can('comments.view') || can('subscribers.view');
+    const hasEngagementAccess = can('comments.view') || can('subscribers.view') || can('posts.view');
 
     if (hasEngagementAccess) {
         items.push({
             label: 'Engagement',
             type: 'label',
+        });
+    }
+
+    // Recipe Submissions
+    if (can('posts.view')) {
+        items.push({
+            label: 'Recipe Submissions',
+            icon: 'i-lucide-chef-hat',
+            to: '/cms/recipe-submissions',
+            active: isActivePrefix('/cms/recipe-submissions'),
+            onSelect: () => { sidebarOpen.value = false; },
         });
     }
 

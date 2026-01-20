@@ -2,7 +2,17 @@
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
-import type { BreadcrumbItem } from '@nuxt/ui';
+import type { BreadcrumbItem, NavigationMenuItem } from '@nuxt/ui';
+
+// Settings navigation
+const settingsNav = computed<NavigationMenuItem[][]>(() => [[
+    { label: 'General', icon: 'i-lucide-settings', to: '/cms/settings/general' },
+    { label: 'Media', icon: 'i-lucide-image', to: '/cms/settings/media' },
+    { label: 'Post Types', icon: 'i-lucide-file-text', to: '/cms/settings/post-types', active: true },
+    { label: 'Workflows', icon: 'i-lucide-git-branch', to: '/cms/settings/workflows' },
+    { label: 'Languages', icon: 'i-lucide-globe', to: '/cms/settings/languages' },
+    { label: 'SEO Pages', icon: 'i-lucide-search', to: '/cms/seo-settings' },
+]]);
 
 interface PostTypeField {
     name: string;
@@ -214,15 +224,15 @@ const hasChanges = computed(() => {
     <DashboardLayout>
         <UDashboardPanel id="settings-post-types" :ui="{ body: 'lg:py-12' }">
             <template #header>
-                <UDashboardNavbar>
+                <UDashboardNavbar title="Settings">
                     <template #leading>
                         <UDashboardSidebarCollapse />
                     </template>
-
-                    <template #title>
-                        <UBreadcrumb :items="breadcrumbs" />
-                    </template>
                 </UDashboardNavbar>
+
+                <UDashboardToolbar>
+                    <UNavigationMenu :items="settingsNav" highlight class="-mx-1 flex-1 overflow-x-auto" />
+                </UDashboardToolbar>
             </template>
 
             <template #body>

@@ -49,7 +49,8 @@ class UserController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'username' => $user->username,
-                    'avatar_url' => $user->avatar_url,
+                    'avatar_url' => $user->avatar_url ?? $user->avatar,
+                    'google_id' => $user->google_id,
                     'roles' => $user->roles->pluck('name'),
                     'created_at' => $user->created_at,
                     'updated_at' => $user->updated_at,
@@ -134,7 +135,9 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'username' => $user->username,
-                'avatar_url' => $user->avatar_url,
+                'avatar_url' => $user->avatar_url ?? $user->avatar,
+                'avatar' => $user->avatar,
+                'google_id' => $user->google_id,
                 'roles' => $user->roles->pluck('name'),
                 'created_at' => $user->created_at,
                 'updated_at' => $user->updated_at,
@@ -171,9 +174,15 @@ class UserController extends Controller
         $user->syncRoles($validated['roles'] ?? []);
 
         if ($request->hasFile('avatar')) {
+            // Store avatar directly on the user model (simpler than media library for this use case)
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            $user->update(['avatar' => '/storage/'.$avatarPath]);
+            // Also update media library for backward compatibility
             $user->addMediaFromRequest('avatar')
                 ->toMediaCollection('avatar');
         } elseif ($request->boolean('remove_avatar')) {
+            // Clear both the avatar field and media library
+            $user->update(['avatar' => null]);
             $user->clearMediaCollection('avatar');
         }
 
