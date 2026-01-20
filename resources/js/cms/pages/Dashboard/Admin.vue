@@ -354,16 +354,16 @@ function getBarHeight(count: number): string {
                                 <p class="text-muted">All caught up!</p>
                             </div>
 
-                            <div v-else class="divide-y divide-default -mx-4">
+                            <div v-else class="divide-y divide-default -mx-4 overflow-hidden">
                                 <div
                                     v-for="post in pendingReview"
                                     :key="post.id"
-                                    class="flex items-center gap-3 px-4 py-3 hover:bg-elevated/50 transition-colors cursor-pointer"
+                                    class="flex items-start gap-3 px-4 py-3 hover:bg-elevated/50 transition-colors cursor-pointer overflow-hidden"
                                     @click="editPost(post)"
                                 >
-                                    <div class="flex-1 min-w-0 overflow-hidden">
-                                        <p class="font-medium text-highlighted truncate text-sm">{{ post.title }}</p>
-                                        <p class="text-xs text-muted truncate">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium text-highlighted text-sm line-clamp-2">{{ post.title }}</p>
+                                        <p class="text-xs text-muted mt-1">
                                             {{ post.author?.name || 'Unknown' }} • {{ formatRelativeDate(post.updated_at) }}
                                         </p>
                                     </div>
@@ -371,7 +371,7 @@ function getBarHeight(count: number): string {
                                         :color="getStatusColor(post.workflow_status || '')"
                                         variant="subtle"
                                         size="sm"
-                                        class="shrink-0"
+                                        class="shrink-0 mt-0.5"
                                     >
                                         {{ post.workflow_status }}
                                     </UBadge>
