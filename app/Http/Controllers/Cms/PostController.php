@@ -368,7 +368,7 @@ class PostController extends Controller
     public function edit(Request $request, string $language, Post $post): Response
     {
         $language = strtolower($language);
-        $post->load(['categories', 'tags', 'author', 'language', 'featuredMedia', 'featuredTag', 'sponsor', 'draftVersion', 'activeVersion', 'versions.createdBy']);
+        $post->load(['categories', 'tags', 'author', 'language', 'featuredMedia', 'coverVideo', 'featuredTag', 'sponsor', 'draftVersion', 'activeVersion', 'versions.createdBy']);
 
         // Set locale for translatable models
         app()->setLocale($language);
@@ -482,6 +482,7 @@ class PostController extends Controller
                 'meta_title' => $useSnapshot ? ($versionSnapshot['meta_title'] ?? $post->meta_title) : $post->meta_title,
                 'meta_description' => $useSnapshot ? ($versionSnapshot['meta_description'] ?? $post->meta_description) : $post->meta_description,
                 'featured_media_id' => $useSnapshot ? ($versionSnapshot['featured_media_id'] ?? $post->featured_media_id) : $post->featured_media_id,
+                'cover_video_id' => $useSnapshot ? ($versionSnapshot['cover_video_id'] ?? $post->cover_video_id) : $post->cover_video_id,
                 'featured_image_anchor' => $useSnapshot ? ($versionSnapshot['featured_image_anchor'] ?? $post->featured_image_anchor ?? ['x' => 50, 'y' => 0]) : ($post->featured_image_anchor ?? ['x' => 50, 'y' => 0]),
                 // Metadata fields - always from post model
                 'status' => $post->status,
@@ -502,6 +503,15 @@ class PostController extends Controller
                     'credit_display' => $post->featuredMedia->credit_display,
                     'is_image' => $post->featuredMedia->is_image,
                     'is_video' => $post->featuredMedia->is_video,
+                ] : null,
+                'cover_video' => $post->coverVideo ? [
+                    'id' => $post->coverVideo->id,
+                    'uuid' => $post->coverVideo->uuid,
+                    'type' => $post->coverVideo->type,
+                    'url' => $post->coverVideo->url,
+                    'thumbnail_url' => $post->coverVideo->thumbnail_url,
+                    'title' => $post->coverVideo->title,
+                    'is_video' => $post->coverVideo->is_video,
                 ] : null,
                 // Taxonomy - use snapshot if available
                 'category_id' => $useSnapshot
@@ -592,6 +602,7 @@ class PostController extends Controller
                 'meta_title' => $validated['meta_title'] ?? null,
                 'meta_description' => $validated['meta_description'] ?? null,
                 'featured_media_id' => $validated['featured_media_id'] ?? null,
+                'cover_video_id' => $validated['cover_video_id'] ?? null,
                 'featured_image_anchor' => $validated['featured_image_anchor'] ?? $post->featured_image_anchor ?? ['x' => 50, 'y' => 0],
                 'featured_tag_id' => $validated['featured_tag_id'] ?? null,
                 'sponsor_id' => $validated['sponsor_id'] ?? null,
@@ -625,6 +636,7 @@ class PostController extends Controller
             'template' => $validated['template'] ?? $post->template,
             'scheduled_at' => $validated['scheduled_at'] ?? null,
             'featured_media_id' => $validated['featured_media_id'] ?? null,
+            'cover_video_id' => $validated['cover_video_id'] ?? null,
             'featured_image_anchor' => $validated['featured_image_anchor'] ?? $post->featured_image_anchor ?? ['x' => 50, 'y' => 0],
             'featured_tag_id' => $validated['featured_tag_id'] ?? null,
             'sponsor_id' => $validated['sponsor_id'] ?? null,

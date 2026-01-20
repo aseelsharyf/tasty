@@ -63,6 +63,12 @@ class PostSeeder extends Seeder
             $this->command->warn('No media items found. Run MediaSeeder first for images.');
         }
 
+        // Get video items for cover videos
+        $videoItems = MediaItem::videos()->get();
+        if ($videoItems->isEmpty()) {
+            $this->command->warn('No video items found. Run MediaSeeder first for videos.');
+        }
+
         // Main navigation categories that must have posts
         $mainCategorySlugs = ['update', 'feature', 'people', 'review', 'recipe', 'pantry'];
         $mainCategories = Category::whereIn('slug', $mainCategorySlugs)->get();
@@ -70,11 +76,11 @@ class PostSeeder extends Seeder
         foreach ($languages as $language) {
             // Create at least one published article for each main category
             foreach ($mainCategories as $mainCategory) {
-                $this->createPublishedArticleForCategory($language, $authors, $mainCategory, $tags, $sponsors, $mediaItems);
+                $this->createPublishedArticleForCategory($language, $authors, $mainCategory, $tags, $sponsors, $mediaItems, $videoItems);
             }
 
             // Create additional random published articles (4 more per language)
-            $this->createPublishedArticles($language, $authors, $categories, $tags, $sponsors, $mediaItems, 4);
+            $this->createPublishedArticles($language, $authors, $categories, $tags, $sponsors, $mediaItems, 4, $videoItems);
 
             // Create 3 draft posts per language
             $this->createDraftPosts($language, $authors, $categories, $tags, $mediaItems, 3);
@@ -86,13 +92,13 @@ class PostSeeder extends Seeder
             $this->createApprovedPosts($language, $authors, $categories, $tags, $mediaItems, 2);
 
             // Create 2 published recipes per language
-            $this->createPublishedRecipes($language, $authors, $categories, $tags, $sponsors, $mediaItems, 2);
+            $this->createPublishedRecipes($language, $authors, $categories, $tags, $sponsors, $mediaItems, 2, $videoItems);
 
             // Create 3 restaurant reviews per language
-            $this->createPublishedRestaurantReviews($language, $authors, $categories, $tags, $sponsors, $mediaItems, 3);
+            $this->createPublishedRestaurantReviews($language, $authors, $categories, $tags, $sponsors, $mediaItems, 3, $videoItems);
 
             // Create 2 people posts per language
-            $this->createPublishedPeoplePosts($language, $authors, $categories, $tags, $sponsors, $mediaItems, 2);
+            $this->createPublishedPeoplePosts($language, $authors, $categories, $tags, $sponsors, $mediaItems, 2, $videoItems);
 
             $this->command->info("Created posts for language: {$language->name}");
         }
@@ -145,11 +151,13 @@ class PostSeeder extends Seeder
     /**
      * Create a published article for a specific category.
      */
-    private function createPublishedArticleForCategory($language, $authors, Category $category, $tags, $sponsors, $mediaItems): void
+    private function createPublishedArticleForCategory($language, $authors, Category $category, $tags, $sponsors, $mediaItems, $videoItems = null): void
     {
         $author = $authors->random();
         $featuredTag = $tags->random();
         $sponsor = fake()->boolean(30) ? $sponsors->random() : null;
+        // 40% chance of having a cover video
+        $coverVideo = ($videoItems && $videoItems->isNotEmpty() && fake()->boolean(40)) ? $videoItems->random() : null;
 
         $post = Post::factory()
             ->article()
@@ -162,6 +170,7 @@ class PostSeeder extends Seeder
                 'status' => Post::STATUS_DRAFT,
                 'content' => $this->getArticleContent($mediaItems),
                 'featured_media_id' => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
+                'cover_video_id' => $coverVideo?->id,
             ]);
 
         // Attach to the specific category
@@ -187,7 +196,7 @@ class PostSeeder extends Seeder
     /**
      * Create published articles with proper workflow.
      */
-    private function createPublishedArticles($language, $authors, $categories, $tags, $sponsors, $mediaItems, int $count): void
+    private function createPublishedArticles($language, $authors, $categories, $tags, $sponsors, $mediaItems, int $count, $videoItems = null): void
     {
         for ($i = 0; $i < $count; $i++) {
             $author = $authors->random();
@@ -195,6 +204,8 @@ class PostSeeder extends Seeder
             $featuredTag = $tags->random();
             // 30% chance of being sponsored
             $sponsor = fake()->boolean(30) ? $sponsors->random() : null;
+            // 40% chance of having a cover video
+            $coverVideo = ($videoItems && $videoItems->isNotEmpty() && fake()->boolean(40)) ? $videoItems->random() : null;
 
             $post = Post::factory()
                 ->article()
@@ -207,6 +218,7 @@ class PostSeeder extends Seeder
                     'status' => Post::STATUS_DRAFT,
                     'content' => $this->getArticleContent($mediaItems),
                     'featured_media_id' => $mediaItems->isNotEmpty() ? $mediaItems->random()->id : null,
+                    'cover_video_id' => $coverVideo?->id,
                 ]);
 
             // Attach to category pivot table
@@ -344,7 +356,7 @@ class PostSeeder extends Seeder
     /**
      * Create published recipes with proper workflow.
      */
-    private function createPublishedRecipes($language, $authors, $categories, $tags, $sponsors, $mediaItems, int $count): void
+    private function createPublishedRecipes($language, $authors, $categories, $tags, $sponsors, $mediaItems, int $count, $videoItems = null): void
     {
         $recipes = $this->getRealisticRecipes();
 
@@ -354,6 +366,8 @@ class PostSeeder extends Seeder
             $featuredTag = $tags->random();
             // 20% chance of being sponsored
             $sponsor = fake()->boolean(20) ? $sponsors->random() : null;
+            // 50% chance of having a cover video for recipes
+            $coverVideo = ($videoItems && $videoItems->isNotEmpty() && fake()->boolean(50)) ? $videoItems->random() : null;
 
             // Get a realistic recipe or fall back to generated content
             $recipe = $recipes[$i % count($recipes)];
@@ -370,6 +384,7 @@ class PostSeeder extends Seeder
                     'sponsor_id' => $sponsor?->id,
                     'workflow_status' => 'draft',
                     'status' => Post::STATUS_DRAFT,
+                    'cover_video_id' => $coverVideo?->id,
                     'content' => $this->getRecipeContentWithCollapsibles($recipe, $mediaItems),
                     'custom_fields' => [
                         'prep_time' => $recipe['prep_time'],
@@ -405,7 +420,7 @@ class PostSeeder extends Seeder
     /**
      * Create published restaurant reviews with proper workflow.
      */
-    private function createPublishedRestaurantReviews($language, $authors, $categories, $tags, $sponsors, $mediaItems, int $count): void
+    private function createPublishedRestaurantReviews($language, $authors, $categories, $tags, $sponsors, $mediaItems, int $count, $videoItems = null): void
     {
         $reviews = $this->getRealisticRestaurantReviews();
         $reviewCategory = Category::where('slug', 'review')->first();
@@ -415,6 +430,8 @@ class PostSeeder extends Seeder
             $category = $reviewCategory ?? $categories->random();
             $featuredTag = $tags->random();
             $sponsor = fake()->boolean(25) ? $sponsors->random() : null;
+            // 30% chance of having a cover video
+            $coverVideo = ($videoItems && $videoItems->isNotEmpty() && fake()->boolean(30)) ? $videoItems->random() : null;
 
             $review = $reviews[$i % count($reviews)];
 
@@ -431,6 +448,7 @@ class PostSeeder extends Seeder
                     'sponsor_id' => $sponsor?->id,
                     'workflow_status' => 'draft',
                     'status' => Post::STATUS_DRAFT,
+                    'cover_video_id' => $coverVideo?->id,
                     'content' => $this->getRestaurantReviewContent($review, $mediaItems),
                     'custom_fields' => [
                         'restaurant_name' => $review['restaurant_name'],
@@ -462,7 +480,7 @@ class PostSeeder extends Seeder
     /**
      * Create published people/interview posts with proper workflow.
      */
-    private function createPublishedPeoplePosts($language, $authors, $categories, $tags, $sponsors, $mediaItems, int $count): void
+    private function createPublishedPeoplePosts($language, $authors, $categories, $tags, $sponsors, $mediaItems, int $count, $videoItems = null): void
     {
         $people = $this->getRealisticPeople();
         $peopleCategory = Category::where('slug', 'people')->first();
@@ -472,6 +490,8 @@ class PostSeeder extends Seeder
             $category = $peopleCategory ?? $categories->random();
             $featuredTag = $tags->random();
             $sponsor = fake()->boolean(20) ? $sponsors->random() : null;
+            // 35% chance of having a cover video for people/interviews
+            $coverVideo = ($videoItems && $videoItems->isNotEmpty() && fake()->boolean(35)) ? $videoItems->random() : null;
 
             $person = $people[$i % count($people)];
 
@@ -488,6 +508,7 @@ class PostSeeder extends Seeder
                     'sponsor_id' => $sponsor?->id,
                     'workflow_status' => 'draft',
                     'status' => Post::STATUS_DRAFT,
+                    'cover_video_id' => $coverVideo?->id,
                     'content' => $this->getPeopleContent($person, $mediaItems),
                     'custom_fields' => [
                         'role' => $person['role'],

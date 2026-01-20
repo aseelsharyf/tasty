@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Page;
 use App\Services\SeoService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\View as ViewFacade;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PageController extends Controller
@@ -26,6 +27,12 @@ class PageController extends Controller
      */
     public function show(string $slug): View
     {
+        // In local environment, check if a direct blade template exists first
+        // This makes it easier to develop and debug page templates
+        if (app()->environment('local') && ViewFacade::exists("pages.{$slug}")) {
+            return view("pages.{$slug}");
+        }
+
         $page = Page::findBySlug($slug);
 
         if (! $page) {

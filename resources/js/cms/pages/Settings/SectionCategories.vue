@@ -2,6 +2,7 @@
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import { useSettingsNav } from '../../composables/useSettingsNav';
 
 interface Section {
     type: string;
@@ -28,6 +29,8 @@ const props = defineProps<{
     mappings: Record<string, CategoryMapping[]>;
     categories: Category[];
 }>();
+
+const { mainNav } = useSettingsNav();
 
 // Initialize form with current mappings (convert to array of IDs)
 const initialMappings: Record<string, number[]> = {};
@@ -87,22 +90,15 @@ function hasRestrictions(sectionType: string): boolean {
     <DashboardLayout>
         <UDashboardPanel id="section-categories-settings" :ui="{ body: 'lg:py-12' }">
             <template #header>
-                <UDashboardNavbar title="Section Category Restrictions">
+                <UDashboardNavbar title="Settings">
                     <template #leading>
                         <UDashboardSidebarCollapse />
                     </template>
-
-                    <template #right>
-                        <UButton
-                            color="neutral"
-                            variant="ghost"
-                            icon="i-lucide-arrow-left"
-                            to="/cms/settings"
-                        >
-                            Back to Settings
-                        </UButton>
-                    </template>
                 </UDashboardNavbar>
+
+                <UDashboardToolbar>
+                    <UNavigationMenu :items="mainNav" highlight class="-mx-1 flex-1 overflow-x-auto" />
+                </UDashboardToolbar>
             </template>
 
             <template #body>

@@ -195,6 +195,11 @@ function handleMediaSelect(items: MediaItem[]) {
             credit_display: item.credit_display || null,
             is_image: item.is_image === true,
             is_video: item.is_video === true,
+            // Video-specific fields for playback
+            type: item.type,
+            embed_url: item.embed_url,
+            embed_provider: item.embed_provider,
+            embed_video_id: item.embed_video_id,
         }));
         editorMediaResolve(blockItems.length > 0 ? blockItems : null);
         editorMediaResolve = null;

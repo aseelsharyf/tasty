@@ -74,6 +74,7 @@ class UpdatePostRequest extends FormRequest
             'tags.*' => ['integer', 'exists:tags,id'],
             'featured_image' => ['nullable', 'image', 'max:5120'],
             'featured_media_id' => ['nullable', 'integer', 'exists:media_items,id'],
+            'cover_video_id' => ['nullable', 'integer', 'exists:media_items,id'],
             'featured_image_anchor' => ['nullable', 'array'],
             'featured_image_anchor.x' => ['required_with:featured_image_anchor', 'numeric', 'min:0', 'max:100'],
             'featured_image_anchor.y' => ['required_with:featured_image_anchor', 'numeric', 'min:0', 'max:100'],

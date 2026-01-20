@@ -40,6 +40,12 @@ class PostPreviewController extends Controller
             $request->merge(['featured_image_anchor' => json_decode($anchorInput, true) ?: null]);
         }
 
+        // Cover video may come as JSON string from form submission
+        $coverVideoInput = $request->input('cover_video');
+        if (is_string($coverVideoInput) && ! empty($coverVideoInput)) {
+            $request->merge(['cover_video' => json_decode($coverVideoInput, true) ?: null]);
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string'],
             'subtitle' => ['nullable', 'string'],
@@ -55,6 +61,7 @@ class PostPreviewController extends Controller
             'tags' => ['nullable', 'string'],
             'post_type' => ['nullable', 'string'],
             'custom_fields' => ['nullable', 'array'],
+            'cover_video' => ['nullable', 'array'],
         ]);
 
         $template = $validated['template'] ?? 'default';
@@ -154,6 +161,16 @@ class PostPreviewController extends Controller
         // Set featuredMedia relationship to null (no media item for preview of unsaved data)
         $post->setRelation('featuredMedia', null);
 
+        // Set coverVideo relationship from preview data
+        $coverVideoData = $validated['cover_video'] ?? null;
+        if ($coverVideoData && isset($coverVideoData['id'])) {
+            // Try to load the actual MediaItem if it exists
+            $coverVideo = \App\Models\MediaItem::find($coverVideoData['id']);
+            $post->setRelation('coverVideo', $coverVideo);
+        } else {
+            $post->setRelation('coverVideo', null);
+        }
+
         return view('templates.posts.preview', [
             'post' => $post,
             'template' => $template,
@@ -222,7 +239,7 @@ class PostPreviewController extends Controller
     public function show(Request $request, string $language, Post $post): View
     {
         // Load relationships
-        $post->load(['author', 'categories', 'tags', 'featuredMedia']);
+        $post->load(['author', 'categories', 'tags', 'featuredMedia', 'coverVideo']);
 
         // Optionally load a specific version and apply snapshot to model
         $versionUuid = $request->query('version');
@@ -253,6 +270,13 @@ class PostPreviewController extends Controller
                     $post->featured_media_id = $snapshot['featured_media_id'];
                     // Reload the featuredMedia relationship
                     $post->load('featuredMedia');
+                }
+
+                // Update cover video if different in snapshot
+                if (isset($snapshot['cover_video_id']) && $snapshot['cover_video_id'] !== $post->cover_video_id) {
+                    $post->cover_video_id = $snapshot['cover_video_id'];
+                    // Reload the coverVideo relationship
+                    $post->load('coverVideo');
                 }
             }
         }

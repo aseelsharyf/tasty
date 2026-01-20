@@ -42,7 +42,7 @@ class SeoSettingController extends Controller
 
         SeoSetting::create($validated);
 
-        return redirect()->route('cms.seo-settings.index')
+        return redirect()->route('cms.settings.seo')
             ->with('success', 'SEO setting created successfully.');
     }
 
@@ -59,7 +59,7 @@ class SeoSettingController extends Controller
 
         $seoSetting->update($validated);
 
-        return redirect()->route('cms.seo-settings.index')
+        return redirect()->route('cms.settings.seo')
             ->with('success', 'SEO setting updated successfully.');
     }
 
@@ -70,7 +70,7 @@ class SeoSettingController extends Controller
     {
         $seoSetting->delete();
 
-        return redirect()->route('cms.seo-settings.index')
+        return redirect()->route('cms.settings.seo')
             ->with('success', 'SEO setting deleted successfully.');
     }
 

@@ -48,6 +48,11 @@ export interface MediaBlockItem {
     } | null;
     is_image: boolean;
     is_video: boolean;
+    // Video-specific fields
+    type?: 'image' | 'video_local' | 'video_embed';
+    embed_url?: string | null;
+    embed_provider?: 'youtube' | 'vimeo' | null;
+    embed_video_id?: string | null;
     // Available crop versions from media library
     crops?: CropVersion[];
     // Currently selected crop version

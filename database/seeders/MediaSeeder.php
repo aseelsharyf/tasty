@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 class MediaSeeder extends Seeder
 {
     /**
-     * Seed sample media items with placeholder images.
+     * Seed sample media items with placeholder images and videos.
      */
     public function run(): void
     {
@@ -30,6 +30,9 @@ class MediaSeeder extends Seeder
 
         // Create client logos
         $this->createClientLogos($photographer);
+
+        // Create sample video embeds
+        $this->createSampleVideos($photographer);
     }
 
     /**
@@ -52,7 +55,7 @@ class MediaSeeder extends Seeder
             $this->createLogoItem($index + 1, $clientName, $photographer);
         }
 
-        $this->command->info('Created ' . count($clients) . ' client logos.');
+        $this->command->info('Created '.count($clients).' client logos.');
     }
 
     /**
@@ -65,18 +68,19 @@ class MediaSeeder extends Seeder
         $colors = ['3b82f6', 'ef4444', '22c55e', 'f59e0b', '8b5cf6', 'ec4899'];
         $bgColor = $colors[$index % count($colors)];
 
-        $imageUrl = "https://ui-avatars.com/api/?name=" . urlencode($initials) . "&size=400&background={$bgColor}&color=fff&bold=true&format=png";
+        $imageUrl = 'https://ui-avatars.com/api/?name='.urlencode($initials)."&size=400&background={$bgColor}&color=fff&bold=true&format=png";
 
         try {
             $response = Http::timeout(30)->get($imageUrl);
 
             if (! $response->successful()) {
                 $this->command->warn("Failed to download logo for {$name}");
+
                 return;
             }
 
             $imageContent = $response->body();
-            $filename = "client-logo-" . strtolower(str_replace([' ', '.'], '-', $name)) . ".png";
+            $filename = 'client-logo-'.strtolower(str_replace([' ', '.'], '-', $name)).'.png';
 
             // Store temporarily
             $tempPath = "temp/{$filename}";
@@ -164,5 +168,71 @@ class MediaSeeder extends Seeder
         } catch (\Exception $e) {
             $this->command->error("Error creating media item {$index}: {$e->getMessage()}");
         }
+    }
+
+    /**
+     * Create sample YouTube video embeds for testing.
+     */
+    private function createSampleVideos(?User $photographer): void
+    {
+        $this->command->info('Creating sample video embeds...');
+
+        // Sample food/cooking related YouTube videos
+        $videos = [
+            [
+                'id' => 'dQw4w9WgXcQ',
+                'title' => 'Traditional Maldivian Cooking Techniques',
+                'caption' => 'Learn the authentic methods passed down through generations',
+            ],
+            [
+                'id' => 'J---aiyznGQ',
+                'title' => 'Fresh Tuna Preparation',
+                'caption' => 'From ocean to table - the Maldivian way',
+            ],
+            [
+                'id' => '9bZkp7q19f0',
+                'title' => 'Island Spice Journey',
+                'caption' => 'Exploring the flavors of the Maldives',
+            ],
+            [
+                'id' => 'kJQP7kiw5Fk',
+                'title' => 'Coconut Milk: The Essential Ingredient',
+                'caption' => 'How to make fresh coconut milk at home',
+            ],
+            [
+                'id' => 'RgKAFK5djSk',
+                'title' => 'Street Food Tour: Malé',
+                'caption' => 'Discovering hidden culinary gems in the capital',
+            ],
+            [
+                'id' => 'fJ9rUzIMcZQ',
+                'title' => 'Seafood Festival Highlights',
+                'caption' => 'The best of Maldivian seafood celebrations',
+            ],
+        ];
+
+        foreach ($videos as $video) {
+            try {
+                MediaItem::create([
+                    'type' => MediaItem::TYPE_VIDEO_EMBED,
+                    'category' => 'media',
+                    'embed_url' => "https://www.youtube.com/watch?v={$video['id']}",
+                    'embed_provider' => 'youtube',
+                    'embed_video_id' => $video['id'],
+                    'embed_thumbnail_url' => "https://img.youtube.com/vi/{$video['id']}/maxresdefault.jpg",
+                    'title' => ['en' => $video['title'], 'dv' => $video['title']],
+                    'caption' => ['en' => $video['caption'], 'dv' => $video['caption']],
+                    'description' => ['en' => null, 'dv' => null],
+                    'alt_text' => ['en' => $video['title'], 'dv' => $video['title']],
+                    'uploaded_by' => $photographer?->id,
+                ]);
+
+                $this->command->info("Created video: {$video['title']}");
+            } catch (\Exception $e) {
+                $this->command->error("Error creating video {$video['title']}: {$e->getMessage()}");
+            }
+        }
+
+        $this->command->info('Created '.count($videos).' sample videos.');
     }
 }

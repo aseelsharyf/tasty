@@ -7,6 +7,7 @@ use App\Http\Controllers\Cms\CmsProductController;
 use App\Http\Controllers\Cms\CommentBanController;
 use App\Http\Controllers\Cms\CommentController;
 use App\Http\Controllers\Cms\DashboardController;
+use App\Http\Controllers\Cms\IngredientController;
 use App\Http\Controllers\Cms\LanguageController;
 use App\Http\Controllers\Cms\LayoutController;
 use App\Http\Controllers\Cms\MediaController;
@@ -28,6 +29,7 @@ use App\Http\Controllers\Cms\SettingsController;
 use App\Http\Controllers\Cms\SponsorController;
 use App\Http\Controllers\Cms\SubscriberController;
 use App\Http\Controllers\Cms\TagController;
+use App\Http\Controllers\Cms\UnitController;
 use App\Http\Controllers\Cms\UserController;
 use App\Http\Controllers\Cms\UserTargetController;
 use App\Http\Controllers\Cms\WorkflowController;
@@ -136,10 +138,10 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::put('settings/section-categories', [SettingsController::class, 'updateSectionCategories'])->name('cms.settings.section-categories.update');
 
         // SEO Settings (Page-level SEO)
-        Route::get('seo-settings', [SeoSettingController::class, 'index'])->name('cms.seo-settings.index');
-        Route::post('seo-settings', [SeoSettingController::class, 'store'])->name('cms.seo-settings.store');
-        Route::put('seo-settings/{seoSetting}', [SeoSettingController::class, 'update'])->name('cms.seo-settings.update');
-        Route::delete('seo-settings/{seoSetting}', [SeoSettingController::class, 'destroy'])->name('cms.seo-settings.destroy');
+        Route::get('settings/seo', [SeoSettingController::class, 'index'])->name('cms.settings.seo');
+        Route::post('settings/seo', [SeoSettingController::class, 'store'])->name('cms.settings.seo.store');
+        Route::put('settings/seo/{seoSetting}', [SeoSettingController::class, 'update'])->name('cms.settings.seo.update');
+        Route::delete('settings/seo/{seoSetting}', [SeoSettingController::class, 'destroy'])->name('cms.settings.seo.destroy');
     });
 
     // Languages API (for fetching available languages)
@@ -440,6 +442,32 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::post('/{submission}/convert', [RecipeSubmissionController::class, 'convertToPost'])->name('cms.recipe-submissions.convert');
         Route::delete('/{submission}', [RecipeSubmissionController::class, 'destroy'])->name('cms.recipe-submissions.destroy');
         Route::post('/bulk', [RecipeSubmissionController::class, 'bulkAction'])->name('cms.recipe-submissions.bulk');
+    });
+
+    // Units Management (for recipe ingredients)
+    Route::middleware('permission:settings.view')->group(function () {
+        Route::get('units/search', [UnitController::class, 'search'])->name('cms.units.search');
+        Route::resource('units', UnitController::class)->except(['show', 'create'])->names([
+            'index' => 'cms.units.index',
+            'store' => 'cms.units.store',
+            'edit' => 'cms.units.edit',
+            'update' => 'cms.units.update',
+            'destroy' => 'cms.units.destroy',
+        ]);
+        Route::delete('units/bulk', [UnitController::class, 'bulkDestroy'])->name('cms.units.bulk-destroy');
+    });
+
+    // Ingredients Management
+    Route::middleware('permission:settings.view')->group(function () {
+        Route::get('ingredients/search', [IngredientController::class, 'search'])->name('cms.ingredients.search');
+        Route::resource('ingredients', IngredientController::class)->except(['show', 'create'])->names([
+            'index' => 'cms.ingredients.index',
+            'store' => 'cms.ingredients.store',
+            'edit' => 'cms.ingredients.edit',
+            'update' => 'cms.ingredients.update',
+            'destroy' => 'cms.ingredients.destroy',
+        ]);
+        Route::delete('ingredients/bulk', [IngredientController::class, 'bulkDestroy'])->name('cms.ingredients.bulk-destroy');
     });
 
     // Workflow Routes

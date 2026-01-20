@@ -2,17 +2,10 @@
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
-import type { BreadcrumbItem, NavigationMenuItem } from '@nuxt/ui';
+import { useSettingsNav } from '../../composables/useSettingsNav';
+import type { BreadcrumbItem } from '@nuxt/ui';
 
-// Settings navigation
-const settingsNav = computed<NavigationMenuItem[][]>(() => [[
-    { label: 'General', icon: 'i-lucide-settings', to: '/cms/settings/general' },
-    { label: 'Media', icon: 'i-lucide-image', to: '/cms/settings/media' },
-    { label: 'Post Types', icon: 'i-lucide-file-text', to: '/cms/settings/post-types' },
-    { label: 'Workflows', icon: 'i-lucide-git-branch', to: '/cms/settings/workflows' },
-    { label: 'Languages', icon: 'i-lucide-globe', to: '/cms/settings/languages', active: true },
-    { label: 'SEO Pages', icon: 'i-lucide-search', to: '/cms/seo-settings' },
-]]);
+const { mainNav: settingsNav } = useSettingsNav();
 
 interface Language {
     id: number;

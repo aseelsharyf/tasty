@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Http\Requests\Cms;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class UpdateUnitRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return $this->user()->can('settings.edit');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function rules(): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:100'],
+            'name_dv' => ['nullable', 'string', 'max:100'],
+            'abbreviation' => ['required', 'string', 'max:20'],
+            'abbreviation_dv' => ['nullable', 'string', 'max:20'],
+            'is_active' => ['boolean'],
+        ];
+    }
+}

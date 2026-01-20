@@ -166,6 +166,8 @@ class MediaController extends Controller
             'tag_ids' => ['nullable', 'array'],
             'tag_ids.*' => ['integer', 'exists:tags,id'],
             'tags' => ['nullable', 'string'], // Comma-separated tag names (for quick upload)
+            'new_tags' => ['nullable', 'array'], // New tag names to create
+            'new_tags.*' => ['string', 'max:100'],
         ]);
 
         // Handle simple string values for title/caption (quick upload from picker)
@@ -192,6 +194,23 @@ class MediaController extends Controller
                 $tagIds[] = $tag->id;
             }
             $validated['tag_ids'] = $tagIds;
+        }
+
+        // Handle new tags array - create tags and add to tag_ids
+        if (! empty($validated['new_tags'])) {
+            $tagIds = $validated['tag_ids'] ?? [];
+            foreach ($validated['new_tags'] as $name) {
+                $name = trim($name);
+                if (empty($name)) {
+                    continue;
+                }
+                $tag = Tag::firstOrCreate(
+                    ['slug' => Str::slug($name)],
+                    ['name' => ['en' => $name]]
+                );
+                $tagIds[] = $tag->id;
+            }
+            $validated['tag_ids'] = array_unique($tagIds);
         }
 
         // Determine type

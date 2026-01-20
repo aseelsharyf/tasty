@@ -33,6 +33,10 @@ interface MediaItem {
     } | null;
     is_image: boolean;
     is_video: boolean;
+    // Video embed fields
+    embed_url?: string | null;
+    embed_provider?: 'youtube' | 'vimeo' | null;
+    embed_video_id?: string | null;
     has_crops?: boolean;
     crops?: CropVersion[];
     // Selected crop info (added when a crop version is selected)

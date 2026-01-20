@@ -10,24 +10,122 @@
     $url = request()->url();
     $anchor = $post->featured_image_anchor ?? ['x' => 50, 'y' => 0];
     $objectPosition = ($anchor['x'] ?? 50) . '% ' . ($anchor['y'] ?? 50) . '%';
+
+    // Cover video handling
+    $coverVideo = $post->coverVideo;
+    $hasVideo = $coverVideo !== null;
+    $videoEmbedUrl = null;
+    $localVideoUrl = null;
+
+    if ($hasVideo) {
+        if ($coverVideo->type === 'video_embed' && $coverVideo->embed_video_id) {
+            if ($coverVideo->embed_provider === 'youtube') {
+                $videoEmbedUrl = "https://www.youtube.com/embed/{$coverVideo->embed_video_id}?rel=0&autoplay=1";
+            } elseif ($coverVideo->embed_provider === 'vimeo') {
+                $videoEmbedUrl = "https://player.vimeo.com/video/{$coverVideo->embed_video_id}?autoplay=1";
+            }
+        } elseif ($coverVideo->type === 'video_local') {
+            $localVideoUrl = $coverVideo->url;
+        }
+
+        // Fallback: try to extract from thumbnail URL for legacy data
+        if (!$videoEmbedUrl && !$localVideoUrl && $coverVideo->thumbnail_url) {
+            if (preg_match('/img\.youtube\.com\/vi\/([a-zA-Z0-9_-]{11})/', $coverVideo->thumbnail_url, $matches)) {
+                $videoEmbedUrl = "https://www.youtube.com/embed/{$matches[1]}?rel=0&autoplay=1";
+            } elseif (preg_match('/vumbnail\.com\/(\d+)/', $coverVideo->thumbnail_url, $matches)) {
+                $videoEmbedUrl = "https://player.vimeo.com/video/{$matches[1]}?autoplay=1";
+            }
+        }
+    }
 @endphp
 
 <header class="w-full bg-tasty-yellow pt-[96px] md:pt-[112px]">
     <div class="max-w-[1440px] mx-auto p-6 sm:p-8 lg:p-10">
         <div class="flex flex-col lg:flex-row gap-8 lg:gap-10 items-center">
-            {{-- Image (Left) --}}
-            <div class="w-full lg:flex-1 aspect-square lg:aspect-auto lg:h-[500px] relative rounded-xl overflow-hidden">
-                @if($post->featured_image_url)
-                    <img
-                        src="{{ $post->featured_image_url }}"
-                        alt="{{ $post->title }}"
-                        class="absolute inset-0 w-full h-full object-cover rounded-xl"
-                        style="object-position: {{ $objectPosition }}"
-                    />
-                @else
-                    <div class="absolute inset-0 bg-tasty-blue-black/10 rounded-xl"></div>
-                @endif
-            </div>
+            {{-- Image/Video (Left) --}}
+            @if($hasVideo)
+                <div
+                    x-data="heroVideoPlayer()"
+                    class="w-full lg:flex-1 aspect-square lg:aspect-auto lg:h-[500px] relative rounded-xl overflow-hidden"
+                >
+                    {{-- Featured Image (shown when video not playing) --}}
+                    <div x-show="!isPlaying" class="absolute inset-0">
+                        @if($post->featured_image_url)
+                            <img
+                                src="{{ $post->featured_image_url }}"
+                                alt="{{ $post->title }}"
+                                class="absolute inset-0 w-full h-full object-cover rounded-xl"
+                                style="object-position: {{ $objectPosition }}"
+                            />
+                        @else
+                            <div class="absolute inset-0 bg-tasty-blue-black/10 rounded-xl"></div>
+                        @endif
+
+                        {{-- Play Button Overlay --}}
+                        <button
+                            type="button"
+                            @click="playVideo()"
+                            class="absolute inset-0 flex items-center justify-center group cursor-pointer"
+                        >
+                            <div class="w-20 h-20 md:w-24 md:h-24 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                                <svg class="w-8 h-8 md:w-10 md:h-10 text-tasty-blue-black ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                    <polygon points="5 3 19 12 5 21 5 3"/>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
+
+                    {{-- Video Player (shown when playing) --}}
+                    <div x-show="isPlaying" x-cloak class="absolute inset-0 bg-black rounded-xl overflow-hidden">
+                        @if($videoEmbedUrl)
+                            {{-- YouTube/Vimeo Embed --}}
+                            <iframe
+                                x-ref="videoIframe"
+                                :src="isPlaying ? '{{ $videoEmbedUrl }}' : ''"
+                                class="w-full h-full"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen
+                            ></iframe>
+                        @elseif($localVideoUrl)
+                            {{-- Local Video --}}
+                            <video
+                                x-ref="videoElement"
+                                class="w-full h-full object-cover"
+                                controls
+                                playsinline
+                            >
+                                <source src="{{ $localVideoUrl }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        @endif
+
+                        {{-- Close/Back to Image Button --}}
+                        <button
+                            type="button"
+                            @click="stopVideo()"
+                            class="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors z-10"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            @else
+                <div class="w-full lg:flex-1 aspect-square lg:aspect-auto lg:h-[500px] relative rounded-xl overflow-hidden">
+                    @if($post->featured_image_url)
+                        <img
+                            src="{{ $post->featured_image_url }}"
+                            alt="{{ $post->title }}"
+                            class="absolute inset-0 w-full h-full object-cover rounded-xl"
+                            style="object-position: {{ $objectPosition }}"
+                        />
+                    @else
+                        <div class="absolute inset-0 bg-tasty-blue-black/10 rounded-xl"></div>
+                    @endif
+                </div>
+            @endif
 
             {{-- Content (Right) --}}
             <div class="w-full lg:flex-1 flex flex-col gap-12 lg:gap-16">
@@ -94,3 +192,40 @@
         </div>
     </div>
 </header>
+
+@if($hasVideo)
+@once
+@push('scripts')
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('heroVideoPlayer', () => ({
+            isPlaying: false,
+
+            playVideo() {
+                this.isPlaying = true;
+
+                // For local videos, start playback
+                this.$nextTick(() => {
+                    const video = this.$refs.videoElement;
+                    if (video) {
+                        video.play();
+                    }
+                });
+            },
+
+            stopVideo() {
+                this.isPlaying = false;
+
+                // For local videos, pause
+                const video = this.$refs.videoElement;
+                if (video) {
+                    video.pause();
+                    video.currentTime = 0;
+                }
+            }
+        }));
+    });
+</script>
+@endpush
+@endonce
+@endif

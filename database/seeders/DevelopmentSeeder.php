@@ -22,9 +22,12 @@ class DevelopmentSeeder extends Seeder
             TaxonomySeeder::class,
             PageSeeder::class,
             MediaSeeder::class,
+            UnitSeeder::class,
+            IngredientSeeder::class,
             PostSeeder::class,
             CommentSeeder::class,
             ProductSeeder::class,
+            HomepageLayoutSeeder::class,
         ]);
 
         $this->command->info('Development data seeded successfully!');

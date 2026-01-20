@@ -3,6 +3,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import type { NavigationMenuItem } from '@nuxt/ui';
+import { useSettingsNav } from '../../composables/useSettingsNav';
 
 const props = defineProps<{
     tab: string;
@@ -32,14 +33,7 @@ const props = defineProps<{
 const activeTab = computed(() => props.tab || 'general');
 
 // Main settings pages navigation
-const mainNav = computed<NavigationMenuItem[][]>(() => [[
-    { label: 'General', icon: 'i-lucide-settings', to: '/cms/settings/general', active: true },
-    { label: 'Media', icon: 'i-lucide-image', to: '/cms/settings/media' },
-    { label: 'Post Types', icon: 'i-lucide-file-text', to: '/cms/settings/post-types' },
-    { label: 'Workflows', icon: 'i-lucide-git-branch', to: '/cms/settings/workflows' },
-    { label: 'Languages', icon: 'i-lucide-globe', to: '/cms/settings/languages' },
-    { label: 'SEO Pages', icon: 'i-lucide-search', to: '/cms/seo-settings' },
-]]);
+const { mainNav } = useSettingsNav();
 
 // Sub-tabs for general settings
 const links = computed<NavigationMenuItem[][]>(() => [[

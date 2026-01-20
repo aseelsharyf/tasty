@@ -146,6 +146,8 @@ const props = defineProps<{
         language_code: string;
         featured_media?: MediaItem | null;
         featured_media_id?: number | null;
+        cover_video?: MediaItem | null;
+        cover_video_id?: number | null;
         featured_image_anchor?: { x: number; y: number } | null;
         workflow_status?: string;
         current_version_uuid?: string | null;
@@ -593,6 +595,7 @@ const form = useForm({
     sponsor_id: props.post.sponsor_id ?? null,
     tags: props.post.tags || [],
     featured_media_id: props.post.featured_media_id ?? null,
+    cover_video_id: props.post.cover_video_id ?? null,
     featured_image_anchor: props.post.featured_image_anchor || { x: 50, y: 0 },
     custom_fields: (props.post.custom_fields || {}) as Record<string, unknown>,
     meta_title: props.post.meta_title || '',
@@ -680,8 +683,9 @@ function autoResizeExcerpt() {
 const mediaPickerOpen = ref(false);
 const mediaPickerType = ref<'all' | 'images' | 'videos'>('images');
 const mediaPickerMultiple = ref(false);
-const mediaPickerPurpose = ref<'cover' | 'editor'>('cover');
+const mediaPickerPurpose = ref<'cover' | 'cover-video' | 'editor'>('cover');
 const selectedFeaturedMedia = ref<MediaItem | null>(props.post.featured_media || null);
+const selectedCoverVideo = ref<MediaItem | null>(props.post.cover_video || null);
 
 // For editor callback
 let editorMediaResolve: ((items: MediaBlockItem[] | null) => void) | null = null;
@@ -691,6 +695,14 @@ function openCoverPicker() {
     mediaPickerType.value = 'images';
     mediaPickerMultiple.value = false;
     mediaPickerPurpose.value = 'cover';
+    mediaPickerOpen.value = true;
+}
+
+// Open media picker for cover video
+function openCoverVideoPicker() {
+    mediaPickerType.value = 'videos';
+    mediaPickerMultiple.value = false;
+    mediaPickerPurpose.value = 'cover-video';
     mediaPickerOpen.value = true;
 }
 
@@ -714,6 +726,13 @@ function handleMediaSelect(items: MediaItem[]) {
             selectedFeaturedMedia.value = item;
             form.featured_media_id = item.id;
         }
+    } else if (mediaPickerPurpose.value === 'cover-video') {
+        // Cover video selection
+        if (items.length > 0) {
+            const item = items[0];
+            selectedCoverVideo.value = item;
+            form.cover_video_id = item.id;
+        }
     } else if (mediaPickerPurpose.value === 'editor' && editorMediaResolve) {
         // Editor block selection - convert to MediaBlockItem format
         const blockItems: MediaBlockItem[] = items.map(item => ({
@@ -728,6 +747,11 @@ function handleMediaSelect(items: MediaItem[]) {
             credit_display: item.credit_display || null,
             is_image: item.is_image === true,
             is_video: item.is_video === true,
+            // Video-specific fields for playback
+            type: item.type,
+            embed_url: item.embed_url,
+            embed_provider: item.embed_provider,
+            embed_video_id: item.embed_video_id,
             // Include crop versions for in-editor crop selection
             crops: item.crops || [],
             crop_version: item.crop_version || null,
@@ -883,6 +907,7 @@ watch(
         form.template,
         form.scheduled_at,
         form.featured_media_id,
+        form.cover_video_id,
         form.featured_image_anchor,
         form.custom_fields,
         form.meta_title,
@@ -1007,6 +1032,11 @@ const lastSavedText = computed(() => {
 function removeFeaturedMedia() {
     selectedFeaturedMedia.value = null;
     form.featured_media_id = null;
+}
+
+function removeCoverVideo() {
+    selectedCoverVideo.value = null;
+    form.cover_video_id = null;
 }
 
 // Category and tag options for sidebar
@@ -1749,6 +1779,7 @@ function openDiff() {
                                 <input type="hidden" name="tags" :value="(selectedTagNames || []).join(',')" />
                                 <input type="hidden" name="post_type" :value="form.post_type || 'article'" />
                                 <input type="hidden" name="custom_fields" :value="JSON.stringify(form.custom_fields || {})" />
+                                <input type="hidden" name="cover_video" :value="selectedCoverVideo ? JSON.stringify(selectedCoverVideo) : ''" />
                             </form>
 
                             <!-- Preview iframe -->
@@ -2055,6 +2086,70 @@ function openDiff() {
                                 <div v-else class="w-full h-40 border border-dashed border-default rounded-lg flex flex-col items-center justify-center gap-2">
                                     <UIcon name="i-lucide-image-off" class="size-8 text-muted" />
                                     <span class="text-sm text-muted">No cover image</span>
+                                </div>
+                            </div>
+
+                            <!-- Cover Video (Optional) -->
+                            <div class="mb-6">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-medium text-muted uppercase tracking-wider">Cover Video</span>
+                                    <span class="text-xs text-muted">(Optional)</span>
+                                </div>
+                                <div v-if="selectedCoverVideo" class="space-y-3">
+                                    <!-- Video thumbnail -->
+                                    <div class="relative aspect-video bg-gray-900 rounded-lg overflow-hidden">
+                                        <img
+                                            v-if="selectedCoverVideo.thumbnail_url"
+                                            :src="selectedCoverVideo.thumbnail_url"
+                                            :alt="selectedCoverVideo.title || 'Cover video'"
+                                            class="w-full h-full object-cover"
+                                        />
+                                        <div v-else class="w-full h-full flex items-center justify-center">
+                                            <UIcon name="i-lucide-video" class="size-12 text-gray-500" />
+                                        </div>
+                                        <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                                            <div class="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
+                                                <UIcon name="i-lucide-play" class="size-6 text-gray-900 ml-0.5" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Video title and actions -->
+                                    <div v-if="!isReadOnly" class="flex items-center justify-between">
+                                        <span class="text-xs text-muted truncate max-w-[200px]">{{ selectedCoverVideo.title || 'Untitled video' }}</span>
+                                        <div class="flex gap-1.5">
+                                            <UButton
+                                                color="neutral"
+                                                variant="ghost"
+                                                icon="i-lucide-video"
+                                                size="xs"
+                                                @click="openCoverVideoPicker"
+                                            >
+                                                Change
+                                            </UButton>
+                                            <UButton
+                                                color="error"
+                                                variant="ghost"
+                                                icon="i-lucide-trash-2"
+                                                size="xs"
+                                                @click="removeCoverVideo"
+                                            >
+                                                Remove
+                                            </UButton>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button
+                                    v-else-if="!isReadOnly"
+                                    type="button"
+                                    class="w-full h-24 border border-dashed border-default rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-colors"
+                                    @click="openCoverVideoPicker"
+                                >
+                                    <UIcon name="i-lucide-video" class="size-6 text-muted" />
+                                    <span class="text-xs text-muted">Add cover video</span>
+                                </button>
+                                <div v-else-if="!selectedCoverVideo" class="w-full h-24 border border-dashed border-default rounded-lg flex flex-col items-center justify-center gap-2">
+                                    <UIcon name="i-lucide-video-off" class="size-6 text-muted" />
+                                    <span class="text-xs text-muted">No cover video</span>
                                 </div>
                             </div>
 

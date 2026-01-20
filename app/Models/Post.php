@@ -52,6 +52,7 @@ class Post extends Model implements HasMedia
         'scheduled_at',
         'featured_image_id',
         'featured_media_id',
+        'cover_video_id',
         'featured_image_anchor',
         'featured_tag_id',
         'sponsor_id',
@@ -200,6 +201,11 @@ class Post extends Model implements HasMedia
     public function featuredMedia(): BelongsTo
     {
         return $this->belongsTo(MediaItem::class, 'featured_media_id');
+    }
+
+    public function coverVideo(): BelongsTo
+    {
+        return $this->belongsTo(MediaItem::class, 'cover_video_id');
     }
 
     public function sponsors(): BelongsToMany

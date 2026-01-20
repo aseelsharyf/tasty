@@ -484,8 +484,8 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
             label: 'Settings',
             icon: 'i-lucide-settings',
             to: '/cms/settings',
-            active: isActivePrefix('/cms/settings'),
-            open: isActivePrefix('/cms/settings'),
+            active: isActivePrefix('/cms/settings') || isActivePrefix('/cms/units') || isActivePrefix('/cms/ingredients'),
+            open: isActivePrefix('/cms/settings') || isActivePrefix('/cms/units') || isActivePrefix('/cms/ingredients'),
             children: [
                 {
                     label: 'General',
@@ -511,6 +511,16 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
                     label: 'Section Categories',
                     to: '/cms/settings/section-categories',
                     icon: 'i-lucide-layout-grid',
+                },
+                {
+                    label: 'Units',
+                    to: '/cms/units',
+                    icon: 'i-lucide-scale',
+                },
+                {
+                    label: 'Ingredients',
+                    to: '/cms/ingredients',
+                    icon: 'i-lucide-carrot',
                 },
             ],
         });

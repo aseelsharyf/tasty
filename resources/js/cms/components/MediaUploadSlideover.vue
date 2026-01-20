@@ -69,8 +69,11 @@ const embedUrl = ref('');
 const embedError = ref<string | null>(null);
 const embedCategory = ref(props.defaultCategory || 'media');
 
+// Default category for file uploads
+const defaultFileCategory = ref(props.defaultCategory || 'media');
+
 // Common fields
-const selectedTagIds = ref<number[]>([]);
+const selectedTags = ref<Array<{ value: number | string; label: string }>>([]);
 const creditType = ref<'user' | 'external'>('external');
 const creditUserId = ref<string>('');
 const creditName = ref('');
@@ -84,6 +87,15 @@ const tagOptions = computed(() => {
         label: typeof tag.name === 'string' ? tag.name : (tag.name?.en || tag.slug),
     }));
 });
+
+// Handle creating a new tag
+function onCreateTag(item: string) {
+    const newTag = {
+        value: `new-${Date.now()}`, // Temporary unique string ID for new tags
+        label: item,
+    };
+    selectedTags.value = [...selectedTags.value, newTag];
+}
 
 // User options
 const userOptions = computed(() => {
@@ -121,17 +133,45 @@ const categoryOptions = computed(() => {
 
 // Get the effective default category
 function getDefaultCategory(): string {
-    return props.defaultCategory || 'media';
+    return defaultFileCategory.value || props.defaultCategory || 'media';
 }
 
 // Parse category from filename
 function parseCategoryFromFilename(filename: string): string {
     const lowerFilename = filename.toLowerCase();
-    for (const category of props.mediaCategories) {
-        if (lowerFilename.includes(category.slug.toLowerCase())) {
-            return category.slug;
+
+    // Remove file extension for cleaner matching
+    const nameWithoutExt = lowerFilename.replace(/\.[^/.]+$/, '');
+
+    // Check categories in order of specificity (longer slugs first to avoid partial matches)
+    const sortedCategories = [...props.mediaCategories].sort((a, b) => b.slug.length - a.slug.length);
+
+    for (const category of sortedCategories) {
+        const slug = category.slug.toLowerCase();
+
+        // Skip 'media' as it's too generic and is the default
+        if (slug === 'media') continue;
+
+        // Check for common naming patterns:
+        // - prefix: "sponsors-logo.jpg", "sponsors_image.png"
+        // - suffix: "logo-sponsors.jpg", "image_sponsors.png"
+        // - folder-like: "sponsors/logo.jpg" (after upload, might be "sponsors-logo.jpg")
+        // - standalone word boundary match
+        const patterns = [
+            new RegExp(`^${slug}[-_]`),           // starts with category
+            new RegExp(`[-_]${slug}$`),           // ends with category
+            new RegExp(`[-_/]${slug}[-_/]`),      // in the middle with separators
+            new RegExp(`^${slug}$`),              // exact match (unlikely but possible)
+            new RegExp(`\\b${slug}\\b`),          // word boundary match
+        ];
+
+        for (const pattern of patterns) {
+            if (pattern.test(nameWithoutExt)) {
+                return category.slug;
+            }
         }
     }
+
     return getDefaultCategory();
 }
 
@@ -218,9 +258,14 @@ async function uploadAll() {
         formData.append('file', uploadFile.file);
         formData.append('category', uploadFile.category);
 
-        // Add tags
-        for (const tagId of selectedTagIds.value) {
-            formData.append('tag_ids[]', String(tagId));
+        // Add tags - separate existing IDs from new tag names
+        for (const tag of selectedTags.value) {
+            if (typeof tag.value === 'number') {
+                formData.append('tag_ids[]', String(tag.value));
+            } else {
+                // New tag to be created
+                formData.append('new_tags[]', tag.label);
+            }
         }
 
         if (creditType.value === 'user' && creditUserId.value) {
@@ -289,9 +334,14 @@ async function uploadEmbed() {
     formData.append('embed_url', embedUrl.value);
     formData.append('category', embedCategory.value);
 
-    // Add tags
-    for (const tagId of selectedTagIds.value) {
-        formData.append('tag_ids[]', String(tagId));
+    // Add tags - separate existing IDs from new tag names
+    for (const tag of selectedTags.value) {
+        if (typeof tag.value === 'number') {
+            formData.append('tag_ids[]', String(tag.value));
+        } else {
+            // New tag to be created
+            formData.append('new_tags[]', tag.label);
+        }
     }
 
     if (creditType.value === 'user' && creditUserId.value) {
@@ -345,8 +395,9 @@ function resetForm() {
     uploadFiles.value = [];
     embedUrl.value = '';
     embedError.value = null;
-    embedCategory.value = getDefaultCategory();
-    selectedTagIds.value = [];
+    defaultFileCategory.value = props.defaultCategory || 'media';
+    embedCategory.value = props.defaultCategory || 'media';
+    selectedTags.value = [];
     creditType.value = 'external';
     creditUserId.value = '';
     creditName.value = '';
@@ -370,10 +421,20 @@ watch(isOpen, (open) => {
     }
 });
 
-// Update embed category when default category changes
+// Update categories when default category changes
 watch(() => props.defaultCategory, (newCategory) => {
     if (newCategory && uploadFiles.value.length === 0) {
         embedCategory.value = newCategory;
+        defaultFileCategory.value = newCategory;
+    }
+});
+
+// When default file category changes, update all pending files that haven't been manually changed
+watch(defaultFileCategory, (newCategory) => {
+    for (const file of uploadFiles.value) {
+        if (file.status === 'pending') {
+            file.category = newCategory;
+        }
     }
 });
 
@@ -585,16 +646,26 @@ const errorCount = computed(() => uploadFiles.value.filter(f => f.status === 'er
 
                     <!-- Common Options -->
                     <div class="space-y-4">
+                        <!-- Category (for file uploads - applies to all files) -->
+                        <UFormField v-if="uploadMode === 'file'" label="Category" hint="Default category for uploaded files">
+                            <USelectMenu
+                                v-model="defaultFileCategory"
+                                :items="categoryOptions"
+                                value-key="value"
+                                class="w-full"
+                            />
+                        </UFormField>
+
                         <!-- Tags -->
                         <UFormField label="Tags">
                             <USelectMenu
-                                v-model="selectedTagIds"
+                                v-model="selectedTags"
                                 :items="tagOptions"
-                                value-key="value"
-                                placeholder="Select tags..."
+                                placeholder="Select or create tags..."
                                 multiple
-                                searchable
+                                create-item
                                 class="w-full"
+                                @create="onCreateTag"
                             />
                         </UFormField>
 

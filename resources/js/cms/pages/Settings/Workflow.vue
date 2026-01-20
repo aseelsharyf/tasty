@@ -3,17 +3,9 @@ import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import draggable from 'vuedraggable';
-import type { NavigationMenuItem } from '@nuxt/ui';
+import { useSettingsNav } from '../../composables/useSettingsNav';
 
-// Settings navigation
-const settingsNav = computed<NavigationMenuItem[][]>(() => [[
-    { label: 'General', icon: 'i-lucide-settings', to: '/cms/settings/general' },
-    { label: 'Media', icon: 'i-lucide-image', to: '/cms/settings/media' },
-    { label: 'Post Types', icon: 'i-lucide-file-text', to: '/cms/settings/post-types' },
-    { label: 'Workflows', icon: 'i-lucide-git-branch', to: '/cms/settings/workflows', active: true },
-    { label: 'Languages', icon: 'i-lucide-globe', to: '/cms/settings/languages' },
-    { label: 'SEO Pages', icon: 'i-lucide-search', to: '/cms/seo-settings' },
-]]);
+const { mainNav: settingsNav } = useSettingsNav();
 
 interface WorkflowState {
     key: string;

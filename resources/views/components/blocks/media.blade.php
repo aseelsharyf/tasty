@@ -24,27 +24,122 @@
         'xl' => 'gap-12',
     ];
     $gapClass = $gapClasses[$gap] ?? 'gap-8';
+
+    // Helper to extract YouTube video ID from various URL formats
+    $extractYouTubeId = function($url) {
+        if (empty($url)) return null;
+
+        // Match YouTube thumbnail URLs: https://img.youtube.com/vi/VIDEO_ID/...
+        if (preg_match('/img\.youtube\.com\/vi\/([a-zA-Z0-9_-]{11})/', $url, $matches)) {
+            return $matches[1];
+        }
+        // Match standard YouTube URLs
+        if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/', $url, $matches)) {
+            return $matches[1];
+        }
+        return null;
+    };
+
+    // Helper to extract Vimeo video ID
+    $extractVimeoId = function($url) {
+        if (empty($url)) return null;
+
+        // Match Vimeo URLs
+        if (preg_match('/vimeo\.com\/(\d+)/', $url, $matches)) {
+            return $matches[1];
+        }
+        if (preg_match('/player\.vimeo\.com\/video\/(\d+)/', $url, $matches)) {
+            return $matches[1];
+        }
+        // Match vumbnail URLs (Vimeo thumbnail service)
+        if (preg_match('/vumbnail\.com\/(\d+)/', $url, $matches)) {
+            return $matches[1];
+        }
+        return null;
+    };
+
+    // Helper to determine video embed URL (as closure to avoid redeclaration)
+    $getVideoEmbedUrl = function($item) use ($extractYouTubeId, $extractVimeoId) {
+        $type = $item['type'] ?? null;
+        $embedProvider = $item['embed_provider'] ?? null;
+        $embedVideoId = $item['embed_video_id'] ?? null;
+        $thumbnailUrl = $item['thumbnail_url'] ?? null;
+        $url = $item['url'] ?? $item['original_url'] ?? null;
+
+        // If we have explicit embed data, use it
+        if ($embedVideoId) {
+            if ($embedProvider === 'youtube') {
+                return "https://www.youtube.com/embed/{$embedVideoId}?rel=0";
+            }
+            if ($embedProvider === 'vimeo') {
+                return "https://player.vimeo.com/video/{$embedVideoId}";
+            }
+        }
+
+        // Try to extract from thumbnail URL or main URL (for legacy data)
+        $youtubeId = $extractYouTubeId($thumbnailUrl) ?? $extractYouTubeId($url);
+        if ($youtubeId) {
+            return "https://www.youtube.com/embed/{$youtubeId}?rel=0";
+        }
+
+        $vimeoId = $extractVimeoId($thumbnailUrl) ?? $extractVimeoId($url);
+        if ($vimeoId) {
+            return "https://player.vimeo.com/video/{$vimeoId}";
+        }
+
+        return null;
+    };
+
+    // Helper to get local video URL (as closure to avoid redeclaration)
+    $getLocalVideoUrl = function($item) {
+        $type = $item['type'] ?? null;
+        if ($type === 'video_local') {
+            return $item['url'] ?? $item['original_url'] ?? null;
+        }
+        return null;
+    };
 @endphp
 
 @if(count($items) > 0)
     @if(count($items) === 1 || $layout === 'single')
-        {{-- Single Image Layout --}}
-        @php $item = $items[0]; @endphp
+        {{-- Single Image/Video Layout --}}
+        @php
+            $item = $items[0];
+            $isVideo = $item['is_video'] ?? false;
+            $embedUrl = $isVideo ? $getVideoEmbedUrl($item) : null;
+            $localVideoUrl = $isVideo ? $getLocalVideoUrl($item) : null;
+        @endphp
         <figure class="{{ $fullWidth ? 'w-full' : '' }}">
-            @if($item['is_video'] ?? false)
+            @if($isVideo)
                 <div class="relative aspect-video bg-tasty-blue-black overflow-hidden">
-                    <img
-                        src="{{ $item['thumbnail_url'] ?? '' }}"
-                        alt="{{ $item['alt_text'] ?? 'Video' }}"
-                        class="w-full h-full object-cover opacity-80"
-                    />
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <div class="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center">
-                            <svg class="w-8 h-8 text-tasty-blue-black ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                <polygon points="5 3 19 12 5 21 5 3"/>
-                            </svg>
-                        </div>
-                    </div>
+                    @if($embedUrl)
+                        {{-- YouTube/Vimeo Embed --}}
+                        <iframe
+                            src="{{ $embedUrl }}"
+                            class="w-full h-full"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen
+                        ></iframe>
+                    @elseif($localVideoUrl)
+                        {{-- Local Video --}}
+                        <video
+                            class="w-full h-full"
+                            controls
+                            playsinline
+                            poster="{{ $item['thumbnail_url'] ?? '' }}"
+                        >
+                            <source src="{{ $localVideoUrl }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    @else
+                        {{-- Fallback: just show thumbnail --}}
+                        <img
+                            src="{{ $item['thumbnail_url'] ?? '' }}"
+                            alt="{{ $item['alt_text'] ?? 'Video' }}"
+                            class="w-full h-full object-cover"
+                        />
+                    @endif
                 </div>
             @else
                 <img
@@ -54,7 +149,7 @@
                 />
             @endif
             @if($item['caption'] ?? null)
-                <figcaption class="text-caption text-tasty-blue-black/50 mt-8 text-center">
+                <figcaption class="text-caption text-tasty-blue-black/50 mt-8 text-left">
                     {{ $item['caption'] }}
                 </figcaption>
             @endif
@@ -63,22 +158,40 @@
     @elseif($layout === 'grid')
         {{-- Grid Layout --}}
         <div class="grid {{ $gapClass }}" style="grid-template-columns: repeat({{ $gridColumns }}, minmax(0, 1fr));">
-            @foreach($items as $item)
+            @foreach($items as $index => $item)
+                @php
+                    $isVideo = $item['is_video'] ?? false;
+                    $embedUrl = $isVideo ? $getVideoEmbedUrl($item) : null;
+                    $localVideoUrl = $isVideo ? $getLocalVideoUrl($item) : null;
+                @endphp
                 <figure class="m-0">
-                    @if($item['is_video'] ?? false)
+                    @if($isVideo)
                         <div class="relative aspect-video bg-tasty-blue-black overflow-hidden">
-                            <img
-                                src="{{ $item['thumbnail_url'] ?? '' }}"
-                                alt="{{ $item['alt_text'] ?? 'Video' }}"
-                                class="w-full h-full object-cover opacity-80"
-                            />
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <div class="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
-                                    <svg class="w-6 h-6 text-tasty-blue-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                                        <polygon points="5 3 19 12 5 21 5 3"/>
-                                    </svg>
-                                </div>
-                            </div>
+                            @if($embedUrl)
+                                <iframe
+                                    src="{{ $embedUrl }}"
+                                    class="w-full h-full"
+                                    frameborder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen
+                                ></iframe>
+                            @elseif($localVideoUrl)
+                                <video
+                                    class="w-full h-full"
+                                    controls
+                                    playsinline
+                                    poster="{{ $item['thumbnail_url'] ?? '' }}"
+                                >
+                                    <source src="{{ $localVideoUrl }}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                            @else
+                                <img
+                                    src="{{ $item['thumbnail_url'] ?? '' }}"
+                                    alt="{{ $item['alt_text'] ?? 'Video' }}"
+                                    class="w-full h-full object-cover"
+                                />
+                            @endif
                         </div>
                     @else
                         <img
@@ -88,7 +201,7 @@
                         />
                     @endif
                     @if($item['caption'] ?? null)
-                        <figcaption class="text-caption text-tasty-blue-black/50 mt-8 text-center">
+                        <figcaption class="text-caption text-tasty-blue-black/50 mt-8 text-left">
                             {{ $item['caption'] }}
                         </figcaption>
                     @endif
@@ -100,15 +213,40 @@
         {{-- Carousel Layout --}}
         <div class="overflow-x-auto scrollbar-hide">
             <div class="flex {{ $gapClass }} pb-4" style="width: max-content;">
-                @foreach($items as $item)
+                @foreach($items as $index => $item)
+                    @php
+                        $isVideo = $item['is_video'] ?? false;
+                        $embedUrl = $isVideo ? $getVideoEmbedUrl($item) : null;
+                        $localVideoUrl = $isVideo ? $getLocalVideoUrl($item) : null;
+                    @endphp
                     <figure class="m-0 flex-shrink-0" style="width: calc({{ 100 / $gridColumns }}vw - 2rem); min-width: 200px; max-width: 500px;">
-                        @if($item['is_video'] ?? false)
+                        @if($isVideo)
                             <div class="relative aspect-video bg-tasty-blue-black overflow-hidden">
-                                <img
-                                    src="{{ $item['thumbnail_url'] ?? '' }}"
-                                    alt="{{ $item['alt_text'] ?? 'Video' }}"
-                                    class="w-full h-full object-cover opacity-80"
-                                />
+                                @if($embedUrl)
+                                    <iframe
+                                        src="{{ $embedUrl }}"
+                                        class="w-full h-full"
+                                        frameborder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowfullscreen
+                                    ></iframe>
+                                @elseif($localVideoUrl)
+                                    <video
+                                        class="w-full h-full"
+                                        controls
+                                        playsinline
+                                        poster="{{ $item['thumbnail_url'] ?? '' }}"
+                                    >
+                                        <source src="{{ $localVideoUrl }}" type="video/mp4">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                @else
+                                    <img
+                                        src="{{ $item['thumbnail_url'] ?? '' }}"
+                                        alt="{{ $item['alt_text'] ?? 'Video' }}"
+                                        class="w-full h-full object-cover"
+                                    />
+                                @endif
                             </div>
                         @else
                             <img
@@ -118,7 +256,7 @@
                             />
                         @endif
                         @if($item['caption'] ?? null)
-                            <figcaption class="text-caption text-tasty-blue-black/50 mt-4 text-center">
+                            <figcaption class="text-caption text-tasty-blue-black/50 mt-4 text-left">
                                 {{ $item['caption'] }}
                             </figcaption>
                         @endif
