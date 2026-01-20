@@ -169,13 +169,17 @@ function editPost(post: Post) {
 }
 
 // Chart data for posts per day
+const postsPerDay = computed(() => props.stats?.posts_per_day || []);
+
 const chartMax = computed(() => {
-    return Math.max(...props.stats.posts_per_day.map(d => d.count), 1);
+    if (!postsPerDay.value.length) return 1;
+    return Math.max(...postsPerDay.value.map(d => d.count), 1);
 });
 
 function getBarHeight(count: number): string {
     const percentage = (count / chartMax.value) * 100;
-    return `${Math.max(percentage, 2)}%`;
+    // Minimum 4% height so bars are visible even when 0
+    return `${Math.max(percentage, 4)}%`;
 }
 </script>
 
@@ -276,23 +280,30 @@ function getBarHeight(count: number): string {
                             description="Posts published in the last 14 days"
                             variant="outline"
                         >
-                            <div class="h-40 flex items-end gap-1">
-                                <div
-                                    v-for="day in stats.posts_per_day"
-                                    :key="day.date"
-                                    class="flex-1 flex flex-col items-center gap-1"
-                                >
+                            <div v-if="postsPerDay.length === 0" class="h-40 flex items-center justify-center">
+                                <p class="text-muted text-sm">No data available</p>
+                            </div>
+                            <template v-else>
+                                <div class="h-40 flex items-end gap-1">
                                     <div
-                                        class="w-full bg-primary rounded-t transition-all"
-                                        :style="{ height: getBarHeight(day.count) }"
-                                        :title="`${day.date}: ${day.count} posts`"
-                                    />
+                                        v-for="day in postsPerDay"
+                                        :key="day.date"
+                                        class="flex-1 flex flex-col items-center gap-1 group cursor-pointer"
+                                    >
+                                        <span class="text-xs text-muted opacity-0 group-hover:opacity-100 transition-opacity">{{ day.count }}</span>
+                                        <div
+                                            class="w-full bg-primary/30 group-hover:bg-primary rounded-t transition-all"
+                                            :class="{ 'bg-primary': day.count > 0 }"
+                                            :style="{ height: getBarHeight(day.count) }"
+                                            :title="`${day.date}: ${day.count} posts`"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="flex justify-between mt-2 text-xs text-muted">
-                                <span>{{ stats.posts_per_day[0]?.date.slice(5) }}</span>
-                                <span>{{ stats.posts_per_day[stats.posts_per_day.length - 1]?.date.slice(5) }}</span>
-                            </div>
+                                <div class="flex justify-between mt-2 text-xs text-muted">
+                                    <span>{{ postsPerDay[0]?.date.slice(5) }}</span>
+                                    <span>{{ postsPerDay[postsPerDay.length - 1]?.date.slice(5) }}</span>
+                                </div>
+                            </template>
                         </UPageCard>
 
                         <!-- Posts by Type -->
@@ -347,12 +358,12 @@ function getBarHeight(count: number): string {
                                 <div
                                     v-for="post in pendingReview"
                                     :key="post.id"
-                                    class="flex items-center gap-4 px-4 py-3 hover:bg-elevated/50 transition-colors cursor-pointer overflow-hidden"
+                                    class="flex items-center gap-3 px-4 py-3 hover:bg-elevated/50 transition-colors cursor-pointer"
                                     @click="editPost(post)"
                                 >
-                                    <div class="flex-1 min-w-0">
-                                        <p class="font-medium text-highlighted truncate">{{ post.title }}</p>
-                                        <p class="text-xs text-muted">
+                                    <div class="flex-1 min-w-0 overflow-hidden">
+                                        <p class="font-medium text-highlighted truncate text-sm">{{ post.title }}</p>
+                                        <p class="text-xs text-muted truncate">
                                             {{ post.author?.name || 'Unknown' }} • {{ formatRelativeDate(post.updated_at) }}
                                         </p>
                                     </div>
@@ -360,6 +371,7 @@ function getBarHeight(count: number): string {
                                         :color="getStatusColor(post.workflow_status || '')"
                                         variant="subtle"
                                         size="sm"
+                                        class="shrink-0"
                                     >
                                         {{ post.workflow_status }}
                                     </UBadge>

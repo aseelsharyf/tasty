@@ -8,7 +8,7 @@ export function useSettingsNav() {
         { label: 'Workflows', icon: 'i-lucide-git-branch', to: '/cms/settings/workflows' },
         { label: 'Languages', icon: 'i-lucide-globe', to: '/cms/settings/languages' },
         { label: 'SEO', icon: 'i-lucide-search', to: '/cms/settings/seo' },
-        { label: 'Section Categories', icon: 'i-lucide-layers', to: '/cms/settings/section-categories' },
+        { label: 'Sections', icon: 'i-lucide-layers', to: '/cms/settings/section-categories' },
         { label: 'Units', icon: 'i-lucide-scale', to: '/cms/units' },
         { label: 'Ingredients', icon: 'i-lucide-carrot', to: '/cms/ingredients' },
     ]];
