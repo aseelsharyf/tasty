@@ -2,10 +2,26 @@
 
 namespace App\Services\Layouts;
 
+use App\Models\Category;
 use App\Models\Post;
 
 class SectionDataResolver
 {
+    /**
+     * The current category context (if on a category page).
+     */
+    protected ?Category $categoryContext = null;
+
+    /**
+     * Set the category context for resolving sections.
+     */
+    public function setCategory(?Category $category): self
+    {
+        $this->categoryContext = $category;
+
+        return $this;
+    }
+
     /**
      * Resolve data for a section based on its configuration.
      *
@@ -18,6 +34,9 @@ class SectionDataResolver
         $config = $section['config'] ?? [];
         $dataSource = $section['dataSource'] ?? ['action' => 'recent', 'params' => []];
         $slots = $section['slots'] ?? [];
+
+        // Apply category context if on a category page and action is 'recent'
+        $dataSource = $this->applyCategoryContext($dataSource);
 
         // Parse slots into categorized arrays
         $slotData = $this->parseSlots($slots);
@@ -39,6 +58,38 @@ class SectionDataResolver
             'add-to-cart' => $this->resolveAddToCart($config, $slotData),
             default => [],
         };
+    }
+
+    /**
+     * Apply category context to data source when on a category page.
+     *
+     * When viewing a category page and the section uses 'recent' action,
+     * automatically scope posts to the current category.
+     *
+     * @param  array<string, mixed>  $dataSource
+     * @return array<string, mixed>
+     */
+    protected function applyCategoryContext(array $dataSource): array
+    {
+        // Only apply if we have a category context and action is 'recent'
+        if (! $this->categoryContext) {
+            return $dataSource;
+        }
+
+        $action = $dataSource['action'] ?? 'recent';
+
+        // Only override 'recent' action - explicit byCategory/byTag should be preserved
+        if ($action !== 'recent') {
+            return $dataSource;
+        }
+
+        // Convert to byCategory with current category slug
+        return [
+            'action' => 'byCategory',
+            'params' => [
+                'slugs' => [$this->categoryContext->slug],
+            ],
+        ];
     }
 
     /**

@@ -30,6 +30,7 @@ class StoreRecipeSubmissionRequest extends FormRequest
 
             // Recipe basic info
             'recipe_name' => ['required', 'string', 'max:255'],
+            'headline' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:2000'],
             'prep_time' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'cook_time' => ['nullable', 'integer', 'min:0', 'max:9999'],
@@ -49,8 +50,6 @@ class StoreRecipeSubmissionRequest extends FormRequest
             'ingredients.*.items' => ['required', 'array', 'min:1'],
             'ingredients.*.items.*.ingredient' => ['required', 'string', 'max:255'],
             'ingredients.*.items.*.quantity' => ['nullable', 'string', 'max:50'],
-            'ingredients.*.items.*.unit' => ['nullable', 'string', 'max:50'],
-            'ingredients.*.items.*.prep_note' => ['nullable', 'string', 'max:255'],
 
             // Instructions (grouped)
             'instructions' => ['required', 'array', 'min:1'],
@@ -86,6 +85,7 @@ class StoreRecipeSubmissionRequest extends FormRequest
             'submitter_email.email' => 'Please enter a valid email address.',
             'chef_name.required_if' => 'Please enter the chef\'s name.',
             'recipe_name.required' => 'Please enter a recipe name.',
+            'headline.required' => 'Please enter a headline for your recipe.',
             'description.required' => 'Please add a description for your recipe.',
             'ingredients.required' => 'Please add at least one ingredient.',
             'ingredients.min' => 'Please add at least one ingredient.',

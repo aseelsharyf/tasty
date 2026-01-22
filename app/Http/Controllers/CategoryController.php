@@ -49,6 +49,9 @@ class CategoryController extends Controller
     {
         $configuration = $category->getLayoutConfiguration();
 
+        // Set category context so sections scope posts to this category
+        $this->dataResolver->setCategory($category);
+
         // Get enabled sections sorted by order
         $sections = collect($configuration['sections'] ?? [])
             ->filter(fn (array $section) => $section['enabled'] ?? true)

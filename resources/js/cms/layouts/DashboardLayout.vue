@@ -19,6 +19,7 @@ interface Language {
 const page = usePage<PageProps>();
 const user = computed(() => page.props.auth?.user);
 const flash = computed(() => page.props.flash);
+const pendingSubmissionsCount = computed(() => (page.props as any).pendingSubmissionsCount || 0);
 
 // Toast visibility with auto-dismiss
 const showToast = ref(false);
@@ -370,6 +371,7 @@ const engagementNavItems = computed<NavigationMenuItem[]>(() => {
             icon: 'i-lucide-chef-hat',
             to: '/cms/recipe-submissions',
             active: isActivePrefix('/cms/recipe-submissions'),
+            badge: pendingSubmissionsCount.value > 0 ? pendingSubmissionsCount.value.toString() : undefined,
             onSelect: () => { sidebarOpen.value = false; },
         });
     }

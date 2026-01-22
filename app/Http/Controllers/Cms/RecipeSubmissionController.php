@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Cms;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Language;
+use App\Models\MediaItem;
 use App\Models\Post;
 use App\Models\RecipeSubmission;
 use App\Models\Tag;
@@ -145,6 +146,7 @@ class RecipeSubmissionController extends Controller
                 'chef_name' => $submission->chef_name,
                 'chef_display_name' => $submission->getChefDisplayName(),
                 'recipe_name' => $submission->recipe_name,
+                'headline' => $submission->headline,
                 'slug' => $submission->slug,
                 'description' => $submission->description,
                 'prep_time' => $submission->prep_time,
@@ -196,9 +198,185 @@ class RecipeSubmissionController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        // Approve the submission
         $submission->approve($request->user(), $validated['notes'] ?? null);
 
-        return redirect()->back()->with('success', 'Submission approved successfully.');
+        // Auto-convert to post
+        return $this->convertSubmissionToPost($request, $submission);
+    }
+
+    /**
+     * Convert an approved submission to a post automatically.
+     */
+    protected function convertSubmissionToPost(Request $request, RecipeSubmission $submission): RedirectResponse
+    {
+        $languageCode = Language::active()->ordered()->first()?->code ?? 'en';
+        $authorId = $request->user()->id;
+
+        // Get the category IDs
+        $categoryIds = [];
+        if ($submission->categories) {
+            $categoryIds = Category::whereIn('slug', $submission->categories)
+                ->pluck('id')
+                ->toArray();
+        }
+
+        // Generate unique slug
+        $baseSlug = $submission->slug;
+        $slug = $baseSlug;
+        $counter = 1;
+        while (Post::where('slug', $slug)->exists()) {
+            $slug = $baseSlug.'-'.$counter;
+            $counter++;
+        }
+
+        // Convert ingredients to the expected format: [{ section: "Name", items: ["ingredient 1"] }]
+        $formattedIngredients = [];
+        if ($submission->ingredients) {
+            foreach ($submission->ingredients as $group) {
+                $items = [];
+                if (! empty($group['items'])) {
+                    foreach ($group['items'] as $item) {
+                        // Build ingredient string: "quantity ingredient"
+                        $ingredientParts = [];
+                        if (! empty($item['quantity'])) {
+                            $ingredientParts[] = $item['quantity'];
+                        }
+                        $ingredientParts[] = $item['ingredient'] ?? '';
+                        $items[] = trim(implode(' ', $ingredientParts));
+                    }
+                }
+                $formattedIngredients[] = [
+                    'section' => $group['group_name'] ?? 'Ingredients',
+                    'items' => $items,
+                ];
+            }
+        }
+
+        // Build custom fields for recipe
+        $customFields = [
+            'prep_time' => (string) ($submission->prep_time ?? ''),
+            'cook_time' => (string) ($submission->cook_time ?? ''),
+            'servings' => (string) ($submission->servings ?? ''),
+            'introduction' => '',
+            'ingredients' => $formattedIngredients,
+        ];
+
+        // Build content blocks: description paragraph + collapsible for each instruction step
+        $contentBlocks = [];
+
+        // Add description as paragraph
+        if ($submission->description) {
+            $contentBlocks[] = [
+                'id' => Str::random(10),
+                'type' => 'paragraph',
+                'data' => ['text' => $submission->description],
+            ];
+        }
+
+        // Add instruction steps as collapsibles
+        if ($submission->instructions) {
+            foreach ($submission->instructions as $index => $group) {
+                $stepName = $group['group_name'] ?? '';
+                $stepTitle = 'Step '.($index + 1).($stepName ? ': '.$stepName : '');
+                $stepContent = $group['steps'][0] ?? '';
+
+                // Create collapsible block with nested paragraph
+                $contentBlocks[] = [
+                    'id' => Str::random(10),
+                    'type' => 'collapsible',
+                    'data' => [
+                        'title' => $stepTitle,
+                        'expanded' => false,
+                        'content' => [
+                            'time' => now()->timestamp * 1000,
+                            'blocks' => [
+                                [
+                                    'id' => Str::random(10),
+                                    'type' => 'paragraph',
+                                    'data' => ['text' => $stepContent],
+                                ],
+                            ],
+                            'version' => '2.28.2',
+                        ],
+                    ],
+                ];
+            }
+        }
+
+        // Handle featured image - create MediaItem from submission image
+        $featuredMediaId = null;
+        if ($submission->image_path) {
+            $mediaItem = MediaItem::create([
+                'type' => MediaItem::TYPE_IMAGE,
+                'category' => MediaItem::CATEGORY_MEDIA,
+                'title' => ['en' => $submission->recipe_name],
+                'alt_text' => ['en' => $submission->recipe_name],
+                'uploaded_by' => $authorId,
+            ]);
+
+            // Copy the file from submission to media item
+            $sourcePath = Storage::disk('public')->path($submission->image_path);
+            if (file_exists($sourcePath)) {
+                $mediaItem->addMedia($sourcePath)
+                    ->preservingOriginal()
+                    ->toMediaCollection('default');
+                $featuredMediaId = $mediaItem->id;
+            }
+        }
+
+        // Create the post
+        // Kicker = Recipe Name, Headline (subtitle) = headline field, Title = Recipe Name
+        $post = Post::create([
+            'uuid' => Str::uuid(),
+            'author_id' => $authorId,
+            'language_code' => $languageCode,
+            'title' => $submission->recipe_name,
+            'kicker' => $submission->recipe_name,
+            'subtitle' => $submission->headline ?? '',
+            'slug' => $slug,
+            'excerpt' => '',
+            'content' => [
+                'time' => now()->timestamp * 1000,
+                'blocks' => $contentBlocks,
+                'version' => '2.28.2',
+            ],
+            'post_type' => Post::TYPE_RECIPE,
+            'status' => Post::STATUS_DRAFT,
+            'workflow_status' => 'draft',
+            'custom_fields' => $customFields,
+            'featured_media_id' => $featuredMediaId,
+            'allow_comments' => true,
+            'show_author' => true,
+        ]);
+
+        // Attach categories
+        if (! empty($categoryIds)) {
+            $post->categories()->attach($categoryIds);
+        }
+
+        // Create/attach meal times as tags
+        if ($submission->meal_times) {
+            $tagIds = [];
+            foreach ($submission->meal_times as $mealTime) {
+                $tagName = ucwords(str_replace('-', ' ', $mealTime));
+                $tagSlug = Str::slug($mealTime);
+
+                $tag = Tag::firstOrCreate(
+                    ['slug' => $tagSlug],
+                    ['name' => ['en' => $tagName]]
+                );
+                $tagIds[] = $tag->id;
+            }
+            $post->tags()->attach($tagIds);
+        }
+
+        // Mark submission as converted
+        $submission->markAsConverted($post);
+
+        return redirect()
+            ->route('cms.posts.edit', ['language' => $languageCode, 'post' => $post->uuid])
+            ->with('success', 'Recipe approved and converted to post. Please review and publish when ready.');
     }
 
     public function reject(Request $request, RecipeSubmission $submission): RedirectResponse
@@ -286,7 +464,7 @@ class RecipeSubmissionController extends Controller
             'prep_time' => (string) ($submission->prep_time ?? ''),
             'cook_time' => (string) ($submission->cook_time ?? ''),
             'servings' => (string) ($submission->servings ?? ''),
-            'introduction' => $submission->description ?? '',
+            'introduction' => '',
             'ingredients' => $formattedIngredients,
         ];
 
@@ -326,7 +504,7 @@ class RecipeSubmissionController extends Controller
             'language_code' => $validated['language_code'],
             'title' => $submission->recipe_name,
             'slug' => $slug,
-            'excerpt' => Str::limit($submission->description, 200),
+            'excerpt' => '',
             'content' => [
                 'time' => now()->timestamp * 1000,
                 'blocks' => $contentBlocks,

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\RecipeSubmission;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -56,6 +57,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'pendingSubmissionsCount' => fn () => $user ? RecipeSubmission::pending()->whereNull('parent_submission_id')->count() : 0,
         ];
     }
 }

@@ -147,6 +147,7 @@
                 enctype="multipart/form-data"
                 class="flex flex-col gap-6 relative"
                 @submit.prevent="submitForm"
+                @keydown.enter.prevent="focusNextField($event)"
             >
                 @csrf
                 <input type="hidden" name="submission_type" :value="mode">
@@ -382,16 +383,33 @@
                     </div>
 
                     <div class="flex flex-col gap-1.5">
+                        <label for="headline" class="text-xs font-medium text-gray-500">Headline *</label>
+                        <input
+                            type="text"
+                            id="headline"
+                            name="headline"
+                            x-model="form.headline"
+                            class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-tasty-blue-black focus:ring-1 focus:ring-tasty-blue-black transition-all"
+                            :class="errors.headline ? 'border-red-500' : ''"
+                            placeholder="A short catchy headline for your recipe"
+                            required
+                        />
+                        <span x-show="errors.headline" x-text="errors.headline" class="text-red-500 text-xs"></span>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
                         <label for="description" class="text-xs font-medium text-gray-500">Description *</label>
                         <textarea
                             id="description"
                             name="description"
                             x-model="form.description"
                             rows="3"
-                            class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-tasty-blue-black focus:ring-1 focus:ring-tasty-blue-black transition-all resize-none"
+                            class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-tasty-blue-black focus:ring-1 focus:ring-tasty-blue-black transition-all resize-none overflow-hidden"
                             :class="errors.description ? 'border-red-500' : ''"
                             placeholder="Describe your recipe..."
                             required
+                            @input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"
+                            x-init="$nextTick(() => { $el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'; })"
                         ></textarea>
                         <span x-show="errors.description" x-text="errors.description" class="text-red-500 text-xs"></span>
                     </div>
@@ -540,21 +558,11 @@
                 <div class="bg-white rounded-2xl p-6 flex flex-col gap-5" :class="!authUser ? 'opacity-50 pointer-events-none blur-[1px]' : ''">
                     <div class="flex items-center justify-between">
                         <h2 class="text-h5 text-tasty-blue-black">Ingredients *</h2>
-                        <button
-                            type="button"
-                            @click="addIngredientGroup()"
-                            class="text-xs text-gray-500 hover:text-tasty-blue-black transition-colors flex items-center gap-1"
-                        >
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Add Group
-                        </button>
                     </div>
 
                     <template x-for="(group, groupIndex) in form.ingredients" :key="groupIndex">
                         <div class="border border-gray-100 rounded-xl p-4 flex flex-col gap-3 bg-gray-50/50">
-                            <div class="flex items-center gap-2" x-show="form.ingredients.length > 1">
+                            <div class="flex items-center gap-2">
                                 <input
                                     type="text"
                                     :name="`ingredients[${groupIndex}][group_name]`"
@@ -565,6 +573,7 @@
                                 <button
                                     type="button"
                                     @click="removeIngredientGroup(groupIndex)"
+                                    x-show="form.ingredients.length > 1"
                                     class="text-red-400 hover:text-red-600 p-1"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -575,6 +584,15 @@
 
                             <template x-for="(item, itemIndex) in group.items" :key="itemIndex">
                                 <div class="flex gap-2 items-center">
+                                    <!-- Quantity -->
+                                    <input
+                                        type="text"
+                                        :name="`ingredients[${groupIndex}][items][${itemIndex}][quantity]`"
+                                        x-model="item.quantity"
+                                        class="w-20 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-tasty-blue-black transition-colors text-center"
+                                        placeholder="Qty"
+                                    />
+
                                     <!-- Ingredient Name with Autocomplete -->
                                     <div class="flex-1 relative" x-data="{ open: false }">
                                         <input
@@ -605,27 +623,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- Quantity -->
-                                    <input
-                                        type="text"
-                                        :name="`ingredients[${groupIndex}][items][${itemIndex}][quantity]`"
-                                        x-model="item.quantity"
-                                        class="w-16 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-tasty-blue-black transition-colors text-center"
-                                        placeholder="Qty"
-                                    />
-
-                                    <!-- Unit -->
-                                    <select
-                                        :name="`ingredients[${groupIndex}][items][${itemIndex}][unit]`"
-                                        x-model="item.unit"
-                                        class="w-24 px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-tasty-blue-black transition-colors bg-white"
-                                    >
-                                        <option value="">Unit</option>
-                                        <template x-for="unit in units" :key="unit.id">
-                                            <option :value="unit.abbreviation" x-text="unit.abbreviation || unit.name"></option>
-                                        </template>
-                                    </select>
-
                                     <!-- Remove Button -->
                                     <button
                                         type="button"
@@ -652,6 +649,18 @@
                             </button>
                         </div>
                     </template>
+
+                    <!-- Add Group button at bottom (centered) -->
+                    <button
+                        type="button"
+                        @click="addIngredientGroup()"
+                        class="mx-auto text-xs text-gray-500 hover:text-tasty-blue-black transition-colors flex items-center gap-1"
+                    >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Group
+                    </button>
                     <span x-show="errors.ingredients" x-text="errors.ingredients" class="text-red-500 text-xs"></span>
                 </div>
 
@@ -659,31 +668,26 @@
                 <div class="bg-white rounded-2xl p-6 flex flex-col gap-5" :class="!authUser ? 'opacity-50 pointer-events-none blur-[1px]' : ''">
                     <div class="flex items-center justify-between">
                         <h2 class="text-h5 text-tasty-blue-black">Instructions *</h2>
-                        <button
-                            type="button"
-                            @click="addInstructionGroup()"
-                            class="text-xs text-gray-500 hover:text-tasty-blue-black transition-colors flex items-center gap-1"
-                        >
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Add Group
-                        </button>
                     </div>
 
                     <template x-for="(group, groupIndex) in form.instructions" :key="groupIndex">
                         <div class="border border-gray-100 rounded-xl p-4 flex flex-col gap-3 bg-gray-50/50">
-                            <div class="flex items-center gap-2" x-show="form.instructions.length > 1">
+                            <!-- Step header with number badge -->
+                            <div class="flex items-center gap-3">
+                                <div class="w-7 h-7 bg-tasty-yellow rounded-full flex items-center justify-center shrink-0">
+                                    <span class="text-xs font-bold text-tasty-blue-black" x-text="groupIndex + 1"></span>
+                                </div>
                                 <input
                                     type="text"
                                     :name="`instructions[${groupIndex}][group_name]`"
                                     x-model="group.group_name"
                                     class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-tasty-blue-black transition-colors bg-white"
-                                    placeholder="Section name (e.g., Prepare the dough)"
+                                    :placeholder="'Step ' + (groupIndex + 1) + ' (e.g., Prepare the dough)'"
                                 />
                                 <button
                                     type="button"
                                     @click="removeInstructionGroup(groupIndex)"
+                                    x-show="form.instructions.length > 1"
                                     class="text-red-400 hover:text-red-600 p-1"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -692,44 +696,33 @@
                                 </button>
                             </div>
 
-                            <template x-for="(step, stepIndex) in group.steps" :key="stepIndex">
-                                <div class="flex items-start gap-3">
-                                    <div class="w-7 h-7 bg-tasty-yellow rounded-full flex items-center justify-center shrink-0 mt-1">
-                                        <span class="text-xs font-bold text-tasty-blue-black" x-text="stepIndex + 1"></span>
-                                    </div>
-                                    <textarea
-                                        :name="`instructions[${groupIndex}][steps][${stepIndex}]`"
-                                        x-model="group.steps[stepIndex]"
-                                        rows="2"
-                                        class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-tasty-blue-black transition-colors resize-none"
-                                        placeholder="Describe this step..."
-                                        required
-                                    ></textarea>
-                                    <button
-                                        type="button"
-                                        @click="removeInstruction(groupIndex, stepIndex)"
-                                        x-show="group.steps.length > 1"
-                                        class="text-red-400 hover:text-red-600 p-1 mt-1"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </template>
-
-                            <button
-                                type="button"
-                                @click="addInstruction(groupIndex)"
-                                class="self-start text-xs text-gray-500 hover:text-tasty-blue-black transition-colors flex items-center gap-1 ml-10"
-                            >
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                                Add Step
-                            </button>
+                            <!-- Step description -->
+                            <div class="ml-10">
+                                <textarea
+                                    :name="`instructions[${groupIndex}][steps][0]`"
+                                    x-model="group.steps[0]"
+                                    rows="2"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-tasty-blue-black transition-colors resize-none overflow-hidden"
+                                    placeholder="Describe this step..."
+                                    required
+                                    @input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"
+                                    x-init="$nextTick(() => { $el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'; })"
+                                ></textarea>
+                            </div>
                         </div>
                     </template>
+
+                    <!-- Add Step button at bottom (centered) -->
+                    <button
+                        type="button"
+                        @click="addInstructionGroup()"
+                        class="mx-auto text-xs text-gray-500 hover:text-tasty-blue-black transition-colors flex items-center gap-1"
+                    >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Step
+                    </button>
                     <span x-show="errors.instructions" x-text="errors.instructions" class="text-red-500 text-xs"></span>
                 </div>
 
@@ -789,11 +782,25 @@
                     </div>
                 </template>
 
+                <!-- Declaration Checkbox -->
+                <div class="bg-white rounded-2xl p-6" :class="!authUser ? 'opacity-50 pointer-events-none blur-[1px]' : ''">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            x-model="form.declaration"
+                            class="w-5 h-5 mt-0.5 rounded border-gray-300 text-tasty-yellow focus:ring-tasty-yellow"
+                        />
+                        <span class="text-sm text-tasty-blue-black">
+                            I hereby confirm that this recipe is my own original creation or I have permission to share it. I agree to the Terms of Service and Privacy Policy.
+                        </span>
+                    </label>
+                </div>
+
                 <!-- Submit Button -->
                 <div class="flex justify-center pt-2" :class="!authUser ? 'opacity-50 pointer-events-none' : ''">
                     <button
                         type="submit"
-                        :disabled="submitting || !authUser"
+                        :disabled="submitting || !authUser || !form.declaration"
                         class="btn btn-yellow px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <template x-if="!submitting">
@@ -858,6 +865,7 @@ function recipeSubmission() {
             is_chef: true,
             chef_name: '',
             recipe_name: '',
+            headline: '',
             slug: '',
             description: '',
             prep_time: '',
@@ -866,10 +874,11 @@ function recipeSubmission() {
             servings: '',
             categories: [],
             meal_times: [],
+            declaration: false,
             ingredients: [
                 {
                     group_name: '',
-                    items: [{ ingredient: '', quantity: '', unit: '', prep_note: '' }]
+                    items: [{ ingredient: '', quantity: '' }]
                 }
             ],
             instructions: [
@@ -888,31 +897,11 @@ function recipeSubmission() {
         rawErrors: {},
 
         init() {
-            // Load saved form data from localStorage first
-            const saved = localStorage.getItem('recipe_submission_draft');
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    // Don't restore avatar_preview from localStorage
-                    delete parsed.avatar_preview;
-                    this.form = { ...this.form, ...parsed };
-                } catch (e) {
-                    console.error('Failed to load draft:', e);
-                }
-            }
-
-            // Pre-fill name from auth user if logged in (override localStorage for name)
+            // Pre-fill name from auth user if logged in
             if (this.authUser) {
-                this.form.submitter_name = this.form.submitter_name || this.authUser.name || '';
+                this.form.submitter_name = this.authUser.name || '';
                 this.form.submitter_email = this.authUser.email || '';
             }
-
-            // Auto-save form data (exclude avatar_preview)
-            this.$watch('form', () => {
-                const toSave = { ...this.form };
-                delete toSave.avatar_preview;
-                localStorage.setItem('recipe_submission_draft', JSON.stringify(toSave));
-            }, { deep: true });
         },
 
         requireAuth() {
@@ -1018,6 +1007,21 @@ function recipeSubmission() {
             }
         },
 
+        focusNextField(event) {
+            // Don't prevent enter in textareas (allow new lines)
+            if (event.target.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            const form = event.target.closest('form');
+            const focusableElements = Array.from(form.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]):not([type="file"]), textarea, select'));
+            const currentIndex = focusableElements.indexOf(event.target);
+
+            if (currentIndex > -1 && currentIndex < focusableElements.length - 1) {
+                focusableElements[currentIndex + 1].focus();
+            }
+        },
+
         generateSlug() {
             this.form.slug = this.form.recipe_name
                 .toLowerCase()
@@ -1046,7 +1050,7 @@ function recipeSubmission() {
         addIngredientGroup() {
             this.form.ingredients.push({
                 group_name: '',
-                items: [{ ingredient: '', quantity: '', unit: '', prep_note: '' }]
+                items: [{ ingredient: '', quantity: '' }]
             });
         },
 
@@ -1058,7 +1062,7 @@ function recipeSubmission() {
 
         addIngredient(groupIndex) {
             this.form.ingredients[groupIndex].items.push({
-                ingredient: '', quantity: '', unit: '', prep_note: ''
+                ingredient: '', quantity: ''
             });
         },
 
@@ -1208,6 +1212,7 @@ function recipeSubmission() {
             formData.append('is_chef', this.form.is_chef ? '1' : '0');
             formData.append('chef_name', this.form.chef_name || '');
             formData.append('recipe_name', this.form.recipe_name);
+            formData.append('headline', this.form.headline);
             formData.append('description', this.form.description);
             formData.append('prep_time', this.form.prep_time || '');
             formData.append('cook_time', this.form.cook_time || '');
@@ -1229,8 +1234,6 @@ function recipeSubmission() {
                 group.items.forEach((item, ii) => {
                     formData.append(`ingredients[${gi}][items][${ii}][ingredient]`, item.ingredient);
                     formData.append(`ingredients[${gi}][items][${ii}][quantity]`, item.quantity || '');
-                    formData.append(`ingredients[${gi}][items][${ii}][unit]`, item.unit || '');
-                    formData.append(`ingredients[${gi}][items][${ii}][prep_note]`, item.prep_note || '');
                 });
             });
 
@@ -1266,7 +1269,6 @@ function recipeSubmission() {
                 });
 
                 if (response.ok) {
-                    localStorage.removeItem('recipe_submission_draft');
                     window.location.href = '{{ route('recipes.submit.success') }}';
                 } else if (response.status === 422) {
                     const data = await response.json();

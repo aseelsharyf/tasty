@@ -487,7 +487,7 @@ const statusTabs = [
                         td: 'border-b border-default',
                         separator: 'h-0',
                     }"
-                    @row-click="(_, row) => viewSubmission(row.original)"
+                    @select="(e, row) => viewSubmission(row.original)"
                 />
 
                 <!-- Pagination -->

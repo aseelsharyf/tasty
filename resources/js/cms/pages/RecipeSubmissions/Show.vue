@@ -52,6 +52,7 @@ interface Submission {
     chef_name?: string;
     chef_display_name: string;
     recipe_name: string;
+    headline?: string;
     slug: string;
     description: string;
     prep_time?: number;
@@ -219,15 +220,6 @@ function formatIngredient(item: Ingredient): string {
                                 </UButton>
                             </template>
 
-                            <template v-if="submission.status === 'approved' && !submission.converted_post && can('posts.create')">
-                                <UButton
-                                    color="primary"
-                                    icon="i-lucide-file-plus"
-                                    @click="openConvertModal"
-                                >
-                                    Convert to Post
-                                </UButton>
-                            </template>
 
                             <UButton
                                 v-if="submission.converted_post"
@@ -315,6 +307,11 @@ function formatIngredient(item: Ingredient): string {
                         </template>
 
                         <div class="space-y-4">
+                            <div v-if="submission.headline">
+                                <dt class="text-sm text-muted">Headline</dt>
+                                <dd class="mt-1 font-medium text-highlighted">{{ submission.headline }}</dd>
+                            </div>
+
                             <div>
                                 <dt class="text-sm text-muted">Description</dt>
                                 <dd class="mt-1">{{ submission.description }}</dd>
@@ -402,15 +399,18 @@ function formatIngredient(item: Ingredient): string {
                         </template>
 
                         <div class="space-y-4">
-                            <div v-for="(group, gi) in submission.instructions" :key="gi">
-                                <h4 v-if="group.group_name" class="font-medium text-highlighted mb-2">
-                                    {{ group.group_name }}
-                                </h4>
-                                <ol class="list-decimal list-inside space-y-2">
-                                    <li v-for="(step, si) in group.steps" :key="si" class="text-muted">
-                                        <span class="text-highlighted">{{ step }}</span>
-                                    </li>
-                                </ol>
+                            <div v-for="(group, gi) in submission.instructions" :key="gi" class="flex gap-3">
+                                <div class="flex items-center justify-center size-7 rounded-full bg-primary/10 text-primary font-bold text-sm shrink-0">
+                                    {{ gi + 1 }}
+                                </div>
+                                <div class="flex-1">
+                                    <h4 v-if="group.group_name" class="font-medium text-highlighted">
+                                        {{ group.group_name }}
+                                    </h4>
+                                    <p v-if="group.steps?.[0]" class="text-muted mt-1">
+                                        {{ group.steps[0] }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </UCard>

@@ -9,7 +9,7 @@
         description="Explore our latest posts with this tag."
         buttonText="More Posts"
         loadAction="byTag"
-        :loadParams="['slug' => $tag->slug]"
+        :loadParams="['tag' => $tag->slug]"
         :autoFetch="true"
         :featuredCount="1"
         :postsCount="8"

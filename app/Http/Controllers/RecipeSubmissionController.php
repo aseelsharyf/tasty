@@ -65,6 +65,7 @@ class RecipeSubmissionController extends Controller
             'is_chef' => $validated['is_chef'],
             'chef_name' => $validated['chef_name'] ?? null,
             'recipe_name' => $validated['recipe_name'],
+            'headline' => $validated['headline'],
             'slug' => Str::slug($validated['recipe_name']),
             'description' => $validated['description'],
             'prep_time' => $validated['prep_time'] ?? null,

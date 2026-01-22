@@ -52,6 +52,8 @@ class LatestUpdates extends Component
 
     public bool $showLoadMore;
 
+    public bool $hasMorePosts = true;
+
     /** @var array<string, class-string> */
     protected array $actions = [
         'recent' => GetRecentPosts::class,
@@ -92,7 +94,7 @@ class LatestUpdates extends Component
         array $manualPostIds = [],
         array $staticContent = [],
         int $dynamicCount = 0,
-        string $action = 'recent',
+        string $action = '',
         array $params = [],
     ) {
         // Initialize post tracker to prevent duplicates across sections
@@ -104,7 +106,7 @@ class LatestUpdates extends Component
         $this->titleLarge = $titleLarge;
         $this->description = $description;
         $this->buttonText = $buttonText;
-        $this->loadAction = $action ?: $loadAction;
+        $this->loadAction = $action ?: $loadAction ?: 'recent';
         $this->loadParams = ! empty($params) ? $params : $loadParams;
         $this->showLoadMore = $showLoadMore;
 
@@ -115,7 +117,7 @@ class LatestUpdates extends Component
                 manualPostIds: $manualPostIds,
                 staticContent: $staticContent,
                 dynamicCount: $dynamicCount,
-                action: $action ?: $loadAction,
+                action: $action ?: $loadAction ?: 'recent',
                 params: ! empty($params) ? $params : $loadParams,
             );
             $this->excludeIds = $this->computeExcludeIds();
@@ -206,15 +208,20 @@ class LatestUpdates extends Component
             // Exclude manual posts AND posts used by other sections
             $excludeIds = $this->getExcludeIds($validManualIds);
 
+            // Fetch one extra to check if there are more
             $result = $actionInstance->execute([
                 'page' => 1,
-                'perPage' => $neededDynamicCount,
+                'perPage' => $neededDynamicCount + 1,
                 'excludeIds' => $excludeIds,
                 'sectionType' => $this->sectionType(),
                 ...$params,
             ]);
 
-            $dynamicPosts = collect($result->items());
+            $allDynamicPosts = collect($result->items());
+            $this->hasMorePosts = $allDynamicPosts->count() > $neededDynamicCount;
+            $dynamicPosts = $allDynamicPosts->take($neededDynamicCount);
+        } else {
+            $this->hasMorePosts = false;
         }
 
         // Build final slot array
@@ -250,11 +257,11 @@ class LatestUpdates extends Component
         $actionClass = $this->actions[$action] ?? GetRecentPosts::class;
         $actionInstance = new $actionClass;
 
-        // Fetch enough posts for featured + regular posts
+        // Fetch one extra post to determine if there are more
         $totalNeeded = $featuredCount + $postsCount;
         $result = $actionInstance->execute([
             'page' => 1,
-            'perPage' => $totalNeeded,
+            'perPage' => $totalNeeded + 1,
             'sectionType' => $this->sectionType(),
             'excludeIds' => $this->getExcludeIds(),
             ...$params,
@@ -262,10 +269,13 @@ class LatestUpdates extends Component
 
         $allPosts = collect($result->items());
 
+        // Check if there are more posts beyond what we need
+        $this->hasMorePosts = $allPosts->count() > $totalNeeded;
+
         // First post(s) become featured
         $this->featuredPost = $allPosts->first();
 
-        // Remaining posts go to the grid
+        // Remaining posts go to the grid (take only what we need, not the extra)
         $this->posts = $allPosts->skip($featuredCount)->take($postsCount)->values();
     }
 

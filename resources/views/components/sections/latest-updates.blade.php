@@ -6,10 +6,42 @@
         action: '{{ $loadAction }}',
         params: {{ Js::from($loadParams) }},
         excludeIds: {{ Js::from($excludeIds) }},
-        perPage: 2
+        perPage: 2,
+        hasMore: {{ $hasMorePosts ? 'true' : 'false' }}
     })"
     @endif
 >
+    @if(!$featuredPost && $posts->isEmpty())
+    {{-- Empty State Layout - Everything centered --}}
+    <div class="w-full max-w-[1880px] mx-auto pt-24 pb-32 max-xl:pt-10 max-lg:pb-24 px-10 max-lg:px-5">
+        <div class="flex flex-col items-center">
+            {{-- Intro Image --}}
+            <div class="w-full max-w-[300px] h-[286px] max-xl:h-[182px] max-xl:max-w-[200px] flex items-center justify-center">
+                <img
+                    src="{{ $introImage }}"
+                    alt="{{ $introImageAlt }}"
+                    class="w-full h-full object-contain"
+                    style="mix-blend-mode: darken;"
+                >
+            </div>
+            {{-- Title & Description --}}
+            <div class="flex flex-col gap-4 items-center text-center text-blue-black w-full max-w-[450px] mt-5">
+                <div class="flex flex-col items-center">
+                    @if($titleSmall)
+                        <span class="font-display text-[48px] leading-[1.1] tracking-[-0.04em] uppercase max-xl:text-[24px]">{{ $titleSmall }}</span>
+                    @endif
+                    <h2 class="font-display text-[72px] leading-[1] tracking-[-0.04em] uppercase max-xl:text-[36px]">{{ $titleLarge }}</h2>
+                </div>
+                <p class="text-body-md">{{ $description }}</p>
+            </div>
+            {{-- Empty State --}}
+            <div class="mt-16 text-center">
+                <p class="text-[14px] uppercase tracking-[0.1em] text-blue-black/40">No posts yet</p>
+            </div>
+        </div>
+    </div>
+    @else
+    {{-- Normal Layout with posts --}}
     {{-- Top Row Container - aligns with hero's 1880px container --}}
     <div class="w-full max-w-[1880px] mx-auto pt-24 max-xl:pt-10 max-xl:px-5">
         {{-- Row 1: Intro Section | Featured Card --}}
@@ -46,7 +78,9 @@
             @endif
         </div>
     </div>
+    @endif
 
+    @if($featuredPost || $posts->isNotEmpty())
     {{-- Cards Grid Container - uses same 1880px container as top row --}}
     <div class="w-full max-w-[1880px] mx-auto pt-16 pb-32 max-lg:pt-10 max-lg:pb-24 px-10 max-lg:px-5">
         {{-- 2-column grid: Post1 | Post2, Post3 | Post4 --}}
@@ -138,6 +172,7 @@
         </div>
         @endif
     </div>
+    @endif
 </section>
 
 @if($showLoadMore)
@@ -146,7 +181,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('latestUpdates', (config) => ({
         loadedPosts: [],
         loading: false,
-        hasMore: true,
+        hasMore: config.hasMore ?? true,
         page: 1,
         action: config.action || 'recent',
         params: config.params || {},

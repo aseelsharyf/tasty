@@ -37,6 +37,7 @@ class RecipeSubmission extends Model
         'is_chef',
         'chef_name',
         'recipe_name',
+        'headline',
         'slug',
         'description',
         'prep_time',
