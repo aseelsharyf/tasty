@@ -55,6 +55,9 @@ const mediaPickerConfigKey = ref<string | null>(null);
 // Dynamic preview posts per section (for dynamic slots)
 const dynamicPreviewPosts = ref<Record<string, PostSearchResult[]>>({});
 
+// Track all post IDs used across sections (manual + dynamic) in order
+const usedPostIdsPerSection = ref<Record<string, number[]>>({});
+
 // Compute all assigned post IDs across all sections (excluding the currently editing slot)
 const excludedPostIds = computed(() => {
     const ids: number[] = [];
@@ -102,7 +105,7 @@ async function fetchAssignedPosts() {
 }
 
 // Fetch preview posts for dynamic slots based on data source
-async function fetchDynamicPreview(section: HomepageSection) {
+async function fetchDynamicPreview(section: HomepageSection, excludePostIds: number[] = []) {
     const sectionType = getSectionType(section.type);
     if (!sectionType?.supportsDynamic) return;
 
@@ -120,20 +123,62 @@ async function fetchDynamicPreview(section: HomepageSection) {
             params.set('tag', section.dataSource.params.slug as string);
         }
 
+        // Pass section type for category filtering
+        if (sectionType) {
+            params.set('sectionType', section.type);
+        }
+
+        // Exclude posts already used by previous sections
+        if (excludePostIds.length > 0) {
+            params.set('excludeIds', excludePostIds.join(','));
+        }
+
         const response = await fetch(`/cms/layouts/homepage/search-posts?${params.toString()}`);
         if (response.ok) {
             const data = await response.json();
-            dynamicPreviewPosts.value[section.id] = data.posts || [];
+            const posts = data.posts || [];
+            dynamicPreviewPosts.value[section.id] = posts;
+
+            // Track which posts this section is using
+            const manualPostIds = section.slots
+                .filter(s => s.mode === 'manual' && s.postId)
+                .map(s => s.postId!);
+            const dynamicPostIds = posts.map((p: PostSearchResult) => p.id);
+            usedPostIdsPerSection.value[section.id] = [...manualPostIds, ...dynamicPostIds];
         }
     } catch (error) {
         console.error('Failed to fetch dynamic preview:', error);
     }
 }
 
-// Fetch all dynamic previews
+// Fetch all dynamic previews sequentially, excluding posts used by previous sections
 async function fetchAllDynamicPreviews() {
+    // Reset tracking
+    usedPostIdsPerSection.value = {};
+
+    // Collect all manually assigned post IDs first (these are always excluded)
+    const manualPostIds: number[] = [];
     for (const section of props.modelValue) {
-        await fetchDynamicPreview(section);
+        for (const slot of section.slots) {
+            if (slot.mode === 'manual' && slot.postId) {
+                manualPostIds.push(slot.postId);
+            }
+        }
+    }
+
+    // Process sections in display order (by their position in the array)
+    // Collect cumulative used IDs as we go
+    const cumulativeUsedIds = new Set<number>(manualPostIds);
+
+    for (const section of props.modelValue) {
+        // Fetch dynamic preview for this section, excluding all previously used posts
+        await fetchDynamicPreview(section, Array.from(cumulativeUsedIds));
+
+        // Add this section's dynamic posts to the cumulative set
+        const sectionDynamicPosts = dynamicPreviewPosts.value[section.id] || [];
+        for (const post of sectionDynamicPosts) {
+            cumulativeUsedIds.add(post.id);
+        }
     }
 }
 
@@ -142,9 +187,10 @@ onMounted(() => {
     fetchAllDynamicPreviews();
 });
 
-// Re-fetch when sections change (e.g., after adding a section)
+// Re-fetch when sections change (e.g., after adding a section, reordering, or slot changes)
 watch(() => props.modelValue, () => {
     fetchAssignedPosts();
+    fetchAllDynamicPreviews();
 }, { deep: true });
 
 // Get the effective post for a slot (manual post or dynamic preview)

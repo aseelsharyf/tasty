@@ -69,7 +69,7 @@ class SeoService
     public function setPost(Post $post): void
     {
         $title = $post->meta_title ?: $post->title;
-        $description = $post->meta_description ?: $post->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($post->content ?? ''), 160);
+        $description = $post->meta_description ?: $post->excerpt ?: \Illuminate\Support\Str::limit($this->extractTextFromContent($post->content), 160);
         $url = route('post.show', ['category' => $post->categories->first()?->slug ?? 'uncategorized', 'post' => $post->slug]);
 
         // Try to get generated OG image, fallback to featured image
@@ -205,7 +205,7 @@ class SeoService
     public function setPage(Page $page): void
     {
         $title = $page->meta_title ?: $page->title;
-        $description = $page->meta_description ?: \Illuminate\Support\Str::limit(strip_tags($page->content ?? ''), 160);
+        $description = $page->meta_description ?: \Illuminate\Support\Str::limit($this->extractTextFromContent($page->content), 160);
         $url = route('page.show', $page);
 
         SEOMeta::setTitle($title);
@@ -425,5 +425,62 @@ class SeoService
         JsonLd::setDescription($description);
         JsonLd::setType('CollectionPage');
         JsonLd::setUrl($url);
+    }
+
+    /**
+     * Extract plain text from content (handles both string and EditorJS array format).
+     */
+    protected function extractTextFromContent(mixed $content): string
+    {
+        if (is_string($content)) {
+            return strip_tags($content);
+        }
+
+        if (! is_array($content)) {
+            return '';
+        }
+
+        $text = '';
+        $blocks = $content['blocks'] ?? $content;
+
+        foreach ($blocks as $block) {
+            $data = $block['data'] ?? [];
+
+            switch ($block['type'] ?? '') {
+                case 'paragraph':
+                case 'header':
+                    if (! empty($data['text'])) {
+                        $text .= ' '.strip_tags($data['text']);
+                    }
+                    break;
+
+                case 'list':
+                    foreach ($data['items'] ?? [] as $item) {
+                        if (is_string($item)) {
+                            $text .= ' '.strip_tags($item);
+                        } elseif (is_array($item) && isset($item['content'])) {
+                            $text .= ' '.strip_tags($item['content']);
+                        }
+                    }
+                    break;
+
+                case 'quote':
+                    if (! empty($data['text'])) {
+                        $text .= ' '.strip_tags($data['text']);
+                    }
+                    break;
+
+                case 'collapsible':
+                    if (! empty($data['title'])) {
+                        $text .= ' '.strip_tags($data['title']);
+                    }
+                    if (! empty($data['content']['blocks'])) {
+                        $text .= ' '.$this->extractTextFromContent($data['content']);
+                    }
+                    break;
+            }
+        }
+
+        return trim($text);
     }
 }

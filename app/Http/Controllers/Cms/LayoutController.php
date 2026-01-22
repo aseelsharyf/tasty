@@ -130,12 +130,21 @@ class LayoutController extends Controller
             'type' => ['nullable', 'string', 'max:50'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
             'sectionType' => ['nullable', 'string', 'max:50'],
+            'excludeIds' => ['nullable', 'string'], // Comma-separated list of IDs to exclude
         ]);
 
         $query = Post::query()
             ->with(['featuredMedia', 'categories'])
             ->published()
             ->latest('published_at');
+
+        // Exclude specific post IDs (for preview deduplication)
+        if (! empty($validated['excludeIds'])) {
+            $excludeIds = array_filter(array_map('intval', explode(',', $validated['excludeIds'])));
+            if (! empty($excludeIds)) {
+                $query->whereNotIn('id', $excludeIds);
+            }
+        }
 
         if (! empty($validated['query'])) {
             $searchTerm = $validated['query'];
