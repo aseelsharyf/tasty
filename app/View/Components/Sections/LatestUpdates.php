@@ -208,12 +208,15 @@ class LatestUpdates extends Component
             // Exclude manual posts AND posts used by other sections
             $excludeIds = $this->getExcludeIds($validManualIds);
 
+            // Don't apply section category filtering when explicitly fetching by category/tag
+            $sectionType = in_array($action, ['byCategory', 'byTag']) ? null : $this->sectionType();
+
             // Fetch one extra to check if there are more
             $result = $actionInstance->execute([
                 'page' => 1,
                 'perPage' => $neededDynamicCount + 1,
                 'excludeIds' => $excludeIds,
-                'sectionType' => $this->sectionType(),
+                'sectionType' => $sectionType,
                 ...$params,
             ]);
 
@@ -259,10 +262,15 @@ class LatestUpdates extends Component
 
         // Fetch one extra post to determine if there are more
         $totalNeeded = $featuredCount + $postsCount;
+
+        // Don't apply section category filtering when explicitly fetching by category/tag
+        // (e.g., on category pages) - only apply when fetching 'recent' posts
+        $sectionType = in_array($action, ['byCategory', 'byTag']) ? null : $this->sectionType();
+
         $result = $actionInstance->execute([
             'page' => 1,
             'perPage' => $totalNeeded + 1,
-            'sectionType' => $this->sectionType(),
+            'sectionType' => $sectionType,
             'excludeIds' => $this->getExcludeIds(),
             ...$params,
         ]);
