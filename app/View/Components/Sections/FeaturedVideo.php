@@ -37,6 +37,14 @@ class FeaturedVideo extends Component
 
     public string $videoUrl;
 
+    public ?string $coverVideoUrl;
+
+    public ?string $coverVideoType;
+
+    public ?string $coverVideoEmbedProvider;
+
+    public ?string $coverVideoEmbedId;
+
     public ?string $category;
 
     public ?string $categoryUrl;
@@ -113,6 +121,10 @@ class FeaturedVideo extends Component
             $this->description = $staticContent['description'] ?? '';
             $this->url = $staticContent['url'] ?? '#';
             $this->videoUrl = $staticContent['videoUrl'] ?? $staticContent['url'] ?? '#';
+            $this->coverVideoUrl = $staticContent['coverVideoUrl'] ?? null;
+            $this->coverVideoType = $staticContent['coverVideoType'] ?? null;
+            $this->coverVideoEmbedProvider = $staticContent['coverVideoEmbedProvider'] ?? null;
+            $this->coverVideoEmbedId = $staticContent['coverVideoEmbedId'] ?? null;
             $this->category = $staticContent['category'] ?? null;
             $this->categoryUrl = $staticContent['categoryUrl'] ?? null;
             $this->tag = $staticContent['tag'] ?? null;
@@ -133,6 +145,10 @@ class FeaturedVideo extends Component
             $this->description = $staticData['description'] ?? '';
             $this->url = $staticData['url'] ?? '#';
             $this->videoUrl = $staticData['videoUrl'] ?? $staticData['url'] ?? '#';
+            $this->coverVideoUrl = $staticData['coverVideoUrl'] ?? null;
+            $this->coverVideoType = $staticData['coverVideoType'] ?? null;
+            $this->coverVideoEmbedProvider = $staticData['coverVideoEmbedProvider'] ?? null;
+            $this->coverVideoEmbedId = $staticData['coverVideoEmbedId'] ?? null;
             $this->category = $staticData['category'] ?? null;
             $this->categoryUrl = $staticData['categoryUrl'] ?? null;
             $this->tag = $staticData['tag'] ?? null;
@@ -147,7 +163,7 @@ class FeaturedVideo extends Component
         // Fetch post by ID or via action
         $post = null;
         if ($postId !== null) {
-            $post = Post::with(['author', 'categories', 'tags'])->find($postId);
+            $post = Post::with(['author', 'categories', 'tags', 'coverVideo'])->find($postId);
         } else {
             $post = $this->fetchPostViaAction($action, $params);
         }
@@ -158,6 +174,7 @@ class FeaturedVideo extends Component
         if ($post) {
             $categoryModel = $post->categories->first();
             $tagModel = $post->tags->first();
+            $coverVideo = $post->coverVideo;
 
             $this->image = $post->featured_image_url ?? '';
             $this->imageAlt = $post->title;
@@ -166,6 +183,10 @@ class FeaturedVideo extends Component
             $this->description = $post->excerpt ?? '';
             $this->url = $post->url;
             $this->videoUrl = $post->video_url ?? $post->url;
+            $this->coverVideoUrl = $coverVideo?->original_url;
+            $this->coverVideoType = $coverVideo?->type;
+            $this->coverVideoEmbedProvider = $coverVideo?->embed_provider;
+            $this->coverVideoEmbedId = $coverVideo?->embed_video_id;
             $this->category = $categoryModel?->name;
             $this->categoryUrl = $categoryModel ? route('category.show', $categoryModel->slug) : null;
             $this->tag = $tagModel?->name;
@@ -181,6 +202,10 @@ class FeaturedVideo extends Component
             $this->description = '';
             $this->url = '#';
             $this->videoUrl = '#';
+            $this->coverVideoUrl = null;
+            $this->coverVideoType = null;
+            $this->coverVideoEmbedProvider = null;
+            $this->coverVideoEmbedId = null;
             $this->category = null;
             $this->categoryUrl = null;
             $this->tag = null;
