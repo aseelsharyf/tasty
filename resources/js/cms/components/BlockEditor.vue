@@ -226,7 +226,7 @@ const initEditor = async () => {
         minHeight: 0,
         data: normalizedData,
         tools: {
-            // Order: Text (default), Heading, Media, Quote, Link, List, Delimiter, Table, Code
+            // Order: Text (default paragraph), Header, Media, Quote, Collapsible, then others
             header: {
                 class: Header,
                 config: {
@@ -250,34 +250,6 @@ const initEditor = async () => {
                     captionPlaceholder: quoteCaptionPlaceholder,
                     authorTitlePlaceholder: isRtlMode ? 'މަގާމު ނުވަތަ ޓައިޓަލް' : 'Title or role',
                     onSelectMedia: props.onSelectMedia,
-                },
-            },
-            linkTool: {
-                class: LinkTool,
-                config: {
-                    endpoint: '/cms/api/fetch-url',
-                },
-            },
-            list: {
-                class: List,
-                inlineToolbar: true,
-                config: {
-                    defaultStyle: 'unordered',
-                },
-            },
-            delimiter: Delimiter,
-            table: {
-                class: Table,
-                inlineToolbar: true,
-                config: {
-                    rows: 2,
-                    cols: 3,
-                },
-            },
-            code: {
-                class: Code,
-                config: {
-                    placeholder: codePlaceholder,
                 },
             },
             collapsible: {
@@ -341,6 +313,34 @@ const initEditor = async () => {
                             },
                         },
                     }),
+                },
+            },
+            linkTool: {
+                class: LinkTool,
+                config: {
+                    endpoint: '/cms/api/fetch-url',
+                },
+            },
+            list: {
+                class: List,
+                inlineToolbar: true,
+                config: {
+                    defaultStyle: 'unordered',
+                },
+            },
+            delimiter: Delimiter,
+            table: {
+                class: Table,
+                inlineToolbar: true,
+                config: {
+                    rows: 2,
+                    cols: 3,
+                },
+            },
+            code: {
+                class: Code,
+                config: {
+                    placeholder: codePlaceholder,
                 },
             },
         },
