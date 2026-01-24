@@ -26,16 +26,16 @@
     </div>
 
     {{-- Content --}}
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-2">
         <a href="{{ $url }}" class="hover:opacity-80 transition-opacity">
-            <h3 class="text-h4 text-blue-black line-clamp-3">{{ $title }}</h3>
+            <h3 class="font-display text-[32px] leading-[1.2] tracking-[-0.04em] text-blue-black line-clamp-2 max-lg:text-[26px]">{{ $title }}</h3>
         </a>
         @if($description)
-            <p class="text-body-md text-blue-black line-clamp-3">{{ $description }}</p>
+            <p class="text-body-md text-blue-black line-clamp-3 mt-1">{{ $description }}</p>
         @endif
 
         {{-- Author/date - Same pattern as horizontal card --}}
-        <div class="flex flex-wrap items-center gap-5 text-[14px] leading-[12px] uppercase text-blue-black
+        <div class="flex flex-wrap items-center gap-5 text-[14px] leading-[12px] uppercase text-blue-black mt-1
             max-lg:flex-col max-lg:items-start max-lg:gap-4 max-lg:text-[12px]">
             @if($author)
                 <a href="{{ $authorUrl }}" class="underline underline-offset-4 hover:opacity-80 transition-opacity">BY {{ strtoupper($author) }}</a>

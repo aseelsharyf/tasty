@@ -37,12 +37,12 @@
     }
 @endphp
 
-<header class="w-full max-w-[1880px] mx-auto">
+<header class="w-full">
     {{-- Hero Image with Gradient --}}
     @if($hasVideo)
         <div
             x-data="heroVideoPlayer()"
-            class="relative w-full h-[400px] sm:h-[600px] lg:h-[840px]"
+            class="relative w-full h-[400px] sm:h-[600px] lg:h-[calc(100vh-80px)]"
         >
             {{-- Featured Image (shown when video not playing) --}}
             <div x-show="!isPlaying" class="absolute inset-0">
@@ -112,7 +112,7 @@
             </div>
         </div>
     @else
-        <div class="relative w-full h-[400px] sm:h-[600px] lg:h-[840px]">
+        <div class="relative w-full h-[400px] sm:h-[600px] lg:h-[calc(100vh-80px)]">
             @if($post->featured_image_url)
                 <img
                     src="{{ $post->featured_image_url }}"

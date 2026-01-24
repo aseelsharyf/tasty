@@ -18,7 +18,7 @@
     $hasAutoplayVideo = $hasLocalVideo || $hasEmbedVideo;
     $uniqueId = 'featured-video-' . uniqid();
 @endphp
-<section class="w-full max-w-[1880px] mx-auto" style="{{ $sectionStyle }}">
+<section class="w-full" style="{{ $sectionStyle }}">
     {{-- Desktop Layout --}}
     <div class="hidden lg:flex w-full max-w-[1440px] mx-auto px-10 pt-16 pb-24 flex-col items-center gap-10">
         {{-- Video Card - 966px max width --}}

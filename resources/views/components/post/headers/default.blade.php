@@ -37,8 +37,8 @@
     }
 @endphp
 
-<header class="w-full max-w-[1880px] mx-auto">
-    <div class="flex flex-col lg:flex-row min-h-[854px] lg:min-h-[864px]">
+<header class="w-full">
+    <div class="flex flex-col lg:flex-row lg:h-[calc(100vh-80px)]">
         {{-- Image/Video Section (Left) --}}
         @if($hasVideo)
             <div

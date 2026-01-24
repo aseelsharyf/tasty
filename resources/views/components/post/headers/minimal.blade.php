@@ -39,9 +39,9 @@
     }
 @endphp
 
-<header class="w-full bg-tasty-yellow pt-[96px] md:pt-[112px]">
-    <div class="max-w-[1440px] mx-auto p-6 sm:p-8 lg:p-10">
-        <div class="flex flex-col lg:flex-row gap-8 lg:gap-10 items-center">
+<header class="w-full bg-tasty-yellow pt-[96px] md:pt-[112px] lg:h-[calc(100vh-80px)]">
+    <div class="max-w-[1440px] mx-auto h-full p-6 sm:p-8 lg:p-10">
+        <div class="flex flex-col lg:flex-row gap-8 lg:gap-10 items-center h-full">
             {{-- Image/Video (Left) --}}
             @if($hasVideo)
                 <div

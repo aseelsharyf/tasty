@@ -48,6 +48,7 @@ class PostPreviewController extends Controller
 
         $validated = $request->validate([
             'title' => ['required', 'string'],
+            'kicker' => ['nullable', 'string'],
             'subtitle' => ['nullable', 'string'],
             'excerpt' => ['nullable', 'string'],
             'content' => ['nullable', 'array'],
@@ -100,6 +101,7 @@ class PostPreviewController extends Controller
         // Build a temporary Post model instance (without saving)
         $post = new Post([
             'title' => $validated['title'],
+            'kicker' => $validated['kicker'] ?? null,
             'subtitle' => $validated['subtitle'] ?? null,
             'excerpt' => $validated['excerpt'] ?? null,
             'language_code' => $languageCode,

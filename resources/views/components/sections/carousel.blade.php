@@ -17,7 +17,7 @@
 
 @if($posts->isNotEmpty())
 <section
-    class="w-full max-w-[1880px] mx-auto {{ $bgColorClass }} {{ $paddingTopClass }} {{ $paddingBottomClass }}"
+    class="w-full {{ $bgColorClass }} {{ $paddingTopClass }} {{ $paddingBottomClass }}"
     @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif
 >
     <div class="scroll-container pb-8 max-lg:pb-6 container-main">

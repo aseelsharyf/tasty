@@ -29,24 +29,34 @@
     </div>
 @endif
 
-<article class="w-full max-w-[1880px] mx-auto">
-    {{-- Article Header - Based on template type --}}
-    @switch($template)
-        @case('feature')
-            {{-- Feature header includes sponsor/share inline --}}
-            <x-post.headers.feature :post="$post" />
-            @break
+{{-- Article Header - Full width, outside constrained article --}}
+@switch($template)
+    @case('feature')
+        {{-- Feature header includes sponsor/share inline --}}
+        <x-post.headers.feature :post="$post" />
+        @break
 
+    @case('minimal')
+        {{-- Minimal header includes author/date/share inline --}}
+        <x-post.headers.minimal :post="$post" />
+        @break
+
+    @default
+        <x-post.headers.default :post="$post" />
+@endswitch
+
+<article class="w-full max-w-[1880px] mx-auto">
+    {{-- Article Meta (sponsor/share) --}}
+    @switch($template)
         @case('minimal')
-            {{-- Minimal header includes author/date/share inline --}}
-            <x-post.headers.minimal :post="$post" />
-            {{-- Sponsor only (share is in header) --}}
             <x-post.article-meta :post="$post" :showShare="false" />
             @break
 
+        @case('feature')
+            {{-- Feature template has meta in header --}}
+            @break
+
         @default
-            <x-post.headers.default :post="$post" />
-            {{-- Article Meta (sponsor/share) for default template --}}
             <x-post.article-meta :post="$post" />
     @endswitch
 

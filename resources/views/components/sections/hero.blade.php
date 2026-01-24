@@ -30,8 +30,8 @@
     $metaAlignment = $alignment === 'bottom' ? 'justify-start' : 'justify-center';
 @endphp
 
-<section class="w-full flex justify-center relative z-0">
-    <div class="flex w-full max-w-[1880px] lg:min-h-[864px]
+<section class="w-full relative z-0">
+    <div class="flex w-full lg:h-[calc(100vh-80px)]
         max-lg:flex-col max-lg:items-start max-lg:w-full">
         {{-- Hero Image --}}
         @if($manual)
@@ -55,6 +55,7 @@
         {{-- Hero Content --}}
         <div class="w-full lg:w-1/2 self-stretch {{ $bgColorClass }} pt-8 pb-16 px-5 lg:p-10 lg:py-24 flex flex-col {{ $contentAlignment }} gap-6 lg:gap-10
             max-lg:shrink-0 max-lg:items-center max-lg:justify-center max-lg:text-center" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+          <div class="flex flex-col {{ $contentAlignment }} gap-6 lg:gap-10 max-w-3xl">
             {{-- Meta: Category • Author • Date --}}
             <div class="flex flex-wrap items-center gap-2.5 text-[12px] leading-[12px] lg:text-body-sm uppercase text-blue-black {{ $metaAlignment }} max-lg:justify-center">
                 @if($heroCategory)
@@ -104,6 +105,7 @@
                 </svg>
                 <span>{{ $buttonText }}</span>
             </a>
+          </div>
         </div>
     </div>
 </section>

@@ -12,14 +12,15 @@
         : 'flex flex-col gap-6 lg:gap-8 lg:flex-1 lg:min-w-[280px] group';
 @endphp
 <section
-    class="w-full max-w-[1880px] mx-auto"
-    @if($showLoadMore)
+    class="w-full bg-off-white"
+    @if($showLoadMore && $hasMore)
     x-data="reviewSection({
         action: '{{ $loadAction }}',
         params: {{ Js::from($loadParams) }},
         excludeIds: {{ Js::from($excludeIds) }},
         perPage: 3,
-        showIntro: {{ $showIntro ? 'true' : 'false' }}
+        showIntro: {{ $showIntro ? 'true' : 'false' }},
+        initialHasMore: {{ $hasMore ? 'true' : 'false' }}
     })"
     @endif
 >
@@ -31,7 +32,7 @@
             <div class="flex gap-10">
                 {{-- Intro Card --}}
                 @if($showIntro)
-                    <article class="flex flex-col gap-5 flex-1 min-w-[280px] justify-center">
+                    <article class="flex flex-col gap-5 w-[calc((100%-80px)/3)] max-w-[400px] justify-center">
                         {{-- Intro Image --}}
                         @if($introImage)
                             <div class="w-full h-[429.5px] overflow-hidden">
@@ -73,9 +74,9 @@
                         $postRating = is_array($post) ? ($post['rating'] ?? null) : ($post->getCustomField('rating'));
                     @endphp
 
-                    <a href="{{ $postUrl }}" class="flex flex-col gap-8 flex-1 min-w-[280px] group">
+                    <a href="{{ $postUrl }}" class="flex flex-col gap-8 w-[280px] lg:w-[calc((100%-80px)/3)] max-w-[400px] group">
                         {{-- Card Image with Tag --}}
-                        <div class="relative w-full flex-1 min-h-[400px] rounded-xl overflow-hidden">
+                        <div class="relative w-full min-h-[400px] rounded-xl overflow-hidden">
                             <img src="{{ $postImage }}" alt="{{ $postTitle }}" class="absolute inset-0 w-full h-full object-cover">
                             <div class="absolute bottom-6 left-0 right-0 flex justify-center">
                                 <div class="inline-flex items-center gap-2.5 bg-white rounded-[48px] px-3 py-2 text-[12px] leading-[12px] uppercase whitespace-nowrap">
@@ -120,7 +121,7 @@
                             $postRating = is_array($post) ? ($post['rating'] ?? null) : ($post->getCustomField('rating'));
                         @endphp
 
-                        <a href="{{ $postUrl }}" class="flex flex-col gap-8 flex-1 min-w-[280px] group">
+                        <a href="{{ $postUrl }}" class="flex flex-col gap-8 w-[280px] lg:w-[calc((100%-80px)/3)] max-w-[400px] group">
                             <div class="relative w-full h-[460px] rounded-xl overflow-hidden">
                                 <img src="{{ $postImage }}" alt="{{ $postTitle }}" class="absolute inset-0 w-full h-full object-cover">
                                 <div class="absolute bottom-6 left-0 right-0 flex justify-center">
@@ -218,7 +219,7 @@
             </div>
         </div>
 
-        @if($showLoadMore)
+        @if($showLoadMore && $hasMore)
         {{-- Dynamically loaded cards via Alpine.js (Desktop) - Always grid --}}
         <div class="hidden lg:grid grid-cols-3 gap-10">
             <template x-for="post in loadedPosts" :key="post.id">
@@ -307,13 +308,13 @@
     </div>
 </section>
 
-@if($showLoadMore)
+@if($showLoadMore && $hasMore)
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('reviewSection', (config) => ({
         loadedPosts: [],
         loading: false,
-        hasMore: true,
+        hasMore: config.initialHasMore !== false,
         page: 1,
         action: config.action || 'recent',
         params: config.params || {},

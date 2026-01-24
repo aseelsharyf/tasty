@@ -8,7 +8,7 @@
     >
         {{-- Yellow curved content area --}}
         <div class="featured-location-content {{ $bgColorClass }}" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
-            <div class="w-max-4xl flex flex-col items-center text-center gap-10 max-lg:gap-6 w-full">
+            <div class="w-max-4xl flex flex-col items-center justify-center text-center gap-10 max-lg:gap-6 w-full h-full">
                 {{-- Kicker (large) & Title (below) --}}
                 <div class="flex flex-col gap-3 items-center w-full">
                     @if($kicker)
@@ -52,17 +52,18 @@
                         <span>{{ $buttonText }}</span>
                     </a>
                 @endif
+
             </div>
         </div>
     </div>
 
-    {{-- Carousel of additional posts below --}}
+    {{-- Carousel of additional posts - separate section below the curve --}}
     @if($carouselPosts->isNotEmpty())
-        <div class="w-full {{ $bgColorClass }} pb-16 max-lg:pb-10" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
-            <div class="scroll-container pb-8 max-lg:pb-6 container-main">
-                <div class="flex items-start px-10 min-w-max max-lg:px-5 max-lg:gap-8">
+        <div class="w-full {{ $bgColorClass }} pb-16 max-lg:pb-10 pt-10 lg:pt-16" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+            <div class="scroll-container pb-8 max-lg:pb-6">
+                <div class="flex items-start justify-center min-w-max px-10 max-lg:px-5 max-lg:gap-8">
                     @foreach($carouselPosts as $carouselPost)
-                        <div class="flex items-start shrink-0 {{ $loop->last ? '' : '' }}">
+                        <div class="flex items-start shrink-0 {{ $loop->last ? 'pr-10 max-lg:pr-5' : '' }}">
                             <x-cards.spread
                                 :post="$carouselPost"
                                 :reversed="$loop->even"

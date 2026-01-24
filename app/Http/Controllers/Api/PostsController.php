@@ -37,7 +37,11 @@ class PostsController extends Controller
             'excludeIds' => 'array',
             'excludeIds.*' => 'integer',
             'tag' => 'nullable|string',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string',
             'category' => 'nullable|string',
+            'categories' => 'nullable|array',
+            'categories.*' => 'string',
             'sectionType' => 'nullable|string|max:50',
         ]);
 
@@ -45,12 +49,16 @@ class PostsController extends Controller
         /** @var BasePostsAction $action */
         $action = new $actionClass;
 
+        // Support both singular and plural formats for categories/tags
+        $categories = $validated['categories'] ?? ($validated['category'] ? [$validated['category']] : null);
+        $tags = $validated['tags'] ?? ($validated['tag'] ? [$validated['tag']] : null);
+
         $params = [
             'page' => $validated['page'] ?? 1,
             'perPage' => $validated['perPage'] ?? 4,
             'excludeIds' => $validated['excludeIds'] ?? [],
-            'tag' => $validated['tag'] ?? null,
-            'category' => $validated['category'] ?? null,
+            'tags' => $tags,
+            'categories' => $categories,
             'sectionType' => $validated['sectionType'] ?? null,
         ];
 

@@ -54,6 +54,8 @@ class Review extends Component
 
     public bool $showLoadMore;
 
+    public bool $hasMore;
+
     /** @var Collection<int, Post|array<string, mixed>> */
     public Collection $posts;
 
@@ -126,7 +128,8 @@ class Review extends Component
         $this->buttonText = $buttonText;
         $this->showLoadMore = $showLoadMore;
         $this->loadAction = $action;
-        $this->loadParams = $params;
+        // Include sectionType in loadParams for API filtering
+        $this->loadParams = array_merge($params, ['sectionType' => $this->sectionType()]);
 
         // New hybrid slot mode from CMS
         if ($totalSlots > 0 || count($manualPostIds) > 0 || count($staticContent) > 0) {
@@ -140,6 +143,7 @@ class Review extends Component
             );
             $this->excludeIds = $this->computeExcludeIds();
             $this->markPostsUsed($this->posts);
+            $this->hasMore = $this->checkHasMore($action, $params);
 
             return;
         }
@@ -149,6 +153,7 @@ class Review extends Component
             $this->posts = collect($staticPosts);
             $this->excludeIds = [];
             $this->showLoadMore = false; // No load more for static data
+            $this->hasMore = false;
 
             return;
         }
@@ -161,6 +166,7 @@ class Review extends Component
                 ->sortBy(fn ($post) => array_search($post->id, $postIds))
                 ->values();
             $this->excludeIds = $postIds;
+            $this->hasMore = $this->checkHasMore($action, $params);
 
             return;
         }
@@ -169,6 +175,7 @@ class Review extends Component
         $this->posts = $this->fetchPostsViaAction($action, $params, $count);
         $this->excludeIds = $this->computeExcludeIds();
         $this->markPostsUsed($this->posts);
+        $this->hasMore = $this->checkHasMore($action, $params);
     }
 
     /**
@@ -285,6 +292,32 @@ class Review extends Component
         }
 
         return $ids;
+    }
+
+    /**
+     * Check if there are more posts available after the initial load.
+     *
+     * @param  array<string, mixed>  $params
+     */
+    protected function checkHasMore(string $action, array $params): bool
+    {
+        if (! $this->showLoadMore) {
+            return false;
+        }
+
+        $actionClass = $this->actions[$action] ?? GetRecentPosts::class;
+        $actionInstance = new $actionClass;
+
+        // Check for one more post beyond what we've loaded
+        $result = $actionInstance->execute([
+            'page' => 1,
+            'perPage' => 1,
+            'excludeIds' => $this->excludeIds,
+            'sectionType' => $this->sectionType(),
+            ...$params,
+        ]);
+
+        return $result->total() > 0;
     }
 
     /**

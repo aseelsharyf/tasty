@@ -7,7 +7,7 @@
 
     $wrapperClass = match($variant) {
         'featured' => "w-full bg-[#F7F7F7] rounded-[12px] overflow-hidden flex flex-col {$alignItems} gap-8 pb-10",
-        'grid' => 'w-full bg-[#F7F7F7] rounded-[12px] overflow-hidden flex flex-col items-center gap-8 pb-10',
+        'grid' => 'w-full h-full bg-[#F7F7F7] rounded-[12px] overflow-hidden flex flex-col items-center gap-8 pb-10',
         'mobile' => 'w-full bg-[#F7F7F7] rounded-[12px] overflow-hidden flex flex-col items-center gap-6 pb-8 shrink-0',
         'scroll' => 'w-full bg-[#F7F7F7] rounded-[12px] overflow-hidden flex flex-col items-center',
         default => 'w-full bg-[#F7F7F7] rounded-[12px] overflow-hidden flex flex-col items-center gap-8 pb-10',

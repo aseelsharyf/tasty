@@ -14,8 +14,8 @@
 @endif
 
 {{-- Content Section --}}
-<section class="w-full max-w-[1880px] mx-auto">
-    <div class="{{ $bgColorClass }} pb-24 max-lg:pb-16" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+<section class="w-full {{ $bgColorClass }}" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+    <div class="max-w-[1880px] mx-auto pb-24 max-lg:pb-16">
         <div class="container-main flex flex-col items-center gap-10 text-center w-full px-10 max-lg:px-5 max-lg:gap-6">
             {{-- Kicker & Title --}}
             <div class="flex flex-col gap-3 max-lg:gap-2">

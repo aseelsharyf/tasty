@@ -1765,6 +1765,7 @@ function openDiff() {
                             >
                                 <input type="hidden" name="_token" :value="page.props.csrf_token" />
                                 <input type="hidden" name="title" :value="form.title || 'Untitled'" />
+                                <input type="hidden" name="kicker" :value="form.kicker || ''" />
                                 <input type="hidden" name="subtitle" :value="form.subtitle || ''" />
                                 <input type="hidden" name="excerpt" :value="form.excerpt || ''" />
                                 <input type="hidden" name="content" :value="JSON.stringify(form.content || {})" />

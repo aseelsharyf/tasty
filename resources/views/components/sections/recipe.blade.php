@@ -1,5 +1,5 @@
 {{-- Recipe Section --}}
-<section class="w-full max-w-[1880px] mx-auto {{ $bgColorClass }} py-16 max-lg:py-8" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+<section class="w-full {{ $bgColorClass }} py-16 max-lg:py-8" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
     {{-- Mobile Intro - Shows on mobile when intro is enabled --}}
     @if($showIntro)
         <div class="hidden max-lg:flex flex-col items-center justify-center gap-5 px-5 pb-8">
@@ -113,7 +113,7 @@
 
                 {{-- Bottom Row: Recipe Cards Grid (3 items) --}}
                 @if($posts->isNotEmpty())
-                    <div class="grid grid-cols-3 gap-6 max-lg:grid-cols-2 max-sm:grid-cols-1 items-start">
+                    <div class="grid grid-cols-3 gap-6 max-lg:grid-cols-2 max-sm:grid-cols-1 items-stretch">
                         @foreach($posts->take(3) as $post)
                             <x-cards.recipe
                                 :post="$post"
