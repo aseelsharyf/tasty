@@ -711,8 +711,23 @@ function handlePreviewSlotClick(section: HomepageSection, slotIndex: number) {
 
                     <!-- Section Body (Always Visible) - 2 Row Layout -->
                     <div class="p-4 space-y-4">
+                        <!-- Inline HTML Editor for custom-html sections -->
+                        <div v-if="section.type === 'custom-html'" class="w-full">
+                            <UFormField label="HTML Content">
+                                <UTextarea
+                                    :model-value="section.config.html as string || ''"
+                                    placeholder="Enter your HTML code here..."
+                                    :rows="8"
+                                    autoresize
+                                    :maxrows="30"
+                                    class="w-full font-mono text-sm"
+                                    @update:model-value="(v) => updateSectionConfig(section, 'html', v)"
+                                />
+                            </UFormField>
+                        </div>
+
                         <!-- Row 1: Interactive Preview -->
-                        <div v-if="getSectionType(section.type)?.slotCount > 0" class="max-w-md">
+                        <div v-else-if="getSectionType(section.type)?.slotCount > 0" class="max-w-md">
                             <p class="text-xs text-muted mb-2">Click on a slot to assign a {{ getSectionType(section.type)?.contentType === 'product' ? 'product' : 'post' }}</p>
                             <SectionPreview
                                 :schema="getSectionType(section.type)!.previewSchema"
@@ -726,8 +741,8 @@ function handlePreviewSlotClick(section: HomepageSection, slotIndex: number) {
                             />
                         </div>
 
-                        <!-- Row 2: Tabs -->
-                        <div class="w-full">
+                        <!-- Row 2: Tabs (hidden for custom-html since it uses inline editor) -->
+                        <div v-if="section.type !== 'custom-html'" class="w-full">
                             <UTabs
                                 v-if="getTabs(getSectionType(section.type)!).length > 0"
                                 :model-value="getActiveTab(section.id, getSectionType(section.type)!)"

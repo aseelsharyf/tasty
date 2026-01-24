@@ -150,6 +150,12 @@
                     :products="$section['data']['products'] ?? []"
                 />
                 @break
+
+            @case('custom-html')
+                <x-sections.custom-html
+                    :html="$section['data']['html'] ?? ''"
+                />
+                @break
         @endswitch
     @endforeach
 </main>

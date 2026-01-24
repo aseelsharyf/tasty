@@ -216,8 +216,10 @@ function getColorOptions() {
                                 <UTextarea
                                     v-model="localConfig[key] as string"
                                     :placeholder="field.placeholder"
-                                    :rows="3"
-                                    class="w-full"
+                                    :rows="field.rows || 6"
+                                    autoresize
+                                    :maxrows="20"
+                                    class="w-full font-mono text-sm"
                                 />
                             </UFormField>
 
