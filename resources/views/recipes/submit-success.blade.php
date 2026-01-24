@@ -23,7 +23,7 @@
 
             <!-- What happens next -->
             <div class="bg-white rounded-2xl p-6">
-                <h2 class="text-h5 text-tasty-blue-black mb-5">What happens next?</h2>
+                <h2 class="text-h4 text-tasty-blue-black mb-5">What happens next?</h2>
 
                 <div class="space-y-4">
                     <div class="flex items-start gap-4">

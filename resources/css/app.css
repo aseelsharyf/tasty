@@ -124,6 +124,39 @@
         letter-spacing: -0.8px;
         font-feature-settings: "dlig" on;
     }
+
+    /* Page/Form Headings - Display font, smaller sizes for static pages and forms */
+    .text-page-h1 {
+        font-family: var(--font-display);
+        font-size: 32px;
+        line-height: 36px;
+        letter-spacing: -1.28px;
+        font-feature-settings: "dlig" on;
+    }
+
+    .text-page-h2 {
+        font-family: var(--font-display);
+        font-size: 28px;
+        line-height: 32px;
+        letter-spacing: -1.12px;
+        font-feature-settings: "dlig" on;
+    }
+
+    .text-page-h3 {
+        font-family: var(--font-display);
+        font-size: 22px;
+        line-height: 26px;
+        letter-spacing: -0.88px;
+        font-feature-settings: "dlig" on;
+    }
+
+    .text-page-h4 {
+        font-family: var(--font-display);
+        font-size: 18px;
+        line-height: 22px;
+        letter-spacing: -0.72px;
+        font-feature-settings: "dlig" on;
+    }
 }
 
 @media (min-width: 1024px) {
@@ -161,6 +194,31 @@
         font-size: 24px;
         line-height: 24px;
         letter-spacing: -0.96px;
+    }
+
+    /* Page/Form Headings - Desktop sizes */
+    .text-page-h1 {
+        font-size: 40px;
+        line-height: 44px;
+        letter-spacing: -1.6px;
+    }
+
+    .text-page-h2 {
+        font-size: 32px;
+        line-height: 36px;
+        letter-spacing: -1.28px;
+    }
+
+    .text-page-h3 {
+        font-size: 26px;
+        line-height: 30px;
+        letter-spacing: -1.04px;
+    }
+
+    .text-page-h4 {
+        font-size: 20px;
+        line-height: 24px;
+        letter-spacing: -0.8px;
     }
 }
 

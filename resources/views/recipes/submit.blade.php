@@ -34,7 +34,7 @@
                 </svg>
             </div>
 
-            <h2 class="text-h4 text-tasty-blue-black mb-2">Sign in to Continue</h2>
+            <h3 class="text-h4 text-tasty-blue-black mb-2">Sign in to Continue</h3>
             <p class="text-body-md text-tasty-blue-black/70 mb-6">
                 You need to be signed in to submit a recipe. It only takes a moment!
             </p>
@@ -187,7 +187,7 @@
                 <!-- Submitter Information -->
                 <div class="bg-white rounded-2xl p-6 flex flex-col gap-5" :class="!authUser ? 'opacity-50 pointer-events-none blur-[1px]' : ''">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-h5 text-tasty-blue-black">Your Information</h2>
+                        <h2 class="text-h4 text-tasty-blue-black">Your Information</h2>
                         <template x-if="authUser">
                             <form action="{{ route('auth.logout') }}" method="POST">
                                 @csrf
@@ -364,7 +364,7 @@
 
                 <!-- Recipe Basic Information -->
                 <div class="bg-white rounded-2xl p-6 flex flex-col gap-5" :class="!authUser ? 'opacity-50 pointer-events-none blur-[1px]' : ''">
-                    <h2 class="text-h5 text-tasty-blue-black">Recipe Details</h2>
+                    <h2 class="text-h4 text-tasty-blue-black">Recipe Details</h2>
 
                     <div class="flex flex-col gap-1.5">
                         <label for="recipe_name" class="text-xs font-medium text-gray-500">Recipe Name *</label>
@@ -557,7 +557,7 @@
                 <!-- Ingredients Section -->
                 <div class="bg-white rounded-2xl p-6 flex flex-col gap-5" :class="!authUser ? 'opacity-50 pointer-events-none blur-[1px]' : ''">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-h5 text-tasty-blue-black">Ingredients *</h2>
+                        <h2 class="text-h4 text-tasty-blue-black">Ingredients *</h2>
                     </div>
 
                     <template x-for="(group, groupIndex) in form.ingredients" :key="groupIndex">
@@ -667,7 +667,7 @@
                 <!-- Instructions Section -->
                 <div class="bg-white rounded-2xl p-6 flex flex-col gap-5" :class="!authUser ? 'opacity-50 pointer-events-none blur-[1px]' : ''">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-h5 text-tasty-blue-black">Instructions *</h2>
+                        <h2 class="text-h4 text-tasty-blue-black">Instructions *</h2>
                     </div>
 
                     <template x-for="(group, groupIndex) in form.instructions" :key="groupIndex">
@@ -730,7 +730,7 @@
                 <template x-if="mode === 'composite'">
                     <div class="bg-white rounded-2xl p-6 flex flex-col gap-5" :class="!authUser ? 'opacity-50 pointer-events-none blur-[1px]' : ''">
                         <div class="flex items-center justify-between">
-                            <h2 class="text-h5 text-tasty-blue-black">Included Recipes *</h2>
+                            <h2 class="text-h4 text-tasty-blue-black">Included Recipes *</h2>
                             <button
                                 type="button"
                                 @click="addChildRecipe()"

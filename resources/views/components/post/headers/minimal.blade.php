@@ -149,7 +149,7 @@
                         {{ $post->title }}
                     </h1>
                     @if($post->excerpt)
-                        <p class="text-[18px] leading-[24px] text-black/90 font-sans">
+                        <p class="text-body-lg text-tasty-blue-black">
                             {{ $post->excerpt }}
                         </p>
                     @endif

@@ -2,6 +2,8 @@
 @props([
     'tag' => 'button',
     'href' => null,
+    'url' => null,
+    'text' => null,
     'type' => 'button',
     'variant' => 'yellow',
     'icon' => null,
@@ -12,6 +14,9 @@
 ])
 
 @php
+    // Support both href and url props
+    $href = $href ?? $url;
+
     // Determine the tag to use
     $tag = $href ? 'a' : ($tag ?? 'button');
 
@@ -59,7 +64,7 @@
         <svg class="animate-spin" width="24" height="24" viewBox="0 0 24 24" fill="none">{!! $loadingSpinner !!}</svg>
     @endif
 
-    <span>{{ $slot }}</span>
+    <span>{{ $text ?? $slot }}</span>
 
     @if($iconPosition === 'right' && $iconSvg && !$loading)
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">{!! $iconSvg !!}</svg>

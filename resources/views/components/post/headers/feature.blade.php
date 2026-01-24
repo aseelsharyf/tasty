@@ -130,7 +130,7 @@
 
     {{-- Title Section on Yellow --}}
     <div class="bg-tasty-yellow pb-12 lg:pb-16">
-        <div class="flex flex-col gap-8 lg:gap-10 items-center text-center px-4 lg:px-10">
+        <div class="flex flex-col gap-8 lg:gap-10 items-center text-center px-4 lg:px-10 max-w-4xl mx-auto">
             {{-- Kicker & Title --}}
             <div class="flex flex-col gap-4 items-center w-full">
                 @if($post->kicker)
@@ -156,7 +156,7 @@
 
             {{-- Description/Excerpt --}}
             @if($post->excerpt)
-                <p class="text-body-lg text-tasty-blue-black text-center max-w-[649px]">
+                <p class="text-body-lg text-tasty-blue-black text-center">
                     {{ $post->excerpt }}
                 </p>
             @endif

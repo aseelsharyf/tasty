@@ -11,37 +11,28 @@
                     text="Editorial Policy"
                     align="center"
                 />
-                <p class="text-body-lg text-tasty-blue-black text-center">
+                <p class="text-body-lg text-tasty-blue-black/60 text-center">
                     Our commitment to honest, thoughtful food journalism.
                 </p>
             </div>
 
             <div class="flex flex-col gap-8">
                 <div class="flex flex-col gap-4">
-                    <x-ui.heading
-                        level="h3"
-                        text="Our Mission"
-                    />
+                    <h2 class="text-h4 text-tasty-blue-black">Our Mission</h2>
                     <p class="text-body-md text-tasty-blue-black">
                         Tasty exists to document, celebrate, and critically examine the food culture of the Maldives. We aim to tell stories that matter, highlight voices that deserve attention, and provide honest assessments that serve our readers.
                     </p>
                 </div>
 
                 <div class="flex flex-col gap-4">
-                    <x-ui.heading
-                        level="h3"
-                        text="Independence"
-                    />
+                    <h2 class="text-h4 text-tasty-blue-black">Independence</h2>
                     <p class="text-body-md text-tasty-blue-black">
                         Our editorial content is independent from our advertising. We never accept payment for coverage, and our reviews are never influenced by advertisers. When we write about a restaurant, product, or establishment, our opinion is our own.
                     </p>
                 </div>
 
                 <div class="flex flex-col gap-4">
-                    <x-ui.heading
-                        level="h3"
-                        text="Reviews & Ratings"
-                    />
+                    <h2 class="text-h4 text-tasty-blue-black">Reviews & Ratings</h2>
                     <p class="text-body-md text-tasty-blue-black">
                         All restaurant reviews are conducted anonymously. We pay for our own meals and visit establishments multiple times before publishing a review. Our ratings reflect the overall dining experience, including food quality, service, atmosphere, and value.
                     </p>
@@ -51,20 +42,14 @@
                 </div>
 
                 <div class="flex flex-col gap-4">
-                    <x-ui.heading
-                        level="h3"
-                        text="Sponsored Content"
-                    />
+                    <h2 class="text-h4 text-tasty-blue-black">Sponsored Content</h2>
                     <p class="text-body-md text-tasty-blue-black">
                         When content is sponsored or created in partnership with a brand, we clearly label it as such. Sponsored content is always marked with a "Sponsored" or "Partner Content" label. These pieces are held to the same editorial standards as our independent content but are paid for by the partner.
                     </p>
                 </div>
 
                 <div class="flex flex-col gap-4">
-                    <x-ui.heading
-                        level="h3"
-                        text="Corrections"
-                    />
+                    <h2 class="text-h4 text-tasty-blue-black">Corrections</h2>
                     <p class="text-body-md text-tasty-blue-black">
                         We take accuracy seriously. If we make an error, we correct it promptly and transparently. Corrections are noted at the bottom of articles with the date and nature of the correction.
                     </p>
@@ -74,20 +59,14 @@
                 </div>
 
                 <div class="flex flex-col gap-4">
-                    <x-ui.heading
-                        level="h3"
-                        text="Diversity & Inclusion"
-                    />
+                    <h2 class="text-h4 text-tasty-blue-black">Diversity & Inclusion</h2>
                     <p class="text-body-md text-tasty-blue-black">
                         We are committed to representing the full diversity of Maldivian food culture. This means covering not just Malé-based establishments but food stories from across the atolls. It means highlighting home cooks alongside professional chefs, traditional recipes alongside modern innovations.
                     </p>
                 </div>
 
                 <div class="flex flex-col gap-4">
-                    <x-ui.heading
-                        level="h3"
-                        text="Contributor Guidelines"
-                    />
+                    <h2 class="text-h4 text-tasty-blue-black">Contributor Guidelines</h2>
                     <p class="text-body-md text-tasty-blue-black">
                         All contributors must disclose any potential conflicts of interest. Writers cannot review establishments they have a personal or financial relationship with. All contributors are expected to adhere to these editorial standards.
                     </p>
