@@ -75,6 +75,8 @@ Route::get('/auth/debug', function () {
 
 // OG Image preview (for debugging)
 Route::get('/og-preview/{post:slug}', [OgImageController::class, 'preview'])->name('og.preview');
+Route::get('/og-html/{post:slug}', [OgImageController::class, 'renderHtml'])->name('og.html');
+Route::get('/og-test', [OgImageController::class, 'testPage'])->name('og.test');
 
 // Product routes
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');

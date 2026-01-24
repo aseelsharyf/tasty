@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Post;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Interfaces\ImageInterface;
 use Intervention\Image\Laravel\Facades\Image;
 
 class OgImageService
@@ -13,6 +14,11 @@ class OgImageService
     protected int $height = 630;
 
     protected string $disk;
+
+    // Tasty brand colors
+    protected array $yellow = ['r' => 255, 'g' => 231, 'b' => 98]; // #ffe762
+
+    protected array $blueBlack = ['r' => 27, 'g' => 27, 'b' => 27]; // #1b1b1b
 
     public function __construct()
     {
@@ -46,16 +52,7 @@ class OgImageService
                 return null;
             }
 
-            $image = Image::read($imageContents);
-
-            // Resize and crop to OG dimensions, respecting focal point
-            $this->coverWithFocalPoint($image, $post->featured_image_anchor);
-
-            // Create gradient overlay using GD
-            $this->applyGradientOverlay($image);
-
-            // Add logo at bottom left
-            $this->addLogo($image);
+            $image = $this->generateOgImage($imageContents, $post);
 
             // Save to disk (works with both local and cloud storage)
             $pngData = $image->toPng()->toString();
@@ -70,18 +67,103 @@ class OgImageService
     }
 
     /**
+     * Generate OG image with unified style.
+     * Yellow background with rounded-corner image on left, kicker + title on right, logo at bottom right.
+     */
+    protected function generateOgImage(string $imageContents, Post $post): ImageInterface
+    {
+        $image = Image::read($imageContents);
+
+        // Layout: 40px padding, 550x550 image, 50px gap, text area, logo
+        $padding = 40;
+        $imageSize = 550;
+        $gap = 50;
+        $textX = $padding + $imageSize + $gap;
+        $textAreaWidth = $this->width - $textX - $padding;
+
+        // Resize image to square with focal point
+        $this->coverWithFocalPoint($image, $post->featured_image_anchor, $imageSize, $imageSize);
+
+        // Apply rounded corners to the image
+        $image = $this->applyRoundedCorners($image, 24);
+
+        // Create canvas with yellow background
+        $canvas = $this->createYellowCanvas();
+
+        // Place the rounded image on left with padding
+        $canvas->place($image, 'top-left', $padding, $padding);
+
+        // Add kicker and title text
+        $this->addText($canvas, $post, $textX, $textAreaWidth);
+
+        // Add logo at bottom right
+        $this->addLogo($canvas);
+
+        return $canvas;
+    }
+
+    /**
+     * Add kicker and title text to the canvas.
+     */
+    protected function addText(ImageInterface $canvas, Post $post, int $textX, int $textAreaWidth): void
+    {
+        $fontPath = resource_path('fonts/new-spirit-condensed.ttf');
+        if (! file_exists($fontPath)) {
+            return;
+        }
+
+        // Get kicker or fallback to category
+        $kicker = $post->kicker;
+        if (! $kicker && $category = $post->categories->first()) {
+            $kicker = $category->name;
+        }
+
+        // Calculate title size based on length
+        $titleLength = mb_strlen($post->title);
+        $titleSize = match (true) {
+            $titleLength > 100 => 32,
+            $titleLength > 70 => 38,
+            $titleLength > 50 => 44,
+            default => 48,
+        };
+
+        // Center content vertically
+        $centerY = $this->height / 2;
+        $currentY = $centerY - 60;
+
+        // Add kicker
+        if ($kicker) {
+            $kickerText = mb_strtoupper($kicker);
+            $this->drawText($canvas, $kickerText, $textX, $currentY, 24, $fontPath);
+            $currentY += 50;
+        }
+
+        // Add title (wrapped)
+        $wrappedTitle = $this->wrapText($post->title, $textAreaWidth - 20, $titleSize, $fontPath);
+        $titleLines = explode("\n", $wrappedTitle);
+
+        foreach ($titleLines as $line) {
+            $this->drawText($canvas, $line, $textX, $currentY, $titleSize, $fontPath);
+            $currentY += $titleSize * 1.1;
+        }
+    }
+
+    /**
      * Cover image to target dimensions respecting focal point.
      *
      * @param  array{x: float, y: float}|null  $focalPoint
      */
-    protected function coverWithFocalPoint(\Intervention\Image\Interfaces\ImageInterface $image, ?array $focalPoint): void
+    protected function coverWithFocalPoint(ImageInterface $image, ?array $focalPoint, ?int $targetWidth = null, ?int $targetHeight = null): void
     {
+        $targetWidth = $targetWidth ?? $this->width;
+        $targetHeight = $targetHeight ?? $this->height;
+
         $origWidth = $image->width();
         $origHeight = $image->height();
 
         // Calculate scale to cover target dimensions
-        $scaleX = $this->width / $origWidth;
-        $scaleY = $this->height / $origHeight;
+        $scaleX = $targetWidth / $origWidth;
+        $scaleY = $targetHeight / $origHeight;
         $scale = max($scaleX, $scaleY);
 
         // Scale image to cover
@@ -94,70 +176,161 @@ class OgImageService
         $focalY = $focalPoint['y'] ?? 0.0;
 
         // Calculate crop offset based on focal point
-        // The focal point should remain visible, ideally centered in the crop
-        $maxOffsetX = $scaledWidth - $this->width;
-        $maxOffsetY = $scaledHeight - $this->height;
+        $maxOffsetX = $scaledWidth - $targetWidth;
+        $maxOffsetY = $scaledHeight - $targetHeight;
 
         // Position the crop so focal point is as centered as possible
-        $offsetX = (int) round(($focalX * $scaledWidth) - ($this->width / 2));
-        $offsetY = (int) round(($focalY * $scaledHeight) - ($this->height / 2));
+        $offsetX = (int) round(($focalX * $scaledWidth) - ($targetWidth / 2));
+        $offsetY = (int) round(($focalY * $scaledHeight) - ($targetHeight / 2));
 
         // Clamp offsets to valid range
         $offsetX = max(0, min($maxOffsetX, $offsetX));
         $offsetY = max(0, min($maxOffsetY, $offsetY));
 
         // Crop to final dimensions
-        $image->crop($this->width, $this->height, $offsetX, $offsetY);
+        $image->crop($targetWidth, $targetHeight, $offsetX, $offsetY);
     }
 
     /**
-     * Apply gradient overlay directly on the image using GD.
+     * Create a canvas filled with Tasty yellow.
      */
-    protected function applyGradientOverlay(\Intervention\Image\Interfaces\ImageInterface $image): void
+    protected function createYellowCanvas(): ImageInterface
     {
-        // Get the underlying GD resource
-        $gdImage = imagecreatetruecolor($this->width, $this->height);
-        imagesavealpha($gdImage, true);
-        imagealphablending($gdImage, false);
+        $canvas = imagecreatetruecolor($this->width, $this->height);
+        $yellow = imagecolorallocate($canvas, $this->yellow['r'], $this->yellow['g'], $this->yellow['b']);
+        imagefill($canvas, 0, 0, $yellow);
 
-        // Fill with transparent
-        $transparent = imagecolorallocatealpha($gdImage, 0, 0, 0, 127);
-        imagefill($gdImage, 0, 0, $transparent);
+        $tempPath = sys_get_temp_dir().'/canvas_'.uniqid().'.png';
+        imagepng($canvas, $tempPath);
+        imagedestroy($canvas);
 
-        imagealphablending($gdImage, true);
+        $image = Image::read($tempPath);
+        unlink($tempPath);
 
-        // Yellow color (#ffe762)
-        $r = 255;
-        $g = 231;
-        $b = 98;
+        return $image;
+    }
 
-        // Gradient covers bottom 40% of image
-        $gradientHeight = (int) ($this->height * 0.9);
+    /**
+     * Draw text on an image using GD.
+     */
+    protected function drawText(ImageInterface $canvas, string $text, float $x, float $y, int $size, string $fontPath): void
+    {
+        // Get the GD resource through a temp file round-trip
+        $tempPath = sys_get_temp_dir().'/canvas_text_'.uniqid().'.png';
+        $canvas->toPng()->save($tempPath);
 
-        // Draw gradient from bottom
-        for ($y = 0; $y < $gradientHeight; $y++) {
-            $progress = $y / $gradientHeight;
-            // Alpha: 40 at bottom (more visible) to 127 at top (transparent)
-            $alpha = (int) (40 + ($progress * 87));
+        $gdImage = imagecreatefrompng($tempPath);
+        $textColor = imagecolorallocate($gdImage, $this->blueBlack['r'], $this->blueBlack['g'], $this->blueBlack['b']);
 
-            $color = imagecolorallocatealpha($gdImage, $r, $g, $b, $alpha);
-            imageline($gdImage, 0, $this->height - 1 - $y, $this->width, $this->height - 1 - $y, $color);
-        }
+        // imagettftext uses baseline Y, add the font size to position from top
+        imagettftext($gdImage, $size, 0, (int) $x, (int) ($y + $size), $textColor, $fontPath, $text);
 
-        // Save gradient to temp and overlay
-        $tempPath = sys_get_temp_dir().'/gradient_'.uniqid().'.png';
         imagepng($gdImage, $tempPath);
         imagedestroy($gdImage);
 
-        $gradient = Image::read($tempPath);
-        $image->place($gradient, 'top-left', 0, 0);
+        // Read back and replace canvas contents
+        $newCanvas = Image::read($tempPath);
+        $canvas->place($newCanvas, 'top-left', 0, 0);
         unlink($tempPath);
     }
 
     /**
-     * Add the Tasty logo to the bottom left of the image.
+     * Wrap text to fit within a given width.
      */
-    protected function addLogo(\Intervention\Image\Interfaces\ImageInterface $image): void
+    protected function wrapText(string $text, int $maxWidth, int $fontSize, string $fontPath): string
+    {
+        $words = explode(' ', $text);
+        $lines = [];
+        $currentLine = '';
+
+        foreach ($words as $word) {
+            $testLine = $currentLine === '' ? $word : $currentLine.' '.$word;
+            $box = imagettfbbox($fontSize, 0, $fontPath, $testLine);
+            $testWidth = $box[2] - $box[0];
+
+            if ($testWidth <= $maxWidth) {
+                $currentLine = $testLine;
+            } else {
+                if ($currentLine !== '') {
+                    $lines[] = $currentLine;
+                }
+                $currentLine = $word;
+            }
+        }
+
+        if ($currentLine !== '') {
+            $lines[] = $currentLine;
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Apply rounded corners to an image.
+     */
+    protected function applyRoundedCorners(ImageInterface $image, int $radius): ImageInterface
+    {
+        $width = $image->width();
+        $height = $image->height();
+
+        // Save image to temp
+        $tempImagePath = sys_get_temp_dir().'/rounded_src_'.uniqid().'.png';
+        $image->toPng()->save($tempImagePath);
+        $srcImage = imagecreatefrompng($tempImagePath);
+
+        // Create a new image with transparency
+        $roundedImage = imagecreatetruecolor($width, $height);
+        imagesavealpha($roundedImage, true);
+        imagealphablending($roundedImage, false);
+
+        $transparent = imagecolorallocatealpha($roundedImage, 0, 0, 0, 127);
+        imagefill($roundedImage, 0, 0, $transparent);
+
+        imagealphablending($roundedImage, true);
+
+        // Create rounded rectangle mask
+        $mask = imagecreatetruecolor($width, $height);
+        $maskTransparent = imagecolorallocate($mask, 0, 0, 0);
+        $maskWhite = imagecolorallocate($mask, 255, 255, 255);
+        imagefill($mask, 0, 0, $maskTransparent);
+
+        // Draw rounded rectangle
+        imagefilledrectangle($mask, $radius, 0, $width - $radius - 1, $height - 1, $maskWhite);
+        imagefilledrectangle($mask, 0, $radius, $width - 1, $height - $radius - 1, $maskWhite);
+        imagefilledellipse($mask, $radius, $radius, $radius * 2, $radius * 2, $maskWhite);
+        imagefilledellipse($mask, $width - $radius - 1, $radius, $radius * 2, $radius * 2, $maskWhite);
+        imagefilledellipse($mask, $radius, $height - $radius - 1, $radius * 2, $radius * 2, $maskWhite);
+        imagefilledellipse($mask, $width - $radius - 1, $height - $radius - 1, $radius * 2, $radius * 2, $maskWhite);
+
+        // Apply mask
+        for ($x = 0; $x < $width; $x++) {
+            for ($y = 0; $y < $height; $y++) {
+                $maskColor = imagecolorat($mask, $x, $y);
+                if ($maskColor === $maskWhite) {
+                    $srcColor = imagecolorat($srcImage, $x, $y);
+                    imagesetpixel($roundedImage, $x, $y, $srcColor);
+                }
+            }
+        }
+
+        imagedestroy($mask);
+        imagedestroy($srcImage);
+        unlink($tempImagePath);
+
+        $resultPath = sys_get_temp_dir().'/rounded_result_'.uniqid().'.png';
+        imagepng($roundedImage, $resultPath);
+        imagedestroy($roundedImage);
+
+        $result = Image::read($resultPath);
+        unlink($resultPath);
+
+        return $result;
+    }
+
+    /**
+     * Add the Tasty logo to the image.
+     */
+    protected function addLogo(ImageInterface $image): void
     {
         $logoPath = public_path('images/tasty-logo-black.png');
 
@@ -167,9 +340,13 @@ class OgImageService
 
         try {
             $logo = Image::read($logoPath);
-            $logo->scale(width: 200);
+            $logo->scale(height: 56);
 
-            $image->place($logo, 'bottom-left', 50, 50);
+            // Position logo aligned with text start (40px padding + 550px image + 50px gap = 640px)
+            $logoX = 640;
+            $logoY = $this->height - 40 - 56; // 40px from bottom, 56px logo height
+
+            $image->place($logo, 'top-left', $logoX, $logoY);
         } catch (\Exception $e) {
             report($e);
         }
