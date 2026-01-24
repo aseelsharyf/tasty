@@ -95,9 +95,9 @@
 
                     {{-- Title at bottom --}}
                     <div class="flex flex-col gap-1 text-blue-black">
-                        <h2 class="font-display text-[36px] leading-[1] tracking-[-0.04em] uppercase">{{ $title }}</h2>
+                        <h2 class="font-display text-[42px] leading-[1] tracking-[-0.04em] uppercase">{{ $title }}</h2>
                         @if($subtitle)
-                            <p class="font-display text-[24px] leading-[1.1] tracking-[-0.04em]">{{ $subtitle }}</p>
+                            <p class="font-display text-[32px] leading-[1.1] tracking-[-0.04em]">{{ $subtitle }}</p>
                         @endif
                     </div>
                 </div>
@@ -210,9 +210,9 @@
 
                 {{-- Title/Subtitle at bottom center --}}
                 <div class="relative z-[10] flex flex-col items-center text-center text-blue-black pt-16 pb-2.5 gap-1">
-                    <h2 class="font-display text-[28px] leading-[1] tracking-[-0.04em] uppercase">{{ $title }}</h2>
+                    <h2 class="font-display text-[32px] leading-[1] tracking-[-0.04em] uppercase">{{ $title }}</h2>
                     @if($subtitle)
-                        <p class="font-display text-[20px] leading-[1.1] tracking-[-0.04em]">{{ $subtitle }}</p>
+                        <p class="font-display text-[24px] leading-[1.1] tracking-[-0.04em]">{{ $subtitle }}</p>
                     @endif
                 </div>
             </a>

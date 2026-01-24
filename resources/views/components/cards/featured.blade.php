@@ -46,8 +46,8 @@
 
         {{-- Title --}}
         <a href="{{ $url }}" class="hover:opacity-80 transition-opacity">
-            <h3 class="font-display text-[36px] leading-[1] tracking-[-0.04em] text-blue-black
-                max-xl:text-[24px] max-xl:leading-[24px] max-xl:tracking-[-0.96px]">{{ $title }}</h3>
+            <h3 class="font-display text-[42px] leading-[1.1] tracking-[-0.04em] text-blue-black
+                max-xl:text-[32px] max-xl:leading-[1.1] max-xl:tracking-[-0.04em]">{{ $title }}</h3>
         </a>
 
         @if($description)

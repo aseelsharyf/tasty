@@ -80,20 +80,20 @@
             </div>
 
             {{-- Kicker & Title --}}
-            <div class="flex flex-col gap-3 lg:gap-4 w-full">
+            <div class="flex flex-col gap-2 lg:gap-3 w-full">
                 @if($manual)
                     @if($heroKicker)
-                        <h1 class="font-display text-[60px] leading-[50px] tracking-[-2.4px] lg:text-[72px] lg:leading-[1] lg:tracking-[-0.04em] uppercase text-blue-black">{{ $heroKicker }}</h1>
+                        <h1 class="font-display text-[48px] leading-[1] tracking-[-0.04em] lg:text-[80px] uppercase text-blue-black">{{ $heroKicker }}</h1>
                     @endif
                     @if($heroTitle)
-                        <p class="font-display text-[40px] leading-[44px] tracking-[-1.6px] lg:text-[48px] lg:leading-[1.1] lg:tracking-[-0.04em] text-blue-black">{{ $heroTitle }}</p>
+                        <p class="font-display text-[24px] leading-[1.1] tracking-[-0.04em] lg:text-[36px] text-blue-black">{{ $heroTitle }}</p>
                     @endif
                 @else
                     <a href="{{ $heroUrl }}" class="hover:opacity-80 transition-opacity">
                         @if($heroKicker)
-                            <h1 class="font-display text-[60px] leading-[50px] tracking-[-2.4px] lg:text-[72px] lg:leading-[1] lg:tracking-[-0.04em] uppercase text-blue-black">{{ $heroKicker }}</h1>
+                            <h1 class="font-display text-[48px] leading-[1] tracking-[-0.04em] lg:text-[80px] uppercase text-blue-black">{{ $heroKicker }}</h1>
                         @endif
-                        <p class="font-display text-[40px] leading-[44px] tracking-[-1.6px] lg:text-[48px] lg:leading-[1.1] lg:tracking-[-0.04em] text-blue-black">{{ $heroTitle }}</p>
+                        <p class="font-display text-[24px] leading-[1.1] tracking-[-0.04em] lg:text-[36px] text-blue-black">{{ $heroTitle }}</p>
                     </a>
                 @endif
             </div>

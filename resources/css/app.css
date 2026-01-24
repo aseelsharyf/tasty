@@ -170,7 +170,7 @@
     font-family: var(--font-sans);
     font-size: 20px;
     line-height: 1.6;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.045em;
 }
 
 .text-body-md,
@@ -178,7 +178,7 @@
     font-family: var(--font-sans);
     font-size: 18px;
     line-height: 1.5;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.045em;
 }
 
 @media (min-width: 1024px) {
@@ -194,7 +194,7 @@
     font-family: var(--font-sans);
     font-size: 14px;
     line-height: 1.2;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.045em;
     text-transform: uppercase;
 }
 

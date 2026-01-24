@@ -126,58 +126,60 @@
         @endif
 
         {{-- Text Section (Right) --}}
-        <div class="w-full lg:w-[35%] bg-tasty-yellow flex flex-col justify-end p-6 sm:p-8 lg:p-10 lg:py-24 gap-8 lg:gap-10">
-            {{-- Category Tag --}}
-            @if($category)
-                <div class="flex items-center">
-                    <a href="{{ route('category.show', $category->slug) }}" class="text-[14px] leading-[12px] uppercase text-tasty-blue-black font-sans hover:underline">
-                        {{ $category->name }}
-                    </a>
+        <div class="w-full lg:w-[35%] bg-tasty-yellow flex flex-col justify-end p-6 sm:p-8 lg:p-10 lg:py-24">
+            <div class="flex flex-col gap-8 lg:gap-10 max-w-4xl">
+                {{-- Category Tag --}}
+                @if($category)
+                    <div class="flex items-center">
+                        <a href="{{ route('category.show', $category->slug) }}" class="text-[14px] leading-[12px] uppercase text-tasty-blue-black font-sans hover:underline">
+                            {{ $category->name }}
+                        </a>
+                    </div>
+                @endif
+
+                {{-- Kicker, Title & Excerpt --}}
+                <div class="flex flex-col gap-4">
+                    @if($post->kicker)
+                        <span class="text-h2 text-tasty-blue-black uppercase">
+                            {{ $post->kicker }}
+                        </span>
+                    @endif
+                    <h1 class="text-h3 text-tasty-blue-black">
+                        {{ $post->title }}
+                    </h1>
+                    @if($post->excerpt)
+                        <p class="text-body-lg text-tasty-blue-black">
+                            {{ $post->excerpt }}
+                        </p>
+                    @endif
                 </div>
-            @endif
 
-            {{-- Kicker, Title & Excerpt --}}
-            <div class="flex flex-col gap-4">
-                @if($post->kicker)
-                    <span class="text-h2 text-tasty-blue-black uppercase">
-                        {{ $post->kicker }}
-                    </span>
-                @endif
-                <h1 class="text-h3 text-tasty-blue-black">
-                    {{ $post->title }}
-                </h1>
-                @if($post->excerpt)
-                    <p class="text-body-lg text-tasty-blue-black">
-                        {{ $post->excerpt }}
-                    </p>
-                @endif
-            </div>
-
-            {{-- Author/Photographer/Date Row --}}
-            <div class="flex items-center gap-5 text-[14px] leading-[12px] uppercase text-tasty-blue-black font-sans flex-wrap">
-                @if($post->author)
-                    <a href="{{ $post->author->url ?? '#' }}" class="underline underline-offset-4 hover:no-underline">
-                        BY {{ $post->author->name }}
-                    </a>
-                @endif
-
-                @if($photographer)
+                {{-- Author/Photographer/Date Row --}}
+                <div class="flex items-center gap-5 text-[14px] leading-[12px] uppercase text-tasty-blue-black font-sans flex-wrap">
                     @if($post->author)
-                        <span>&bull;</span>
+                        <a href="{{ $post->author->url ?? '#' }}" class="underline underline-offset-4 hover:no-underline">
+                            BY {{ $post->author->name }}
+                        </a>
                     @endif
-                    <span>PHOTO BY {{ $photographer }}</span>
-                @endif
 
-                @if($post->published_at)
-                    @if($post->author || $photographer)
-                        <span>&bull;</span>
+                    @if($photographer)
+                        @if($post->author)
+                            <span>&bull;</span>
+                        @endif
+                        <span>PHOTO BY {{ $photographer }}</span>
                     @endif
-                    <span>{{ $post->published_at->format('F j, Y') }}</span>
-                @endif
+
+                    @if($post->published_at)
+                        @if($post->author || $photographer)
+                            <span>&bull;</span>
+                        @endif
+                        <span>{{ $post->published_at->format('F j, Y') }}</span>
+                    @endif
+                </div>
+
+                {{-- Sponsor Badge --}}
+                <x-article.sponsor-badge :sponsor="$post->sponsor" />
             </div>
-
-            {{-- Sponsor Badge --}}
-            <x-article.sponsor-badge :sponsor="$post->sponsor" />
         </div>
     </div>
 </header>
