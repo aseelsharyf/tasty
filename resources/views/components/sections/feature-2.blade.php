@@ -8,18 +8,18 @@
     >
         {{-- Curved content area --}}
         <div class="feature-2-content {{ $bgColorClass }}" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
-            <div class="w-max-4xl flex flex-col items-center text-center gap-10 max-lg:gap-6 w-full">
+            <div class="w-max-4xl flex flex-col items-center justify-center text-center gap-10 max-lg:gap-6 w-full h-full">
                 {{-- Kicker (large) & Title (below) --}}
-                <div class="flex flex-col gap-3 items-center w-full">
+                <div class="flex flex-col gap-3 items-center w-full 2xl:gap-5">
                     @if($kicker)
                         <a href="{{ $buttonUrl }}" class="hover:opacity-80 transition-opacity">
-                            <p class="font-display text-[80px] leading-[1] tracking-[-0.04em] uppercase text-{{ $textColor }} max-lg:text-[48px]">
+                            <p class="font-display text-[80px] leading-[1] tracking-[-0.04em] uppercase text-{{ $textColor }} max-lg:text-[48px] 2xl:text-[200px]">
                                 {{ $kicker }}
                             </p>
                         </a>
                     @endif
                     @if($title)
-                        <h2 class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] text-{{ $textColor }} max-w-[800px] max-lg:text-[24px]">
+                        <h2 class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] text-{{ $textColor }} max-w-[800px] max-lg:text-[24px] 2xl:text-[90px] 2xl:max-w-[1200px]">
                             {{ $title }}
                         </h2>
                     @endif
