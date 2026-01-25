@@ -95,7 +95,7 @@
                         <div class="flex flex-col gap-4 text-center text-blue-black">
                             <div class="flex flex-col gap-1 min-h-[85px]">
                                 <span class="font-display text-[44px] leading-[1] tracking-[-0.04em] uppercase">{{ $postKicker }}</span>
-                                @if($postTitle)<h3 class="font-display text-[42px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1">{{ $postTitle }}</h3>@endif
+                                @if($postTitle)<h3 class="font-display text-[28px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1">{{ $postTitle }}</h3>@endif
                             </div>
                             @if($postSubtitle)<p class="text-body-md line-clamp-3 min-h-[78px]">{{ $postSubtitle }}</p>@endif
                         </div>
@@ -141,7 +141,7 @@
                             <div class="flex flex-col gap-4 text-center text-blue-black">
                                 <div class="flex flex-col gap-1 min-h-[85px]">
                                     <span class="font-display text-[44px] leading-[1] tracking-[-0.04em] uppercase">{{ $postKicker }}</span>
-                                    @if($postTitle)<h3 class="font-display text-[42px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1">{{ $postTitle }}</h3>@endif
+                                    @if($postTitle)<h3 class="font-display text-[28px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1">{{ $postTitle }}</h3>@endif
                                 </div>
                                 @if($postSubtitle)<p class="text-body-md line-clamp-3 min-h-[78px]">{{ $postSubtitle }}</p>@endif
                             </div>
@@ -245,7 +245,7 @@
                     <div class="flex flex-col gap-4 text-center text-blue-black">
                         <div class="flex flex-col gap-1 min-h-[85px]">
                             <span class="font-display text-[44px] leading-[1] tracking-[-0.04em] uppercase" x-text="post.kicker"></span>
-                            <h3 class="font-display text-[42px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1" x-show="post.title" x-text="post.title"></h3>
+                            <h3 class="font-display text-[28px] leading-[1.1] tracking-[-0.04em] line-clamp-2 mt-1" x-show="post.title" x-text="post.title"></h3>
                         </div>
                         <p class="text-body-md line-clamp-3 min-h-[78px]" x-show="post.description" x-text="post.description"></p>
                     </div>
