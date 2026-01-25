@@ -110,7 +110,7 @@ class Spread extends Component
         $this->initPostTracker();
 
         $this->showIntro = $showIntro;
-        $this->introImage = $introImage ?: \Illuminate\Support\Facades\Vite::asset('resources/images/image-07.png');
+        $this->introImage = $introImage ?: asset('images/image-07.png');
         $this->introImageAlt = $introImageAlt;
         $this->titleSmall = $titleSmall;
         $this->titleLarge = $titleLarge;

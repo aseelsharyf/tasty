@@ -2,7 +2,7 @@
 
 @section('content')
     <x-sections.latest-updates
-        introImage="{{ Vite::asset('resources/images/latest-updates-transparent.png') }}"
+        introImage="{{ asset('images/latest-updates-transparent.png') }}"
         introImageAlt="{{ $tag->name }}"
         titleSmall="Tag"
         :titleLarge="$tag->name"

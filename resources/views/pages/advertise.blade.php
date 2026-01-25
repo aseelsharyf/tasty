@@ -18,7 +18,7 @@
 
             <div class="w-full aspect-[16/9] rounded-xl overflow-hidden">
                 <img
-                    src="{{ Vite::asset('resources/images/image-02.png') }}"
+                    src="{{ asset('images/image-02.png') }}"
                     alt="Tasty audience"
                     class="w-full h-full object-cover"
                 />

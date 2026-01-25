@@ -8,7 +8,7 @@
               :manual="true"
               kicker="Bite Club"
               title="The ghost kitchen feeding Malé after dark"
-              image="{{ Vite::asset('resources/images/image-01.png') }}"
+              image="{{ asset('images/image-01.png') }}"
               category="On Culture"
               author="Mohamed Ashraf"
               date="November 12, 2025"
@@ -18,13 +18,13 @@
 
         {{-- Latest Updates Section (Static) --}}
         <x-sections.latest-updates
-            introImage="{{ Vite::asset('resources/images/latest-updates-transparent.png') }}"
+            introImage="{{ asset('images/latest-updates-transparent.png') }}"
             introImageAlt="Latest Updates"
             titleSmall="Latest"
             titleLarge="Updates"
             description="The flavors, characters, and tiny island obsessions that makes the Maldivian food culture."
             :staticFeatured="[
-                'image' => Vite::asset('resources/images/image-02.png'),
+                'image' => asset('images/image-02.png'),
                 'imageAlt' => 'Mexican Fiesta at Bianco',
                 'category' => 'Latest',
                 'tag' => 'Food',
@@ -36,7 +36,7 @@
             ]"
             :staticPosts="[
                 [
-                    'image' => Vite::asset('resources/images/image-03.png'),
+                    'image' => asset('images/image-03.png'),
                     'imageAlt' => 'Gig alert in Jazz Cafe',
                     'category' => 'Latest',
                     'tag' => 'Event',
@@ -46,7 +46,7 @@
                     'url' => '#',
                 ],
                 [
-                    'image' => Vite::asset('resources/images/image-04.png'),
+                    'image' => asset('images/image-04.png'),
                     'imageAlt' => 'Celebrate Diwali and Culinary Excellence',
                     'category' => 'Latest',
                     'tag' => 'Seasonal',
@@ -56,7 +56,7 @@
                     'url' => '#',
                 ],
                 [
-                    'image' => Vite::asset('resources/images/image-31.png'),
+                    'image' => asset('images/image-31.png'),
                     'imageAlt' => 'FHAM 2025 Culinary Challenge',
                     'category' => 'Latest',
                     'tag' => 'People',
@@ -66,7 +66,7 @@
                     'url' => '#',
                 ],
                 [
-                    'image' => Vite::asset('resources/images/image-05.png'),
+                    'image' => asset('images/image-05.png'),
                     'imageAlt' => 'Food Carnival 2025',
                     'category' => 'Latest',
                     'tag' => 'Event',
@@ -85,7 +85,7 @@
                 'title' => 'Aminath Hameed',
                 'subtitle' => 'Chef and Owner of Maldivian Patisserie.',
                 'description' => 'Two weeks in Lanka, documenting dishes and cooks who give the island its food identity.',
-                'image' => Vite::asset('resources/images/image-06.png'),
+                'image' => asset('images/image-06.png'),
                 'url' => '#',
             ]"
             tag1="TASTY FEATURE"
@@ -96,7 +96,7 @@
 
         {{-- The Spread Section (Static) --}}
         <x-sections.spread
-            introImage="{{ Vite::asset('resources/images/image-07.png') }}"
+            introImage="{{ asset('images/image-07.png') }}"
             introImageAlt="The Spread"
             titleSmall="The"
             titleLarge="SPREAD"
@@ -110,7 +110,7 @@
                 [
                     'title' => 'The Art of Maldivian Breakfast',
                     'description' => 'A deep dive into the traditional morning meals that fuel island life.',
-                    'image' => Vite::asset('resources/images/image-08.png'),
+                    'image' => asset('images/image-08.png'),
                     'url' => '#',
                     'author' => 'Writer User',
                     'authorUrl' => '#',
@@ -120,7 +120,7 @@
                 [
                     'title' => 'Street Food Adventures in Male',
                     'description' => 'Discovering hidden gems and local favorites in the capital city.',
-                    'image' => Vite::asset('resources/images/image-09.png'),
+                    'image' => asset('images/image-09.png'),
                     'url' => '#',
                     'author' => 'Writer User',
                     'authorUrl' => '#',
@@ -130,7 +130,7 @@
                 [
                     'title' => 'Cooking with Coconut',
                     'description' => 'Essential techniques for using coconut in traditional recipes.',
-                    'image' => Vite::asset('resources/images/image-10.png'),
+                    'image' => asset('images/image-10.png'),
                     'url' => '#',
                     'author' => 'Writer User',
                     'authorUrl' => '#',
@@ -140,7 +140,7 @@
                 [
                     'title' => 'Island Spice Markets',
                     'description' => 'A guide to the vibrant spice trade across the Maldivian atolls.',
-                    'image' => Vite::asset('resources/images/image-11.png'),
+                    'image' => asset('images/image-11.png'),
                     'url' => '#',
                     'author' => 'Writer User',
                     'authorUrl' => '#',
@@ -156,7 +156,7 @@
                 'title' => 'Nami at Reveli',
                 'subtitle' => 'Sushi and steak by the sea',
                 'description' => 'Nami\'s Japanese-inspired plates land big flavors in a sleek dining room. Come for the sushi; stay because you forgot you were in Malé for a second.',
-                'image' => Vite::asset('resources/images/image-13.png'),
+                'image' => asset('images/image-13.png'),
                 'url' => '#',
                 'videoUrl' => '#',
                 'category' => 'On The Menu',
@@ -171,7 +171,7 @@
         {{-- Review Section (Static) --}}
         <x-sections.review
             :showIntro="true"
-            introImage="{{ Vite::asset('resources/images/on-the-menu.png') }}"
+            introImage="{{ asset('images/on-the-menu.png') }}"
             introImageAlt="On the Menu"
             titleSmall="On the"
             titleLarge="Menu"
@@ -182,7 +182,7 @@
             :showLoadMore="false"
             :staticPosts="[
                 [
-                    'image' => Vite::asset('resources/images/image-14.png'),
+                    'image' => asset('images/image-14.png'),
                     'title' => 'SUSHI MASTERCLASS',
                     'subtitle' => 'At Nobu Maldives',
                     'description' => 'A journey through traditional Japanese cuisine with a modern twist.',
@@ -191,7 +191,7 @@
                     'rating' => 4,
                 ],
                 [
-                    'image' => Vite::asset('resources/images/image-15.png'),
+                    'image' => asset('images/image-15.png'),
                     'title' => 'ITALIAN NIGHTS',
                     'subtitle' => 'At Olive Garden',
                     'description' => 'Authentic pasta and wood-fired pizzas under the stars.',
@@ -200,7 +200,7 @@
                     'rating' => 5,
                 ],
                 [
-                    'image' => Vite::asset('resources/images/image-16.png'),
+                    'image' => asset('images/image-16.png'),
                     'title' => 'SEAFOOD FEAST',
                     'subtitle' => 'At The Ocean Grill',
                     'description' => 'Fresh catches prepared with local spices and herbs.',
@@ -209,7 +209,7 @@
                     'rating' => 3,
                 ],
                 [
-                    'image' => Vite::asset('resources/images/image-17.png'),
+                    'image' => asset('images/image-17.png'),
                     'title' => 'BREAKFAST BLISS',
                     'subtitle' => 'At Morning Glory',
                     'description' => 'Start your day with the perfect island breakfast spread.',
@@ -218,7 +218,7 @@
                     'rating' => 4,
                 ],
                 [
-                    'image' => Vite::asset('resources/images/image-18.png'),
+                    'image' => asset('images/image-18.png'),
                     'title' => 'FINE DINING',
                     'subtitle' => 'At The Lighthouse',
                     'description' => 'An elevated culinary experience with breathtaking views.',
@@ -237,7 +237,7 @@
                 'tag1' => 'TASTY FEATURE',
                 'tag2' => 'FOOD DESTINATIONS',
                 'description' => 'Two weeks in Lanka, documenting dishes and cooks who give the island its food identity.',
-                'image' => Vite::asset('resources/images/image-20.png'),
+                'image' => asset('images/image-20.png'),
                 'buttonText' => 'Read More',
                 'buttonUrl' => '#',
             ]"
@@ -255,7 +255,7 @@
                 [
                     'title' => 'Where Ceylon Begins: Walking the Endless Green of Lanka\'s Tea Hills',
                     'excerpt' => 'Walking through misty rows of emerald green, meeting the pickers and stories behind Sri Lanka\'s most iconic leaf.',
-                    'image' => Vite::asset('resources/images/image-21.png'),
+                    'image' => asset('images/image-21.png'),
                     'url' => '#',
                     'author' => 'Aminath Ahmed',
                     'date' => 'February 14, 2025',
@@ -265,7 +265,7 @@
                 [
                     'title' => 'A Morning at Colombo\'s Heritage Café, Where Time Moves Softer',
                     'excerpt' => 'Quiet columns, slow mornings, and a café that pours history with every cup. A taste of Sri Lanka\'s timeless charm.',
-                    'image' => Vite::asset('resources/images/image-22.png'),
+                    'image' => asset('images/image-22.png'),
                     'url' => '#',
                     'author' => 'Mohamed Ashraf',
                     'date' => 'January 8, 2025',
@@ -275,7 +275,7 @@
                 [
                     'title' => 'Heat, Hustle & Street Gold',
                     'excerpt' => 'From spicy short eats to crispy on-the-fly, Sri Lanka\'s street vendors turn open-air kitchens. Loud, fast, and absolutely delicious.',
-                    'image' => Vite::asset('resources/images/image-23.png'),
+                    'image' => asset('images/image-23.png'),
                     'url' => '#',
                     'author' => 'Hanan Saeed',
                     'date' => 'September 22, 2025',
@@ -290,7 +290,7 @@
         {{-- Recipe Section (Static) --}}
         <x-sections.recipe
             :showIntro="true"
-            introImage="{{ Vite::asset('resources/images/on-the-menu.png') }}"
+            introImage="{{ asset('images/on-the-menu.png') }}"
             introImageAlt="Everyday Cooking"
             titleSmall="Everyday"
             titleLarge="COOKING"
@@ -299,7 +299,7 @@
             gradient="top"
             mobileLayout="grid"
             :staticFeatured="[
-                'image' => Vite::asset('resources/images/image-26.png'),
+                'image' => asset('images/image-26.png'),
                 'imageAlt' => '12 Must-Try Recipes',
                 'title' => '12 Must-Try Recipes to Make This December',
                 'description' => 'The recipe for choosing the perfect resort is in the menu! Ever look up hotels and resorts and see terms like all inclusive and European plan and not quite know what they mean?',
@@ -310,7 +310,7 @@
             ]"
             :staticPosts="[
                 [
-                    'image' => Vite::asset('resources/images/image-27.png'),
+                    'image' => asset('images/image-27.png'),
                     'title' => 'How to Cook Squash Pasta',
                     'tags' => ['RECIPE', 'VEGAN'],
                     'author' => 'Author Name',
@@ -318,7 +318,7 @@
                     'url' => '#',
                 ],
                 [
-                    'image' => Vite::asset('resources/images/image-28.png'),
+                    'image' => asset('images/image-28.png'),
                     'title' => 'Chocolate Chip Cookies to Die for',
                     'tags' => ['RECIPE', 'SWEET TOOTH'],
                     'author' => 'Author Name',
@@ -326,7 +326,7 @@
                     'url' => '#',
                 ],
                 [
-                    'image' => Vite::asset('resources/images/image-29.png'),
+                    'image' => asset('images/image-29.png'),
                     'title' => 'How to Make a Fantastic Omelet',
                     'tags' => ['RECIPE', 'MALDIVIAN'],
                     'author' => 'Author Name',

@@ -100,7 +100,7 @@ class LatestUpdates extends Component
         // Initialize post tracker to prevent duplicates across sections
         $this->initPostTracker();
 
-        $this->introImage = $introImage ?: \Illuminate\Support\Facades\Vite::asset('resources/images/latest-updates.png');
+        $this->introImage = $introImage ?: asset('images/latest-updates.png');
         $this->introImageAlt = $introImageAlt;
         $this->titleSmall = $titleSmall;
         $this->titleLarge = $titleLarge;

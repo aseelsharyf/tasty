@@ -22,7 +22,7 @@
                 <!-- Hero Image -->
                 <div class="w-full aspect-[2.5/1] rounded-2xl overflow-hidden">
                     <img
-                        src="{{ Vite::asset('resources/images/image-01.png') }}"
+                        src="{{ asset('images/image-01.png') }}"
                         alt="Tasty - Celebrating flavours and stories"
                         class="w-full h-full object-cover"
                     />
