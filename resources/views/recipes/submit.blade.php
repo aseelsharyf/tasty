@@ -584,24 +584,52 @@
 
                             <template x-for="(item, itemIndex) in group.items" :key="itemIndex">
                                 <div class="flex gap-2 items-center">
-                                    <!-- Quantity -->
-                                    <input
-                                        type="text"
-                                        :name="`ingredients[${groupIndex}][items][${itemIndex}][quantity]`"
-                                        x-model="item.quantity"
-                                        class="w-20 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-tasty-blue-black transition-colors text-center"
-                                        placeholder="Qty"
-                                    />
+                                    <!-- Quantity + Unit combined -->
+                                    <div class="flex border border-gray-200 rounded-lg bg-white">
+                                        <input
+                                            type="text"
+                                            :name="`ingredients[${groupIndex}][items][${itemIndex}][quantity]`"
+                                            x-model="item.quantity"
+                                            class="w-12 px-2 py-2 text-sm focus:outline-none text-center border-r border-gray-200 rounded-l-lg"
+                                            placeholder="Qty"
+                                        />
+                                        <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                                            <input
+                                                type="text"
+                                                :name="`ingredients[${groupIndex}][items][${itemIndex}][unit]`"
+                                                x-model="item.unit"
+                                                @input="open = true"
+                                                @focus="open = true"
+                                                class="w-14 px-2 py-2 text-sm focus:outline-none text-center rounded-r-lg"
+                                                placeholder="unit"
+                                                autocomplete="off"
+                                            />
+                                            <div
+                                                x-show="open"
+                                                x-transition
+                                                class="absolute z-30 w-36 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto left-0"
+                                                style="top: 100%;"
+                                            >
+                                                <template x-for="unit in filteredUnits(item.unit)" :key="unit.id">
+                                                    <button
+                                                        type="button"
+                                                        @click="item.unit = unit.abbreviation || unit.name; open = false"
+                                                        class="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm border-b border-gray-100 last:border-b-0"
+                                                        x-text="unit.abbreviation ? unit.abbreviation + ' (' + unit.name + ')' : unit.name"
+                                                    ></button>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <!-- Ingredient Name with Autocomplete -->
-                                    <div class="flex-1 relative" x-data="{ open: false }">
+                                    <div class="flex-1 relative" x-data="{ open: false }" @click.away="open = false">
                                         <input
                                             type="text"
                                             :name="`ingredients[${groupIndex}][items][${itemIndex}][ingredient]`"
                                             x-model="item.ingredient"
                                             @input="open = $event.target.value.length > 0"
                                             @focus="open = item.ingredient.length > 0"
-                                            @click.away="open = false"
                                             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-tasty-blue-black transition-colors"
                                             placeholder="Ingredient *"
                                             required
@@ -623,12 +651,21 @@
                                         </div>
                                     </div>
 
+                                    <!-- Prep Note (compact) -->
+                                    <input
+                                        type="text"
+                                        :name="`ingredients[${groupIndex}][items][${itemIndex}][prep_note]`"
+                                        x-model="item.prep_note"
+                                        class="w-28 px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-tasty-blue-black transition-colors text-gray-500"
+                                        placeholder="chopped..."
+                                    />
+
                                     <!-- Remove Button -->
                                     <button
                                         type="button"
                                         @click="removeIngredient(groupIndex, itemIndex)"
                                         x-show="group.items.length > 1"
-                                        class="text-red-400 hover:text-red-600 p-1"
+                                        class="text-red-400 hover:text-red-600 p-1 shrink-0"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -878,7 +915,7 @@ function recipeSubmission() {
             ingredients: [
                 {
                     group_name: '',
-                    items: [{ ingredient: '', quantity: '' }]
+                    items: [{ ingredient: '', quantity: '', unit: '', prep_note: '' }]
                 }
             ],
             instructions: [
@@ -1046,11 +1083,21 @@ function recipeSubmission() {
             ).slice(0, 8);
         },
 
+        filteredUnits(search) {
+            if (!search) return this.units.slice(0, 10);
+            const term = search.toLowerCase();
+            return this.units.filter(unit =>
+                unit.name.toLowerCase().includes(term) ||
+                (unit.abbreviation && unit.abbreviation.toLowerCase().includes(term)) ||
+                (unit.name_dv && unit.name_dv.includes(search))
+            ).slice(0, 10);
+        },
+
         // Ingredient management
         addIngredientGroup() {
             this.form.ingredients.push({
                 group_name: '',
-                items: [{ ingredient: '', quantity: '' }]
+                items: [{ ingredient: '', quantity: '', unit: '', prep_note: '' }]
             });
         },
 
@@ -1062,7 +1109,7 @@ function recipeSubmission() {
 
         addIngredient(groupIndex) {
             this.form.ingredients[groupIndex].items.push({
-                ingredient: '', quantity: ''
+                ingredient: '', quantity: '', unit: '', prep_note: ''
             });
         },
 
@@ -1234,6 +1281,8 @@ function recipeSubmission() {
                 group.items.forEach((item, ii) => {
                     formData.append(`ingredients[${gi}][items][${ii}][ingredient]`, item.ingredient);
                     formData.append(`ingredients[${gi}][items][${ii}][quantity]`, item.quantity || '');
+                    formData.append(`ingredients[${gi}][items][${ii}][unit]`, item.unit || '');
+                    formData.append(`ingredients[${gi}][items][${ii}][prep_note]`, item.prep_note || '');
                 });
             });
 
