@@ -91,7 +91,6 @@
         <div class="bg-off-white pb-16">
             <div class="max-w-[894px] mx-auto px-4 lg:px-0 pt-10 border-t border-tasty-blue-black/10">
                 <div class="flex flex-wrap items-center gap-2 {{ $isRtl ? 'justify-end' : '' }}">
-                    <span class="text-sm text-gray-500 uppercase tracking-wide">Tags:</span>
                     @foreach($post->tags as $tag)
                         @if($isPreview)
                             <span class="inline-block bg-white text-gray-700 text-sm px-3 py-1 rounded-full">
@@ -118,16 +117,30 @@
 @if(!$isPreview && $relatedPosts?->isNotEmpty())
     @php
         $primaryCategory = $post->categories->first();
+        $relatedCount = $relatedPosts->count();
     @endphp
     <section class="w-full max-w-[1880px] mx-auto py-16 md:py-24">
         <div class="container-main px-5 md:px-10">
             <h2 class="text-h2 text-blue-black text-center mb-10 md:mb-16">More In {{ $primaryCategory?->name ?? 'This Category' }}</h2>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
-                @foreach($relatedPosts as $relatedPost)
-                    <x-cards.horizontal :post="$relatedPost" />
-                @endforeach
-            </div>
+            @if($relatedCount === 1)
+                {{-- Single post: center it --}}
+                <div class="max-w-2xl mx-auto">
+                    <x-cards.horizontal :post="$relatedPosts->first()" />
+                </div>
+            @else
+                {{-- Multiple posts: use grid --}}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
+                    @foreach($relatedPosts as $relatedPost)
+                        <x-cards.horizontal :post="$relatedPost" />
+                    @endforeach
+                </div>
+            @endif
         </div>
     </section>
+@endif
+
+{{-- Newsletter Section (only for public view, not preview) --}}
+@if(!$isPreview)
+    <x-sections.newsletter />
 @endif

@@ -1,6 +1,6 @@
 @props(['post', 'comments', 'totalCount', 'allowComments'])
 
-<section class="bg-off-white py-16 border-t border-tasty-blue-black/10" x-data>
+<section class="bg-off-white py-16" x-data>
     <script>
         function toggleReplyForm(uuid) {
             const form = document.getElementById('reply-form-' + uuid);
