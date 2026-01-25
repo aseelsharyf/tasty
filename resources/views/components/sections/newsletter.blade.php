@@ -6,7 +6,7 @@
 >
     {{-- Desktop Layout --}}
     <div class="hidden lg:flex w-full max-w-[1440px] mx-auto px-10 pt-16 pb-32 flex-col items-center gap-10">
-        <h2 class="text-h2 text-blue-black text-center max-w-[900px]">{{ $title }}</h2>
+        <h2 class="font-display text-[50px] leading-[75px] tracking-[-0.04em] text-blue-black text-center max-w-[900px]">{{ $title }}</h2>
 
         {{-- Subscribe Form - Inline on desktop --}}
         <form @submit.prevent="submit" class="w-full max-w-[500px]">

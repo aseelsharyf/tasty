@@ -73,7 +73,7 @@
                 ></div>
 
                 {{-- Content overlay --}}
-                <div class="absolute inset-0 flex flex-col justify-between p-10 z-[10]">
+                <div class="absolute inset-0 flex flex-col justify-between pl-10 pr-10 pt-10 z-[10]">
                     {{-- Tag at top --}}
                     @if($category || $tag)
                         <div class="flex items-start">
@@ -95,7 +95,7 @@
 
                     {{-- Title at bottom --}}
                     <div class="flex flex-col gap-1 text-blue-black">
-                        <h2 class="font-display text-[42px] leading-[1] tracking-[-0.04em] uppercase">{{ $title }}</h2>
+                        <h2 class="font-display text-[44px] leading-[1] tracking-[-0.04em] uppercase">{{ $title }}</h2>
                         @if($subtitle)
                             <p class="font-display text-[32px] leading-[1.1] tracking-[-0.04em]">{{ $subtitle }}</p>
                         @endif

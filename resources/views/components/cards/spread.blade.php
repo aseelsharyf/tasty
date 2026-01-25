@@ -28,7 +28,7 @@
     {{-- Content --}}
     <div class="flex flex-col gap-2">
         <a href="{{ $url }}" class="hover:opacity-80 transition-opacity">
-            <h3 class="font-display text-[42px] leading-[1.1] tracking-[-0.04em] text-blue-black line-clamp-2 max-lg:text-[32px]">{{ $title }}</h3>
+            <h3 class="font-display text-[40px] leading-[1.1] tracking-[-0.04em] text-blue-black line-clamp-2 max-lg:text-[32px]">{{ $title }}</h3>
         </a>
         @if($description)
             <p class="text-body-md text-blue-black line-clamp-3 mt-1">{{ $description }}</p>

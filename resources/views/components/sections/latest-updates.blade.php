@@ -30,7 +30,7 @@
                     @if($titleSmall)
                         <span class="font-display text-[48px] leading-[1.1] tracking-[-0.04em] uppercase max-xl:text-[24px]">{{ $titleSmall }}</span>
                     @endif
-                    <h2 class="font-display text-[72px] leading-[1] tracking-[-0.04em] uppercase max-xl:text-[36px]">{{ $titleLarge }}</h2>
+                    <h2 class="font-display text-[74px] leading-[1] tracking-[-0.04em] uppercase max-xl:text-[36px]">{{ $titleLarge }}</h2>
                 </div>
                 <p class="text-body-md">{{ $description }}</p>
             </div>
@@ -64,7 +64,7 @@
                         @if($titleSmall)
                             <span class="font-display text-[48px] leading-[1.1] tracking-[-0.04em] uppercase max-xl:text-[24px]">{{ $titleSmall }}</span>
                         @endif
-                        <h2 class="font-display text-[72px] leading-[1] tracking-[-0.04em] uppercase max-xl:text-[36px]">{{ $titleLarge }}</h2>
+                        <h2 class="font-display text-[74px] leading-[1] tracking-[-0.04em] uppercase max-xl:text-[36px]">{{ $titleLarge }}</h2>
                     </div>
                     <p class="text-body-md">{{ $description }}</p>
                 </div>
@@ -134,7 +134,7 @@
                         </template>
                         {{-- Title --}}
                         <a :href="post.url" class="hover:opacity-80 transition-opacity">
-                            <h3 class="font-display text-[28px] leading-[1.1] tracking-[-0.04em] text-blue-black line-clamp-3
+                            <h3 class="font-display text-[30px] leading-[1.1] tracking-[-0.04em] text-blue-black line-clamp-3
                                 max-xl:text-[24px] max-xl:leading-[24px] max-xl:tracking-[-0.96px]" x-text="post.title"></h3>
                         </a>
                         {{-- Meta: Author & Date --}}

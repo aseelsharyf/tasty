@@ -3,8 +3,8 @@
     <div class="w-full max-w-[1440px] mx-auto px-10 pt-16 pb-32 max-lg:px-5 max-lg:pt-10 max-lg:pb-16 flex flex-col gap-16 max-lg:gap-10">
         {{-- Header --}}
         <div class="flex flex-col gap-5 items-center text-center text-blue-black w-full max-w-[660px] mx-auto">
-            <h2 class="text-h2 uppercase">{{ $title }}</h2>
-            <p class="text-body-md">{{ $description }}</p>
+            <h2 class="font-display text-[82px] leading-[1] tracking-[-0.04em] uppercase max-lg:text-[48px]">{{ $title }}</h2>
+            <p class="text-[22px] leading-[1.4]">{{ $description }}</p>
         </div>
 
         {{-- Products Grid --}}

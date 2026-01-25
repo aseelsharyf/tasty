@@ -10,16 +10,16 @@
         <div class="feature-2-content {{ $bgColorClass }}" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
             <div class="w-max-4xl flex flex-col items-center justify-center text-center gap-10 max-lg:gap-6 w-full h-full">
                 {{-- Kicker (large) & Title (below) --}}
-                <div class="flex flex-col gap-3 items-center w-full 2xl:gap-5">
+                <div class="flex flex-col gap-3 items-center w-full max-w-4xl 2xl:gap-5">
                     @if($kicker)
                         <a href="{{ $buttonUrl }}" class="hover:opacity-80 transition-opacity">
-                            <p class="font-display text-[80px] leading-[1] tracking-[-0.04em] uppercase text-{{ $textColor }} max-lg:text-[48px] 2xl:text-[200px]">
+                            <p class="font-display text-[130px] leading-[1] tracking-[-0.04em] uppercase text-{{ $textColor }} max-lg:text-[48px]">
                                 {{ $kicker }}
                             </p>
                         </a>
                     @endif
                     @if($title)
-                        <h2 class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] text-{{ $textColor }} max-w-[800px] max-lg:text-[24px] 2xl:text-[90px] 2xl:max-w-[1200px]">
+                        <h2 class="font-display text-[56px] leading-[1.1] tracking-[-0.04em] text-{{ $textColor }} max-lg:text-[24px]">
                             {{ $title }}
                         </h2>
                     @endif
@@ -50,7 +50,7 @@
 
                 {{-- Description --}}
                 @if($description)
-                    <p class="text-body-md text-{{ $textColor }} max-w-[600px] text-center">
+                    <p class="text-[20px] leading-[1.3] text-{{ $textColor }} max-w-4xl text-center">
                         {{ $description }}
                     </p>
                 @endif

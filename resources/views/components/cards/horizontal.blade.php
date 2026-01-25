@@ -28,7 +28,7 @@
 
         {{-- Title --}}
         <a href="{{ $url }}" class="hover:opacity-80 transition-opacity">
-            <h3 class="font-display text-[28px] leading-[1.1] tracking-[-0.04em] text-blue-black line-clamp-3
+            <h3 class="font-display text-[30px] leading-[1.1] tracking-[-0.04em] text-blue-black line-clamp-3
                 max-xl:text-[24px] max-xl:leading-[24px] max-xl:tracking-[-0.96px]">{{ $title }}</h3>
         </a>
 

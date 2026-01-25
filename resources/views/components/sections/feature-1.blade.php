@@ -18,14 +18,14 @@
     <div class="max-w-[1880px] mx-auto pb-24 max-lg:pb-16">
         <div class="container-main flex flex-col items-center gap-10 text-center w-full px-10 max-lg:px-5 max-lg:gap-6">
             {{-- Kicker & Title --}}
-            <div class="flex flex-col gap-3 max-lg:gap-2">
+            <div class="flex flex-col gap-3 max-lg:gap-2 max-w-4xl">
                 @if($kicker)
                     <a href="{{ $buttonUrl }}" class="hover:opacity-80 transition-opacity">
-                        <p class="font-display text-[80px] leading-[1] tracking-[-0.04em] text-{{ $textColor }} uppercase max-lg:text-[48px]">{{ $kicker }}</p>
+                        <p class="font-display text-[130px] leading-[1] tracking-[-0.04em] text-{{ $textColor }} uppercase max-lg:text-[48px]">{{ $kicker }}</p>
                     </a>
                 @endif
                 @if($title)
-                    <h2 class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] text-{{ $textColor }} max-lg:text-[24px]">{{ $title }}</h2>
+                    <h2 class="font-display text-[56px] leading-[1.1] tracking-[-0.04em] text-{{ $textColor }} max-lg:text-[24px]">{{ $title }}</h2>
                 @endif
             </div>
 
@@ -54,7 +54,7 @@
 
             {{-- Description --}}
             @if($description)
-                <p class="text-body-md text-{{ $textColor }} max-w-[650px]">{{ $description }}</p>
+                <p class="text-[20px] leading-[1.3] text-{{ $textColor }} max-w-4xl">{{ $description }}</p>
             @endif
 
             {{-- Button --}}
