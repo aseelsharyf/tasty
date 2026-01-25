@@ -396,6 +396,107 @@ function clearGroupedItemInput(fieldName: string, sectionIndex: number) {
     }
 }
 
+// Bulk mode state for grouped-repeater fields
+interface GroupedRepeaterSection {
+    section: string;
+    items: string[];
+}
+
+const bulkModeFields = ref<Record<string, boolean>>({});
+const bulkTextValues = ref<Record<string, string>>({});
+
+function isBulkMode(fieldName: string): boolean {
+    return bulkModeFields.value[fieldName] ?? false;
+}
+
+function toggleBulkMode(fieldName: string) {
+    const newMode = !bulkModeFields.value[fieldName];
+    bulkModeFields.value[fieldName] = newMode;
+
+    if (newMode) {
+        // Switching to bulk mode - convert structure to markdown
+        const sections = (form.custom_fields?.[fieldName] as GroupedRepeaterSection[]) ?? [];
+        bulkTextValues.value[fieldName] = sectionsToMarkdown(sections);
+    } else {
+        // Switching to form mode - parse markdown to structure
+        const markdown = bulkTextValues.value[fieldName] || '';
+        const sections = markdownToSections(markdown);
+        form.custom_fields = { ...form.custom_fields, [fieldName]: sections };
+    }
+}
+
+function getBulkText(fieldName: string): string {
+    return bulkTextValues.value[fieldName] ?? '';
+}
+
+function setBulkText(fieldName: string, value: string) {
+    bulkTextValues.value[fieldName] = value;
+}
+
+function applyBulkText(fieldName: string) {
+    const markdown = bulkTextValues.value[fieldName] || '';
+    const sections = markdownToSections(markdown);
+    form.custom_fields = { ...form.custom_fields, [fieldName]: sections };
+}
+
+// Convert sections array to markdown format
+function sectionsToMarkdown(sections: GroupedRepeaterSection[]): string {
+    if (!sections || sections.length === 0) return '';
+
+    return sections.map(section => {
+        const header = section.section ? `## ${section.section}` : '## (Untitled)';
+        const items = (section.items || []).map(item => `- ${item}`).join('\n');
+        return items ? `${header}\n${items}` : header;
+    }).join('\n\n');
+}
+
+// Parse markdown format to sections array
+function markdownToSections(markdown: string): GroupedRepeaterSection[] {
+    if (!markdown.trim()) return [];
+
+    const sections: GroupedRepeaterSection[] = [];
+    const lines = markdown.split('\n');
+
+    let currentSection: GroupedRepeaterSection | null = null;
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        // Check for section header (## Section Name)
+        if (trimmed.startsWith('## ')) {
+            if (currentSection) {
+                sections.push(currentSection);
+            }
+            currentSection = {
+                section: trimmed.slice(3).trim(),
+                items: []
+            };
+        }
+        // Check for item (- item or * item)
+        else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            const itemText = trimmed.slice(2).trim();
+            if (itemText) {
+                if (!currentSection) {
+                    // Create default section if items come before any header
+                    currentSection = { section: '', items: [] };
+                }
+                currentSection.items.push(itemText);
+            }
+        }
+        // Plain text line (not empty) - treat as item if we have a section
+        else if (trimmed && currentSection) {
+            currentSection.items.push(trimmed);
+        }
+    }
+
+    // Push last section
+    if (currentSection) {
+        sections.push(currentSection);
+    }
+
+    return sections;
+}
+
 // Use workflow composable
 const workflow = useWorkflow(props.workflowConfig);
 const transitionLoading = workflow.loading;
@@ -2437,8 +2538,47 @@ function openDiff() {
 
                                         <!-- Grouped Repeater Field (for sectioned ingredients) -->
                                         <div v-else-if="field.type === 'grouped-repeater'">
-                                            <label class="text-sm font-medium mb-2 block">{{ field.label }}</label>
-                                            <div class="space-y-3">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <label class="text-sm font-medium">{{ field.label }}</label>
+                                                <UButton
+                                                    size="xs"
+                                                    :color="isBulkMode(field.name) ? 'primary' : 'neutral'"
+                                                    variant="ghost"
+                                                    :icon="isBulkMode(field.name) ? 'i-lucide-list' : 'i-lucide-file-text'"
+                                                    :disabled="isReadOnly"
+                                                    @click="toggleBulkMode(field.name)"
+                                                >
+                                                    {{ isBulkMode(field.name) ? 'Form mode' : 'Bulk mode' }}
+                                                </UButton>
+                                            </div>
+
+                                            <!-- Bulk Mode -->
+                                            <div v-if="isBulkMode(field.name)" class="space-y-2">
+                                                <UTextarea
+                                                    :model-value="getBulkText(field.name)"
+                                                    :rows="12"
+                                                    autoresize
+                                                    size="sm"
+                                                    class="w-full font-mono text-xs"
+                                                    placeholder="## Section Name
+- 1 cup flour
+- 2 eggs
+- 1 tsp vanilla
+
+## Another Section
+- 1/2 cup sugar
+- 1 tbsp butter"
+                                                    :disabled="isReadOnly"
+                                                    @update:model-value="setBulkText(field.name, $event as string)"
+                                                    @blur="applyBulkText(field.name)"
+                                                />
+                                                <p class="text-xs text-muted">
+                                                    Use <code class="bg-elevated px-1 rounded">## Section</code> for headers and <code class="bg-elevated px-1 rounded">- item</code> for ingredients. Changes apply on blur.
+                                                </p>
+                                            </div>
+
+                                            <!-- Form Mode -->
+                                            <div v-else class="space-y-3">
                                                 <!-- Sections -->
                                                 <div
                                                     v-for="(section, sectionIndex) in ((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])"
