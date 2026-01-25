@@ -19,7 +19,12 @@ Route::get('/template', function () {
     return view('template');
 })->name('template');
 
-// CMS Routes
+// CMS Routes - domain-based for live.tastymaldives.com (no /cms prefix)
+Route::domain(config('app.cms_domain'))->group(function () {
+    Route::group([], base_path('routes/cms.php'));
+});
+
+// CMS Routes - path-based for other hosts (/cms prefix)
 Route::prefix('cms')->group(base_path('routes/cms.php'));
 
 // Homepage - uses configurable layout

@@ -56,6 +56,8 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
+    'cms_domain' => env('CMS_DOMAIN'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

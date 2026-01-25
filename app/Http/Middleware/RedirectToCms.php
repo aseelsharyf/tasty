@@ -26,9 +26,9 @@ class RedirectToCms
     {
         $host = $request->getHost();
 
-        // If this is a CMS-only host and not already on a /cms route, redirect to CMS
-        if (in_array($host, $this->cmsOnlyHosts, true) && ! $request->is('cms*')) {
-            return redirect('/cms');
+        // If this is a CMS-only host, redirect root to login
+        if (in_array($host, $this->cmsOnlyHosts, true) && $request->path() === '/') {
+            return redirect('/login');
         }
 
         return $next($request);
