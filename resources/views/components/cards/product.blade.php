@@ -1,4 +1,7 @@
-<a href="{{ $url }}" class="group flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-8 w-[426px] aspect-[426/626] max-lg:w-full max-lg:aspect-auto max-lg:h-auto">
+<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-8 w-[426px] aspect-[426/626] max-lg:w-full max-lg:aspect-auto max-lg:h-auto">
+    {{-- Main card link (covers entire card) --}}
+    <a href="{{ $url }}" class="absolute inset-0 z-0" aria-label="{{ $title }}"></a>
+
     {{-- Image container: fixed proportion of card height --}}
     <div class="relative h-[55%] max-lg:h-[250px] bg-white rounded-lg flex items-end justify-center p-6 mb-6">
         <img
@@ -7,7 +10,18 @@
             class="absolute inset-0 w-full h-full object-contain p-5"
         >
         @if(count($tags) > 0)
-            <span class="tag relative z-10">{{ implode(' • ', $tags) }}</span>
+            <span class="tag relative z-10 inline-flex items-center gap-1 whitespace-nowrap">
+                @foreach($tags as $index => $tag)
+                    @if($index > 0)
+                        <span>•</span>
+                    @endif
+                    @if($tag['url'] ?? null)
+                        <a href="{{ $tag['url'] }}" class="hover:underline relative z-10">{{ $tag['name'] }}</a>
+                    @else
+                        <span>{{ $tag['name'] }}</span>
+                    @endif
+                @endforeach
+            </span>
         @endif
     </div>
 
@@ -16,16 +30,13 @@
         {{-- Store Logo --}}
         @if($storeLogo)
             @if($storeUrl)
-                <span
-                    class="relative z-10 cursor-pointer"
-                    onclick="event.preventDefault(); event.stopPropagation(); window.location.href='{{ $storeUrl }}';"
-                >
+                <a href="{{ $storeUrl }}" class="relative z-10">
                     <img
                         src="{{ $storeLogo }}"
                         alt="{{ $storeName ?? 'Store' }}"
                         class="max-w-[80px] max-h-[32px] object-contain grayscale hover:grayscale-0 transition-all duration-300"
                     >
-                </span>
+                </a>
             @else
                 <img
                     src="{{ $storeLogo }}"
@@ -48,4 +59,4 @@
             </div>
         @endif
     </div>
-</a>
+</div>

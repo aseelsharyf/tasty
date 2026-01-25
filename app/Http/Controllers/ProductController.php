@@ -126,6 +126,36 @@ class ProductController extends Controller
     }
 
     /**
+     * Display products for a specific tag.
+     */
+    public function byTag(\App\Models\Tag $tag): View
+    {
+        $this->seo->setBasic($tag->name.' Products', "Browse products tagged with {$tag->name}");
+
+        $categories = ProductCategory::query()
+            ->active()
+            ->ordered()
+            ->get();
+
+        $products = Product::query()
+            ->active()
+            ->ordered()
+            ->where(function ($query) use ($tag) {
+                $query->where('featured_tag_id', $tag->id)
+                    ->orWhereHas('tags', fn ($q) => $q->where('tags.id', $tag->id));
+            })
+            ->with(['featuredMedia', 'tags', 'category', 'store'])
+            ->paginate(12);
+
+        return view('products.index', [
+            'categories' => $categories,
+            'products' => $products,
+            'currentCategory' => null,
+            'currentTag' => $tag,
+        ]);
+    }
+
+    /**
      * Track click and redirect to affiliate URL.
      */
     public function redirect(Product $product): RedirectResponse

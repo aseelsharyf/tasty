@@ -82,6 +82,7 @@ Route::get('/og-test', [OgImageController::class, 'testPage'])->name('og.test');
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/go/{product:slug}', [ProductController::class, 'redirect'])->name('products.redirect');
 Route::get('/products/category/{category:slug}', [ProductController::class, 'byCategory'])->name('products.category');
+Route::get('/products/tag/{tag:slug}', [ProductController::class, 'byTag'])->name('products.tag');
 Route::get('/products/{store:slug}', [ProductController::class, 'byStore'])->name('products.store');
 Route::get('/products/{store:slug}/load-more', [ProductController::class, 'loadMore'])->name('products.store.loadMore');
 

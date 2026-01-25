@@ -13,7 +13,7 @@ class Product extends Component
 
     public string $imageAlt;
 
-    /** @var array<int, string> */
+    /** @var array<int, array{name: string, url: string|null}> */
     public array $tags;
 
     public string $title;
@@ -34,11 +34,15 @@ class Product extends Component
 
     public ?string $storeUrl;
 
+    public ?string $categoryName;
+
+    public ?string $categoryUrl;
+
     /**
      * Create a new component instance.
      *
      * @param  ProductModel|array<string, mixed>|null  $product
-     * @param  array<int, string>|string|null  $tags
+     * @param  array<int, array{name: string, url: string|null}>|array<int, string>|string|null  $tags
      */
     public function __construct(
         ProductModel|array|null $product = null,
@@ -54,18 +58,26 @@ class Product extends Component
         ?string $storeLogo = null,
         ?string $storeName = null,
         ?string $storeUrl = null,
+        ?string $categoryName = null,
+        ?string $categoryUrl = null,
     ) {
         $this->showPrice = $showPrice;
         if ($product instanceof ProductModel) {
             $this->image = $product->featured_image_url ?? '';
             $this->imageAlt = $product->featuredMedia?->alt_text ?? $product->title;
-            // Build tags from category and featured tag
+            // Build tags from category and featured tag with URLs
             $badgeTags = [];
             if ($product->category) {
-                $badgeTags[] = strtoupper($product->category->name);
+                $badgeTags[] = [
+                    'name' => strtoupper($product->category->name),
+                    'url' => route('products.category', $product->category->slug),
+                ];
             }
             if ($product->featuredTag) {
-                $badgeTags[] = strtoupper($product->featuredTag->name);
+                $badgeTags[] = [
+                    'name' => strtoupper($product->featuredTag->name),
+                    'url' => route('products.tag', $product->featuredTag->slug),
+                ];
             }
             $this->tags = $badgeTags;
             $this->title = $product->title;
@@ -79,11 +91,22 @@ class Product extends Component
             $this->storeLogo = $product->store?->logo_url;
             $this->storeName = $product->store?->name;
             $this->storeUrl = $product->store?->slug ? route('products.store', $product->store->slug) : null;
+            // Category info
+            $this->categoryName = $product->category?->name;
+            $this->categoryUrl = $product->category?->slug ? route('products.category', $product->category->slug) : null;
         } elseif (is_array($product)) {
             $this->image = $product['image'] ?? '';
             $this->imageAlt = $product['imageAlt'] ?? $product['title'] ?? '';
             $dataTags = $product['tags'] ?? [];
-            $this->tags = is_string($dataTags) ? array_filter(array_map('trim', explode(',', $dataTags))) : $dataTags;
+            // Convert simple string tags to array format
+            if (is_string($dataTags)) {
+                $this->tags = array_map(fn ($t) => ['name' => trim($t), 'url' => null], array_filter(explode(',', $dataTags)));
+            } elseif (is_array($dataTags) && count($dataTags) > 0 && is_string($dataTags[0] ?? null)) {
+                // Simple array of strings
+                $this->tags = array_map(fn ($t) => ['name' => $t, 'url' => null], $dataTags);
+            } else {
+                $this->tags = $dataTags;
+            }
             $this->title = $product['title'] ?? '';
             $this->description = $product['description'] ?? '';
             $this->url = $product['url'] ?? '#';
@@ -92,6 +115,8 @@ class Product extends Component
             $this->storeLogo = $product['storeLogo'] ?? null;
             $this->storeName = $product['storeName'] ?? null;
             $this->storeUrl = $product['storeUrl'] ?? null;
+            $this->categoryName = $product['categoryName'] ?? null;
+            $this->categoryUrl = $product['categoryUrl'] ?? null;
         } else {
             $this->image = '';
             $this->imageAlt = '';
@@ -104,6 +129,8 @@ class Product extends Component
             $this->storeLogo = null;
             $this->storeName = null;
             $this->storeUrl = null;
+            $this->categoryName = null;
+            $this->categoryUrl = null;
         }
 
         // Allow individual prop overrides
@@ -139,6 +166,12 @@ class Product extends Component
         }
         if ($storeUrl !== null) {
             $this->storeUrl = $storeUrl;
+        }
+        if ($categoryName !== null) {
+            $this->categoryName = $categoryName;
+        }
+        if ($categoryUrl !== null) {
+            $this->categoryUrl = $categoryUrl;
         }
     }
 
