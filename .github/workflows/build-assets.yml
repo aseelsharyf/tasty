@@ -8,6 +8,8 @@ on:
       - develop
     paths:
       - 'resources/**'
+      - 'public/images/**'
+      - 'public/fonts/**'
       - 'package.json'
       - 'package-lock.json'
       - 'vite.config.ts'
@@ -73,7 +75,7 @@ jobs:
           host_bucket = %(bucket)s.${{ env.DO_SPACES_REGION }}.digitaloceanspaces.com
           EOF
 
-      - name: Sync assets to DigitalOcean Spaces
+      - name: Sync build assets to DigitalOcean Spaces
         run: |
           s3cmd sync \
             --acl-public \
@@ -83,6 +85,41 @@ jobs:
             --add-header="Cache-Control:public, max-age=31536000, immutable" \
             public/build/ \
             s3://${{ env.DO_SPACES_BUCKET }}/${{ steps.env.outputs.ENV_PREFIX }}/build/
+
+      - name: Sync static images to DigitalOcean Spaces
+        run: |
+          s3cmd sync \
+            --acl-public \
+            --no-mime-magic \
+            --guess-mime-type \
+            --add-header="Cache-Control:public, max-age=31536000, immutable" \
+            public/images/ \
+            s3://${{ env.DO_SPACES_BUCKET }}/${{ steps.env.outputs.ENV_PREFIX }}/images/
+
+      - name: Sync fonts to DigitalOcean Spaces
+        run: |
+          s3cmd sync \
+            --acl-public \
+            --no-mime-magic \
+            --guess-mime-type \
+            --add-header="Cache-Control:public, max-age=31536000, immutable" \
+            public/fonts/ \
+            s3://${{ env.DO_SPACES_BUCKET }}/${{ steps.env.outputs.ENV_PREFIX }}/fonts/
+
+      - name: Trigger deployment webhooks
+        if: ${{ vars.DEPLOY_WEBHOOK_URLS != '' }}
+        run: |
+          IFS=',' read -ra URLS <<< "${{ vars.DEPLOY_WEBHOOK_URLS }}"
+          for url in "${URLS[@]}"; do
+            url=$(echo "$url" | xargs)  # trim whitespace
+            if [[ -n "$url" ]]; then
+              echo "Triggering webhook: $url"
+              curl -s -X POST "$url" \
+                -H "Content-Type: application/json" \
+                -d '{"branch":"${{ github.ref_name }}","env":"${{ steps.env.outputs.ENV_NAME }}","commit":"${{ github.sha }}"}' \
+                || echo "Warning: Failed to trigger $url"
+            fi
+          done
 
       - name: Upload manifest as artifact
         uses: actions/upload-artifact@v4
