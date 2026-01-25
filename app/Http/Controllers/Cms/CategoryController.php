@@ -24,8 +24,8 @@ class CategoryController extends Controller
             $rootCategories = Category::query()
                 ->whereNull('parent_id')
                 ->withCount('posts')
-                ->with(['children' => function ($q) {
-                    $q->withCount('posts')->orderBy('order');
+                ->with(['featuredImage', 'children' => function ($q) {
+                    $q->withCount('posts')->with('featuredImage')->orderBy('order');
                 }])
                 ->orderBy('order')
                 ->get();
@@ -69,7 +69,7 @@ class CategoryController extends Controller
         $languageCodes = $activeLanguages->pluck('code')->toArray();
 
         // Paginate for list view - transform to ensure translated names are strings
-        $categories = $query->paginate(20)
+        $categories = $query->with('featuredImage')->paginate(20)
             ->withQueryString()
             ->through(fn (Category $cat) => [
                 'id' => $cat->id,
@@ -86,6 +86,11 @@ class CategoryController extends Controller
                 ] : null,
                 'created_at' => $cat->created_at,
                 'translated_locales' => array_keys($cat->getTranslations('name')),
+                'featured_image' => $cat->featuredImage ? [
+                    'id' => $cat->featuredImage->id,
+                    'url' => $cat->featuredImage->url,
+                    'thumbnail_url' => $cat->featuredImage->thumbnail_url,
+                ] : null,
             ]);
 
         // Get parent options for the create slideover
@@ -157,6 +162,7 @@ class CategoryController extends Controller
             'description' => $description,
             'parent_id' => $validated['parent_id'] ?? null,
             'order' => $maxOrder + 1,
+            'featured_image_id' => $validated['featured_image_id'] ?? null,
         ]);
 
         return redirect()->route('cms.categories.index')
@@ -165,7 +171,7 @@ class CategoryController extends Controller
 
     public function edit(Request $request, Category $category): Response|\Illuminate\Http\JsonResponse
     {
-        $category->load('parent');
+        $category->load(['parent', 'featuredImage']);
 
         // Exclude current category and its descendants from parent options
         $excludeIds = $this->getDescendantIds($category);
@@ -195,6 +201,13 @@ class CategoryController extends Controller
             'parent' => $category->parent ? [
                 'id' => $category->parent->id,
                 'name' => $category->parent->name,
+            ] : null,
+            'featured_image_id' => $category->featured_image_id,
+            'featured_image' => $category->featuredImage ? [
+                'id' => $category->featuredImage->id,
+                'url' => $category->featuredImage->url,
+                'thumbnail_url' => $category->featuredImage->thumbnail_url,
+                'alt_text' => $category->featuredImage->alt_text,
             ] : null,
         ];
 
@@ -237,6 +250,7 @@ class CategoryController extends Controller
             'slug' => $validated['slug'] ?? $category->slug,
             'description' => $description,
             'parent_id' => $validated['parent_id'] ?? null,
+            'featured_image_id' => $validated['featured_image_id'] ?? null,
         ]);
 
         return redirect()->route('cms.categories.index')
@@ -331,6 +345,11 @@ class CategoryController extends Controller
             'posts_count' => $category->posts_count,
             'order' => $category->order,
             'translated_locales' => array_keys($category->getTranslations('name')),
+            'featured_image' => $category->featuredImage ? [
+                'id' => $category->featuredImage->id,
+                'url' => $category->featuredImage->url,
+                'thumbnail_url' => $category->featuredImage->thumbnail_url,
+            ] : null,
             'children' => [],
         ];
 

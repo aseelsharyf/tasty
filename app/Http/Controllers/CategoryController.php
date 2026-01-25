@@ -22,8 +22,8 @@ class CategoryController extends Controller
         // Set SEO
         $this->seoService->setCategory($category);
 
-        // Check for custom layout
-        $category->load('pageLayout');
+        // Check for custom layout and load featured image
+        $category->load(['pageLayout', 'featuredImage']);
 
         if ($category->hasCustomLayout()) {
             return $this->renderCustomLayout($category);

@@ -38,6 +38,7 @@ class UpdateCategoryRequest extends FormRequest
                 'exists:categories,id',
                 Rule::notIn([$categoryId]), // Cannot be its own parent
             ],
+            'featured_image_id' => ['nullable', 'integer', 'exists:media_items,id'],
         ];
     }
 

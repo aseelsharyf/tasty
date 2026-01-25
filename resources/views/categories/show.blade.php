@@ -2,7 +2,7 @@
 
 @section('content')
     <x-sections.latest-updates
-        introImage="{{ Vite::asset('resources/images/latest-updates-transparent.png') }}"
+        :introImage="$category->featuredImage?->url ?? Vite::asset('resources/images/latest-updates-transparent.png')"
         introImageAlt="{{ $category->name }}"
         titleSmall="Category"
         :titleLarge="$category->name"

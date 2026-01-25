@@ -376,4 +376,115 @@ class OgImageService
         $filename = 'og-images/posts/'.$post->slug.'.png';
         Storage::disk($this->disk)->delete($filename);
     }
+
+    /**
+     * Generate a default OG image for general pages.
+     */
+    public function generateDefault(?string $title = null, ?string $subtitle = null, bool $force = false): ?string
+    {
+        $filename = 'og-images/default.png';
+
+        if (! $force && Storage::disk($this->disk)->exists($filename)) {
+            return Storage::disk($this->disk)->url($filename);
+        }
+
+        try {
+            $canvas = $this->createYellowCanvas();
+
+            // Add logo centered
+            $this->addCenteredLogo($canvas);
+
+            // Add title and subtitle if provided
+            if ($title) {
+                $this->addDefaultText($canvas, $title, $subtitle);
+            }
+
+            $pngData = $canvas->toPng()->toString();
+            Storage::disk($this->disk)->put($filename, $pngData, 'public');
+
+            return Storage::disk($this->disk)->url($filename);
+        } catch (\Exception $e) {
+            report($e);
+
+            return null;
+        }
+    }
+
+    /**
+     * Add centered logo to canvas.
+     */
+    protected function addCenteredLogo(ImageInterface $canvas, string $position = 'center'): void
+    {
+        $logoPath = public_path('images/tasty-logo-black.png');
+
+        if (! file_exists($logoPath)) {
+            return;
+        }
+
+        try {
+            $logo = Image::read($logoPath);
+            $logo->scale(height: 80);
+
+            $logoX = ($this->width - $logo->width()) / 2;
+
+            if ($position === 'bottom') {
+                $logoY = $this->height - 60 - $logo->height();
+            } else {
+                $logoY = ($this->height - $logo->height()) / 2;
+            }
+
+            $canvas->place($logo, 'top-left', (int) $logoX, (int) $logoY);
+        } catch (\Exception $e) {
+            report($e);
+        }
+    }
+
+    /**
+     * Add centered text for default pages.
+     */
+    protected function addDefaultText(ImageInterface $canvas, string $title, ?string $subtitle = null): void
+    {
+        $fontPath = resource_path('fonts/new-spirit-condensed.ttf');
+        if (! file_exists($fontPath)) {
+            return;
+        }
+
+        $titleSize = 64;
+        $subtitleSize = 24;
+
+        // Calculate title position (centered)
+        $titleBox = imagettfbbox($titleSize, 0, $fontPath, $title);
+        $titleWidth = $titleBox[2] - $titleBox[0];
+        $titleX = ($this->width - $titleWidth) / 2;
+
+        $centerY = $this->height / 2;
+        $titleY = $subtitle ? $centerY - 40 : $centerY - ($titleSize / 2);
+
+        $this->drawText($canvas, $title, $titleX, $titleY, $titleSize, $fontPath);
+
+        // Add subtitle if provided
+        if ($subtitle) {
+            $subtitleText = mb_strtoupper($subtitle);
+            $subtitleBox = imagettfbbox($subtitleSize, 0, $fontPath, $subtitleText);
+            $subtitleWidth = $subtitleBox[2] - $subtitleBox[0];
+            $subtitleX = ($this->width - $subtitleWidth) / 2;
+            $subtitleY = $titleY - 50;
+
+            $this->drawText($canvas, $subtitleText, $subtitleX, $subtitleY, $subtitleSize, $fontPath);
+        }
+    }
+
+    /**
+     * Get the default OG image URL, generating if needed.
+     */
+    public function getDefaultUrl(): ?string
+    {
+        $filename = 'og-images/default.png';
+
+        if (Storage::disk($this->disk)->exists($filename)) {
+            return Storage::disk($this->disk)->url($filename);
+        }
+
+        return $this->generateDefault();
+    }
 }

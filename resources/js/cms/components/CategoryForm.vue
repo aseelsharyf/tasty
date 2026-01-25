@@ -2,7 +2,15 @@
 import { useForm } from '@inertiajs/vue3';
 import { computed, watch, ref } from 'vue';
 import DhivehiInput from './DhivehiInput.vue';
+import MediaPickerModal from './MediaPickerModal.vue';
 import type { ParentOption, Language } from '../types';
+
+interface FeaturedImage {
+    id: number;
+    url: string;
+    thumbnail_url?: string;
+    alt_text?: string;
+}
 
 interface CategoryWithTranslations {
     id?: number;
@@ -13,6 +21,8 @@ interface CategoryWithTranslations {
     description?: string;
     description_translations?: Record<string, string>;
     parent_id?: number | null;
+    featured_image_id?: number | null;
+    featured_image?: FeaturedImage | null;
 }
 
 const props = withDefaults(defineProps<{
@@ -54,7 +64,31 @@ const form = useForm({
     slug: props.category?.slug || '',
     description: initDescriptionTranslations(),
     parent_id: props.category?.parent_id ?? null,
+    featured_image_id: props.category?.featured_image_id ?? null,
 });
+
+// Featured image state
+const featuredImage = ref<FeaturedImage | null>(props.category?.featured_image || null);
+const showMediaPicker = ref(false);
+
+function handleMediaSelect(items: any[]) {
+    if (items.length > 0) {
+        const item = items[0];
+        featuredImage.value = {
+            id: item.id,
+            url: item.url,
+            thumbnail_url: item.thumbnail_url,
+            alt_text: item.alt_text,
+        };
+        form.featured_image_id = item.id;
+    }
+    showMediaPicker.value = false;
+}
+
+function removeFeaturedImage() {
+    featuredImage.value = null;
+    form.featured_image_id = null;
+}
 
 // Auto-generate slug from first language name (only in create mode)
 watch(() => form.name[props.languages[0]?.code || 'en'], (newName) => {
@@ -91,6 +125,7 @@ function onSubmit() {
         slug: form.slug,
         description: Object.keys(descData).length > 0 ? descData : null,
         parent_id: form.parent_id,
+        featured_image_id: form.featured_image_id,
     }));
 
     if (isEditing.value && props.category?.uuid) {
@@ -122,6 +157,8 @@ function reset() {
     });
     form.slug = '';
     form.parent_id = null;
+    form.featured_image_id = null;
+    featuredImage.value = null;
     form.clearErrors();
     activeTab.value = props.languages[0]?.code || 'en';
 }
@@ -145,6 +182,8 @@ watch(() => props.category, (newCategory) => {
         });
         form.slug = newCategory.slug || '';
         form.parent_id = newCategory.parent_id ?? null;
+        form.featured_image_id = newCategory.featured_image_id ?? null;
+        featuredImage.value = newCategory.featured_image || null;
     }
 }, { immediate: true, deep: true });
 
@@ -292,6 +331,48 @@ defineExpose({ reset, form });
             />
         </UFormField>
 
+        <!-- Featured Image (only on default/first language tab) -->
+        <UFormField
+            v-if="activeTab === languages[0]?.code"
+            label="Featured Artwork"
+            name="featured_image_id"
+            :error="form.errors.featured_image_id"
+            help="Image displayed on the category page header"
+        >
+            <div class="space-y-3">
+                <!-- Image Preview -->
+                <div
+                    v-if="featuredImage"
+                    class="relative w-40 aspect-square rounded-lg overflow-hidden border border-default bg-muted/30"
+                >
+                    <img
+                        :src="featuredImage.thumbnail_url || featuredImage.url"
+                        :alt="featuredImage.alt_text || 'Featured image'"
+                        class="w-full h-full object-cover"
+                    />
+                    <button
+                        type="button"
+                        class="absolute top-2 right-2 p-1.5 bg-black/60 rounded-full hover:bg-black/80 transition-colors"
+                        @click="removeFeaturedImage"
+                    >
+                        <UIcon name="i-lucide-x" class="size-4 text-white" />
+                    </button>
+                </div>
+
+                <!-- Select Button -->
+                <UButton
+                    type="button"
+                    color="neutral"
+                    variant="soft"
+                    icon="i-lucide-image"
+                    :disabled="form.processing"
+                    @click="showMediaPicker = true"
+                >
+                    {{ featuredImage ? 'Change Image' : 'Select Image' }}
+                </UButton>
+            </div>
+        </UFormField>
+
         <div class="flex justify-end gap-2 pt-6">
             <UButton
                 color="neutral"
@@ -308,5 +389,13 @@ defineExpose({ reset, form });
                 {{ isEditing ? 'Save Changes' : 'Create Category' }}
             </UButton>
         </div>
+
+        <!-- Media Picker Modal -->
+        <MediaPickerModal
+            v-model:open="showMediaPicker"
+            type="images"
+            default-category="media"
+            @select="handleMediaSelect"
+        />
     </UForm>
 </template>

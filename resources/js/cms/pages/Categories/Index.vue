@@ -241,6 +241,25 @@ const columns: TableColumn<Category>[] = [
         enableHiding: false,
     },
     {
+        id: 'image',
+        header: '',
+        cell: ({ row }) => {
+            const category = row.original as Category & { featured_image?: { url: string; thumbnail_url?: string } };
+            if (category.featured_image) {
+                return h('div', { class: 'size-10 rounded-lg overflow-hidden bg-muted/30' }, [
+                    h('img', {
+                        src: category.featured_image.thumbnail_url || category.featured_image.url,
+                        alt: category.name,
+                        class: 'w-full h-full object-cover',
+                    }),
+                ]);
+            }
+            return h('div', { class: 'size-10 rounded-lg bg-muted/20 flex items-center justify-center' }, [
+                h(UIcon, { name: 'i-lucide-image', class: 'size-4 text-muted' }),
+            ]);
+        },
+    },
+    {
         accessorKey: 'name',
         header: () => h('button', {
             class: 'flex items-center gap-1 hover:text-highlighted',
@@ -434,16 +453,32 @@ const flattenedTree = computed(() => flattenTree(props.tree));
                         class="flex items-center gap-3 p-3 rounded-lg border border-default hover:bg-elevated/50 transition-colors"
                         :style="{ marginLeft: `${item.depth * 24}px` }"
                     >
-                        <UIcon
-                            v-if="item.children && item.children.length > 0"
-                            name="i-lucide-folder"
-                            class="size-5 text-primary"
-                        />
-                        <UIcon
+                        <!-- Featured Image or Folder Icon -->
+                        <div
+                            v-if="item.featured_image"
+                            class="size-10 rounded-lg overflow-hidden bg-muted/30 shrink-0"
+                        >
+                            <img
+                                :src="item.featured_image.thumbnail_url || item.featured_image.url"
+                                :alt="item.name"
+                                class="w-full h-full object-cover"
+                            />
+                        </div>
+                        <div
                             v-else
-                            name="i-lucide-folder-open"
-                            class="size-5 text-muted"
-                        />
+                            class="size-10 rounded-lg bg-muted/20 flex items-center justify-center shrink-0"
+                        >
+                            <UIcon
+                                v-if="item.children && item.children.length > 0"
+                                name="i-lucide-folder"
+                                class="size-5 text-primary"
+                            />
+                            <UIcon
+                                v-else
+                                name="i-lucide-folder-open"
+                                class="size-5 text-muted"
+                            />
+                        </div>
 
                         <div class="flex-1 min-w-0">
                             <div class="font-medium text-highlighted truncate">

@@ -48,6 +48,7 @@ class Category extends Model
         'description',
         'parent_id',
         'order',
+        'featured_image_id',
     ];
 
     protected $appends = [
@@ -99,6 +100,11 @@ class Category extends Model
     public function posts(): BelongsToMany
     {
         return $this->belongsToMany(Post::class);
+    }
+
+    public function featuredImage(): BelongsTo
+    {
+        return $this->belongsTo(MediaItem::class, 'featured_image_id');
     }
 
     // Accessors

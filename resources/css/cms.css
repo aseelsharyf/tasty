@@ -23,6 +23,19 @@
     --font-dhivehi: 'MV Typewriter', 'MV Faseyha', 'Faruma', sans-serif;
 }
 
+/* Ensure CMS uses Inter for all elements including headings */
+@layer base {
+    body,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: 'Inter', sans-serif;
+    }
+}
+
 /* Dhivehi font utility class with increased size for top/bottom characters */
 .font-dhivehi {
     font-family: var(--font-dhivehi);

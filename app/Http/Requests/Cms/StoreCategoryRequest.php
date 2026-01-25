@@ -30,6 +30,7 @@ class StoreCategoryRequest extends FormRequest
             'description' => ['nullable'],
             'description.*' => ['nullable', 'string', 'max:1000'],
             'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'featured_image_id' => ['nullable', 'integer', 'exists:media_items,id'],
         ];
     }
 
