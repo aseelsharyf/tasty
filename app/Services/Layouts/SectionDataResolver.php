@@ -56,6 +56,7 @@ class SectionDataResolver
             'feature-2' => $this->resolveFeature2($config, $dataSource, $slotData),
             'newsletter' => $this->resolveNewsletter($config),
             'add-to-cart' => $this->resolveAddToCart($config, $slotData),
+            'ad' => $this->resolveAd($config),
             'custom-html' => $this->resolveCustomHtml($config),
             default => [],
         };
@@ -550,6 +551,23 @@ class SectionDataResolver
             'bgColor' => $config['bgColor'] ?? 'white',
             'productIds' => $productIds,
             'count' => $slotData['totalSlots'] ?: 6,
+        ];
+    }
+
+    /**
+     * Resolve Ad section data.
+     *
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>
+     */
+    protected function resolveAd(array $config): array
+    {
+        return [
+            'adSlot' => $config['adSlot'] ?? '',
+            'size' => $config['size'] ?? 'leaderboard',
+            'bgColor' => $config['bgColor'] ?? '#F7F7F7',
+            'paddingTop' => $config['paddingTop'] ?? 'medium',
+            'paddingBottom' => $config['paddingBottom'] ?? 'medium',
         ];
     }
 

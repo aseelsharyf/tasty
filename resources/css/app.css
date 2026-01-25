@@ -5,10 +5,123 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/* Iunito Font Family */
+@font-face {
+    font-family: "Iunito";
+    src: url("../fonts/Iunito-ExtraLight.otf") format("opentype");
+    font-weight: 200;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Iunito";
+    src: url("../fonts/Iunito-ExtraLightItalic.otf") format("opentype");
+    font-weight: 200;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Iunito";
+    src: url("../fonts/Iunito-Light.otf") format("opentype");
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Iunito";
+    src: url("../fonts/Iunito-LightItalic.otf") format("opentype");
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Iunito";
+    src: url("../fonts/Iunito-Regular.otf") format("opentype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Iunito";
+    src: url("../fonts/Iunito-Italic.otf") format("opentype");
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Iunito";
+    src: url("../fonts/Iunito-SemiBold.otf") format("opentype");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Iunito";
+    src: url("../fonts/Iunito-SemiBoldItalic.otf") format("opentype");
+    font-weight: 600;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Iunito";
+    src: url("../fonts/Iunito-Bold.otf") format("opentype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Iunito";
+    src: url("../fonts/Iunito-BoldItalic.otf") format("opentype");
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Iunito";
+    src: url("../fonts/Iunito-ExtraBold.otf") format("opentype");
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Iunito";
+    src: url("../fonts/Iunito-ExtraBoldItalic.otf") format("opentype");
+    font-weight: 800;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Iunito";
+    src: url("../fonts/Iunito-Black.otf") format("opentype");
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Iunito";
+    src: url("../fonts/Iunito-BlackItalic.otf") format("opentype");
+    font-weight: 900;
+    font-style: italic;
+    font-display: swap;
+}
+
 @theme {
-    /* Font Families - Work Sans with Inter fallback */
+    /* Font Families - Iunito with fallbacks */
     --font-sans:
-        "Work Sans", Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+        "Iunito", Inter, -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: "Space Mono", ui-monospace, monospace;
     --font-display: "new-spirit-condensed", "new-spirit", Georgia, serif;
 
@@ -228,7 +341,6 @@
     font-family: var(--font-sans);
     font-size: 20px;
     line-height: 1.6;
-    letter-spacing: -0.045em;
 }
 
 .text-body-md,
@@ -236,7 +348,6 @@
     font-family: var(--font-sans);
     font-size: 18px;
     line-height: 1.5;
-    letter-spacing: -0.045em;
 }
 
 @media (min-width: 1024px) {
@@ -252,7 +363,6 @@
     font-family: var(--font-sans);
     font-size: 14px;
     line-height: 1.2;
-    letter-spacing: -0.045em;
     text-transform: uppercase;
 }
 

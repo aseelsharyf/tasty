@@ -4,6 +4,7 @@ namespace App\Services\Layouts;
 
 use App\Services\Layouts\Sections\AbstractSectionDefinition;
 use App\Services\Layouts\Sections\AddToCartSection;
+use App\Services\Layouts\Sections\AdSection;
 use App\Services\Layouts\Sections\CarouselSection;
 use App\Services\Layouts\Sections\CustomHtmlSection;
 use App\Services\Layouts\Sections\Feature1Section;
@@ -48,6 +49,7 @@ class SectionRegistry
         $this->register(new Feature2Section);
         $this->register(new NewsletterSection);
         $this->register(new AddToCartSection);
+        $this->register(new AdSection);
         $this->register(new CustomHtmlSection);
     }
 

@@ -151,6 +151,16 @@
                 />
                 @break
 
+            @case('ad')
+                <x-sections.ad
+                    :adSlot="$section['data']['adSlot'] ?? null"
+                    :size="$section['data']['size'] ?? 'leaderboard'"
+                    :bgColor="$section['data']['bgColor'] ?? '#F7F7F7'"
+                    :paddingTop="$section['data']['paddingTop'] ?? 'medium'"
+                    :paddingBottom="$section['data']['paddingBottom'] ?? 'medium'"
+                />
+                @break
+
             @case('custom-html')
                 <x-sections.custom-html
                     :html="$section['data']['html'] ?? ''"
