@@ -1,0 +1,92 @@
+name: Build and Deploy Assets
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - develop
+    paths:
+      - 'resources/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'tailwind.config.js'
+      - 'tsconfig.json'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  DO_SPACES_BUCKET: tasty
+  DO_SPACES_REGION: sgp1
+  DO_SPACES_ENDPOINT: https://tasty.sgp1.digitaloceanspaces.com
+  DO_SPACES_CDN: https://tasty.sgp1.digitaloceanspaces.com
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set environment based on branch
+        id: env
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "ENV_NAME=production" >> $GITHUB_OUTPUT
+            echo "ENV_PREFIX=production" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref_name }}" == "staging" ]]; then
+            echo "ENV_NAME=staging" >> $GITHUB_OUTPUT
+            echo "ENV_PREFIX=staging" >> $GITHUB_OUTPUT
+          else
+            echo "ENV_NAME=develop" >> $GITHUB_OUTPUT
+            echo "ENV_PREFIX=develop" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+        env:
+          VITE_ASSET_URL: ${{ env.DO_SPACES_CDN }}/${{ steps.env.outputs.ENV_PREFIX }}
+
+      - name: Install s3cmd
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y s3cmd
+
+      - name: Configure s3cmd
+        run: |
+          cat > ~/.s3cfg << EOF
+          [default]
+          access_key = ${{ secrets.DO_SPACES_ACCESS_KEY }}
+          secret_key = ${{ secrets.DO_SPACES_SECRET_KEY }}
+          host_base = ${{ env.DO_SPACES_REGION }}.digitaloceanspaces.com
+          host_bucket = %(bucket)s.${{ env.DO_SPACES_REGION }}.digitaloceanspaces.com
+          EOF
+
+      - name: Sync assets to DigitalOcean Spaces
+        run: |
+          s3cmd sync \
+            --acl-public \
+            --delete-removed \
+            --no-mime-magic \
+            --guess-mime-type \
+            --add-header="Cache-Control:public, max-age=31536000, immutable" \
+            public/build/ \
+            s3://${{ env.DO_SPACES_BUCKET }}/${{ steps.env.outputs.ENV_PREFIX }}/build/
+
+      - name: Upload manifest as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vite-manifest-${{ steps.env.outputs.ENV_NAME }}
+          path: public/build/manifest.json
+          retention-days: 30

@@ -4,7 +4,10 @@ import vue from '@vitejs/plugin-vue';
 import ui from '@nuxt/ui/vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
+const assetUrl = process.env.VITE_ASSET_URL || '';
+
 export default defineConfig({
+    base: assetUrl ? `${assetUrl}/build/` : '/build/',
     plugins: [
         laravel({
             input: [

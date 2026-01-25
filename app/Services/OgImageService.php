@@ -15,6 +15,8 @@ class OgImageService
 
     protected string $disk;
 
+    protected string $pathPrefix;
+
     // Tasty brand colors
     protected array $yellow = ['r' => 255, 'g' => 231, 'b' => 98]; // #ffe762
 
@@ -24,6 +26,20 @@ class OgImageService
     {
         // Use the same disk as media library for CDN support
         $this->disk = config('media-library.disk_name', 'public');
+        // Use media prefix for environment separation (production/staging/develop)
+        $this->pathPrefix = config('media-library.prefix', '');
+    }
+
+    /**
+     * Get the full path with environment prefix.
+     */
+    protected function getPath(string $filename): string
+    {
+        if ($this->pathPrefix) {
+            return $this->pathPrefix.'/'.$filename;
+        }
+
+        return $filename;
     }
 
     /**
@@ -36,12 +52,13 @@ class OgImageService
         }
 
         $filename = 'og-images/posts/'.$post->slug.'.png';
+        $fullPath = $this->getPath($filename);
 
         // Check if OG image already exists and is newer than the post
-        if (Storage::disk($this->disk)->exists($filename)) {
-            $ogImageTime = Storage::disk($this->disk)->lastModified($filename);
+        if (Storage::disk($this->disk)->exists($fullPath)) {
+            $ogImageTime = Storage::disk($this->disk)->lastModified($fullPath);
             if ($ogImageTime > $post->updated_at->timestamp) {
-                return Storage::disk($this->disk)->url($filename);
+                return Storage::disk($this->disk)->url($fullPath);
             }
         }
 
@@ -56,9 +73,9 @@ class OgImageService
 
             // Save to disk (works with both local and cloud storage)
             $pngData = $image->toPng()->toString();
-            Storage::disk($this->disk)->put($filename, $pngData, 'public');
+            Storage::disk($this->disk)->put($fullPath, $pngData, 'public');
 
-            return Storage::disk($this->disk)->url($filename);
+            return Storage::disk($this->disk)->url($fullPath);
         } catch (\Exception $e) {
             report($e);
 
@@ -358,10 +375,11 @@ class OgImageService
     public function getUrlForPost(Post $post): ?string
     {
         $filename = 'og-images/posts/'.$post->slug.'.png';
+        $fullPath = $this->getPath($filename);
 
         // Check if already exists
-        if (Storage::disk($this->disk)->exists($filename)) {
-            return Storage::disk($this->disk)->url($filename);
+        if (Storage::disk($this->disk)->exists($fullPath)) {
+            return Storage::disk($this->disk)->url($fullPath);
         }
 
         // Generate new one
@@ -374,7 +392,8 @@ class OgImageService
     public function deleteForPost(Post $post): void
     {
         $filename = 'og-images/posts/'.$post->slug.'.png';
-        Storage::disk($this->disk)->delete($filename);
+        $fullPath = $this->getPath($filename);
+        Storage::disk($this->disk)->delete($fullPath);
     }
 
     /**
@@ -383,9 +402,10 @@ class OgImageService
     public function generateDefault(?string $title = null, ?string $subtitle = null, bool $force = false): ?string
     {
         $filename = 'og-images/default.png';
+        $fullPath = $this->getPath($filename);
 
-        if (! $force && Storage::disk($this->disk)->exists($filename)) {
-            return Storage::disk($this->disk)->url($filename);
+        if (! $force && Storage::disk($this->disk)->exists($fullPath)) {
+            return Storage::disk($this->disk)->url($fullPath);
         }
 
         try {
@@ -400,9 +420,9 @@ class OgImageService
             }
 
             $pngData = $canvas->toPng()->toString();
-            Storage::disk($this->disk)->put($filename, $pngData, 'public');
+            Storage::disk($this->disk)->put($fullPath, $pngData, 'public');
 
-            return Storage::disk($this->disk)->url($filename);
+            return Storage::disk($this->disk)->url($fullPath);
         } catch (\Exception $e) {
             report($e);
 
@@ -480,9 +500,10 @@ class OgImageService
     public function getDefaultUrl(): ?string
     {
         $filename = 'og-images/default.png';
+        $fullPath = $this->getPath($filename);
 
-        if (Storage::disk($this->disk)->exists($filename)) {
-            return Storage::disk($this->disk)->url($filename);
+        if (Storage::disk($this->disk)->exists($fullPath)) {
+            return Storage::disk($this->disk)->url($fullPath);
         }
 
         return $this->generateDefault();
