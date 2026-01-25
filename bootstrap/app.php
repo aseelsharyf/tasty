@@ -30,15 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => RoleOrPermissionMiddleware::class,
         ]);
 
-        $middleware->redirectGuestsTo(function ($request) {
-            // On CMS domain, redirect to /login (no prefix)
-            $cmsDomain = config('app.cms_domain');
-            if ($cmsDomain && $request->getHost() === $cmsDomain) {
-                return '/login';
-            }
-            // On other hosts, redirect to /cms/login
-            return route('cms.login');
-        });
+        $middleware->redirectGuestsTo(fn () => route('cms.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
