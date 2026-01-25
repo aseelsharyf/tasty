@@ -16,7 +16,7 @@
     $hasMetadata = $prepTime || $cookTime || $servings;
 @endphp
 
-<div class="w-full bg-off-white py-16">
+<div class="w-full bg-off-white">
     <div class="max-w-[1200px] mx-auto px-4 lg:px-8">
 
         {{-- Introduction (from custom_fields, separate from excerpt) --}}
@@ -53,10 +53,13 @@
 
         {{-- Two Column Layout --}}
         <div class="flex flex-col lg:flex-row gap-12 lg:gap-16 {{ $isRtl ? 'lg:flex-row-reverse' : '' }}">
-            {{-- Left Column: Ingredients --}}
+            {{-- Left Column: Ingredients + Ad --}}
             <aside class="w-full lg:w-[280px] lg:flex-shrink-0">
-                <div class="lg:sticky lg:top-8">
+                <div class="lg:sticky lg:top-8 space-y-8">
                     <x-recipe.ingredients :ingredients="$ingredients" :isRtl="$isRtl" />
+
+                    {{-- Ad Slot: Recipe Sidebar --}}
+                    <x-ads.slot :ad-slot="null" :width="300" :height="250" />
                 </div>
             </aside>
 

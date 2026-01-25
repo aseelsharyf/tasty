@@ -60,6 +60,13 @@
             <x-post.article-meta :post="$post" />
     @endswitch
 
+    {{-- Ad Slot 1: After header/meta --}}
+    @if(!$isPreview)
+        <div class="bg-off-white py-6">
+            <x-ads.slot :ad-slot="null" :width="300" :height="250" />
+        </div>
+    @endif
+
     {{-- Article Content --}}
     @if(($post->post_type ?? 'article') === 'recipe')
         {{-- Recipe Layout: Two-column (Ingredients | Preparation) --}}
@@ -69,7 +76,7 @@
             'isRtl' => $isRtl,
         ])
     @elseif(!empty($contentBlocks))
-        <div class="w-full bg-off-white py-16 {{ $isRtl ? 'text-right' : '' }}">
+        <div class="w-full bg-off-white {{ $isRtl ? 'text-right' : '' }}">
             @include('templates.posts.partials.content-blocks', [
                 'blocks' => $contentBlocks,
                 'isRtl' => $isRtl,
@@ -77,7 +84,7 @@
         </div>
     @elseif(is_string($post->content))
         {{-- Fallback for HTML content --}}
-        <div class="bg-off-white py-16">
+        <div class="bg-off-white">
             <div class="max-w-[894px] mx-auto px-4 lg:px-0">
                 <div class="text-body-lg text-tasty-blue-black/90 prose prose-lg max-w-none">
                     {!! $post->content !!}
@@ -88,7 +95,7 @@
 
     {{-- Tags Section --}}
     @if($post->tags->isNotEmpty())
-        <div class="bg-off-white pb-16">
+        <div class="bg-off-white pt-8 pb-8">
             <div class="max-w-[894px] mx-auto px-4 lg:px-0 pt-10 border-t border-tasty-blue-black/10">
                 <div class="flex flex-wrap items-center gap-2 {{ $isRtl ? 'justify-end' : '' }}">
                     @foreach($post->tags as $tag)
@@ -107,9 +114,23 @@
         </div>
     @endif
 
+    {{-- Ad Slot 2: Before comments --}}
+    @if(!$isPreview)
+        <div class="bg-off-white py-8">
+            <x-ads.slot :ad-slot="null" :width="300" :height="250" />
+        </div>
+    @endif
+
     {{-- Comments Section (only for public view, not preview) --}}
     @if(!$isPreview)
         <x-comments.section :post="$post" />
+    @endif
+
+    {{-- Ad Slot 3: After comments --}}
+    @if(!$isPreview)
+        <div class="bg-off-white py-8">
+            <x-ads.slot :ad-slot="null" :width="300" :height="250" />
+        </div>
     @endif
 </article>
 
