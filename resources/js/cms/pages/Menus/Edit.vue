@@ -211,7 +211,7 @@ function confirmDeleteItem(item: MenuItemTreeItem) {
 function deleteItem() {
     if (!itemToDelete.value) return;
 
-    router.delete(`/cms/menus/${props.menu.uuid}/items/${itemToDelete.value.id}`, {
+    router.delete(`/cms/menus/${props.menu.uuid}/items/${itemToDelete.value.uuid}`, {
         preserveScroll: true,
         onSuccess: () => {
             deleteItemModalOpen.value = false;
@@ -264,7 +264,7 @@ function updateItem() {
         is_active: itemForm.is_active,
     }));
 
-    itemForm.put(`/cms/menus/${props.menu.uuid}/items/${itemToEdit.value.id}`, {
+    itemForm.put(`/cms/menus/${props.menu.uuid}/items/${itemToEdit.value.uuid}`, {
         preserveScroll: true,
         onSuccess: () => {
             showEditItemModal.value = false;
