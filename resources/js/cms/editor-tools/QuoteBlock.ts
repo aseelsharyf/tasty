@@ -74,8 +74,8 @@ export default class QuoteBlock implements BlockTool {
         this.wrapper.classList.add('ce-quote-block');
         this.wrapper.classList.add(`ce-quote-block--${this.data.alignment}`);
 
-        // Quote text
-        const quoteText = document.createElement('blockquote');
+        // Quote text - use div for contentEditable to ensure inline toolbar works
+        const quoteText = document.createElement('div');
         quoteText.classList.add('ce-quote-block__text');
         quoteText.contentEditable = this.readOnly ? 'false' : 'true';
         quoteText.dataset.placeholder = this.config.quotePlaceholder || 'Enter a quote';
@@ -83,7 +83,6 @@ export default class QuoteBlock implements BlockTool {
         quoteText.addEventListener('input', () => {
             this.data.text = quoteText.innerHTML;
         });
-        quoteText.addEventListener('keydown', (e) => e.stopPropagation());
         this.wrapper.appendChild(quoteText);
 
         // Author section

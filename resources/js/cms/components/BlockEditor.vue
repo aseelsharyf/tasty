@@ -225,6 +225,8 @@ const initEditor = async () => {
         readOnly: props.readOnly || false,
         minHeight: 0,
         data: normalizedData,
+        // Define which inline tools are available globally
+        inlineToolbar: ['bold', 'italic', 'link'],
         tools: {
             // Order: Text (default paragraph), Header, Media, Quote, Collapsible, then others
             header: {
@@ -244,7 +246,7 @@ const initEditor = async () => {
             },
             quote: {
                 class: QuoteBlock,
-                inlineToolbar: true,
+                inlineToolbar: ['bold', 'italic'],
                 config: {
                     quotePlaceholder: quotePlaceholder,
                     captionPlaceholder: quoteCaptionPlaceholder,
@@ -276,7 +278,7 @@ const initEditor = async () => {
                         },
                         quote: {
                             class: QuoteBlock,
-                            inlineToolbar: true,
+                            inlineToolbar: ['bold', 'italic'],
                             config: {
                                 quotePlaceholder: quotePlaceholder,
                                 captionPlaceholder: quoteCaptionPlaceholder,

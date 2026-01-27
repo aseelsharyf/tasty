@@ -49,7 +49,7 @@
 
                 {{-- Right: Quote text --}}
                 <blockquote class="flex-1 flex flex-col justify-center min-w-0 {{ $isRtl ? 'text-right' : '' }}">
-                    <p class="text-h3 text-black">
+                    <p class="font-display text-black" style="font-size: 42px; line-height: 42px; letter-spacing: -1.68px;">
                         {!! $text !!}
                     </p>
                 </blockquote>
@@ -77,7 +77,7 @@
 
                 {{-- Right: Quote text --}}
                 <blockquote class="flex-1 flex flex-col justify-center min-w-0 {{ $isRtl ? 'text-right' : '' }}">
-                    <p class="text-h3 text-black">
+                    <p class="font-display text-black" style="font-size: 42px; line-height: 42px; letter-spacing: -1.68px;">
                         {!! $text !!}
                     </p>
                 </blockquote>
@@ -88,7 +88,7 @@
 @else
     {{-- Default: Centered pull quote (no photo or fallback) --}}
     <blockquote class="{{ $alignClass }}">
-        <p class="text-h3 text-tasty-blue-black mb-6">
+        <p class="font-display text-tasty-blue-black mb-6" style="font-size: 42px; line-height: 42px; letter-spacing: -1.68px;">
             {!! $text !!}
         </p>
 

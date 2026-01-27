@@ -149,7 +149,7 @@
                 />
             @endif
             @if($item['caption'] ?? null)
-                <figcaption class="text-caption text-tasty-blue-black/50 mt-8 text-left">
+                <figcaption class="text-caption text-tasty-blue-black/50 mt-4 text-left">
                     {{ $item['caption'] }}
                 </figcaption>
             @endif
@@ -201,7 +201,7 @@
                         />
                     @endif
                     @if($item['caption'] ?? null)
-                        <figcaption class="text-caption text-tasty-blue-black/50 mt-8 text-left">
+                        <figcaption class="text-caption text-tasty-blue-black/40 mt-4 text-left">
                             {{ $item['caption'] }}
                         </figcaption>
                     @endif

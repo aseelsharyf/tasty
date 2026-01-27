@@ -5,7 +5,6 @@
 
 .ce-quote-block__text {
     font-size: 1.25rem;
-    font-style: italic;
     line-height: 1.75;
     color: var(--ui-text);
     border-left: 4px solid var(--ui-primary);
@@ -14,10 +13,15 @@
     min-height: 1.5em;
 }
 
+/* Italic styling for <i> and <em> tags within the quote */
+.ce-quote-block__text i,
+.ce-quote-block__text em {
+    font-style: italic;
+}
+
 .ce-quote-block__text:empty::before {
     content: attr(data-placeholder);
     color: var(--ui-text-dimmed);
-    font-style: italic;
 }
 
 .ce-quote-block__text:focus {

@@ -62,7 +62,7 @@
 
     {{-- Ad Slot 1: After header/meta --}}
     @if(!$isPreview)
-        <div class="bg-off-white py-6">
+        <div class="bg-off-white pt-12 pb-4">
             <x-ads.slot :ad-slot="null" :width="300" :height="250" />
         </div>
     @endif
@@ -76,7 +76,7 @@
             'isRtl' => $isRtl,
         ])
     @elseif(!empty($contentBlocks))
-        <div class="w-full bg-off-white {{ $template === 'minimal' ? 'pt-12' : '' }} {{ $isRtl ? 'text-right' : '' }}">
+        <div class="w-full bg-off-white pt-8 {{ $template === 'minimal' ? 'lg:pt-12' : '' }} {{ $isRtl ? 'text-right' : '' }}">
             @include('templates.posts.partials.content-blocks', [
                 'blocks' => $contentBlocks,
                 'isRtl' => $isRtl,

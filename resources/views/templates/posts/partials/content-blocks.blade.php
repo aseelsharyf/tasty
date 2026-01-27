@@ -116,7 +116,7 @@
                 @endphp
                 @if($isFullScreen)
                     {{-- Full screen width - breaks out of container --}}
-                    <div class="w-full py-16">
+                    <div class="w-full py-8">
                         <x-blocks.media
                             :items="$items"
                             :layout="$layout"
@@ -128,7 +128,7 @@
                     </div>
                 @else
                     {{-- Default content width --}}
-                    <div class="{{ $contentWidth }} w-full px-4 lg:px-0 py-16">
+                    <div class="{{ $contentWidth }} w-full px-4 lg:px-0 py-8">
                         <x-blocks.media
                             :items="$items"
                             :layout="$layout"
@@ -143,7 +143,7 @@
 
             {{-- Legacy Image block --}}
             @case('image')
-                <div class="{{ $fullWidth }} w-full px-4 lg:px-0 py-16">
+                <div class="{{ $fullWidth }} w-full px-4 lg:px-0 py-8">
                     <x-blocks.media
                         :items="[[
                             'url' => $data['file']['url'] ?? $data['url'] ?? '',
@@ -214,7 +214,7 @@
 
             {{-- Embed --}}
             @case('embed')
-                <div class="{{ $fullWidth }} w-full px-4 lg:px-0">
+                <div class="{{ $contentWidth }} w-full px-4 lg:px-0 py-10">
                     <div class="aspect-video">
                         <iframe
                             src="{{ $data['embed'] ?? '' }}"
@@ -224,7 +224,7 @@
                         ></iframe>
                     </div>
                     @if($data['caption'] ?? null)
-                        <p class="text-caption text-tasty-blue-black/50 mt-8 text-center">{!! $data['caption'] !!}</p>
+                        <p class="text-caption text-tasty-blue-black/40 mt-0 text-left">{!! $data['caption'] !!}</p>
                     @endif
                 </div>
                 @break
