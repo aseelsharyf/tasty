@@ -40,7 +40,7 @@
 @endphp
 
 @if($style === 'ordered')
-    <ol class="text-body-lg text-tasty-blue-black/90 list-decimal {{ $isRtl ? 'pr-6' : 'pl-6' }} space-y-2 {{ $alignClass }}">
+    <ol class="text-body-lg text-tasty-blue-black/90 list-decimal {{ $isRtl ? 'pr-[30px]' : 'pl-[30px]' }} space-y-2 {{ $alignClass }}">
         @foreach($items as $item)
             <li>
                 {!! getListItemContent($item) !!}
@@ -75,7 +75,7 @@
     </ul>
 @else
     {{-- Unordered list --}}
-    <ul class="text-body-lg text-tasty-blue-black/90 list-disc {{ $isRtl ? 'pr-6' : 'pl-6' }} space-y-2 {{ $alignClass }}">
+    <ul class="text-body-lg text-tasty-blue-black/90 list-disc {{ $isRtl ? 'pr-[30px]' : 'pl-[30px]' }} space-y-2 {{ $alignClass }}">
         @foreach($items as $item)
             <li>
                 {!! getListItemContent($item) !!}
