@@ -108,6 +108,9 @@
             $isVideo = $item['is_video'] ?? false;
             $embedUrl = $isVideo ? $getVideoEmbedUrl($item) : null;
             $localVideoUrl = $isVideo ? $getLocalVideoUrl($item) : null;
+            // Get focal point for object-position (defaults to center)
+            $focalPoint = $item['focal_point'] ?? null;
+            $objectPosition = $focalPoint ? "{$focalPoint['x']}% {$focalPoint['y']}%" : '50% 50%';
         @endphp
         @if($isVideo)
             {{-- Video: Content width, aspect-video --}}
@@ -156,6 +159,7 @@
                         src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
                         alt="{{ $item['alt_text'] ?? '' }}"
                         class="w-full h-full object-cover"
+                        style="object-position: {{ $objectPosition }};"
                     />
                 </div>
                 @if($item['caption'] ?? null)
@@ -281,7 +285,7 @@
         </div>
 
     @elseif($layout === 'carousel')
-        {{-- Carousel Layout --}}
+        {{-- Carousel Layout: Full width scrollable on mobile, multi-column on desktop --}}
         <div class="overflow-x-auto scrollbar-hide">
             <div class="flex {{ $gapClass }} pb-4" style="width: max-content;">
                 @foreach($items as $index => $item)
@@ -290,7 +294,8 @@
                         $embedUrl = $isVideo ? $getVideoEmbedUrl($item) : null;
                         $localVideoUrl = $isVideo ? $getLocalVideoUrl($item) : null;
                     @endphp
-                    <figure class="m-0 flex-shrink-0" style="width: calc({{ 100 / $gridColumns }}vw - 2rem); min-width: 200px; max-width: 500px;">
+                    {{-- Mobile: ~90vw per item (full width with peek), Desktop: based on columns --}}
+                    <figure class="m-0 flex-shrink-0 w-[calc(90vw-2rem)] lg:w-[calc({{ 100 / $gridColumns }}vw-2rem)] lg:min-w-[300px] lg:max-w-[500px]">
                         @if($isVideo)
                             <div class="relative aspect-video bg-tasty-blue-black overflow-hidden">
                                 @if($embedUrl)
@@ -320,11 +325,13 @@
                                 @endif
                             </div>
                         @else
-                            <img
-                                src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
-                                alt="{{ $item['alt_text'] ?? '' }}"
-                                class="w-full aspect-[4/3] object-cover"
-                            />
+                            <div class="aspect-[353/358] lg:aspect-[4/3] overflow-hidden">
+                                <img
+                                    src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
+                                    alt="{{ $item['alt_text'] ?? '' }}"
+                                    class="w-full h-full object-cover"
+                                />
+                            </div>
                         @endif
                         @if($item['caption'] ?? null)
                             <figcaption class="text-caption text-tasty-blue-black/50 mt-4 text-left">

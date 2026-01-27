@@ -32,6 +32,11 @@ export interface CropVersion {
     thumbnail_url: string | null;
 }
 
+export interface FocalPoint {
+    x: number;
+    y: number;
+}
+
 export interface MediaBlockItem {
     id: number;
     uuid: string;
@@ -57,10 +62,13 @@ export interface MediaBlockItem {
     crops?: CropVersion[];
     // Currently selected crop version
     crop_version?: CropVersion | null;
+    // Focal point for single image display
+    focal_point?: FocalPoint | null;
 }
 
 interface MediaBlockConfig {
     onSelectMedia?: (options: { multiple: boolean }) => Promise<MediaBlockItem[] | null>;
+    onSetFocalPoint?: (imageUrl: string, currentFocalPoint: FocalPoint | null) => Promise<FocalPoint | null>;
     placeholder?: string;
 }
 
@@ -365,6 +373,12 @@ export default class MediaBlock implements BlockTool {
             itemEl.appendChild(cropSelector);
         }
 
+        // Focal point button (only for single image layout)
+        if (!isVideo && this.data.items.length === 1 && !this.readOnly && this.config.onSetFocalPoint) {
+            const focalPointBtn = this.renderFocalPointButton(item, index);
+            itemEl.appendChild(focalPointBtn);
+        }
+
         // Caption/Credit section
         const infoSection = document.createElement('div');
         infoSection.classList.add('ce-media-block__info');
@@ -515,6 +529,57 @@ export default class MediaBlock implements BlockTool {
         }
 
         this.renderMedia();
+    }
+
+    private renderFocalPointButton(item: MediaBlockItem, index: number): HTMLElement {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.classList.add('ce-media-block__focal-point-btn');
+
+        const hasFocalPoint = item.focal_point && (item.focal_point.x !== 50 || item.focal_point.y !== 50);
+        if (hasFocalPoint) {
+            btn.classList.add('ce-media-block__focal-point-btn--active');
+        }
+
+        btn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 2v4"/>
+                <path d="M12 18v4"/>
+                <path d="M2 12h4"/>
+                <path d="M18 12h4"/>
+            </svg>
+            <span>Focus Point${hasFocalPoint ? ` (${Math.round(item.focal_point!.x)}%, ${Math.round(item.focal_point!.y)}%)` : ''}</span>
+        `;
+
+        btn.addEventListener('mousedown', (e) => e.stopPropagation());
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            await this.openFocalPointPicker(index);
+        });
+
+        return btn;
+    }
+
+    private async openFocalPointPicker(index: number): Promise<void> {
+        if (!this.config.onSetFocalPoint) return;
+
+        const item = this.data.items[index];
+        if (!item) return;
+
+        try {
+            const imageUrl = item.url || item.thumbnail_url || '';
+            const result = await this.config.onSetFocalPoint(imageUrl, item.focal_point || null);
+
+            if (result) {
+                this.data.items[index].focal_point = result;
+                this.renderMedia();
+            }
+        } catch (error) {
+            console.error('MediaBlock: Failed to set focal point', error);
+        }
     }
 
     private async selectMedia(multiple: boolean): Promise<void> {

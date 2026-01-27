@@ -3,14 +3,14 @@ import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import axios from 'axios';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
-import BlockEditor, { type MediaSelectCallback, type PostSelectCallback } from '../../components/BlockEditor.vue';
+import BlockEditor, { type MediaSelectCallback, type PostSelectCallback, type FocalPointCallback } from '../../components/BlockEditor.vue';
 import MediaPickerModal from '../../components/MediaPickerModal.vue';
 import EditorPostPickerModal from '../../components/EditorPostPickerModal.vue';
 import type { PostBlockItem } from '../../editor-tools/PostsBlock';
 import NotificationDropdown from '../../components/NotificationDropdown.vue';
 import EditorialSlideover from '../../components/EditorialSlideover.vue';
 import ImageAnchorPicker from '../../components/ImageAnchorPicker.vue';
-import type { MediaBlockItem } from '../../editor-tools/MediaBlock';
+import type { MediaBlockItem, FocalPoint } from '../../editor-tools/MediaBlock';
 import { useSidebar } from '../../composables/useSidebar';
 import { useDhivehiKeyboard } from '../../composables/useDhivehiKeyboard';
 import { useWorkflow, type WorkflowConfig } from '../../composables/useWorkflow';
@@ -898,6 +898,40 @@ function handlePostPickerClose(open: boolean) {
         editorPostResolve(null);
         editorPostResolve = null;
     }
+}
+
+// Focal point picker state for media block
+const focalPointPickerOpen = ref(false);
+const focalPointImageUrl = ref<string>('');
+const focalPointValue = ref<FocalPoint>({ x: 50, y: 50 });
+let editorFocalPointResolve: ((focalPoint: FocalPoint | null) => void) | null = null;
+
+// Callback for BlockEditor to open focal point picker
+const handleEditorSetFocalPoint: FocalPointCallback = (imageUrl: string, currentFocalPoint: FocalPoint | null) => {
+    return new Promise((resolve) => {
+        editorFocalPointResolve = resolve;
+        focalPointImageUrl.value = imageUrl;
+        focalPointValue.value = currentFocalPoint || { x: 50, y: 50 };
+        focalPointPickerOpen.value = true;
+    });
+};
+
+// Handle focal point confirmation
+function handleFocalPointConfirm() {
+    if (editorFocalPointResolve) {
+        editorFocalPointResolve(focalPointValue.value);
+        editorFocalPointResolve = null;
+    }
+    focalPointPickerOpen.value = false;
+}
+
+// Handle focal point picker close without saving
+function handleFocalPointCancel() {
+    if (editorFocalPointResolve) {
+        editorFocalPointResolve(null);
+        editorFocalPointResolve = null;
+    }
+    focalPointPickerOpen.value = false;
 }
 
 // Sidebar toggle for mobile
@@ -2420,6 +2454,7 @@ function openDiff() {
                                 :dhivehi-layout="dhivehiLayout"
                                 :on-select-media="handleEditorSelectMedia"
                                 :on-select-posts="handleEditorSelectPosts"
+                                :on-set-focal-point="handleEditorSetFocalPoint"
                                 :read-only="isReadOnly"
                             />
 
@@ -2934,6 +2969,45 @@ function openDiff() {
             @select="handlePostSelect"
             @update:open="handlePostPickerClose"
         />
+
+        <!-- Focal Point Picker Modal for Media Block -->
+        <UModal v-model:open="focalPointPickerOpen" :ui="{ width: 'max-w-xl' }">
+            <template #content>
+                <UCard>
+                    <template #header>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-semibold text-highlighted">Set Focus Point</h3>
+                                <p class="text-sm text-muted mt-1">Click or drag to set the focal point for cropping</p>
+                            </div>
+                            <UButton
+                                icon="i-lucide-x"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
+                                @click="handleFocalPointCancel"
+                            />
+                        </div>
+                    </template>
+
+                    <ImageAnchorPicker
+                        v-model="focalPointValue"
+                        :image-url="focalPointImageUrl"
+                    />
+
+                    <template #footer>
+                        <div class="flex justify-end gap-2">
+                            <UButton color="neutral" variant="ghost" @click="handleFocalPointCancel">
+                                Cancel
+                            </UButton>
+                            <UButton color="primary" @click="handleFocalPointConfirm">
+                                Apply Focus Point
+                            </UButton>
+                        </div>
+                    </template>
+                </UCard>
+            </template>
+        </UModal>
 
         <!-- Editorial Slideover -->
         <EditorialSlideover

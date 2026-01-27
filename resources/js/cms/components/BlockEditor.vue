@@ -7,7 +7,7 @@ import Delimiter from '@editorjs/delimiter';
 import Table from '@editorjs/table';
 import Code from '@editorjs/code';
 import LinkTool from '@editorjs/link';
-import MediaBlock, { type MediaBlockItem } from '../editor-tools/MediaBlock';
+import MediaBlock, { type MediaBlockItem, type FocalPoint } from '../editor-tools/MediaBlock';
 import QuoteBlock from '../editor-tools/QuoteBlock';
 import CollapsibleBlock from '../editor-tools/CollapsibleBlock';
 import PostsBlock, { type PostBlockItem } from '../editor-tools/PostsBlock';
@@ -22,6 +22,9 @@ export type MediaSelectCallback = (options: { multiple: boolean }) => Promise<Me
 
 // Post selection callback type
 export type PostSelectCallback = () => Promise<PostBlockItem[] | null>;
+
+// Focal point callback type
+export type FocalPointCallback = (imageUrl: string, currentFocalPoint: FocalPoint | null) => Promise<FocalPoint | null>;
 
 // Character mappings from JTK library (duplicated here for editor use)
 const TRANS_FROM = "qwertyuiop[]\\asdfghjkl;'zxcvbnm,./QWERTYUIOP{}|ASDFGHJKL:\"ZXCVBNM<>?()";
@@ -40,6 +43,7 @@ const props = defineProps<{
     dhivehiLayout?: DhivehiLayout;
     onSelectMedia?: MediaSelectCallback;
     onSelectPosts?: PostSelectCallback;
+    onSetFocalPoint?: FocalPointCallback;
 }>();
 
 const emit = defineEmits<{
@@ -248,6 +252,7 @@ const initEditor = async () => {
                 config: {
                     placeholder: isRtlMode ? 'މީޑީއާ އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add media',
                     onSelectMedia: props.onSelectMedia,
+                    onSetFocalPoint: props.onSetFocalPoint,
                 },
             },
             quote: {
@@ -280,6 +285,7 @@ const initEditor = async () => {
                             config: {
                                 placeholder: isRtlMode ? 'މީޑީއާ އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add media',
                                 onSelectMedia: props.onSelectMedia,
+                                onSetFocalPoint: props.onSetFocalPoint,
                             },
                         },
                         quote: {

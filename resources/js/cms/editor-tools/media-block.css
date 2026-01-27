@@ -475,3 +475,44 @@
 :root.dark .ce-media-block__crop-option + .ce-media-block__crop-option {
     border-top-color: var(--color-gray-700);
 }
+
+/* Focal point button */
+.ce-media-block__focal-point-btn {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.625rem;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: none;
+    border-radius: 0.375rem;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0;
+    z-index: 10;
+}
+
+.ce-media-block__item:hover .ce-media-block__focal-point-btn {
+    opacity: 1;
+}
+
+.ce-media-block__focal-point-btn:hover {
+    background-color: rgba(0, 0, 0, 0.85);
+}
+
+.ce-media-block__focal-point-btn--active {
+    background-color: var(--color-primary-600);
+}
+
+.ce-media-block__focal-point-btn--active:hover {
+    background-color: var(--color-primary-700);
+}
+
+.ce-media-block__focal-point-btn svg {
+    flex-shrink: 0;
+}
