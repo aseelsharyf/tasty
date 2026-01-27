@@ -36,6 +36,7 @@ interface BulkUploadFile {
     progress: number;
     error: string | null;
     category: string;
+    title: string;
     caption: string;
     tags: Array<{ value: number | string; label: string }>;
 }
@@ -72,6 +73,7 @@ const selectedFileIds = ref<Set<string>>(new Set());
 
 // Default values
 const defaultCategory = ref(props.defaultCategory || 'media');
+const defaultTitle = ref('');
 const defaultCaption = ref('');
 const defaultTags = ref<Array<{ value: number | string; label: string }>>([]);
 
@@ -128,6 +130,10 @@ const tagOptions = computed(() => {
     }));
 });
 
+// Tag dropdown open states
+const defaultTagsDropdownOpen = ref(false);
+const editingFileTagsDropdownOpen = ref(false);
+
 // Handle creating a new tag
 function onCreateTag(item: string) {
     const newTag = {
@@ -135,6 +141,7 @@ function onCreateTag(item: string) {
         label: item,
     };
     defaultTags.value = [...defaultTags.value, newTag];
+    defaultTagsDropdownOpen.value = false;
 }
 
 function onCreateTagForFile(item: string, fileId: string) {
@@ -146,6 +153,7 @@ function onCreateTagForFile(item: string, fileId: string) {
         };
         file.tags = [...file.tags, newTag];
     }
+    editingFileTagsDropdownOpen.value = false;
 }
 
 // Available tags (excluding already selected for default)
@@ -159,6 +167,7 @@ function addDefaultTag(tag: { value: number | string; label: string } | null) {
     if (tag && !defaultTags.value.some(t => t.value === tag.value)) {
         defaultTags.value = [...defaultTags.value, tag];
     }
+    defaultTagsDropdownOpen.value = false;
 }
 
 // Remove a tag from default tags
@@ -181,6 +190,7 @@ function addTagToFile(fileId: string, tag: { value: number | string; label: stri
     if (file && !file.tags.some(t => t.value === tag.value)) {
         file.tags = [...file.tags, tag];
     }
+    editingFileTagsDropdownOpen.value = false;
 }
 
 // Remove a tag from a specific file
@@ -291,6 +301,7 @@ function addFiles(files: File[]) {
             status: 'pending',
             error: null,
             category: parseCategoryFromFilename(file.name),
+            title: defaultTitle.value,
             caption: defaultCaption.value,
             tags: [...defaultTags.value],
         };
@@ -410,11 +421,21 @@ function applyDefaultsToSelected() {
     for (const file of uploadFiles.value) {
         if (selectedFileIds.value.has(file.id) && file.status === 'pending') {
             file.category = defaultCategory.value;
+            file.title = defaultTitle.value;
             file.caption = defaultCaption.value;
             file.tags = [...defaultTags.value];
         }
     }
 }
+
+// Auto-apply default title to selected files when it changes
+watch(defaultTitle, (newTitle) => {
+    for (const file of uploadFiles.value) {
+        if (selectedFileIds.value.has(file.id) && file.status === 'pending') {
+            file.title = newTitle;
+        }
+    }
+});
 
 // Auto-apply default caption to selected files when it changes
 watch(defaultCaption, (newCaption) => {
@@ -487,6 +508,10 @@ async function uploadDirect(uploadFile: BulkUploadFile) {
     const formData = new FormData();
     formData.append('file', uploadFile.file);
     formData.append('category', uploadFile.category);
+
+    if (uploadFile.title) {
+        formData.append('title', uploadFile.title);
+    }
 
     if (uploadFile.caption) {
         formData.append('caption', uploadFile.caption);
@@ -602,6 +627,10 @@ async function uploadWithSignedUrl(uploadFile: BulkUploadFile) {
         category: uploadFile.category,
     };
 
+    if (uploadFile.title) {
+        confirmData.title = uploadFile.title;
+    }
+
     if (uploadFile.caption) {
         confirmData.caption = uploadFile.caption;
     }
@@ -660,6 +689,7 @@ function resetForm() {
     selectedFileIds.value = new Set();
     editingFileId.value = null;
     defaultCategory.value = props.defaultCategory || 'media';
+    defaultTitle.value = '';
     defaultCaption.value = '';
     defaultTags.value = [];
     creditType.value = 'external';
@@ -708,13 +738,13 @@ const canUpload = computed(() => {
     if (uploadFiles.value.length === 0) return false;
     const pendingFiles = uploadFiles.value.filter(f => f.status === 'pending');
     if (pendingFiles.length === 0) return false;
-    return pendingFiles.every(f => f.caption.trim() !== '' && f.tags.length > 0);
+    return pendingFiles.every(f => f.title.trim() !== '' && f.caption.trim() !== '' && f.tags.length > 0);
 });
 
 // Get files missing required fields
 const filesMissingFields = computed(() => {
     return uploadFiles.value.filter(f =>
-        f.status === 'pending' && (f.caption.trim() === '' || f.tags.length === 0)
+        f.status === 'pending' && (f.title.trim() === '' || f.caption.trim() === '' || f.tags.length === 0)
     ).length;
 });
 </script>
@@ -740,7 +770,7 @@ const filesMissingFields = computed(() => {
                     </div>
                     <div class="flex items-center gap-3">
                         <span v-if="filesMissingFields > 0" class="text-sm text-warning">
-                            {{ filesMissingFields }} file{{ filesMissingFields > 1 ? 's' : '' }} missing caption or tags
+                            {{ filesMissingFields }} file{{ filesMissingFields > 1 ? 's' : '' }} missing title, caption or tags
                         </span>
                         <UButton
                             type="button"
@@ -922,6 +952,9 @@ const filesMissingFields = computed(() => {
                                             <UBadge size="xs" color="neutral" variant="subtle">
                                                 {{ categoryOptions.find(c => c.value === file.category)?.label || file.category }}
                                             </UBadge>
+                                            <UBadge v-if="file.title" size="xs" color="primary" variant="subtle">
+                                                <UIcon name="i-lucide-heading" class="size-2.5" />
+                                            </UBadge>
                                             <UBadge v-if="file.caption" size="xs" color="success" variant="subtle">
                                                 <UIcon name="i-lucide-text" class="size-2.5" />
                                             </UBadge>
@@ -965,12 +998,23 @@ const filesMissingFields = computed(() => {
                                 />
                             </UFormField>
 
+                            <!-- Default Title -->
+                            <UFormField label="Title">
+                                <UInput
+                                    v-model="defaultTitle"
+                                    placeholder="Enter default title..."
+                                    class="w-full"
+                                />
+                            </UFormField>
+
                             <!-- Default Caption -->
                             <UFormField label="Caption">
-                                <UInput
+                                <UTextarea
                                     v-model="defaultCaption"
                                     placeholder="Enter default caption..."
                                     class="w-full"
+                                    autoresize
+                                    :rows="2"
                                 />
                             </UFormField>
 
@@ -996,6 +1040,7 @@ const filesMissingFields = computed(() => {
                                     </div>
                                     <!-- Add Tags Dropdown -->
                                     <USelectMenu
+                                        v-model:open="defaultTagsDropdownOpen"
                                         :model-value="null"
                                         :items="availableDefaultTagOptions"
                                         placeholder="Add tags..."
@@ -1139,11 +1184,21 @@ const filesMissingFields = computed(() => {
                         />
                     </UFormField>
 
-                    <UFormField label="Caption">
+                    <UFormField label="Title">
                         <UInput
+                            v-model="editingFile.title"
+                            placeholder="Enter title..."
+                            class="w-full"
+                        />
+                    </UFormField>
+
+                    <UFormField label="Caption">
+                        <UTextarea
                             v-model="editingFile.caption"
                             placeholder="Enter caption..."
                             class="w-full"
+                            autoresize
+                            :rows="2"
                         />
                     </UFormField>
 
@@ -1168,6 +1223,7 @@ const filesMissingFields = computed(() => {
                             </div>
                             <!-- Add Tags Dropdown -->
                             <USelectMenu
+                                v-model:open="editingFileTagsDropdownOpen"
                                 :model-value="null"
                                 :items="getAvailableTagOptionsForFile(editingFile.id)"
                                 placeholder="Add tags..."
