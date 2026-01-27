@@ -156,8 +156,10 @@
         </figure>
 
     @elseif($layout === 'grid')
-        {{-- Grid Layout --}}
-        <div class="grid {{ $gapClass }}" style="grid-template-columns: repeat({{ $gridColumns }}, minmax(0, 1fr));">
+        {{-- Grid Layout: 2 photos side by side on desktop (scrollable if >2), stacked on mobile --}}
+        {{-- Desktop: 640x712 aspect ratio, Mobile: 353x358 aspect ratio --}}
+        <div class="flex flex-col gap-6 lg:hidden">
+            {{-- Mobile: Stacked layout --}}
             @foreach($items as $index => $item)
                 @php
                     $isVideo = $item['is_video'] ?? false;
@@ -194,11 +196,13 @@
                             @endif
                         </div>
                     @else
-                        <img
-                            src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
-                            alt="{{ $item['alt_text'] ?? '' }}"
-                            class="w-full h-full object-cover"
-                        />
+                        <div class="aspect-[353/358] overflow-hidden">
+                            <img
+                                src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
+                                alt="{{ $item['alt_text'] ?? '' }}"
+                                class="w-full h-full object-cover"
+                            />
+                        </div>
                     @endif
                     @if($item['caption'] ?? null)
                         <figcaption class="text-caption text-tasty-blue-black/40 mt-4 text-left">
@@ -207,6 +211,62 @@
                     @endif
                 </figure>
             @endforeach
+        </div>
+        <div class="hidden lg:block overflow-x-auto scrollbar-hide">
+            {{-- Desktop: 2 photos side by side, horizontally scrollable if more --}}
+            <div class="flex gap-8" style="width: max-content;">
+                @foreach($items as $index => $item)
+                    @php
+                        $isVideo = $item['is_video'] ?? false;
+                        $embedUrl = $isVideo ? $getVideoEmbedUrl($item) : null;
+                        $localVideoUrl = $isVideo ? $getLocalVideoUrl($item) : null;
+                    @endphp
+                    <figure class="m-0 flex-shrink-0 w-[calc(50%-1rem)]" style="min-width: 400px; max-width: 640px;">
+                        @if($isVideo)
+                            <div class="relative aspect-video bg-tasty-blue-black overflow-hidden">
+                                @if($embedUrl)
+                                    <iframe
+                                        src="{{ $embedUrl }}"
+                                        class="w-full h-full"
+                                        frameborder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowfullscreen
+                                    ></iframe>
+                                @elseif($localVideoUrl)
+                                    <video
+                                        class="w-full h-full"
+                                        controls
+                                        playsinline
+                                        poster="{{ $item['thumbnail_url'] ?? '' }}"
+                                    >
+                                        <source src="{{ $localVideoUrl }}" type="video/mp4">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                @else
+                                    <img
+                                        src="{{ $item['thumbnail_url'] ?? '' }}"
+                                        alt="{{ $item['alt_text'] ?? 'Video' }}"
+                                        class="w-full h-full object-cover"
+                                    />
+                                @endif
+                            </div>
+                        @else
+                            <div class="aspect-[640/712] overflow-hidden">
+                                <img
+                                    src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
+                                    alt="{{ $item['alt_text'] ?? '' }}"
+                                    class="w-full h-full object-cover"
+                                />
+                            </div>
+                        @endif
+                        @if($item['caption'] ?? null)
+                            <figcaption class="text-caption text-tasty-blue-black/40 mt-4 text-left">
+                                {{ $item['caption'] }}
+                            </figcaption>
+                        @endif
+                    </figure>
+                @endforeach
+            </div>
         </div>
 
     @elseif($layout === 'carousel')

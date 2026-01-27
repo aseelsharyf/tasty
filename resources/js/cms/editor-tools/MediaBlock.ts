@@ -257,7 +257,9 @@ export default class MediaBlock implements BlockTool {
                 }
                 layoutSelector.appendChild(colsSelect);
 
-                // Gap selector
+                // Gap selector - hidden for now as it was confusing for users
+                // Uncomment to re-enable gap control
+                /*
                 const gapSeparator = document.createElement('span');
                 gapSeparator.classList.add('ce-media-block__layout-separator');
                 layoutSelector.appendChild(gapSeparator);
@@ -293,6 +295,7 @@ export default class MediaBlock implements BlockTool {
                     gapSelect.appendChild(option);
                 });
                 layoutSelector.appendChild(gapSelect);
+                */
             }
 
             this.wrapper.appendChild(layoutSelector);

@@ -128,7 +128,7 @@
                     </div>
                 @else
                     {{-- Default content width --}}
-                    <div class="{{ $contentWidth }} w-full px-4 lg:px-0 py-8">
+                    <div class="w-full flex justify-center px-4 lg:px-0">
                         <x-blocks.media
                             :items="$items"
                             :layout="$layout"
