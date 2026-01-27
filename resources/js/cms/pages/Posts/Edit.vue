@@ -3,8 +3,10 @@ import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import axios from 'axios';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
-import BlockEditor, { type MediaSelectCallback } from '../../components/BlockEditor.vue';
+import BlockEditor, { type MediaSelectCallback, type PostSelectCallback } from '../../components/BlockEditor.vue';
 import MediaPickerModal from '../../components/MediaPickerModal.vue';
+import EditorPostPickerModal from '../../components/EditorPostPickerModal.vue';
+import type { PostBlockItem } from '../../editor-tools/PostsBlock';
 import NotificationDropdown from '../../components/NotificationDropdown.vue';
 import EditorialSlideover from '../../components/EditorialSlideover.vue';
 import ImageAnchorPicker from '../../components/ImageAnchorPicker.vue';
@@ -867,6 +869,34 @@ function handleMediaPickerClose(open: boolean) {
     if (!open && mediaPickerPurpose.value === 'editor' && editorMediaResolve) {
         editorMediaResolve(null);
         editorMediaResolve = null;
+    }
+}
+
+// Post picker state for editor block
+const postPickerOpen = ref(false);
+let editorPostResolve: ((items: PostBlockItem[] | null) => void) | null = null;
+
+// Callback for BlockEditor to open post picker
+const handleEditorSelectPosts: PostSelectCallback = () => {
+    return new Promise((resolve) => {
+        editorPostResolve = resolve;
+        postPickerOpen.value = true;
+    });
+};
+
+// Handle post selection from picker
+function handlePostSelect(posts: PostBlockItem[]) {
+    if (editorPostResolve) {
+        editorPostResolve(posts.length > 0 ? posts : null);
+        editorPostResolve = null;
+    }
+}
+
+// Handle post picker close without selection
+function handlePostPickerClose(open: boolean) {
+    if (!open && editorPostResolve) {
+        editorPostResolve(null);
+        editorPostResolve = null;
     }
 }
 
@@ -2389,6 +2419,7 @@ function openDiff() {
                                 :dhivehi-enabled="dhivehiEnabled"
                                 :dhivehi-layout="dhivehiLayout"
                                 :on-select-media="handleEditorSelectMedia"
+                                :on-select-posts="handleEditorSelectPosts"
                                 :read-only="isReadOnly"
                             />
 
@@ -2895,6 +2926,13 @@ function openDiff() {
             default-category="media"
             @select="handleMediaSelect"
             @update:open="handleMediaPickerClose"
+        />
+
+        <!-- Post Picker Modal for Editor Block -->
+        <EditorPostPickerModal
+            v-model:open="postPickerOpen"
+            @select="handlePostSelect"
+            @update:open="handlePostPickerClose"
         />
 
         <!-- Editorial Slideover -->

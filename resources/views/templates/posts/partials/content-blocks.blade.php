@@ -251,6 +251,17 @@
                 </div>
                 @break
 
+            {{-- Posts Block --}}
+            @case('posts')
+                <div class="w-full">
+                    <x-blocks.posts
+                        :posts="$data['posts'] ?? []"
+                        :layout="$data['layout'] ?? 'single'"
+                        :isRtl="$isRtl"
+                    />
+                </div>
+                @break
+
             @default
                 {{-- Unknown block type - render as debug in dev --}}
                 @if(config('app.debug'))

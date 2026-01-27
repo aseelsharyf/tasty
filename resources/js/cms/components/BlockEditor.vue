@@ -10,13 +10,18 @@ import LinkTool from '@editorjs/link';
 import MediaBlock, { type MediaBlockItem } from '../editor-tools/MediaBlock';
 import QuoteBlock from '../editor-tools/QuoteBlock';
 import CollapsibleBlock from '../editor-tools/CollapsibleBlock';
+import PostsBlock, { type PostBlockItem } from '../editor-tools/PostsBlock';
 import '../editor-tools/media-block.css';
 import '../editor-tools/quote-block.css';
 import '../editor-tools/collapsible-block.css';
+import '../editor-tools/posts-block.css';
 import type { DhivehiLayout } from '../composables/useDhivehiKeyboard';
 
 // Media selection callback type
 export type MediaSelectCallback = (options: { multiple: boolean }) => Promise<MediaBlockItem[] | null>;
+
+// Post selection callback type
+export type PostSelectCallback = () => Promise<PostBlockItem[] | null>;
 
 // Character mappings from JTK library (duplicated here for editor use)
 const TRANS_FROM = "qwertyuiop[]\\asdfghjkl;'zxcvbnm,./QWERTYUIOP{}|ASDFGHJKL:\"ZXCVBNM<>?()";
@@ -34,6 +39,7 @@ const props = defineProps<{
     dhivehiEnabled?: boolean;
     dhivehiLayout?: DhivehiLayout;
     onSelectMedia?: MediaSelectCallback;
+    onSelectPosts?: PostSelectCallback;
 }>();
 
 const emit = defineEmits<{
@@ -314,6 +320,13 @@ const initEditor = async () => {
                                 placeholder: codePlaceholder,
                             },
                         },
+                        posts: {
+                            class: PostsBlock,
+                            config: {
+                                placeholder: isRtlMode ? 'ޕੋސްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
+                                onSelectPosts: props.onSelectPosts,
+                            },
+                        },
                     }),
                 },
             },
@@ -343,6 +356,13 @@ const initEditor = async () => {
                 class: Code,
                 config: {
                     placeholder: codePlaceholder,
+                },
+            },
+            posts: {
+                class: PostsBlock,
+                config: {
+                    placeholder: isRtlMode ? 'ޕੋސްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
+                    onSelectPosts: props.onSelectPosts,
                 },
             },
         },
