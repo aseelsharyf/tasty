@@ -39,14 +39,14 @@
     }
 @endphp
 
-<header class="w-full bg-tasty-yellow pt-[96px] md:pt-[112px] lg:h-[calc(100vh-80px)]">
-    <div class="max-w-[1440px] mx-auto h-full p-6 sm:p-8 lg:p-10">
-        <div class="flex flex-col lg:flex-row gap-8 lg:gap-10 items-center h-full">
+<header class="w-full bg-tasty-yellow pt-[96px] md:pt-[112px] lg:min-h-[85vh] lg:max-h-[95vh] flex items-center">
+    <div class="max-w-[1440px] mx-auto w-full p-6 sm:p-8 lg:p-10">
+        <div class="flex flex-col lg:flex-row gap-8 lg:gap-10 items-center">
             {{-- Image/Video (Left) --}}
             @if($hasVideo)
                 <div
                     x-data="heroVideoPlayer()"
-                    class="w-full lg:flex-1 aspect-square lg:aspect-auto lg:h-[500px] relative rounded-xl overflow-hidden"
+                    class="w-full lg:w-[660px] lg:shrink-0 aspect-[660/784] relative rounded-xl overflow-hidden"
                 >
                     {{-- Featured Image (shown when video not playing) --}}
                     <div x-show="!isPlaying" class="absolute inset-0">
@@ -113,7 +113,7 @@
                     </div>
                 </div>
             @else
-                <div class="w-full lg:flex-1 aspect-square lg:aspect-auto lg:h-[500px] relative rounded-xl overflow-hidden">
+                <div class="w-full lg:w-[660px] lg:shrink-0 aspect-[660/784] relative rounded-xl overflow-hidden">
                     @if($post->featured_image_url)
                         <img
                             src="{{ $post->featured_image_url }}"

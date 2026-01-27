@@ -76,7 +76,7 @@
             'isRtl' => $isRtl,
         ])
     @elseif(!empty($contentBlocks))
-        <div class="w-full bg-off-white {{ $isRtl ? 'text-right' : '' }}">
+        <div class="w-full bg-off-white {{ $template === 'minimal' ? 'pt-12' : '' }} {{ $isRtl ? 'text-right' : '' }}">
             @include('templates.posts.partials.content-blocks', [
                 'blocks' => $contentBlocks,
                 'isRtl' => $isRtl,
