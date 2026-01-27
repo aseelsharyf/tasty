@@ -111,12 +111,15 @@
                     $items = $data['items'] ?? [];
                     $layout = $data['layout'] ?? 'single';
                     $displayWidth = $data['displayWidth'] ?? 'default';
-                    // fullScreen = edge to edge, default = content width
-                    $isFullScreen = $displayWidth === 'fullScreen';
+                    $isSingleImage = count($items) === 1 || $layout === 'single';
+                    // Check if first item is a video
+                    $firstItemIsVideo = isset($items[0]) && ($items[0]['is_video'] ?? false);
+                    // Single images (not videos) are always full width, multi-image respects displayWidth setting
+                    $isFullScreen = $displayWidth === 'fullScreen' || ($isSingleImage && !$firstItemIsVideo);
                 @endphp
                 @if($isFullScreen)
-                    {{-- Full screen width - breaks out of container --}}
-                    <div class="w-full py-8">
+                    {{-- Full width --}}
+                    <div class="w-full">
                         <x-blocks.media
                             :items="$items"
                             :layout="$layout"

@@ -109,8 +109,9 @@
             $embedUrl = $isVideo ? $getVideoEmbedUrl($item) : null;
             $localVideoUrl = $isVideo ? $getLocalVideoUrl($item) : null;
         @endphp
-        <figure class="{{ $fullWidth ? 'w-full' : '' }}">
-            @if($isVideo)
+        @if($isVideo)
+            {{-- Video: Content width, aspect-video --}}
+            <figure class="max-w-[894px] w-full mx-auto px-4 lg:px-0">
                 <div class="relative aspect-video bg-tasty-blue-black overflow-hidden">
                     @if($embedUrl)
                         {{-- YouTube/Vimeo Embed --}}
@@ -141,19 +142,29 @@
                         />
                     @endif
                 </div>
-            @else
-                <img
-                    src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
-                    alt="{{ $item['alt_text'] ?? '' }}"
-                    class="w-full h-auto object-cover"
-                />
-            @endif
-            @if($item['caption'] ?? null)
-                <figcaption class="text-caption text-tasty-blue-black/50 mt-4 text-left">
-                    {{ $item['caption'] }}
-                </figcaption>
-            @endif
-        </figure>
+                @if($item['caption'] ?? null)
+                    <figcaption class="text-caption text-tasty-blue-black/40 mt-4 text-left">
+                        {{ $item['caption'] }}
+                    </figcaption>
+                @endif
+            </figure>
+        @else
+            {{-- Image: Full width, 1440x738 on desktop, 560px height on mobile --}}
+            <figure class="w-full">
+                <div class="h-[560px] lg:h-auto lg:aspect-[1440/738] overflow-hidden">
+                    <img
+                        src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
+                        alt="{{ $item['alt_text'] ?? '' }}"
+                        class="w-full h-full object-cover"
+                    />
+                </div>
+                @if($item['caption'] ?? null)
+                    <figcaption class="max-w-[894px] mx-auto text-caption text-tasty-blue-black/40 mt-4 text-left px-4 lg:px-0">
+                        {{ $item['caption'] }}
+                    </figcaption>
+                @endif
+            </figure>
+        @endif
 
     @elseif($layout === 'grid')
         {{-- Grid Layout: 2 photos side by side on desktop (scrollable if >2), stacked on mobile --}}

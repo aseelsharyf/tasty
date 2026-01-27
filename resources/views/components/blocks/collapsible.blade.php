@@ -10,13 +10,13 @@
 
 <div
     x-data="{ expanded: {{ $defaultExpanded ? 'true' : 'false' }} }"
-    class="w-full border-b border-tasty-blue-black/20"
+    class="w-full"
 >
     {{-- Header --}}
     <button
         @click="expanded = !expanded"
         :aria-expanded="expanded"
-        class="w-full flex items-center justify-between py-6 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-tasty-blue-black/20 group"
+        class="w-full flex items-center justify-between text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-tasty-blue-black/20 group"
     >
         <h3 class="text-h4 text-tasty-blue-black {{ $isRtl ? 'font-dhivehi text-right' : '' }}">
             {!! $title !!}
@@ -50,8 +50,8 @@
         </span>
     </button>
 
-    {{-- Horizontal line under heading --}}
-    <div class="border-t border-tasty-blue-black/20"></div>
+    {{-- Horizontal line under heading - black border --}}
+    <div class="border-t border-tasty-blue-black"></div>
 
     {{-- Content --}}
     <div
@@ -59,7 +59,7 @@
         x-collapse
         x-cloak
     >
-        <div class="py-8">
+        <div class="py-2">
             {{-- Check for slot content first, then fall back to EditorJS blocks --}}
             @if($slot->isNotEmpty())
                 {{ $slot }}

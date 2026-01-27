@@ -23,6 +23,6 @@
     $alignClass = $isRtl ? 'text-right' : '';
 @endphp
 
-<h{{ $level }} class="{{ $typeClass }} text-tasty-blue-black {{ $alignClass }}">
+<h{{ $level }} class="{{ $typeClass }} text-tasty-blue-black {{ $alignClass }} break-words">
     {!! $text !!}
 </h{{ $level }}>
