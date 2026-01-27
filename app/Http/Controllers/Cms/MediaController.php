@@ -16,6 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -673,5 +674,210 @@ class MediaController extends Controller
             'Writer', 'Editor' => 'other',
             default => null,
         };
+    }
+
+    /**
+     * Get upload configuration (whether to use signed URLs or direct upload).
+     */
+    public function uploadConfig(): JsonResponse
+    {
+        $disk = config('media-library.disk_name', 'public');
+        $diskConfig = config("filesystems.disks.{$disk}", []);
+        $useSignedUrls = in_array($diskConfig['driver'] ?? '', ['s3']);
+
+        return response()->json([
+            'use_signed_urls' => $useSignedUrls,
+            'disk' => $disk,
+        ]);
+    }
+
+    /**
+     * Generate a signed URL for direct S3 upload.
+     */
+    public function signedUploadUrl(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'filename' => ['required', 'string', 'max:255'],
+            'content_type' => ['required', 'string', 'max:100'],
+            'size' => ['required', 'integer', 'min:1', 'max:104857600'], // 100MB max
+        ]);
+
+        $disk = config('media-library.disk_name', 'public');
+        $diskConfig = config("filesystems.disks.{$disk}", []);
+
+        // Only allow signed URLs for S3-compatible disks
+        if (($diskConfig['driver'] ?? '') !== 's3') {
+            return response()->json(['error' => 'Signed URLs are only supported for S3 disks.'], 400);
+        }
+
+        // Validate mime type
+        $allowedMimeTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'image/avif',
+            'image/svg+xml',
+            'video/mp4',
+            'video/quicktime',
+            'video/webm',
+        ];
+
+        if (! in_array($validated['content_type'], $allowedMimeTypes)) {
+            return response()->json(['error' => 'File type not allowed.'], 422);
+        }
+
+        // Generate a unique path for the upload
+        $extension = pathinfo($validated['filename'], PATHINFO_EXTENSION);
+        $uuid = Str::uuid()->toString();
+        $path = "temp-uploads/{$uuid}.{$extension}";
+
+        // Generate signed URL for PUT request using Laravel's temporaryUploadUrl
+        $signedUrl = Storage::disk($disk)->temporaryUploadUrl(
+            $path,
+            now()->addMinutes(15),
+            ['ContentType' => $validated['content_type']]
+        );
+
+        // temporaryUploadUrl returns ['url' => '...', 'headers' => [...]]
+        $url = is_array($signedUrl) ? $signedUrl['url'] : $signedUrl;
+
+        return response()->json([
+            'signed_url' => $url,
+            'path' => $path,
+            'uuid' => $uuid,
+            'headers' => is_array($signedUrl) ? ($signedUrl['headers'] ?? []) : [],
+        ]);
+    }
+
+    /**
+     * Confirm upload after file has been uploaded directly to S3.
+     */
+    public function confirmUpload(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'path' => ['required', 'string', 'max:500'],
+            'filename' => ['required', 'string', 'max:255'],
+            'content_type' => ['required', 'string', 'max:100'],
+            'size' => ['required', 'integer', 'min:1'],
+            // Category
+            'category' => ['nullable', 'string', 'max:50'],
+            // Translatable fields
+            'title' => ['nullable'],
+            'caption' => ['nullable'],
+            // Credits
+            'credit_user_id' => ['nullable', 'exists:users,id'],
+            'credit_name' => ['nullable', 'string', 'max:255'],
+            'credit_url' => ['nullable', 'url', 'max:255'],
+            'credit_role' => ['nullable', 'string', 'in:photographer,videographer,illustrator,other'],
+            // Tags
+            'tag_ids' => ['nullable', 'array'],
+            'tag_ids.*' => ['integer', 'exists:tags,id'],
+            'new_tags' => ['nullable', 'array'],
+            'new_tags.*' => ['string', 'max:100'],
+        ]);
+
+        $disk = config('media-library.disk_name', 'public');
+
+        // Verify the file exists in S3
+        if (! Storage::disk($disk)->exists($validated['path'])) {
+            return response()->json(['error' => 'File not found in storage.'], 404);
+        }
+
+        // Handle simple string values for title/caption
+        if (! empty($validated['title']) && is_string($validated['title'])) {
+            $validated['title'] = ['en' => $validated['title']];
+        }
+        if (! empty($validated['caption']) && is_string($validated['caption'])) {
+            $validated['caption'] = ['en' => $validated['caption']];
+        }
+
+        // Handle new tags
+        if (! empty($validated['new_tags'])) {
+            $tagIds = $validated['tag_ids'] ?? [];
+            foreach ($validated['new_tags'] as $name) {
+                $name = trim($name);
+                if (empty($name)) {
+                    continue;
+                }
+                $tag = Tag::firstOrCreate(
+                    ['slug' => Str::slug($name)],
+                    ['name' => ['en' => $name]]
+                );
+                $tagIds[] = $tag->id;
+            }
+            $validated['tag_ids'] = array_unique($tagIds);
+        }
+
+        // Determine type from mime type
+        $mimeType = $validated['content_type'];
+        $type = Str::startsWith($mimeType, 'video/') ? MediaItem::TYPE_VIDEO_LOCAL : MediaItem::TYPE_IMAGE;
+
+        // Determine category
+        $category = $validated['category'] ?? MediaItem::parseCategoryFromFilename($validated['filename']);
+
+        try {
+            $mediaItem = DB::transaction(function () use ($validated, $mimeType, $type, $category, $disk) {
+                $mediaItem = MediaItem::create([
+                    'type' => $type,
+                    'category' => $category,
+                    'title' => $validated['title'] ?? null,
+                    'caption' => $validated['caption'] ?? null,
+                    'credit_user_id' => $validated['credit_user_id'] ?? null,
+                    'credit_name' => $validated['credit_name'] ?? null,
+                    'credit_url' => $validated['credit_url'] ?? null,
+                    'credit_role' => $validated['credit_role'] ?? null,
+                    'uploaded_by' => Auth::id(),
+                    'mime_type' => $mimeType,
+                    'file_size' => $validated['size'],
+                ]);
+
+                // Add to Spatie media library directly from the temp path
+                // Spatie will move the file to its proper location
+                $tempPath = $validated['path'];
+
+                $spatieMedia = $mediaItem->addMediaFromDisk($tempPath, $disk)
+                    ->usingFileName($validated['filename'])
+                    ->toMediaCollection('default');
+
+                // Get dimensions and blurhash for images
+                if ($type === MediaItem::TYPE_IMAGE) {
+                    $updateData = [];
+
+                    // Try to get dimensions from the uploaded file
+                    $fullUrl = $spatieMedia->getUrl();
+                    $imageData = @getimagesizefromstring(@file_get_contents($fullUrl));
+                    if ($imageData) {
+                        $updateData['width'] = $imageData[0];
+                        $updateData['height'] = $imageData[1];
+                    }
+
+                    // Note: Blurhash generation for remote files is complex
+                    // It would require downloading the file, which defeats the purpose
+                    // Consider generating it via a queued job instead
+
+                    if (! empty($updateData)) {
+                        $mediaItem->update($updateData);
+                    }
+                }
+
+                // Sync tags
+                if (! empty($validated['tag_ids'])) {
+                    $mediaItem->tags()->sync($validated['tag_ids']);
+                }
+
+                return $mediaItem;
+            });
+
+            return response()->json([
+                'success' => true,
+                'media' => $this->formatMediaItem($mediaItem->fresh(['folder', 'uploadedBy', 'creditUser', 'media', 'tags'])),
+            ]);
+        } catch (\Throwable $e) {
+            // Clean up temp file on failure
+            Storage::disk($disk)->delete($validated['path']);
+
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
     }
 }

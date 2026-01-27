@@ -5,6 +5,7 @@ import { useDebounceFn } from '@vueuse/core';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import MediaEditSlideover from '../../components/MediaEditSlideover.vue';
 import MediaUploadSlideover from '../../components/MediaUploadSlideover.vue';
+import MediaBulkUploadModal from '../../components/MediaBulkUploadModal.vue';
 import BlurHashImage from '../../components/BlurHashImage.vue';
 import { usePermission } from '../../composables/usePermission';
 import type { NavigationMenuItem } from '@nuxt/ui';
@@ -143,6 +144,7 @@ const selectedCategory = ref<string | null>(props.filters.category || null);
 // Slideovers
 const editSlideoverOpen = ref(false);
 const uploadSlideoverOpen = ref(false);
+const bulkUploadModalOpen = ref(false);
 const selectedMedia = ref<MediaItem | null>(null);
 
 // Delete confirmation modal
@@ -313,6 +315,10 @@ function openUpload() {
     uploadSlideoverOpen.value = true;
 }
 
+function openBulkUpload() {
+    bulkUploadModalOpen.value = true;
+}
+
 function confirmDeleteMedia(item: MediaItem) {
     mediaToDelete.value = item;
     bulkDeletePending.value = false;
@@ -450,14 +456,25 @@ function getRowActions(item: MediaItem) {
                     </template>
 
                     <template #right>
-                        <UButton
-                            v-if="can('media.upload')"
-                            color="primary"
-                            icon="i-lucide-upload"
-                            @click="openUpload"
-                        >
-                            Upload
-                        </UButton>
+                        <div class="flex items-center gap-2">
+                            <UButton
+                                v-if="can('media.upload')"
+                                color="neutral"
+                                variant="outline"
+                                icon="i-lucide-upload"
+                                @click="openBulkUpload"
+                            >
+                                Bulk Upload
+                            </UButton>
+                            <UButton
+                                v-if="can('media.upload')"
+                                color="primary"
+                                icon="i-lucide-upload"
+                                @click="openUpload"
+                            >
+                                Upload
+                            </UButton>
+                        </div>
                     </template>
                 </UDashboardNavbar>
 
@@ -692,6 +709,17 @@ function getRowActions(item: MediaItem) {
         <!-- Upload Slideover -->
         <MediaUploadSlideover
             v-model:open="uploadSlideoverOpen"
+            :tags="tags"
+            :languages="languages"
+            :users="users"
+            :credit-roles="creditRoles"
+            :media-categories="mediaCategories"
+            :default-category="selectedCategory"
+        />
+
+        <!-- Bulk Upload Modal -->
+        <MediaBulkUploadModal
+            v-model:open="bulkUploadModalOpen"
             :tags="tags"
             :languages="languages"
             :users="users"

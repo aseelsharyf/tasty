@@ -378,11 +378,15 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::get('media/tags', [MediaController::class, 'tags'])->name('cms.media.tags');
         Route::get('media/categories', [MediaController::class, 'categories'])->name('cms.media.categories');
         Route::get('media/trashed', [MediaController::class, 'trashed'])->name('cms.media.trashed');
-        Route::get('media/{media}', [MediaController::class, 'show'])->name('cms.media.show');
 
         Route::middleware('permission:media.upload')->group(function () {
+            Route::get('media/upload-config', [MediaController::class, 'uploadConfig'])->name('cms.media.upload-config');
+            Route::post('media/signed-url', [MediaController::class, 'signedUploadUrl'])->name('cms.media.signed-url');
+            Route::post('media/confirm-upload', [MediaController::class, 'confirmUpload'])->name('cms.media.confirm-upload');
             Route::post('media', [MediaController::class, 'store'])->name('cms.media.store');
         });
+
+        Route::get('media/{media}', [MediaController::class, 'show'])->name('cms.media.show');
 
         Route::middleware('permission:media.edit')->group(function () {
             Route::put('media/{media}', [MediaController::class, 'update'])->name('cms.media.update');
