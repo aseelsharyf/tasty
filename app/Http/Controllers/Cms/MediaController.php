@@ -483,6 +483,91 @@ class MediaController extends Controller
             ->with('success', "{$count} items {$actionLabels[$validated['action']]}.");
     }
 
+    public function bulkUpdate(Request $request): RedirectResponse|JsonResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'string', 'exists:media_items,uuid'],
+            // Fields to update (all optional - only provided fields will be updated)
+            'title' => ['nullable', 'string', 'max:255'],
+            'caption' => ['nullable', 'string', 'max:1000'],
+            'category' => ['nullable', 'string', 'max:50'],
+            'tag_ids' => ['nullable', 'array'],
+            'tag_ids.*' => ['integer', 'exists:tags,id'],
+            'new_tags' => ['nullable', 'array'],
+            'new_tags.*' => ['string', 'max:100'],
+            // Mode for tags: 'replace' (default) or 'append'
+            'tag_mode' => ['nullable', 'string', 'in:replace,append'],
+        ]);
+
+        // Handle new tags - create them and add to tag_ids
+        if (! empty($validated['new_tags'])) {
+            $tagIds = $validated['tag_ids'] ?? [];
+            foreach ($validated['new_tags'] as $name) {
+                $name = trim($name);
+                if (empty($name)) {
+                    continue;
+                }
+                $tag = Tag::firstOrCreate(
+                    ['slug' => Str::slug($name)],
+                    ['name' => ['en' => $name]]
+                );
+                $tagIds[] = $tag->id;
+            }
+            $validated['tag_ids'] = array_unique($tagIds);
+        }
+
+        $items = MediaItem::whereIn('uuid', $validated['ids'])->get();
+        $count = $items->count();
+
+        foreach ($items as $item) {
+            $updateData = [];
+
+            // Update title if provided (store as translatable)
+            if (isset($validated['title']) && $validated['title'] !== '') {
+                $updateData['title'] = ['en' => $validated['title']];
+            }
+
+            // Update caption if provided (store as translatable)
+            if (isset($validated['caption']) && $validated['caption'] !== '') {
+                $updateData['caption'] = ['en' => $validated['caption']];
+            }
+
+            // Update category if provided
+            if (isset($validated['category']) && $validated['category'] !== '') {
+                $updateData['category'] = $validated['category'];
+            }
+
+            if (! empty($updateData)) {
+                $item->update($updateData);
+            }
+
+            // Update tags if provided
+            if (isset($validated['tag_ids'])) {
+                $tagMode = $validated['tag_mode'] ?? 'replace';
+                if ($tagMode === 'append') {
+                    // Append: merge existing tags with new ones
+                    $existingTagIds = $item->tags->pluck('id')->toArray();
+                    $mergedTagIds = array_unique(array_merge($existingTagIds, $validated['tag_ids']));
+                    $item->tags()->sync($mergedTagIds);
+                } else {
+                    // Replace: just sync the new tags
+                    $item->tags()->sync($validated['tag_ids']);
+                }
+            }
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "{$count} items updated.",
+            ]);
+        }
+
+        return redirect()->back()
+            ->with('success', "{$count} items updated.");
+    }
+
     public function picker(Request $request): JsonResponse
     {
         $query = MediaItem::query()

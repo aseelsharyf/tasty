@@ -211,7 +211,7 @@
                             @endif
                         </div>
                     @else
-                        <div class="aspect-[353/358] overflow-hidden">
+                        <div class="aspect-[640/712] overflow-hidden">
                             <img
                                 src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
                                 alt="{{ $item['alt_text'] ?? '' }}"
@@ -295,7 +295,7 @@
                         $localVideoUrl = $isVideo ? $getLocalVideoUrl($item) : null;
                     @endphp
                     {{-- Mobile: ~90vw per item (full width with peek), Desktop: based on columns --}}
-                    <figure class="m-0 flex-shrink-0 w-[calc(90vw-2rem)] lg:w-[calc({{ 100 / $gridColumns }}vw-2rem)] lg:min-w-[300px] lg:max-w-[500px]">
+                    <figure class="m-0 flex-shrink-0 w-[calc(90vw-2rem)] lg:w-[calc(50%-1rem)]" style="min-width: 400px; max-width: 640px;">
                         @if($isVideo)
                             <div class="relative aspect-video bg-tasty-blue-black overflow-hidden">
                                 @if($embedUrl)
@@ -325,7 +325,7 @@
                                 @endif
                             </div>
                         @else
-                            <div class="aspect-[353/358] lg:aspect-[4/3] overflow-hidden">
+                            <div class="aspect-[640/712] overflow-hidden">
                                 <img
                                     src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
                                     alt="{{ $item['alt_text'] ?? '' }}"

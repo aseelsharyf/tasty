@@ -391,6 +391,7 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::middleware('permission:media.edit')->group(function () {
             Route::put('media/{media}', [MediaController::class, 'update'])->name('cms.media.update');
             Route::post('media/bulk', [MediaController::class, 'bulkAction'])->name('cms.media.bulk');
+            Route::post('media/bulk-update', [MediaController::class, 'bulkUpdate'])->name('cms.media.bulk-update');
 
             // Media Item Crops
             Route::get('media/{media}/crops', [MediaItemCropController::class, 'index'])->name('cms.media.crops.index');

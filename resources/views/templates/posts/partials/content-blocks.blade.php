@@ -8,7 +8,7 @@
     'fullWidth' => 'w-full max-w-[1146px]', // Full width for media (1146px)
 ])
 
-<div class="flex flex-col items-center gap-8">
+<div class="flex flex-col items-center gap-9">
     @foreach($blocks as $block)
         @php
             $type = $block['type'] ?? null;
@@ -119,7 +119,7 @@
                 @endphp
                 @if($isFullScreen)
                     {{-- Full width --}}
-                    <div class="w-full">
+                    <div class="w-full py-9">
                         <x-blocks.media
                             :items="$items"
                             :layout="$layout"
@@ -131,7 +131,7 @@
                     </div>
                 @else
                     {{-- Default content width --}}
-                    <div class="w-full flex justify-center px-4 lg:px-0">
+                    <div class="w-full flex justify-center px-4 py-9 lg:px-0">
                         <x-blocks.media
                             :items="$items"
                             :layout="$layout"
@@ -146,7 +146,7 @@
 
             {{-- Legacy Image block --}}
             @case('image')
-                <div class="{{ $fullWidth }} w-full px-4 lg:px-0 py-8">
+                <div class="{{ $fullWidth }} w-full px-4 lg:px-0 py-9">
                     <x-blocks.media
                         :items="[[
                             'url' => $data['file']['url'] ?? $data['url'] ?? '',

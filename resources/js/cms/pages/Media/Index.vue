@@ -6,10 +6,11 @@ import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import MediaEditSlideover from '../../components/MediaEditSlideover.vue';
 import MediaUploadSlideover from '../../components/MediaUploadSlideover.vue';
 import MediaBulkUploadModal from '../../components/MediaBulkUploadModal.vue';
+import MediaBulkEditModal from '../../components/MediaBulkEditModal.vue';
 import BlurHashImage from '../../components/BlurHashImage.vue';
 import { usePermission } from '../../composables/usePermission';
 import type { NavigationMenuItem } from '@nuxt/ui';
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 
 interface MediaFolder {
     id: number;
@@ -140,11 +141,18 @@ const search = ref(props.filters.search || '');
 const selectedType = ref(props.filters.type || '');
 const selectedTagIds = ref<number[]>(props.filters.tags || []);
 const selectedCategory = ref<string | null>(props.filters.category || null);
+const selectedSort = ref(props.filters.direction === 'asc' ? 'oldest' : 'newest');
+
+const sortOptions = [
+    { value: 'newest', label: 'Newest first' },
+    { value: 'oldest', label: 'Oldest first' },
+];
 
 // Slideovers
 const editSlideoverOpen = ref(false);
 const uploadSlideoverOpen = ref(false);
 const bulkUploadModalOpen = ref(false);
+const bulkEditModalOpen = ref(false);
 const selectedMedia = ref<MediaItem | null>(null);
 
 // Delete confirmation modal
@@ -285,8 +293,8 @@ function applyFilters() {
         search: search.value || undefined,
         tags: selectedTagIds.value.length > 0 ? selectedTagIds.value : undefined,
         category: selectedCategory.value || undefined,
-        sort: props.filters.sort,
-        direction: props.filters.direction,
+        sort: 'created_at',
+        direction: selectedSort.value === 'oldest' ? 'asc' : 'desc',
     }, {
         preserveState: true,
         replace: true,
@@ -303,6 +311,7 @@ function clearFilters() {
     selectedTagIds.value = [];
     selectedCategory.value = null;
     search.value = '';
+    selectedSort.value = 'newest';
     router.get('/cms/media', {}, { preserveState: true, replace: true });
 }
 
@@ -362,6 +371,18 @@ function clearSelection() {
 
 const selectedUuids = computed(() => Array.from(selectedItems.value));
 const selectedCount = computed(() => selectedItems.value.size);
+const selectedMediaItems = computed(() => {
+    return props.media.data.filter(m => selectedItems.value.has(m.uuid));
+});
+
+function openBulkEdit() {
+    if (selectedUuids.value.length === 0) return;
+    bulkEditModalOpen.value = true;
+}
+
+function onBulkEditComplete() {
+    clearSelection();
+}
 
 function confirmBulkDelete() {
     if (selectedUuids.value.length === 0) return;
@@ -516,6 +537,14 @@ function getRowActions(item: MediaItem) {
                         @update:model-value="applyFilters"
                     />
 
+                    <USelectMenu
+                        v-model="selectedSort"
+                        :items="sortOptions"
+                        value-key="value"
+                        class="w-40"
+                        @update:model-value="applyFilters"
+                    />
+
                     <UButton
                         v-if="search || selectedTagIds.length > 0"
                         color="neutral"
@@ -552,6 +581,17 @@ function getRowActions(item: MediaItem) {
                             Clear
                         </UButton>
                         <UButton
+                            v-if="can('media.edit')"
+                            color="primary"
+                            variant="soft"
+                            size="sm"
+                            icon="i-lucide-pencil"
+                            @click="openBulkEdit"
+                        >
+                            Edit
+                        </UButton>
+                        <UButton
+                            v-if="can('media.delete')"
                             color="error"
                             variant="soft"
                             size="sm"
@@ -659,6 +699,9 @@ function getRowActions(item: MediaItem) {
                                 <span v-if="item.file_size">{{ formatFileSize(item.file_size) }}</span>
                                 <span v-if="item.width && item.height">{{ item.width }}x{{ item.height }}</span>
                             </div>
+                            <p v-if="item.created_at" class="text-xs text-muted mt-1">
+                                {{ format(new Date(item.created_at), 'MMM d, yyyy') }}
+                            </p>
                             <p v-if="item.credit_display" class="text-xs text-muted mt-1 truncate">
                                 {{ item.credit_display.name }}
                             </p>
@@ -737,6 +780,15 @@ function getRowActions(item: MediaItem) {
             :users="users"
             :credit-roles="creditRoles"
             @delete="confirmDeleteMedia"
+        />
+
+        <!-- Bulk Edit Modal -->
+        <MediaBulkEditModal
+            v-model:open="bulkEditModalOpen"
+            :tags="tags"
+            :media-categories="mediaCategories"
+            :selected-items="selectedMediaItems"
+            @updated="onBulkEditComplete"
         />
 
         <!-- Delete Confirmation Modal -->
