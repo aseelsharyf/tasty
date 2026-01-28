@@ -270,6 +270,39 @@
         letter-spacing: -0.72px;
         font-feature-settings: "dlig" on;
     }
+
+    /* Article Block Headings - Used in EditorJS content blocks */
+    .text-block-h1 {
+        font-family: var(--font-display);
+        font-size: 35px;
+        line-height: 40px;
+        letter-spacing: -1.4px;
+        font-feature-settings: "dlig" on;
+    }
+
+    .text-block-h2 {
+        font-family: var(--font-display);
+        font-size: 40px;
+        line-height: 45px;
+        letter-spacing: -1.6px;
+        font-feature-settings: "dlig" on;
+    }
+
+    .text-block-h3 {
+        font-family: var(--font-display);
+        font-size: 45px;
+        line-height: 50px;
+        letter-spacing: -1.8px;
+        font-feature-settings: "dlig" on;
+    }
+
+    .text-block-h4 {
+        font-family: var(--font-display);
+        font-size: 50px;
+        line-height: 55px;
+        letter-spacing: -2px;
+        font-feature-settings: "dlig" on;
+    }
 }
 
 @media (min-width: 1024px) {

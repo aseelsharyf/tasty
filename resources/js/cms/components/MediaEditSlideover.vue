@@ -173,6 +173,14 @@ watch(() => props.media, (media) => {
 // Reactive tags list (can be extended when creating new tags inline)
 const localTags = ref<Tag[]>([...props.tags]);
 
+// Keep localTags in sync when props.tags updates (e.g., after page reload with new tags)
+watch(() => props.tags, (newTags) => {
+    // Merge new tags with any locally-created tags that aren't in props yet
+    const propsTagIds = new Set(newTags.map(t => t.id));
+    const localOnlyTags = localTags.value.filter(t => !propsTagIds.has(t.id));
+    localTags.value = [...newTags, ...localOnlyTags];
+});
+
 // Tag options for multi-select
 const tagOptions = computed(() => {
     return localTags.value.map(tag => ({

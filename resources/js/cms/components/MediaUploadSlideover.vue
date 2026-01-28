@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 
 interface Tag {
@@ -60,6 +60,9 @@ const isOpen = computed({
 // Upload mode
 const uploadMode = ref<'file' | 'embed'>('file');
 
+// Upload configuration
+const useSignedUrls = ref(false);
+
 // File uploads
 const uploadFiles = ref<UploadFile[]>([]);
 const isDragging = ref(false);
@@ -88,13 +91,36 @@ const tagOptions = computed(() => {
     }));
 });
 
+// Tag dropdown open state
+const tagsDropdownOpen = ref(false);
+
+// Available tags (excluding already selected)
+const availableTagOptions = computed(() => {
+    const selectedValues = new Set(selectedTags.value.map(t => t.value));
+    return tagOptions.value.filter(t => !selectedValues.has(t.value));
+});
+
 // Handle creating a new tag
 function onCreateTag(item: string) {
     const newTag = {
-        value: `new-${Date.now()}`, // Temporary unique string ID for new tags
+        value: `new-${Date.now()}`,
         label: item,
     };
     selectedTags.value = [...selectedTags.value, newTag];
+    tagsDropdownOpen.value = false;
+}
+
+// Add a tag
+function addTag(tag: { value: number | string; label: string } | null) {
+    if (tag && !selectedTags.value.some(t => t.value === tag.value)) {
+        selectedTags.value = [...selectedTags.value, tag];
+    }
+    tagsDropdownOpen.value = false;
+}
+
+// Remove a tag
+function removeTag(tagValue: number | string) {
+    selectedTags.value = selectedTags.value.filter(t => t.value !== tagValue);
 }
 
 // User options
@@ -208,16 +234,19 @@ function addFiles(files: File[]) {
             category: parseCategoryFromFilename(file.name),
         };
 
+        uploadFiles.value.push(uploadFile);
+
         // Generate preview for images
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                uploadFile.preview = e.target?.result as string;
+                const idx = uploadFiles.value.findIndex(f => f.id === uploadFile.id);
+                if (idx !== -1) {
+                    uploadFiles.value[idx] = { ...uploadFiles.value[idx], preview: e.target?.result as string };
+                }
             };
             reader.readAsDataURL(file);
         }
-
-        uploadFiles.value.push(uploadFile);
     }
 }
 
@@ -243,6 +272,24 @@ function formatFileSize(bytes: number): string {
 const isUploading = ref(false);
 const hasSuccessfulUploads = ref(false); // Track if any uploads succeeded during this session
 
+// Fetch upload configuration on mount
+onMounted(async () => {
+    try {
+        const response = await fetch('/cms/media/upload-config', {
+            headers: {
+                'Accept': 'application/json',
+                'X-XSRF-TOKEN': getCsrfToken(),
+            },
+        });
+        if (response.ok) {
+            const data = await response.json();
+            useSignedUrls.value = data.use_signed_urls;
+        }
+    } catch {
+        useSignedUrls.value = false;
+    }
+});
+
 async function uploadAll() {
     if (uploadFiles.value.length === 0) return;
 
@@ -254,55 +301,15 @@ async function uploadAll() {
         uploadFile.status = 'uploading';
         uploadFile.progress = 0;
 
-        const formData = new FormData();
-        formData.append('file', uploadFile.file);
-        formData.append('category', uploadFile.category);
-
-        // Add tags - separate existing IDs from new tag names
-        for (const tag of selectedTags.value) {
-            if (typeof tag.value === 'number') {
-                formData.append('tag_ids[]', String(tag.value));
-            } else {
-                // New tag to be created
-                formData.append('new_tags[]', tag.label);
-            }
-        }
-
-        if (creditType.value === 'user' && creditUserId.value) {
-            formData.append('credit_user_id', creditUserId.value);
-        } else if (creditType.value === 'external' && creditName.value) {
-            formData.append('credit_name', creditName.value);
-            if (creditUrl.value) {
-                formData.append('credit_url', creditUrl.value);
-            }
-        }
-
-        if (creditRole.value) {
-            formData.append('credit_role', creditRole.value);
-        }
-
         try {
-            const response = await fetch('/cms/media', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-XSRF-TOKEN': getCsrfToken(),
-                    'Accept': 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                uploadFile.status = 'success';
-                uploadFile.progress = 100;
-                hasSuccessfulUploads.value = true;
+            if (useSignedUrls.value) {
+                await uploadWithSignedUrl(uploadFile);
             } else {
-                const data = await response.json();
-                uploadFile.status = 'error';
-                uploadFile.error = data.error || 'Upload failed';
+                await uploadDirect(uploadFile);
             }
-        } catch (error) {
+        } catch (error: any) {
             uploadFile.status = 'error';
-            uploadFile.error = 'Network error';
+            uploadFile.error = error.message || 'Upload failed';
         }
     }
 
@@ -311,9 +318,7 @@ async function uploadAll() {
     // Check if all succeeded
     const allSuccess = uploadFiles.value.every(f => f.status === 'success');
     if (allSuccess) {
-        // Refresh the page
         router.reload();
-        // Close after short delay
         setTimeout(() => {
             isOpen.value = false;
             resetForm();
@@ -321,25 +326,146 @@ async function uploadAll() {
     }
 }
 
-async function uploadEmbed() {
-    if (!embedUrl.value) {
-        embedError.value = 'Please enter a video URL';
-        return;
+// Direct upload (for local disk)
+async function uploadDirect(uploadFile: UploadFile) {
+    const formData = new FormData();
+    formData.append('file', uploadFile.file);
+    formData.append('category', uploadFile.category);
+
+    appendSharedFields(formData);
+
+    const response = await fetch('/cms/media', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-XSRF-TOKEN': getCsrfToken(),
+            'Accept': 'application/json',
+        },
+    });
+
+    if (response.ok) {
+        uploadFile.status = 'success';
+        uploadFile.progress = 100;
+        hasSuccessfulUploads.value = true;
+    } else {
+        const data = await response.json();
+        if (data.errors) {
+            const firstError = Object.values(data.errors)[0];
+            throw new Error(Array.isArray(firstError) ? firstError[0] : String(firstError));
+        }
+        throw new Error(data.message || data.error || 'Upload failed');
+    }
+}
+
+// Signed URL upload (for S3)
+async function uploadWithSignedUrl(uploadFile: UploadFile) {
+    // Step 1: Get signed URL
+    const signedUrlResponse = await fetch('/cms/media/signed-url', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-XSRF-TOKEN': getCsrfToken(),
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+            filename: uploadFile.file.name,
+            content_type: uploadFile.file.type,
+            size: uploadFile.file.size,
+        }),
+    });
+
+    if (!signedUrlResponse.ok) {
+        const errorData = await signedUrlResponse.json();
+        throw new Error(errorData.error || errorData.message || 'Failed to get upload URL');
     }
 
-    isUploading.value = true;
-    embedError.value = null;
+    const { signed_url, path, headers } = await signedUrlResponse.json();
 
-    const formData = new FormData();
-    formData.append('embed_url', embedUrl.value);
-    formData.append('category', embedCategory.value);
+    uploadFile.progress = 10;
 
-    // Add tags - separate existing IDs from new tag names
+    // Step 2: Upload directly to S3
+    const uploadResponse = await fetch(signed_url, {
+        method: 'PUT',
+        body: uploadFile.file,
+        headers: {
+            'Content-Type': uploadFile.file.type,
+            ...headers,
+        },
+    });
+
+    if (!uploadResponse.ok) {
+        throw new Error('Failed to upload file to storage');
+    }
+
+    uploadFile.progress = 70;
+
+    // Step 3: Confirm upload with backend
+    const tagIds: number[] = [];
+    const newTags: string[] = [];
+
+    for (const tag of selectedTags.value) {
+        if (typeof tag.value === 'number') {
+            tagIds.push(tag.value);
+        } else {
+            newTags.push(tag.label);
+        }
+    }
+
+    const confirmData: Record<string, unknown> = {
+        path,
+        filename: uploadFile.file.name,
+        content_type: uploadFile.file.type,
+        size: uploadFile.file.size,
+        category: uploadFile.category,
+    };
+
+    if (tagIds.length > 0) {
+        confirmData.tag_ids = tagIds;
+    }
+
+    if (newTags.length > 0) {
+        confirmData.new_tags = newTags;
+    }
+
+    if (creditType.value === 'user' && creditUserId.value) {
+        confirmData.credit_user_id = creditUserId.value;
+    } else if (creditType.value === 'external' && creditName.value) {
+        confirmData.credit_name = creditName.value;
+        if (creditUrl.value) {
+            confirmData.credit_url = creditUrl.value;
+        }
+    }
+
+    if (creditRole.value) {
+        confirmData.credit_role = creditRole.value;
+    }
+
+    const confirmResponse = await fetch('/cms/media/confirm-upload', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-XSRF-TOKEN': getCsrfToken(),
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify(confirmData),
+    });
+
+    if (!confirmResponse.ok) {
+        const errorData = await confirmResponse.json();
+        throw new Error(errorData.error || errorData.message || 'Failed to confirm upload');
+    }
+
+    uploadFile.status = 'success';
+    uploadFile.progress = 100;
+    hasSuccessfulUploads.value = true;
+}
+
+// Append shared tags/credit fields to FormData
+function appendSharedFields(formData: FormData) {
     for (const tag of selectedTags.value) {
         if (typeof tag.value === 'number') {
             formData.append('tag_ids[]', String(tag.value));
         } else {
-            // New tag to be created
             formData.append('new_tags[]', tag.label);
         }
     }
@@ -356,6 +482,22 @@ async function uploadEmbed() {
     if (creditRole.value) {
         formData.append('credit_role', creditRole.value);
     }
+}
+
+async function uploadEmbed() {
+    if (!embedUrl.value) {
+        embedError.value = 'Please enter a video URL';
+        return;
+    }
+
+    isUploading.value = true;
+    embedError.value = null;
+
+    const formData = new FormData();
+    formData.append('embed_url', embedUrl.value);
+    formData.append('category', embedCategory.value);
+
+    appendSharedFields(formData);
 
     try {
         const response = await fetch('/cms/media', {
@@ -658,15 +800,36 @@ const errorCount = computed(() => uploadFiles.value.filter(f => f.status === 'er
 
                         <!-- Tags -->
                         <UFormField label="Tags">
-                            <USelectMenu
-                                v-model="selectedTags"
-                                :items="tagOptions"
-                                placeholder="Select or create tags..."
-                                multiple
-                                create-item
-                                class="w-full"
-                                @create="onCreateTag"
-                            />
+                            <div class="space-y-2">
+                                <!-- Selected Tags as pills -->
+                                <div v-if="selectedTags.length > 0" class="flex flex-wrap gap-1.5">
+                                    <span
+                                        v-for="tag in selectedTags"
+                                        :key="tag.value"
+                                        class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded text-sm font-medium"
+                                    >
+                                        {{ tag.label }}
+                                        <button
+                                            type="button"
+                                            class="hover:text-primary/70 transition-colors"
+                                            @click="removeTag(tag.value)"
+                                        >
+                                            <UIcon name="i-lucide-x" class="size-3" />
+                                        </button>
+                                    </span>
+                                </div>
+                                <!-- Add Tags Dropdown -->
+                                <USelectMenu
+                                    v-model:open="tagsDropdownOpen"
+                                    :model-value="null"
+                                    :items="availableTagOptions"
+                                    placeholder="Add tags..."
+                                    create-item
+                                    class="w-full"
+                                    @update:model-value="addTag"
+                                    @create="onCreateTag"
+                                />
+                            </div>
                         </UFormField>
 
                         <!-- Credit -->

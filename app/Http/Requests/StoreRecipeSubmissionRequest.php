@@ -50,6 +50,8 @@ class StoreRecipeSubmissionRequest extends FormRequest
             'ingredients.*.items' => ['required', 'array', 'min:1'],
             'ingredients.*.items.*.ingredient' => ['required', 'string', 'max:255'],
             'ingredients.*.items.*.quantity' => ['nullable', 'string', 'max:50'],
+            'ingredients.*.items.*.unit' => ['nullable', 'string', 'max:50'],
+            'ingredients.*.items.*.prep_note' => ['nullable', 'string', 'max:255'],
 
             // Instructions (grouped)
             'instructions' => ['required', 'array', 'min:1'],

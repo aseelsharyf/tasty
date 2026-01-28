@@ -231,27 +231,7 @@ class RecipeSubmissionController extends Controller
         }
 
         // Convert ingredients to the expected format: [{ section: "Name", items: ["ingredient 1"] }]
-        $formattedIngredients = [];
-        if ($submission->ingredients) {
-            foreach ($submission->ingredients as $group) {
-                $items = [];
-                if (! empty($group['items'])) {
-                    foreach ($group['items'] as $item) {
-                        // Build ingredient string: "quantity ingredient"
-                        $ingredientParts = [];
-                        if (! empty($item['quantity'])) {
-                            $ingredientParts[] = $item['quantity'];
-                        }
-                        $ingredientParts[] = $item['ingredient'] ?? '';
-                        $items[] = trim(implode(' ', $ingredientParts));
-                    }
-                }
-                $formattedIngredients[] = [
-                    'section' => $group['group_name'] ?? 'Ingredients',
-                    'items' => $items,
-                ];
-            }
-        }
+        $formattedIngredients = $this->formatIngredients($submission->ingredients);
 
         // Build custom fields for recipe
         $customFields = [
@@ -262,17 +242,8 @@ class RecipeSubmissionController extends Controller
             'ingredients' => $formattedIngredients,
         ];
 
-        // Build content blocks: description paragraph + collapsible for each instruction step
+        // Build content blocks: collapsible for each instruction step
         $contentBlocks = [];
-
-        // Add description as paragraph
-        if ($submission->description) {
-            $contentBlocks[] = [
-                'id' => Str::random(10),
-                'type' => 'paragraph',
-                'data' => ['text' => $submission->description],
-            ];
-        }
 
         // Add instruction steps as collapsibles
         if ($submission->instructions) {
@@ -327,6 +298,7 @@ class RecipeSubmissionController extends Controller
 
         // Create the post
         // Kicker = Recipe Name, Headline (subtitle) = headline field, Title = Recipe Name
+        // Description goes to excerpt (deck field)
         $post = Post::create([
             'uuid' => Str::uuid(),
             'author_id' => $authorId,
@@ -335,7 +307,7 @@ class RecipeSubmissionController extends Controller
             'kicker' => $submission->recipe_name,
             'subtitle' => $submission->headline ?? '',
             'slug' => $slug,
-            'excerpt' => '',
+            'excerpt' => $submission->description ?? '',
             'content' => [
                 'time' => now()->timestamp * 1000,
                 'blocks' => $contentBlocks,
@@ -431,33 +403,7 @@ class RecipeSubmissionController extends Controller
         }
 
         // Convert ingredients to the expected format: [{ section: "Name", items: ["ingredient 1"] }]
-        $formattedIngredients = [];
-        if ($submission->ingredients) {
-            foreach ($submission->ingredients as $group) {
-                $items = [];
-                if (! empty($group['items'])) {
-                    foreach ($group['items'] as $item) {
-                        // Build ingredient string: "quantity unit ingredient (prep_note)"
-                        $ingredientParts = [];
-                        if (! empty($item['quantity'])) {
-                            $ingredientParts[] = $item['quantity'];
-                        }
-                        if (! empty($item['unit'])) {
-                            $ingredientParts[] = $item['unit'];
-                        }
-                        $ingredientParts[] = $item['ingredient'] ?? '';
-                        if (! empty($item['prep_note'])) {
-                            $ingredientParts[] = '('.$item['prep_note'].')';
-                        }
-                        $items[] = trim(implode(' ', $ingredientParts));
-                    }
-                }
-                $formattedIngredients[] = [
-                    'section' => $group['group_name'] ?? 'Ingredients',
-                    'items' => $items,
-                ];
-            }
-        }
+        $formattedIngredients = $this->formatIngredients($submission->ingredients);
 
         // Build custom fields for recipe
         $customFields = [
@@ -498,13 +444,14 @@ class RecipeSubmissionController extends Controller
         }
 
         // Create the post
+        // Description goes to excerpt (deck field)
         $post = Post::create([
             'uuid' => Str::uuid(),
             'author_id' => $authorId,
             'language_code' => $validated['language_code'],
             'title' => $submission->recipe_name,
             'slug' => $slug,
-            'excerpt' => '',
+            'excerpt' => $submission->description ?? '',
             'content' => [
                 'time' => now()->timestamp * 1000,
                 'blocks' => $contentBlocks,
@@ -547,6 +494,46 @@ class RecipeSubmissionController extends Controller
         return redirect()
             ->route('cms.posts.edit', ['language' => $validated['language_code'], 'post' => $post->uuid])
             ->with('success', 'Recipe converted to post. Please review and publish when ready.');
+    }
+
+    /**
+     * Format submission ingredients into the post custom_fields format.
+     *
+     * @param  array<int, array{group_name: ?string, items: array<int, array{ingredient: string, quantity: ?string, unit: ?string, prep_note: ?string}>}>|null  $ingredients
+     * @return array<int, array{section: string, items: array<int, string>}>
+     */
+    private function formatIngredients(?array $ingredients): array
+    {
+        if (! $ingredients) {
+            return [];
+        }
+
+        $formatted = [];
+        foreach ($ingredients as $group) {
+            $items = [];
+            if (! empty($group['items'])) {
+                foreach ($group['items'] as $item) {
+                    $ingredientParts = [];
+                    if (! empty($item['quantity'])) {
+                        $ingredientParts[] = $item['quantity'];
+                    }
+                    if (! empty($item['unit'])) {
+                        $ingredientParts[] = $item['unit'];
+                    }
+                    $ingredientParts[] = $item['ingredient'] ?? '';
+                    if (! empty($item['prep_note'])) {
+                        $ingredientParts[] = '('.$item['prep_note'].')';
+                    }
+                    $items[] = trim(implode(' ', $ingredientParts));
+                }
+            }
+            $formatted[] = [
+                'section' => $group['group_name'] ?? 'Ingredients',
+                'items' => $items,
+            ];
+        }
+
+        return $formatted;
     }
 
     public function destroy(RecipeSubmission $submission): RedirectResponse
