@@ -8,6 +8,7 @@
     'gap' => 'md',
     'isRtl' => false,
     'fullWidth' => false, // For breaking out of content container
+    'singleImageDisplay' => 'fullWidth', // fullWidth, contained, portrait
 ])
 
 @php
@@ -151,8 +152,42 @@
                     </figcaption>
                 @endif
             </figure>
+        @elseif($singleImageDisplay === 'contained')
+            {{-- Contained: Slightly wider than body text (1146px), with 1146x683 aspect ratio --}}
+            <figure class="max-w-[1146px] w-full mx-auto px-4 lg:px-0">
+                <div class="overflow-hidden border border-tasty-blue-black/10 aspect-[1146/683]">
+                    <img
+                        src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
+                        alt="{{ $item['alt_text'] ?? '' }}"
+                        class="w-full h-full object-cover"
+                        style="object-position: {{ $objectPosition }};"
+                    />
+                </div>
+                @if($item['caption'] ?? null)
+                    <figcaption class="text-caption text-tasty-blue-black/40 mt-4 text-left border-b border-dashed border-tasty-blue-black/20 pb-4">
+                        {{ $item['caption'] }}
+                    </figcaption>
+                @endif
+            </figure>
+        @elseif($singleImageDisplay === 'portrait')
+            {{-- Portrait: Centered with narrower max-width for portrait images --}}
+            <figure class="max-w-[500px] w-full mx-auto px-4 lg:px-0">
+                <div class="overflow-hidden border border-tasty-blue-black/10">
+                    <img
+                        src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
+                        alt="{{ $item['alt_text'] ?? '' }}"
+                        class="w-full h-auto"
+                        style="object-position: {{ $objectPosition }};"
+                    />
+                </div>
+                @if($item['caption'] ?? null)
+                    <figcaption class="text-caption text-tasty-blue-black/40 mt-4 text-left border-b border-dashed border-tasty-blue-black/20 pb-4">
+                        {{ $item['caption'] }}
+                    </figcaption>
+                @endif
+            </figure>
         @else
-            {{-- Image: Full width, 1440x738 on desktop, 560px height on mobile --}}
+            {{-- Full Width (default): Full width, 1440x738 on desktop, 560px height on mobile --}}
             <figure class="w-full">
                 <div class="h-[560px] lg:h-auto lg:aspect-[1440/738] overflow-hidden">
                     <img

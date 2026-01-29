@@ -111,13 +111,28 @@
                     $items = $data['items'] ?? [];
                     $layout = $data['layout'] ?? 'single';
                     $displayWidth = $data['displayWidth'] ?? 'default';
+                    $singleImageDisplay = $data['singleImageDisplay'] ?? 'fullWidth';
                     $isSingleImage = count($items) === 1 || $layout === 'single';
                     // Check if first item is a video
                     $firstItemIsVideo = isset($items[0]) && ($items[0]['is_video'] ?? false);
-                    // Single images (not videos) are always full width, multi-image respects displayWidth setting
-                    $isFullScreen = $displayWidth === 'fullScreen' || ($isSingleImage && !$firstItemIsVideo);
+                    // Single images: fullWidth mode uses edge-to-edge, contained/portrait use their own max-width
+                    // Videos always use content width, multi-image respects displayWidth setting
+                    $isFullScreen = $displayWidth === 'fullScreen' || ($isSingleImage && !$firstItemIsVideo && $singleImageDisplay === 'fullWidth');
                 @endphp
-                @if($isFullScreen)
+                @if($isSingleImage && !$firstItemIsVideo && in_array($singleImageDisplay, ['contained', 'portrait']))
+                    {{-- Contained/Portrait: centered with their own max-width, slightly wider than body text --}}
+                    <div class="w-full py-9">
+                        <x-blocks.media
+                            :items="$items"
+                            :layout="$layout"
+                            :gridColumns="$data['gridColumns'] ?? 3"
+                            :gap="$data['gap'] ?? 'md'"
+                            :isRtl="$isRtl"
+                            :fullWidth="false"
+                            :singleImageDisplay="$singleImageDisplay"
+                        />
+                    </div>
+                @elseif($isFullScreen)
                     {{-- Full width --}}
                     <div class="w-full py-9">
                         <x-blocks.media
@@ -127,6 +142,7 @@
                             :gap="$data['gap'] ?? 'md'"
                             :isRtl="$isRtl"
                             :fullWidth="true"
+                            :singleImageDisplay="$singleImageDisplay"
                         />
                     </div>
                 @else
@@ -139,6 +155,7 @@
                             :gap="$data['gap'] ?? 'md'"
                             :isRtl="$isRtl"
                             :fullWidth="false"
+                            :singleImageDisplay="$singleImageDisplay"
                         />
                     </div>
                 @endif

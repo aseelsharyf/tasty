@@ -11,6 +11,11 @@ export type GapSize = 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 export type DisplayWidth = 'default' | 'fullScreen';
 
 /**
+ * Single image display options
+ */
+export type SingleImageDisplay = 'fullWidth' | 'contained' | 'portrait';
+
+/**
  * Media data structure for Editor.js block
  */
 export interface MediaBlockData {
@@ -19,6 +24,7 @@ export interface MediaBlockData {
     gridColumns: number; // 1-12
     gap: GapSize;
     displayWidth: DisplayWidth; // default (content width) or fullScreen (edge to edge)
+    singleImageDisplay: SingleImageDisplay; // fullWidth, contained (centered with max-width), or portrait (centered portrait)
 }
 
 export interface CropVersion {
@@ -107,6 +113,7 @@ export default class MediaBlock implements BlockTool {
             gridColumns: 3,
             gap: 'md',
             displayWidth: 'default',
+            singleImageDisplay: 'fullWidth',
         };
 
         if (data && typeof data === 'object') {
@@ -132,6 +139,10 @@ export default class MediaBlock implements BlockTool {
             // Display width
             if (data.displayWidth && ['default', 'fullScreen'].includes(data.displayWidth)) {
                 normalized.displayWidth = data.displayWidth;
+            }
+            // Single image display
+            if (data.singleImageDisplay && ['fullWidth', 'contained', 'portrait'].includes(data.singleImageDisplay)) {
+                normalized.singleImageDisplay = data.singleImageDisplay;
             }
         }
 
@@ -170,7 +181,8 @@ export default class MediaBlock implements BlockTool {
         `;
 
         if (!this.readOnly) {
-            placeholder.addEventListener('click', () => this.selectMedia(false));
+            // Allow multiple selection even on initial media insert
+            placeholder.addEventListener('click', () => this.selectMedia(true));
         }
 
         this.wrapper.appendChild(placeholder);
@@ -189,6 +201,17 @@ export default class MediaBlock implements BlockTool {
         // Apply grid columns via inline style for flexibility (1-12)
         if (this.data.layout === 'grid') {
             container.style.setProperty('--grid-cols', String(this.data.gridColumns));
+        }
+
+        // Apply single image display class
+        if (this.data.items.length === 1 && this.data.layout === 'single') {
+            container.classList.add(`ce-media-block__container--display-${this.data.singleImageDisplay}`);
+        }
+
+        // Single image display selector (only for single image, not video)
+        if (this.data.items.length === 1 && !this.readOnly && !this.data.items[0].is_video) {
+            const singleDisplaySelector = this.renderSingleImageDisplaySelector();
+            this.wrapper.appendChild(singleDisplaySelector);
         }
 
         // Layout selector for multiple items
@@ -580,6 +603,53 @@ export default class MediaBlock implements BlockTool {
         } catch (error) {
             console.error('MediaBlock: Failed to set focal point', error);
         }
+    }
+
+    private renderSingleImageDisplaySelector(): HTMLElement {
+        const selector = document.createElement('div');
+        selector.classList.add('ce-media-block__single-display-selector');
+
+        const options: Array<{ value: SingleImageDisplay; icon: string; label: string }> = [
+            {
+                value: 'fullWidth',
+                label: 'Full Width',
+                icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="6" width="20" height="12" rx="2"/>
+                </svg>`,
+            },
+            {
+                value: 'contained',
+                label: 'Contained',
+                icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="5" y="6" width="14" height="12" rx="2"/>
+                </svg>`,
+            },
+            {
+                value: 'portrait',
+                label: 'Portrait',
+                icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="7" y="3" width="10" height="18" rx="2"/>
+                </svg>`,
+            },
+        ];
+
+        options.forEach(({ value, icon, label }) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `ce-media-block__single-display-btn ${this.data.singleImageDisplay === value ? 'active' : ''}`;
+            btn.title = label;
+            btn.innerHTML = icon;
+            btn.addEventListener('mousedown', (e) => e.stopPropagation());
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.data.singleImageDisplay = value;
+                this.renderMedia();
+            });
+            selector.appendChild(btn);
+        });
+
+        return selector;
     }
 
     private async selectMedia(multiple: boolean): Promise<void> {
