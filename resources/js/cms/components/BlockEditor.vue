@@ -518,6 +518,28 @@ defineExpose({
     color: var(--ui-text-highlighted);
 }
 
+/* Header sizing based on level */
+h2.ce-header {
+    font-size: 35px;
+    line-height: 40px;
+    letter-spacing: -1.4px;
+    font-weight: 600;
+}
+
+h3.ce-header {
+    font-size: 40px;
+    line-height: 45px;
+    letter-spacing: -1.6px;
+    font-weight: 600;
+}
+
+h4.ce-header {
+    font-size: 45px;
+    line-height: 50px;
+    letter-spacing: -1.8px;
+    font-weight: 600;
+}
+
 
 .ce-code__textarea {
     background-color: var(--ui-bg-elevated);

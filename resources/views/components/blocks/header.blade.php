@@ -11,7 +11,6 @@
 
     // Map heading levels to article block heading classes
     $headingClasses = [
-        1 => 'text-block-h1',
         2 => 'text-block-h2',
         3 => 'text-block-h3',
         4 => 'text-block-h4',
