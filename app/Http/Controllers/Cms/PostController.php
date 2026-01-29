@@ -673,8 +673,9 @@ class PostController extends Controller
         // Build content snapshot for versioning
         $contentSnapshot = $post->buildContentSnapshot();
 
-        // Create a new version
-        $newVersion = $post->createVersion($contentSnapshot, 'Saved by '.$user->name);
+        // Create a new version, preserving the workflow status if not published
+        // This ensures that posts in copydesk/review stay in that status when saved
+        $newVersion = $post->createVersion($contentSnapshot, 'Saved by '.$user->name, null, ! $isPublished);
 
         // For editors/admins, if the post is published, also update the active version
         if ($isEditorOrAdmin && $isPublished) {

@@ -108,8 +108,9 @@ trait HasWorkflow
      *
      * @param  array<string, mixed>|null  $data  Override data (if not provided, uses current model state)
      * @param  int|null  $userId  Optional user ID to attribute the version to
+     * @param  bool  $preserveWorkflowStatus  If true, preserve the current workflow status instead of resetting to draft
      */
-    public function createVersion(?array $data = null, ?string $note = null, ?int $userId = null): ContentVersion
+    public function createVersion(?array $data = null, ?string $note = null, ?int $userId = null, bool $preserveWorkflowStatus = false): ContentVersion
     {
         // Determine the user ID: passed in, authenticated, or from author relationship
         $createdBy = $userId ?? auth()->id() ?? $this->author_id ?? null;
@@ -119,27 +120,32 @@ trait HasWorkflow
         // Build content snapshot from model or provided data
         $snapshot = $data ?? $this->buildContentSnapshot();
 
+        // Determine workflow status: preserve current if requested, otherwise default to draft
+        $currentStatus = $this->draftVersion?->workflow_status ?? $this->workflow_status ?? ContentVersion::STATUS_DRAFT;
+        $workflowStatus = $preserveWorkflowStatus ? $currentStatus : ContentVersion::STATUS_DRAFT;
+
         $version = $this->versions()->create([
             'version_number' => $nextVersionNumber,
             'content_snapshot' => $snapshot,
-            'workflow_status' => ContentVersion::STATUS_DRAFT,
+            'workflow_status' => $workflowStatus,
             'is_active' => false,
             'created_by' => $createdBy,
             'version_note' => $note,
         ]);
 
-        // Record initial transition
+        // Record initial transition (only if status changed or is initial)
+        $previousStatus = $preserveWorkflowStatus ? $currentStatus : null;
         $version->transitions()->create([
-            'from_status' => null,
-            'to_status' => ContentVersion::STATUS_DRAFT,
+            'from_status' => $previousStatus,
+            'to_status' => $workflowStatus,
             'performed_by' => $createdBy,
             'comment' => $note,
         ]);
 
-        // Update draft version reference
+        // Update draft version reference and workflow status
         $this->update([
             'draft_version_id' => $version->id,
-            'workflow_status' => ContentVersion::STATUS_DRAFT,
+            'workflow_status' => $workflowStatus,
         ]);
 
         return $version;
@@ -149,23 +155,25 @@ trait HasWorkflow
      * Update the current draft version instead of creating a new one.
      *
      * @param  array<string, mixed>  $data
+     * @param  bool  $preserveWorkflowStatus  If true, preserve the current workflow status when creating a new version
      */
-    public function updateDraftVersion(array $data): ?ContentVersion
+    public function updateDraftVersion(array $data, bool $preserveWorkflowStatus = true): ?ContentVersion
     {
         $draftVersion = $this->draftVersion;
 
-        // Verify the draft version exists AND belongs to this model
-        $isValidDraft = $draftVersion
-            && $draftVersion->isDraft()
+        // Check if the draft version is editable (draft status OR any in-progress workflow status like copydesk/review)
+        $editableStatuses = [ContentVersion::STATUS_DRAFT, 'review', 'copydesk', 'rejected'];
+        $isEditable = $draftVersion
+            && in_array($draftVersion->workflow_status, $editableStatuses)
             && $draftVersion->versionable_type === static::class
             && $draftVersion->versionable_id === $this->id;
 
-        if (! $isValidDraft) {
-            // No valid editable draft version - create a new one
-            return $this->createVersion($data, $draftVersion ? 'Updated from previous version' : 'Initial version');
+        if (! $isEditable) {
+            // No valid editable version - create a new one, preserving workflow status if requested
+            return $this->createVersion($data, $draftVersion ? 'Updated from previous version' : 'Initial version', null, $preserveWorkflowStatus);
         }
 
-        // Update the existing draft version
+        // Update the existing version's content
         $draftVersion->update([
             'content_snapshot' => $data,
         ]);

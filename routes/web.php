@@ -14,10 +14,11 @@ use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\TagController;
 use Illuminate\Support\Facades\Route;
 
-// Static template page (old home design)
-Route::get('/template', function () {
-    return view('template');
-})->name('template');
+Route::get('/test-404', fn() => abort(404));
+Route::get('/test-500', fn() => abort(500));
+Route::get('/test-403', fn() => abort(403));
+Route::get('/test-408', fn() => abort(408));
+Route::get('/test-503', fn() => abort(503));
 
 // CMS Routes with /cms prefix (default for all hosts)
 Route::prefix('cms')->group(base_path('routes/cms.php'));
