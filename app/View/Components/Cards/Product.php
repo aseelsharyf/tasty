@@ -70,19 +70,19 @@ class Product extends Component
             if ($product->category) {
                 $badgeTags[] = [
                     'name' => strtoupper($product->category->name),
-                    'url' => route('products.category', $product->category->slug),
+                    'url' => $this->safeRoute('products.category', $product->category->slug),
                 ];
             }
             if ($product->featuredTag) {
                 $badgeTags[] = [
                     'name' => strtoupper($product->featuredTag->name),
-                    'url' => route('products.tag', $product->featuredTag->slug),
+                    'url' => $this->safeRoute('products.tag', $product->featuredTag->slug),
                 ];
             }
             $this->tags = $badgeTags;
             $this->title = $product->title;
             $this->description = $product->description ?? '';
-            $this->url = route('products.redirect', ['product' => $product->slug]);
+            $this->url = $this->safeRoute('products.redirect', ['product' => $product->slug]);
             $this->price = $product->formatted_price;
             $this->compareAtPrice = $product->compare_at_price
                 ? number_format((float) $product->compare_at_price, 2).' '.$product->currency
@@ -90,10 +90,10 @@ class Product extends Component
             // Store info
             $this->storeLogo = $product->store?->logo_url;
             $this->storeName = $product->store?->name;
-            $this->storeUrl = $product->store?->slug ? route('products.store', $product->store->slug) : null;
+            $this->storeUrl = $product->store?->slug ? $this->safeRoute('products.store', $product->store->slug) : null;
             // Category info
             $this->categoryName = $product->category?->name;
-            $this->categoryUrl = $product->category?->slug ? route('products.category', $product->category->slug) : null;
+            $this->categoryUrl = $product->category?->slug ? $this->safeRoute('products.category', $product->category->slug) : null;
         } elseif (is_array($product)) {
             $this->image = $product['image'] ?? '';
             $this->imageAlt = $product['imageAlt'] ?? $product['title'] ?? '';
@@ -181,5 +181,17 @@ class Product extends Component
     public function render(): View|Closure|string
     {
         return view('components.cards.product');
+    }
+
+    /**
+     * Safely generate a route URL, returning '#' if route doesn't exist (CMS_ONLY mode).
+     */
+    private function safeRoute(string $name, mixed $parameters = []): string
+    {
+        try {
+            return route($name, $parameters);
+        } catch (\Symfony\Component\Routing\Exception\RouteNotFoundException) {
+            return '#';
+        }
     }
 }

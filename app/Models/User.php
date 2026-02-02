@@ -117,7 +117,11 @@ class User extends Authenticatable implements HasMedia
             return null;
         }
 
-        return route('author.show', $this->username);
+        try {
+            return route('author.show', $this->username);
+        } catch (\Symfony\Component\Routing\Exception\RouteNotFoundException) {
+            return '#';
+        }
     }
 
     /**

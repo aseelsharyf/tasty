@@ -188,9 +188,9 @@ class FeaturedVideo extends Component
             $this->coverVideoEmbedProvider = $coverVideo?->embed_provider;
             $this->coverVideoEmbedId = $coverVideo?->embed_video_id;
             $this->category = $categoryModel?->name;
-            $this->categoryUrl = $categoryModel ? route('category.show', $categoryModel->slug) : null;
+            $this->categoryUrl = $categoryModel ? $this->safeRoute('category.show', $categoryModel->slug) : null;
             $this->tag = $tagModel?->name;
-            $this->tagUrl = $tagModel ? route('tag.show', $tagModel->slug) : null;
+            $this->tagUrl = $tagModel ? $this->safeRoute('tag.show', $tagModel->slug) : null;
             $this->author = $post->author?->name ?? 'Unknown';
             $this->authorUrl = $post->author?->url ?? '#';
             $this->date = $post->published_at?->format('F j, Y') ?? '';
@@ -243,5 +243,17 @@ class FeaturedVideo extends Component
     public function render(): View|Closure|string
     {
         return view('components.sections.featured-video');
+    }
+
+    /**
+     * Safely generate a route URL, returning '#' if route doesn't exist (CMS_ONLY mode).
+     */
+    private function safeRoute(string $name, mixed $parameters = []): string
+    {
+        try {
+            return route($name, $parameters);
+        } catch (\Symfony\Component\Routing\Exception\RouteNotFoundException) {
+            return '#';
+        }
     }
 }

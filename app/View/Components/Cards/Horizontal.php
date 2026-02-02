@@ -66,9 +66,9 @@ class Horizontal extends Component
             $this->blurhash = $post->featured_image_blurhash;
             $this->imagePosition = ($anchor['x'] ?? 50).'% '.($anchor['y'] ?? 50).'%';
             $this->category = $categoryModel?->name;
-            $this->categoryUrl = $categoryModel ? route('category.show', $categoryModel->slug) : null;
+            $this->categoryUrl = $categoryModel ? $this->safeRoute('category.show', $categoryModel->slug) : null;
             $this->tag = $tagModel?->name;
-            $this->tagUrl = $tagModel ? route('tag.show', $tagModel->slug) : null;
+            $this->tagUrl = $tagModel ? $this->safeRoute('tag.show', $tagModel->slug) : null;
             $this->title = $post->title;
             $this->author = $post->author?->name ?? 'Unknown';
             $this->authorUrl = $post->author?->url ?? '#';
@@ -152,5 +152,17 @@ class Horizontal extends Component
     public function render(): View|Closure|string
     {
         return view('components.cards.horizontal');
+    }
+
+    /**
+     * Safely generate a route URL, returning '#' if route doesn't exist (CMS_ONLY mode).
+     */
+    private function safeRoute(string $name, mixed $parameters = []): string
+    {
+        try {
+            return route($name, $parameters);
+        } catch (\Symfony\Component\Routing\Exception\RouteNotFoundException) {
+            return '#';
+        }
     }
 }
