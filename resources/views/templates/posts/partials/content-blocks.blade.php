@@ -6,7 +6,13 @@
     'isRtl' => false,
     'contentWidth' => 'max-w-[894px]', // Content width from Figma (894px)
     'fullWidth' => 'w-full max-w-[1146px]', // Full width for media (1146px)
+    'adCodeAfterFirstParagraph' => null, // Ad code to insert after first paragraph
 ])
+
+@php
+    $paragraphCount = 0;
+    $adInserted = false;
+@endphp
 
 <div class="flex flex-col items-center gap-9">
     @foreach($blocks as $block)
@@ -24,6 +30,16 @@
                         :isRtl="$isRtl"
                     />
                 </div>
+                @php $paragraphCount++; @endphp
+                {{-- Ad Slot: After first paragraph --}}
+                @if($paragraphCount === 1 && !$adInserted && $adCodeAfterFirstParagraph)
+                    <div class="w-full bg-off-white pt-8 pb-4">
+                        <div class="ad-slot flex items-center justify-center">
+                            {!! $adCodeAfterFirstParagraph !!}
+                        </div>
+                    </div>
+                    @php $adInserted = true; @endphp
+                @endif
                 @break
 
             {{-- Header --}}

@@ -21,10 +21,13 @@ class AdPlacement extends Model
 
     public const SLOT_AFTER_COMMENTS = 'after_comments';
 
+    public const SLOT_AFTER_INGREDIENTS = 'after_ingredients';
+
     public const SLOTS = [
         self::SLOT_AFTER_HEADER => 'After Header/Meta',
         self::SLOT_BEFORE_COMMENTS => 'Before Comments',
         self::SLOT_AFTER_COMMENTS => 'After Comments',
+        self::SLOT_AFTER_INGREDIENTS => 'After Ingredients',
     ];
 
     protected $fillable = [

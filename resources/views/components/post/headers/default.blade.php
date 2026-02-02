@@ -164,7 +164,7 @@
                 </div>
 
                 {{-- Author/Photographer/Date Row --}}
-                <div class="flex items-center gap-5 text-[14px] leading-[12px] uppercase text-tasty-blue-black font-sans flex-wrap">
+                {{-- <div class="flex items-center gap-5 text-[14px] leading-[12px] uppercase text-tasty-blue-black font-sans flex-wrap">
                     @if($post->author)
                         <a href="{{ $post->author->url ?? '#' }}" class="underline underline-offset-4 hover:no-underline">
                             BY {{ $post->author->name }}
@@ -184,7 +184,7 @@
                         @endif
                         <span>{{ $post->published_at->format('F j, Y') }}</span>
                     @endif
-                </div>
+                </div> --}}
 
                 {{-- Sponsor Badge --}}
                 {{-- <x-article.sponsor-badge :sponsor="$post->sponsor" /> --}}

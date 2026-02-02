@@ -58,8 +58,20 @@
                 <div class="lg:sticky lg:top-8 space-y-8">
                     <x-recipe.ingredients :ingredients="$ingredients" :isRtl="$isRtl" />
 
-                    {{-- Ad Slot: Recipe Sidebar --}}
-                    <x-ads.slot :ad-slot="null" :width="300" :height="250" />
+                     @if(!$isPreview)
+                        @php
+                            $categoryId = $categoryId ?? $post->categories->first()?->id;
+                            $adCodeBeforeComments = \App\Models\AdPlacement::getAdForArticleSlot(\App\Models\AdPlacement::SLOT_AFTER_INGREDIENTS, $categoryId);
+                        @endphp
+                        @if($adCodeBeforeComments)
+                            <div class="bg-off-white py-8">
+                                <div class="ad-slot flex items-center justify-center">
+                                    {!! $adCodeBeforeComments !!}
+                                </div>
+                            </div>
+                        @endif
+                    @endif
+
                 </div>
             </aside>
 

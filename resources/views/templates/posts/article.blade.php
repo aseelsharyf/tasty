@@ -60,20 +60,13 @@
             <x-post.article-meta :post="$post" />
     @endswitch
 
-    {{-- Ad Slot: After header/meta --}}
-    @if(!$isPreview)
-        @php
-            $categoryId = $post->categories->first()?->id;
-            $adCodeAfterHeader = \App\Models\AdPlacement::getAdForArticleSlot(\App\Models\AdPlacement::SLOT_AFTER_HEADER, $categoryId);
-        @endphp
-        @if($adCodeAfterHeader)
-            <div class="bg-off-white pt-12 pb-4">
-                <div class="ad-slot flex items-center justify-center">
-                    {!! $adCodeAfterHeader !!}
-                </div>
-            </div>
-        @endif
-    @endif
+    {{-- Prepare ad code for after first paragraph (non-recipe articles only) --}}
+    @php
+        $categoryId = $post->categories->first()?->id;
+        $adCodeAfterHeader = !$isPreview
+            ? \App\Models\AdPlacement::getAdForArticleSlot(\App\Models\AdPlacement::SLOT_AFTER_HEADER, $categoryId)
+            : null;
+    @endphp
 
     {{-- Article Content --}}
     @if(($post->post_type ?? 'article') === 'recipe')
@@ -88,6 +81,7 @@
             @include('templates.posts.partials.content-blocks', [
                 'blocks' => $contentBlocks,
                 'isRtl' => $isRtl,
+                'adCodeAfterFirstParagraph' => $adCodeAfterHeader,
             ])
         </div>
     @elseif(is_string($post->content))

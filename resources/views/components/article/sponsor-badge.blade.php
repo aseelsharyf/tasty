@@ -12,7 +12,7 @@
     @endphp
 
     <div class="bg-white px-6 py-3 rounded-full flex items-center gap-5">
-        <span class="font-sans text-[20px] leading-[26px] font-normal text-tasty-blue-black">{{ $sponsorLabel }}</span>
+        <span class="font-sans text-md leading-[26px] font-normal text-tasty-blue-black">{{ $sponsorLabel }}</span>
         @if($sponsorUrl)
             <a href="{{ $sponsorUrl }}" target="_blank" rel="noopener noreferrer" class="hover:opacity-80 transition-opacity">
                 @if($sponsorLogo)
