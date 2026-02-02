@@ -9,8 +9,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Change column type from smallint to string using raw SQL for PostgreSQL
-        DB::statement('ALTER TABLE ad_placements ALTER COLUMN slot TYPE varchar(50) USING slot::varchar');
+        // Check if slot column needs type change (only needed if it's not already varchar)
+        $columnType = DB::selectOne("
+            SELECT data_type
+            FROM information_schema.columns
+            WHERE table_name = 'ad_placements' AND column_name = 'slot'
+        ");
+
+        if ($columnType && $columnType->data_type !== 'character varying') {
+            // Change column type from smallint to string using raw SQL for PostgreSQL
+            DB::statement('ALTER TABLE ad_placements ALTER COLUMN slot TYPE varchar(50) USING slot::varchar');
+        }
     }
 
     public function down(): void
