@@ -60,11 +60,19 @@
             <x-post.article-meta :post="$post" />
     @endswitch
 
-    {{-- Ad Slot 1: After header/meta --}}
+    {{-- Ad Slot: After header/meta --}}
     @if(!$isPreview)
-        <div class="bg-off-white pt-12 pb-4">
-            <x-ads.slot :ad-slot="null" :width="300" :height="250" />
-        </div>
+        @php
+            $categoryId = $post->categories->first()?->id;
+            $adCodeAfterHeader = \App\Models\AdPlacement::getAdForArticleSlot(\App\Models\AdPlacement::SLOT_AFTER_HEADER, $categoryId);
+        @endphp
+        @if($adCodeAfterHeader)
+            <div class="bg-off-white pt-12 pb-4">
+                <div class="ad-slot flex items-center justify-center">
+                    {!! $adCodeAfterHeader !!}
+                </div>
+            </div>
+        @endif
     @endif
 
     {{-- Article Content --}}
@@ -114,11 +122,19 @@
         </div>
     @endif
 
-    {{-- Ad Slot 2: Before comments --}}
+    {{-- Ad Slot: Before comments --}}
     @if(!$isPreview)
-        <div class="bg-off-white py-8">
-            <x-ads.slot :ad-slot="null" :width="300" :height="250" />
-        </div>
+        @php
+            $categoryId = $categoryId ?? $post->categories->first()?->id;
+            $adCodeBeforeComments = \App\Models\AdPlacement::getAdForArticleSlot(\App\Models\AdPlacement::SLOT_BEFORE_COMMENTS, $categoryId);
+        @endphp
+        @if($adCodeBeforeComments)
+            <div class="bg-off-white py-8">
+                <div class="ad-slot flex items-center justify-center">
+                    {!! $adCodeBeforeComments !!}
+                </div>
+            </div>
+        @endif
     @endif
 
     {{-- Comments Section (only for public view, not preview) --}}
@@ -126,11 +142,19 @@
         <x-comments.section :post="$post" />
     @endif
 
-    {{-- Ad Slot 3: After comments --}}
+    {{-- Ad Slot: After comments --}}
     @if(!$isPreview)
-        <div class="bg-off-white py-8">
-            <x-ads.slot :ad-slot="null" :width="300" :height="250" />
-        </div>
+        @php
+            $categoryId = $categoryId ?? $post->categories->first()?->id;
+            $adCodeAfterComments = \App\Models\AdPlacement::getAdForArticleSlot(\App\Models\AdPlacement::SLOT_AFTER_COMMENTS, $categoryId);
+        @endphp
+        @if($adCodeAfterComments)
+            <div class="bg-off-white py-8">
+                <div class="ad-slot flex items-center justify-center">
+                    {!! $adCodeAfterComments !!}
+                </div>
+            </div>
+        @endif
     @endif
 </article>
 

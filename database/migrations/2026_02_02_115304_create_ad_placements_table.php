@@ -1,0 +1,41 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('ad_placements', function (Blueprint $table) {
+            $table->id();
+            $table->uuid('uuid')->unique();
+            $table->string('name');
+            $table->string('page_type');
+            $table->string('slot');
+            $table->foreignId('category_id')
+                ->nullable()
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->text('ad_code');
+            $table->boolean('is_active')->default(true);
+            $table->unsignedInteger('priority')->default(0);
+            $table->timestamps();
+
+            $table->index(['page_type', 'slot', 'is_active']);
+            $table->index(['category_id', 'is_active']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('ad_placements');
+    }
+};

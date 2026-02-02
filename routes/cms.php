@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Cms\AdPlacementController;
 use App\Http\Controllers\Cms\Api\FetchUrlController;
 use App\Http\Controllers\Cms\AuthController;
 use App\Http\Controllers\Cms\CategoryController;
@@ -473,6 +474,16 @@ Route::middleware(['auth', 'cms'])->group(function () {
             'destroy' => 'cms.ingredients.destroy',
         ]);
         Route::delete('ingredients/bulk', [IngredientController::class, 'bulkDestroy'])->name('cms.ingredients.bulk-destroy');
+    });
+
+    // Ad Placements Management
+    Route::middleware('permission:settings.view')->group(function () {
+        Route::get('ad-placements', [AdPlacementController::class, 'index'])->name('cms.ad-placements.index');
+        Route::post('ad-placements', [AdPlacementController::class, 'store'])->name('cms.ad-placements.store');
+        Route::delete('ad-placements/bulk', [AdPlacementController::class, 'bulkDestroy'])->name('cms.ad-placements.bulk-destroy');
+        Route::get('ad-placements/{adPlacement}/edit', [AdPlacementController::class, 'edit'])->name('cms.ad-placements.edit');
+        Route::put('ad-placements/{adPlacement}', [AdPlacementController::class, 'update'])->name('cms.ad-placements.update');
+        Route::delete('ad-placements/{adPlacement}', [AdPlacementController::class, 'destroy'])->name('cms.ad-placements.destroy');
     });
 
     // Workflow Routes

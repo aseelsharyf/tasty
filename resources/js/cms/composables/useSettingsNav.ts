@@ -14,6 +14,7 @@ export function useSettingsNav() {
         { label: 'Sections', icon: 'i-lucide-layers', to: cmsPath('/settings/section-categories') },
         { label: 'Units', icon: 'i-lucide-scale', to: cmsPath('/units') },
         { label: 'Ingredients', icon: 'i-lucide-carrot', to: cmsPath('/ingredients') },
+        { label: 'Ad Placements', icon: 'i-lucide-megaphone', to: cmsPath('/ad-placements') },
     ]];
 
     return {
