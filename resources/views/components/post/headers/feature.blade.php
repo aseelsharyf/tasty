@@ -9,6 +9,15 @@
     $anchor = $post->featured_image_anchor ?? ['x' => 50, 'y' => 0];
     $objectPosition = ($anchor['x'] ?? 50) . '% ' . ($anchor['y'] ?? 50) . '%';
 
+    // Safe route helper for CMS_ONLY mode
+    $safeRoute = function($name, $params = []) {
+        try {
+            return route($name, $params);
+        } catch (\Symfony\Component\Routing\Exception\RouteNotFoundException $e) {
+            return '#';
+        }
+    };
+
     // Cover video handling
     $coverVideo = $post->coverVideo;
     $hasVideo = $coverVideo !== null;
@@ -148,7 +157,7 @@
                 <div class="flex items-center justify-center gap-5 text-[14px] leading-[12px] uppercase text-tasty-blue-black font-sans">
                     <span>tasty feature</span>
                     <span>&bull;</span>
-                    <a href="{{ route('category.show', $category->slug) }}" class="hover:underline">
+                    <a href="{{ $safeRoute('category.show', $category->slug) }}" class="hover:underline">
                         {{ $category->name }}
                     </a>
                 </div>
