@@ -159,7 +159,7 @@
                 @if($includeMeta)
                     <div class="flex flex-col gap-8">
                         {{-- Sponsor Badge --}}
-                        <x-article.sponsor-badge :sponsor="$post->sponsor" />
+                        {{-- <x-article.sponsor-badge :sponsor="$post->sponsor" /> --}}
 
                         {{-- Author/Photographer/Date Row --}}
                         <div class="flex items-center gap-5 text-[14px] leading-[12px] uppercase text-tasty-blue-black font-sans flex-wrap">

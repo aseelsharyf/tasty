@@ -8,6 +8,7 @@
 @php
     $url = request()->url();
     $sponsor = $post->sponsor;
+    $sponsorLabel = $sponsor?->label ?: __('Supported by');
 @endphp
 
 <div class="pt-16">
@@ -16,7 +17,7 @@
             @if($showSponsor && $sponsor)
                 {{-- Sponsor Badge --}}
                 <div class="bg-white px-6 py-3 rounded-full flex items-center gap-5">
-                    <span class="font-sans text-[20px] leading-[26px] font-normal text-tasty-blue-black">Powered by</span>
+                    <span class="font-sans text-[20px] leading-[26px] font-normal text-tasty-blue-black">{{ $sponsorLabel }}</span>
                     @if($sponsor->featuredMedia)
                         <a href="{{ $sponsor->url }}" target="_blank" rel="noopener noreferrer">
                             <img src="{{ $sponsor->featuredMedia->url }}" alt="{{ $sponsor->name }}" class="max-w-[204px] max-h-[51px] object-contain" />

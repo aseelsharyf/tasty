@@ -108,10 +108,16 @@ class SponsorController extends Controller
             $url = array_filter($url, fn ($v) => $v !== null && $v !== '');
         }
 
+        $label = $validated['label'] ?? null;
+        if (is_array($label)) {
+            $label = array_filter($label, fn ($v) => $v !== null && $v !== '');
+        }
+
         Sponsor::create([
             'name' => $name,
             'slug' => $validated['slug'] ?? null,
             'url' => $url,
+            'label' => $label,
             'featured_media_id' => $validated['featured_media_id'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
             'order' => $validated['order'] ?? 0,
@@ -134,6 +140,8 @@ class SponsorController extends Controller
             'slug' => $sponsor->slug,
             'url' => $sponsor->url,
             'url_translations' => $sponsor->getTranslations('url'),
+            'label' => $sponsor->label,
+            'label_translations' => $sponsor->getTranslations('label'),
             'featured_media_id' => $sponsor->featured_media_id,
             'featured_media' => $sponsor->featuredMedia ? [
                 'id' => $sponsor->featuredMedia->id,
@@ -183,10 +191,16 @@ class SponsorController extends Controller
             $url = array_filter($url, fn ($v) => $v !== null && $v !== '');
         }
 
+        $label = $validated['label'] ?? $sponsor->getTranslations('label');
+        if (is_array($label)) {
+            $label = array_filter($label, fn ($v) => $v !== null && $v !== '');
+        }
+
         $sponsor->update([
             'name' => $name,
             'slug' => $validated['slug'] ?? $sponsor->slug,
             'url' => $url,
+            'label' => $label,
             'featured_media_id' => $validated['featured_media_id'] ?? $sponsor->featured_media_id,
             'is_active' => $validated['is_active'] ?? $sponsor->is_active,
             'order' => $validated['order'] ?? $sponsor->order,

@@ -15,13 +15,14 @@ class Sponsor extends Model
 {
     use HasFactory, HasTranslations, HasUuid;
 
-    public array $translatable = ['name', 'url'];
+    public array $translatable = ['name', 'url', 'label'];
 
     protected $fillable = [
         'uuid',
         'name',
         'slug',
         'url',
+        'label',
         'featured_media_id',
         'is_active',
         'order',

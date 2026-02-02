@@ -33,6 +33,8 @@ class UpdateSponsorRequest extends FormRequest
             ],
             'url' => ['nullable'],
             'url.*' => ['nullable', 'string', 'url', 'max:500'],
+            'label' => ['nullable'],
+            'label.*' => ['nullable', 'string', 'max:255'],
             'featured_media_id' => ['nullable', 'integer', 'exists:media_items,id'],
             'is_active' => ['nullable', 'boolean'],
             'order' => ['nullable', 'integer', 'min:0'],

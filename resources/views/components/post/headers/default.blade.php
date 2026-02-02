@@ -178,7 +178,7 @@
                 </div>
 
                 {{-- Sponsor Badge --}}
-                <x-article.sponsor-badge :sponsor="$post->sponsor" />
+                {{-- <x-article.sponsor-badge :sponsor="$post->sponsor" /> --}}
             </div>
         </div>
     </div>

@@ -21,6 +21,8 @@ interface SponsorWithTranslations {
     name_translations?: Record<string, string>;
     url?: string;
     url_translations?: Record<string, string>;
+    label?: string;
+    label_translations?: Record<string, string>;
     slug?: string;
     featured_media_id?: number | null;
     featured_media?: MediaItem | null;
@@ -61,9 +63,18 @@ function initUrlTranslations(): Record<string, string> {
     return translations;
 }
 
+function initLabelTranslations(): Record<string, string> {
+    const translations: Record<string, string> = {};
+    props.languages.forEach(lang => {
+        translations[lang.code] = props.sponsor?.label_translations?.[lang.code] || '';
+    });
+    return translations;
+}
+
 const form = useForm({
     name: initNameTranslations(),
     url: initUrlTranslations(),
+    label: initLabelTranslations(),
     slug: props.sponsor?.slug || '',
     featured_media_id: props.sponsor?.featured_media_id || null as number | null,
     is_active: props.sponsor?.is_active ?? true,
@@ -113,11 +124,15 @@ function onSubmit() {
     const urlData = Object.fromEntries(
         Object.entries(form.url).filter(([_, v]) => v?.trim())
     );
+    const labelData = Object.fromEntries(
+        Object.entries(form.label).filter(([_, v]) => v?.trim())
+    );
 
     // Transform form data for submission
     form.transform(() => ({
         name: nameData,
         url: urlData,
+        label: labelData,
         slug: form.slug,
         featured_media_id: form.featured_media_id,
         is_active: form.is_active,
@@ -150,6 +165,7 @@ function reset() {
     props.languages.forEach(lang => {
         form.name[lang.code] = '';
         form.url[lang.code] = '';
+        form.label[lang.code] = '';
     });
     form.slug = '';
     form.featured_media_id = null;
@@ -166,6 +182,7 @@ watch(() => props.sponsor, (newSponsor) => {
         props.languages.forEach(lang => {
             form.name[lang.code] = newSponsor.name_translations?.[lang.code] || '';
             form.url[lang.code] = newSponsor.url_translations?.[lang.code] || '';
+            form.label[lang.code] = newSponsor.label_translations?.[lang.code] || '';
         });
         form.slug = newSponsor.slug || '';
         form.featured_media_id = newSponsor.featured_media_id || null;
@@ -251,6 +268,32 @@ defineExpose({ reset, form });
                 v-else
                 v-model="form.name[activeTab]"
                 :placeholder="languages.length > 1 ? `Enter sponsor name in ${languages.find(l => l.code === activeTab)?.name}` : 'e.g., Acme Corp'"
+                class="w-full"
+                :dir="isCurrentRtl ? 'rtl' : 'ltr'"
+                :disabled="form.processing"
+            />
+        </UFormField>
+
+        <!-- Display Label (per language) -->
+        <UFormField
+            :label="languages.length > 1 ? `Display Label (${languages.find(l => l.code === activeTab)?.native_name || activeTab})` : 'Display Label'"
+            name="label"
+            :error="form.errors[`label.${activeTab}`] || form.errors.label"
+            help="Text shown before sponsor name on posts (e.g., 'In Partnership with', 'Sponsored by'). Defaults to 'Supported by' if empty."
+        >
+            <DhivehiInput
+                v-if="isDhivehi"
+                v-model="form.label[activeTab]"
+                placeholder="ސްޕޮންސަރ ކުރީ"
+                :disabled="form.processing"
+                :default-enabled="true"
+                :show-toggle="false"
+                class="w-full"
+            />
+            <UInput
+                v-else
+                v-model="form.label[activeTab]"
+                :placeholder="languages.length > 1 ? `e.g., In Partnership with, Sponsored by` : 'e.g., In Partnership with, Sponsored by'"
                 class="w-full"
                 :dir="isCurrentRtl ? 'rtl' : 'ltr'"
                 :disabled="form.processing"
