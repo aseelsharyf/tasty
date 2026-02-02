@@ -477,7 +477,7 @@ Route::middleware(['auth', 'cms'])->group(function () {
     });
 
     // Ad Placements Management
-    Route::middleware('permission:settings.view')->group(function () {
+    Route::middleware('permission:settings.view')->prefix('settings')->group(function () {
         Route::get('ad-placements', [AdPlacementController::class, 'index'])->name('cms.ad-placements.index');
         Route::post('ad-placements', [AdPlacementController::class, 'store'])->name('cms.ad-placements.store');
         Route::delete('ad-placements/bulk', [AdPlacementController::class, 'bulkDestroy'])->name('cms.ad-placements.bulk-destroy');

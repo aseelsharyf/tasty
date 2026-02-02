@@ -124,7 +124,7 @@ function bulkDelete() {
     if (selectedIds.value.length === 0) return;
 
     bulkDeleting.value = true;
-    router.delete(cmsPath('/ad-placements/bulk'), {
+    router.delete(cmsPath('/settings/ad-placements/bulk'), {
         data: { ids: selectedIds.value },
         onSuccess: () => {
             bulkDeleteModalOpen.value = false;
@@ -137,7 +137,7 @@ function bulkDelete() {
 }
 
 function onSearch() {
-    router.get(cmsPath('/ad-placements'), {
+    router.get(cmsPath('/settings/ad-placements'), {
         search: search.value || undefined,
         sort: props.filters.sort,
         direction: props.filters.direction,
@@ -218,7 +218,7 @@ function saveAdPlacement() {
     saving.value = true;
     formErrors.value = {};
 
-    router.post(cmsPath('/ad-placements'), form.value, {
+    router.post(cmsPath('/settings/ad-placements'), form.value, {
         onSuccess: () => {
             createModalOpen.value = false;
         },
@@ -253,7 +253,7 @@ function updateAdPlacement() {
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get(cmsPath('/ad-placements'), {
+    router.get(cmsPath('/settings/ad-placements'), {
         search: search.value || undefined,
         sort: field,
         direction: newDirection,
@@ -521,7 +521,7 @@ const columns: TableColumn<AdPlacement>[] = [
                         :page="adPlacements.current_page"
                         :total="adPlacements.total"
                         :items-per-page="adPlacements.per_page"
-                        @update:page="(page) => router.get(cmsPath('/ad-placements'), { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/settings/ad-placements'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 

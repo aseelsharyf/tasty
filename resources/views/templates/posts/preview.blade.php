@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.preview')
 
 @section('content')
     @include('templates.posts.article', [

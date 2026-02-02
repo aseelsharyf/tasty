@@ -2931,6 +2931,7 @@ function openDiff() {
                                         value-key="value"
                                         placeholder="Add sponsor"
                                         searchable
+                                        :clear="!isReadOnly"
                                         size="md"
                                         :disabled="isReadOnly"
                                         :ui="{ content: 'min-w-56' }"

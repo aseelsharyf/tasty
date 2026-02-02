@@ -532,6 +532,11 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
                     to: cms('/ingredients'),
                     icon: 'i-lucide-carrot',
                 },
+                {
+                    label: 'Ad Placements',
+                    to: cms('/settings/ad-placements'),
+                    icon: 'i-lucide-megaphone',
+                },
             ],
         });
     }
