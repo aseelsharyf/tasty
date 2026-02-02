@@ -2,11 +2,13 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { PageProps } from '../../types';
 import type { DropdownMenuItem } from '@nuxt/ui';
 
 const page = usePage<PageProps>();
 const user = computed(() => page.props.auth?.user);
+const { cmsPath } = useCmsPath();
 
 interface PostsByType {
     type: string;
@@ -93,7 +95,7 @@ async function createPostOfType(postType: string) {
     isCreatingPost.value = true;
 
     try {
-        const response = await fetch('/cms/posts/quick-draft', {
+        const response = await fetch(cmsPath('/posts/quick-draft'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -165,7 +167,7 @@ function formatRelativeDate(dateString: string): string {
 }
 
 function editPost(post: Post) {
-    router.visit(`/cms/posts/${post.language_code}/${post.uuid}/edit`);
+    router.visit(cmsPath(`/posts/${post.language_code}/${post.uuid}/edit`));
 }
 
 // Chart data for posts per day
@@ -379,7 +381,7 @@ function getBarHeight(count: number): string {
                             </div>
 
                             <div v-if="pendingReview.length > 0" class="pt-4 mt-2 border-t border-default">
-                                <Link href="/cms/posts/en?workflow_status=review">
+                                <Link :href="cmsPath('/posts/en?workflow_status=review')">
                                     <UButton
                                         color="neutral"
                                         variant="ghost"
@@ -451,7 +453,7 @@ function getBarHeight(count: number): string {
                             </div>
 
                             <div v-if="stats.top_writers.length > 0" class="pt-4 mt-2 border-t border-default">
-                                <Link href="/cms/targets">
+                                <Link :href="cmsPath('/targets')">
                                     <UButton
                                         color="neutral"
                                         variant="ghost"

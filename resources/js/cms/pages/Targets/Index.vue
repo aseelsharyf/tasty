@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { NavigationMenuItem } from '@nuxt/ui';
 
 interface TargetProgress {
@@ -49,33 +50,35 @@ const props = defineProps<{
     isAdmin: boolean;
 }>();
 
+const { cmsPath } = useCmsPath();
+
 // Period navigation
 const periodLinks = computed<NavigationMenuItem[][]>(() => [[
     {
         label: 'Weekly',
         icon: 'i-lucide-calendar-days',
-        to: '/cms/targets?period=weekly',
+        to: cmsPath('/targets?period=weekly'),
         active: props.periodType === 'weekly',
         onSelect: () => changePeriod('weekly'),
     },
     {
         label: 'Monthly',
         icon: 'i-lucide-calendar',
-        to: '/cms/targets?period=monthly',
+        to: cmsPath('/targets?period=monthly'),
         active: props.periodType === 'monthly',
         onSelect: () => changePeriod('monthly'),
     },
     {
         label: 'Yearly',
         icon: 'i-lucide-calendar-range',
-        to: '/cms/targets?period=yearly',
+        to: cmsPath('/targets?period=yearly'),
         active: props.periodType === 'yearly',
         onSelect: () => changePeriod('yearly'),
     },
 ]]);
 
 function changePeriod(value: string) {
-    router.get('/cms/targets', { period: value }, { preserveState: true });
+    router.get(cmsPath('/targets'), { period: value }, { preserveState: true });
 }
 
 // Writers with targets (filter out those without targets)
@@ -121,7 +124,7 @@ async function submitAssignment() {
 
     savingAssignment.value = true;
     try {
-        await router.post(`/cms/targets/assign/${selectedWriterForTarget.value.uuid}`, assignForm.value, {
+        await router.post(cmsPath(`/targets/assign/${selectedWriterForTarget.value.uuid}`), assignForm.value, {
             preserveScroll: true,
             onSuccess: () => {
                 showAssignModal.value = false;
@@ -147,7 +150,7 @@ async function confirmDelete() {
 
     deleting.value = true;
     try {
-        await router.delete(`/cms/targets/${targetToDelete.value.target.id}`, {
+        await router.delete(cmsPath(`/targets/${targetToDelete.value.target.id}`), {
             preserveScroll: true,
             onSuccess: () => {
                 showDeleteModal.value = false;

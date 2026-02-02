@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { useCmsPath } from '../composables/useCmsPath';
 
 interface Tag {
     id: number;
@@ -35,6 +36,8 @@ const isOpen = computed({
     get: () => props.open,
     set: (value) => emit('update:open', value),
 });
+
+const { cmsPath } = useCmsPath();
 
 // Form state
 const title = ref('');
@@ -144,7 +147,7 @@ async function submit() {
         data.tag_mode = tagMode.value;
     }
 
-    router.post('/cms/media/bulk-update', data, {
+    router.post(cmsPath('/media/bulk-update'), data, {
         preserveScroll: true,
         onSuccess: () => {
             isSubmitting.value = false;

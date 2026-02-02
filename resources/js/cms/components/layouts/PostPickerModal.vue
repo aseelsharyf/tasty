@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { PostSearchResult } from '../../types';
+
+const { cmsPath } = useCmsPath();
 
 const props = defineProps<{
     open: boolean;
@@ -60,7 +63,7 @@ async function searchPosts() {
             params.set('sectionType', props.sectionType);
         }
 
-        const response = await fetch(`/cms/layouts/homepage/search-posts?${params.toString()}`);
+        const response = await fetch(cmsPath(`/layouts/homepage/search-posts?${params.toString()}`));
 
         if (!response.ok) {
             throw new Error('Failed to fetch posts');

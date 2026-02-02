@@ -3,9 +3,11 @@ import { Head, useForm, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { useSettingsNav } from '../../composables/useSettingsNav';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { BreadcrumbItem } from '@nuxt/ui';
 
 const { mainNav: settingsNav } = useSettingsNav();
+const { cmsPath } = useCmsPath();
 
 interface Language {
     id: number;
@@ -58,7 +60,7 @@ function openAddModal() {
 }
 
 function addLanguage() {
-    newLanguageForm.post('/cms/settings/languages', {
+    newLanguageForm.post(cmsPath('/settings/languages'), {
         onSuccess: () => {
             addLanguageModal.value = false;
         },
@@ -79,7 +81,7 @@ function openEditModal(language: Language) {
 function updateLanguage() {
     if (!languageToEdit.value) return;
 
-    editLanguageForm.put(`/cms/settings/languages/${languageToEdit.value.code}`, {
+    editLanguageForm.put(cmsPath(`/settings/languages/${languageToEdit.value.code}`), {
         onSuccess: () => {
             editLanguageModal.value = false;
             languageToEdit.value = null;
@@ -95,7 +97,7 @@ function openDeleteModal(language: Language) {
 function deleteLanguage() {
     if (!languageToDelete.value) return;
 
-    router.delete(`/cms/settings/languages/${languageToDelete.value.code}`, {
+    router.delete(cmsPath(`/settings/languages/${languageToDelete.value.code}`), {
         onSuccess: () => {
             deleteLanguageModal.value = false;
             languageToDelete.value = null;
@@ -104,21 +106,21 @@ function deleteLanguage() {
 }
 
 function setAsDefault(language: Language) {
-    router.put(`/cms/settings/languages/${language.code}`, {
+    router.put(cmsPath(`/settings/languages/${language.code}`), {
         ...language,
         is_default: true,
     });
 }
 
 function toggleActive(language: Language) {
-    router.put(`/cms/settings/languages/${language.code}`, {
+    router.put(cmsPath(`/settings/languages/${language.code}`), {
         ...language,
         is_active: !language.is_active,
     });
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { label: 'Settings', to: '/cms/settings' },
+    { label: 'Settings', to: cmsPath('/settings') },
     { label: 'Languages' },
 ];
 

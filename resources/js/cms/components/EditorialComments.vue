@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
+import { useCmsPath } from '../composables/useCmsPath';
 
 interface User {
     id: number;
@@ -30,6 +31,8 @@ const emit = defineEmits<{
     (e: 'comment-resolved', comment: Comment): void;
 }>();
 
+const { cmsPath } = useCmsPath();
+
 const loading = ref(false);
 const comments = ref<Comment[]>([]);
 const newComment = ref('');
@@ -57,7 +60,7 @@ async function fetchComments() {
 
     loading.value = true;
     try {
-        const response = await axios.get(`/cms/workflow/versions/${props.versionUuid}/comments`);
+        const response = await axios.get(cmsPath(`/workflow/versions/${props.versionUuid}/comments`));
         comments.value = response.data.comments;
     } catch (error) {
         console.error('Failed to fetch comments:', error);
@@ -71,7 +74,7 @@ async function addComment() {
 
     submitting.value = true;
     try {
-        const response = await axios.post(`/cms/workflow/versions/${props.versionUuid}/comments`, {
+        const response = await axios.post(cmsPath(`/workflow/versions/${props.versionUuid}/comments`), {
             content: newComment.value,
             type: commentType.value,
         });
@@ -89,7 +92,7 @@ async function addComment() {
 
 async function resolveComment(comment: Comment) {
     try {
-        await axios.post(`/cms/workflow/comments/${comment.uuid}/resolve`);
+        await axios.post(cmsPath(`/workflow/comments/${comment.uuid}/resolve`));
         comment.is_resolved = true;
         emit('comment-resolved', comment);
     } catch (error) {
@@ -99,7 +102,7 @@ async function resolveComment(comment: Comment) {
 
 async function unresolveComment(comment: Comment) {
     try {
-        await axios.post(`/cms/workflow/comments/${comment.uuid}/unresolve`);
+        await axios.post(cmsPath(`/workflow/comments/${comment.uuid}/unresolve`));
         comment.is_resolved = false;
     } catch (error) {
         console.error('Failed to unresolve comment:', error);

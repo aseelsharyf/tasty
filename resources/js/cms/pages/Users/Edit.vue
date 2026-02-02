@@ -2,6 +2,7 @@
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { User, Role } from '../../types';
 import type { BreadcrumbItem } from '@nuxt/ui';
 
@@ -9,6 +10,8 @@ const props = defineProps<{
     user: User;
     roles: Role[];
 }>();
+
+const { cmsPath } = useCmsPath();
 
 const form = useForm({
     name: props.user.name,
@@ -69,15 +72,15 @@ function onSubmit() {
     form.transform((data) => ({
         ...data,
         _method: 'put',
-    })).post(`/cms/users/${props.user.uuid}`, {
+    })).post(cmsPath(`/users/${props.user.uuid}`), {
         forceFormData: true,
     });
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { label: 'Users', to: '/cms/users' },
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+    { label: 'Users', to: cmsPath('/users') },
     { label: props.user.name },
-];
+]);
 </script>
 
 <template>
@@ -119,7 +122,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
                             <div class="flex gap-2 lg:ms-auto">
                                 <UButton
-                                    :to="'/cms/users'"
+                                    :to="cmsPath('/users')"
                                     color="neutral"
                                     variant="ghost"
                                 >

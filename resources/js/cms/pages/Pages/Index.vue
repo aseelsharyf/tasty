@@ -3,6 +3,7 @@ import { Head, router, Link } from '@inertiajs/vue3';
 import { ref, computed, h, resolveComponent } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Page, PaginatedResponse, Language } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
@@ -26,6 +27,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const UButton = resolveComponent('UButton');
 const UBadge = resolveComponent('UBadge');
@@ -67,7 +69,7 @@ function bulkDelete() {
     if (selectedIds.value.length === 0) return;
 
     bulkDeleting.value = true;
-    router.delete(`/cms/pages/${props.currentLanguage.code}/bulk`, {
+    router.delete(cmsPath(`/pages/${props.currentLanguage.code}/bulk`), {
         data: { ids: selectedIds.value },
         onSuccess: () => {
             bulkDeleteModalOpen.value = false;
@@ -80,7 +82,7 @@ function bulkDelete() {
 }
 
 function applyFilters() {
-    router.get(`/cms/pages/${props.currentLanguage.code}`, {
+    router.get(cmsPath(`/pages/${props.currentLanguage.code}`), {
         search: search.value || undefined,
         status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
     }, {
@@ -96,7 +98,7 @@ function clearSearch() {
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get(`/cms/pages/${props.currentLanguage.code}`, {
+    router.get(cmsPath(`/pages/${props.currentLanguage.code}`), {
         search: search.value || undefined,
         status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
         sort: field,
@@ -114,7 +116,7 @@ function confirmDelete(page: Page) {
 
 function deletePage() {
     if (pageToDelete.value) {
-        router.delete(`/cms/pages/${props.currentLanguage.code}/${pageToDelete.value.uuid}`, {
+        router.delete(cmsPath(`/pages/${props.currentLanguage.code}/${pageToDelete.value.uuid}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 pageToDelete.value = null;
@@ -131,7 +133,7 @@ function getRowActions(row: Page) {
             {
                 label: 'Edit',
                 icon: 'i-lucide-pencil',
-                onSelect: () => router.visit(`/cms/pages/${props.currentLanguage.code}/${row.uuid}/edit`),
+                onSelect: () => router.visit(cmsPath(`/pages/${props.currentLanguage.code}/${row.uuid}/edit`)),
             },
         ]);
     }
@@ -306,7 +308,7 @@ const languageOptions = computed(() =>
 );
 
 function switchLanguage(code: string) {
-    router.visit(`/cms/pages/${code}`);
+    router.visit(cmsPath(`/pages/${code}`));
 }
 </script>
 
@@ -337,7 +339,7 @@ function switchLanguage(code: string) {
                             </USelectMenu>
                             <Link
                                 v-if="can('pages.create')"
-                                :href="`/cms/pages/${currentLanguage.code}/create`"
+                                :href="cmsPath(`/pages/${currentLanguage.code}/create`)"
                             >
                                 <UButton icon="i-lucide-plus">
                                     Add Page
@@ -441,7 +443,7 @@ function switchLanguage(code: string) {
                         :page="pages.current_page"
                         :total="pages.total"
                         :items-per-page="pages.per_page"
-                        @update:page="(page) => router.get(`/cms/pages/${currentLanguage.code}`, { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath(`/pages/${currentLanguage.code}`), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 
@@ -451,7 +453,7 @@ function switchLanguage(code: string) {
                     <p>No pages found.</p>
                     <Link
                         v-if="can('pages.create')"
-                        :href="`/cms/pages/${currentLanguage.code}/create`"
+                        :href="cmsPath(`/pages/${currentLanguage.code}/create`)"
                         class="inline-block mt-4"
                     >
                         <UButton variant="outline">

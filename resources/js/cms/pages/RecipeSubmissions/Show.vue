@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 
 interface Ingredient {
     ingredient: string;
@@ -83,6 +84,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const processing = ref(false);
 const actionNotes = ref('');
@@ -113,7 +115,7 @@ function getStatusColor(status: string): 'warning' | 'success' | 'error' | 'info
 
 function approve() {
     processing.value = true;
-    router.post(`/cms/recipe-submissions/${props.submission.uuid}/approve`, {
+    router.post(cmsPath(`/recipe-submissions/${props.submission.uuid}/approve`), {
         notes: actionNotes.value,
     }, {
         onFinish: () => {
@@ -125,7 +127,7 @@ function approve() {
 
 function reject() {
     processing.value = true;
-    router.post(`/cms/recipe-submissions/${props.submission.uuid}/reject`, {
+    router.post(cmsPath(`/recipe-submissions/${props.submission.uuid}/reject`), {
         notes: actionNotes.value,
     }, {
         onFinish: () => {
@@ -143,7 +145,7 @@ function openConvertModal() {
 
 function convertToPost() {
     processing.value = true;
-    router.post(`/cms/recipe-submissions/${props.submission.uuid}/convert`, {
+    router.post(cmsPath(`/recipe-submissions/${props.submission.uuid}/convert`), {
         language_code: selectedLanguage.value,
         author_id: authorMode.value === 'existing' ? selectedAuthorId.value : null,
         create_author: authorMode.value === 'create',
@@ -157,12 +159,12 @@ function convertToPost() {
 
 function deleteSubmission() {
     if (confirm('Are you sure you want to delete this submission? This cannot be undone.')) {
-        router.delete(`/cms/recipe-submissions/${props.submission.uuid}`);
+        router.delete(cmsPath(`/recipe-submissions/${props.submission.uuid}`));
     }
 }
 
 function goBack() {
-    router.get('/cms/recipe-submissions');
+    router.get(cmsPath('/recipe-submissions'));
 }
 
 function formatIngredient(item: Ingredient): string {
@@ -226,7 +228,7 @@ function formatIngredient(item: Ingredient): string {
                                 color="info"
                                 variant="soft"
                                 icon="i-lucide-external-link"
-                                :href="`/cms/posts/en/${submission.converted_post.uuid}/edit`"
+                                :href="cmsPath(`/posts/en/${submission.converted_post.uuid}/edit`)"
                             >
                                 View Post
                             </UButton>

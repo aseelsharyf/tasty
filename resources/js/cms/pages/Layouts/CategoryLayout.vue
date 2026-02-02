@@ -4,6 +4,7 @@ import { ref, computed, watch } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import HomepageSectionList from '../../components/layouts/HomepageSectionList.vue';
 import SectionTypePicker from '../../components/layouts/SectionTypePicker.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { BreadcrumbItem } from '@nuxt/ui';
 import type { HomepageSection, HomepageConfiguration, SectionTypeDefinition } from '../../types';
 
@@ -22,6 +23,8 @@ const props = defineProps<{
     hasExistingLayout: boolean;
 }>();
 
+const { cmsPath } = useCmsPath();
+
 const form = useForm({
     sections: JSON.parse(JSON.stringify(props.configuration.sections)) as HomepageSection[],
     useCustomLayout: props.useCustomLayout,
@@ -37,11 +40,11 @@ const hasChanges = computed(() => {
     return sectionsChanged || layoutModeChanged;
 });
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { label: 'Layouts', to: '/cms/layouts' },
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+    { label: 'Layouts', to: cmsPath('/layouts') },
     { label: 'Categories' },
     { label: props.category.name },
-];
+]);
 
 const toast = useToast();
 
@@ -133,7 +136,7 @@ function updateSections(sections: HomepageSection[]) {
 
 function saveChanges() {
     isSaving.value = true;
-    form.put(`/cms/layouts/categories/${props.category.uuid}`, {
+    form.put(cmsPath(`/layouts/categories/${props.category.uuid}`), {
         preserveScroll: true,
         onSuccess: () => {
             toast.add({ title: 'Saved', description: 'Category layout updated successfully.', color: 'success' });

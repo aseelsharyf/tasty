@@ -3,6 +3,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { useSettingsNav } from '../../composables/useSettingsNav';
+import { useCmsPath } from '../../composables/useCmsPath';
 
 interface Section {
     type: string;
@@ -31,6 +32,7 @@ const props = defineProps<{
 }>();
 
 const { mainNav } = useSettingsNav();
+const { cmsPath } = useCmsPath();
 
 // Initialize form with current mappings (convert to array of IDs)
 const initialMappings: Record<string, number[]> = {};
@@ -74,7 +76,7 @@ function getCategoryName(categoryId: number): string {
 }
 
 function onSubmit() {
-    form.put('/cms/settings/section-categories', {
+    form.put(cmsPath('/settings/section-categories'), {
         preserveScroll: true,
     });
 }

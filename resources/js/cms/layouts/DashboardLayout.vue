@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { usePermission } from '../composables/usePermission';
 import { useSidebar } from '../composables/useSidebar';
+import { useCmsPath } from '../composables/useCmsPath';
 import TastyLogo from '../components/TastyLogo.vue';
 import type { PageProps } from '../types';
 import type { NavigationMenuItem, DropdownMenuItem, CommandPaletteItem, CommandPaletteGroup } from '@nuxt/ui';
@@ -49,13 +50,17 @@ function dismissToast() {
 }
 
 const { can } = usePermission();
+const { cmsPath, basePath } = useCmsPath();
+
+// Shorthand for CMS path - use cms('/posts') instead of '/cms/posts'
+const cms = (path: string) => cmsPath(path);
 
 // Languages for navigation
 const languages = ref<Language[]>([]);
 
 async function fetchLanguages() {
     try {
-        const response = await fetch('/cms/languages');
+        const response = await fetch(cmsPath('/languages'));
         languages.value = await response.json();
     } catch (error) {
         console.error('Failed to fetch languages:', error);
@@ -72,15 +77,17 @@ const sidebarCollapsed = ref(false);
 // Use shared sidebar state
 const { isHidden: sidebarHidden } = useSidebar();
 
-// Helper to check if current URL matches
+// Helper to check if current URL matches (automatically handles CMS base path)
 function isActive(path: string, exact = false): boolean {
+    // Convert path to full CMS path
+    const fullPath = cms(path);
     // Parse the path and current URL to handle query parameters
-    const [pathBase, pathQuery] = path.split('?');
+    const [pathBase, pathQuery] = fullPath.split('?');
     const [urlBase, urlQuery] = page.url.split('?');
 
     if (exact) {
         // For exact match, compare both base and query string
-        return page.url === path;
+        return page.url === fullPath;
     }
 
     // If path has query params, check if current URL has same base and query params
@@ -95,8 +102,9 @@ function isActive(path: string, exact = false): boolean {
 
 // Check if URL starts with path (for parent menu items)
 function isActivePrefix(path: string): boolean {
+    const fullPath = cms(path);
     const [urlBase] = page.url.split('?');
-    return urlBase.startsWith(path);
+    return urlBase.startsWith(fullPath);
 }
 
 // Build navigation items based on permissions
@@ -105,15 +113,15 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => {
         {
             label: 'Dashboard',
             icon: 'i-lucide-layout-dashboard',
-            to: '/cms',
-            active: isActive('/cms', true),
+            to: cms('/'),
+            active: isActive('/', true),
             onSelect: () => { sidebarOpen.value = false; },
         },
         {
             label: 'Targets',
             icon: 'i-lucide-target',
-            to: '/cms/targets',
-            active: isActivePrefix('/cms/targets'),
+            to: cms('/targets'),
+            active: isActivePrefix('/targets'),
             onSelect: () => { sidebarOpen.value = false; },
         },
     ];
@@ -127,25 +135,25 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => {
         // Generate language-specific post navigation
         const postChildren: NavigationMenuItem[] = languages.value.map((lang) => ({
             label: lang.name,
-            to: `/cms/posts/${lang.code}?status=${defaultPostStatus}`,
+            to: cms(`/posts/${lang.code}?status=${defaultPostStatus}`),
             icon: lang.direction === 'rtl' ? 'i-lucide-align-right' : 'i-lucide-align-left',
-            active: isActivePrefix(`/cms/posts/${lang.code}`),
+            active: isActivePrefix(`/posts/${lang.code}`),
         }));
 
         // Fallback if languages haven't loaded yet
         if (postChildren.length === 0) {
             postChildren.push(
-                { label: 'English', to: `/cms/posts/en?status=${defaultPostStatus}`, icon: 'i-lucide-align-left', active: isActivePrefix('/cms/posts/en') },
-                { label: 'Dhivehi', to: `/cms/posts/dv?status=${defaultPostStatus}`, icon: 'i-lucide-align-right', active: isActivePrefix('/cms/posts/dv') },
+                { label: 'English', to: cms(`/posts/en?status=${defaultPostStatus}`), icon: 'i-lucide-align-left', active: isActivePrefix('/posts/en') },
+                { label: 'Dhivehi', to: cms(`/posts/dv?status=${defaultPostStatus}`), icon: 'i-lucide-align-right', active: isActivePrefix('/posts/dv') },
             );
         }
 
         items.push({
             label: 'Posts',
             icon: 'i-lucide-file-text',
-            to: `/cms/posts/${languages.value.find(l => l.is_default)?.code || 'en'}?status=${defaultPostStatus}`,
-            active: isActivePrefix('/cms/posts'),
-            open: isActivePrefix('/cms/posts'),
+            to: cms(`/posts/${languages.value.find(l => l.is_default)?.code || 'en'}?status=${defaultPostStatus}`),
+            active: isActivePrefix('/posts'),
+            open: isActivePrefix('/posts'),
             children: postChildren,
         });
     }
@@ -154,19 +162,19 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => {
         const mediaChildren: NavigationMenuItem[] = [
             {
                 label: 'All Media',
-                to: '/cms/media',
+                to: cms('/media'),
                 icon: 'i-lucide-grid-3x3',
-                active: isActive('/cms/media', true) || (isActive('/cms/media') && !page.url.includes('type=')),
+                active: isActive('/media', true) || (isActive('/media') && !page.url.includes('type=')),
             },
             {
                 label: 'Images',
-                to: '/cms/media?type=images',
+                to: cms('/media?type=images'),
                 icon: 'i-lucide-image',
                 active: page.url.includes('type=images'),
             },
             {
                 label: 'Videos',
-                to: '/cms/media?type=videos',
+                to: cms('/media?type=videos'),
                 icon: 'i-lucide-video',
                 active: page.url.includes('type=videos'),
             },
@@ -175,9 +183,9 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Media',
             icon: 'i-lucide-image',
-            to: '/cms/media',
-            active: isActivePrefix('/cms/media'),
-            open: isActivePrefix('/cms/media'),
+            to: cms('/media'),
+            active: isActivePrefix('/media'),
+            open: isActivePrefix('/media'),
             children: mediaChildren,
         });
     }
@@ -200,8 +208,8 @@ const taxonomyNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Categories',
             icon: 'i-lucide-folder-tree',
-            to: '/cms/categories',
-            active: isActive('/cms/categories'),
+            to: cms('/categories'),
+            active: isActive('/categories'),
             onSelect: () => { sidebarOpen.value = false; },
         });
     }
@@ -210,8 +218,8 @@ const taxonomyNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Tags',
             icon: 'i-lucide-tags',
-            to: '/cms/tags',
-            active: isActive('/cms/tags'),
+            to: cms('/tags'),
+            active: isActive('/tags'),
             onSelect: () => { sidebarOpen.value = false; },
         });
     }
@@ -220,8 +228,8 @@ const taxonomyNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Sponsors',
             icon: 'i-lucide-handshake',
-            to: '/cms/sponsors',
-            active: isActive('/cms/sponsors'),
+            to: cms('/sponsors'),
+            active: isActive('/sponsors'),
             onSelect: () => { sidebarOpen.value = false; },
         });
     }
@@ -244,8 +252,8 @@ const shopNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Products',
             icon: 'i-lucide-package',
-            to: '/cms/products',
-            active: isActivePrefix('/cms/products'),
+            to: cms('/products'),
+            active: isActivePrefix('/products'),
             onSelect: () => { sidebarOpen.value = false; },
         });
     }
@@ -254,8 +262,8 @@ const shopNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Categories',
             icon: 'i-lucide-boxes',
-            to: '/cms/product-categories',
-            active: isActivePrefix('/cms/product-categories'),
+            to: cms('/product-categories'),
+            active: isActivePrefix('/product-categories'),
             onSelect: () => { sidebarOpen.value = false; },
         });
     }
@@ -264,8 +272,8 @@ const shopNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Clients',
             icon: 'i-lucide-building-2',
-            to: '/cms/product-stores',
-            active: isActivePrefix('/cms/product-stores'),
+            to: cms('/product-stores'),
+            active: isActivePrefix('/product-stores'),
             onSelect: () => { sidebarOpen.value = false; },
         });
     }
@@ -289,8 +297,8 @@ const layoutNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Homepage',
             icon: 'i-lucide-home',
-            to: '/cms/layouts/homepage',
-            active: isActivePrefix('/cms/layouts/homepage'),
+            to: cms('/layouts/homepage'),
+            active: isActivePrefix('/layouts/homepage'),
         });
     }
 
@@ -299,15 +307,15 @@ const layoutNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Layouts',
             icon: 'i-lucide-layout-template',
-            to: '/cms/layouts',
-            active: isActive('/cms/layouts', true) || isActivePrefix('/cms/layouts/categories') || isActivePrefix('/cms/layouts/tags'),
-            open: isActivePrefix('/cms/layouts/categories') || isActivePrefix('/cms/layouts/tags'),
+            to: cms('/layouts'),
+            active: isActive('/layouts', true) || isActivePrefix('/layouts/categories') || isActivePrefix('/layouts/tags'),
+            open: isActivePrefix('/layouts/categories') || isActivePrefix('/layouts/tags'),
             children: [
                 {
                     label: 'Categories & Tags',
-                    to: '/cms/layouts',
+                    to: cms('/layouts'),
                     icon: 'i-lucide-folder-tree',
-                    active: isActive('/cms/layouts', true) || isActivePrefix('/cms/layouts/categories') || isActivePrefix('/cms/layouts/tags'),
+                    active: isActive('/layouts', true) || isActivePrefix('/layouts/categories') || isActivePrefix('/layouts/tags'),
                 },
             ],
         });
@@ -317,25 +325,25 @@ const layoutNavItems = computed<NavigationMenuItem[]>(() => {
         // Generate language-specific page navigation
         const pageChildren: NavigationMenuItem[] = languages.value.map((lang) => ({
             label: lang.name,
-            to: `/cms/pages/${lang.code}`,
+            to: cms(`/pages/${lang.code}`),
             icon: lang.direction === 'rtl' ? 'i-lucide-align-right' : 'i-lucide-align-left',
-            active: isActivePrefix(`/cms/pages/${lang.code}`),
+            active: isActivePrefix(`/pages/${lang.code}`),
         }));
 
         // Fallback if languages haven't loaded yet
         if (pageChildren.length === 0) {
             pageChildren.push(
-                { label: 'English', to: '/cms/pages/en', icon: 'i-lucide-align-left', active: isActivePrefix('/cms/pages/en') },
-                { label: 'Dhivehi', to: '/cms/pages/dv', icon: 'i-lucide-align-right', active: isActivePrefix('/cms/pages/dv') },
+                { label: 'English', to: cms('/pages/en'), icon: 'i-lucide-align-left', active: isActivePrefix('/pages/en') },
+                { label: 'Dhivehi', to: cms('/pages/dv'), icon: 'i-lucide-align-right', active: isActivePrefix('/pages/dv') },
             );
         }
 
         items.push({
             label: 'Pages',
             icon: 'i-lucide-file-text',
-            to: `/cms/pages/${languages.value.find(l => l.is_default)?.code || 'en'}`,
-            active: isActivePrefix('/cms/pages'),
-            open: isActivePrefix('/cms/pages'),
+            to: cms(`/pages/${languages.value.find(l => l.is_default)?.code || 'en'}`),
+            active: isActivePrefix('/pages'),
+            open: isActivePrefix('/pages'),
             children: pageChildren,
         });
     }
@@ -344,8 +352,8 @@ const layoutNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Menus',
             icon: 'i-lucide-menu',
-            to: '/cms/menus',
-            active: isActivePrefix('/cms/menus'),
+            to: cms('/menus'),
+            active: isActivePrefix('/menus'),
             onSelect: () => { sidebarOpen.value = false; },
         });
     }
@@ -369,8 +377,8 @@ const engagementNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Recipe Submissions',
             icon: 'i-lucide-chef-hat',
-            to: '/cms/recipe-submissions',
-            active: isActivePrefix('/cms/recipe-submissions'),
+            to: cms('/recipe-submissions'),
+            active: isActivePrefix('/recipe-submissions'),
             badge: pendingSubmissionsCount.value > 0 ? pendingSubmissionsCount.value.toString() : undefined,
             onSelect: () => { sidebarOpen.value = false; },
         });
@@ -380,31 +388,31 @@ const engagementNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Comments',
             icon: 'i-lucide-message-square',
-            to: '/cms/comments',
-            active: isActivePrefix('/cms/comments'),
-            open: isActivePrefix('/cms/comments'),
+            to: cms('/comments'),
+            active: isActivePrefix('/comments'),
+            open: isActivePrefix('/comments'),
             children: [
                 {
                     label: 'All Comments',
-                    to: '/cms/comments',
+                    to: cms('/comments'),
                     icon: 'i-lucide-messages-square',
-                    active: isActive('/cms/comments', true) || (isActive('/cms/comments') && !page.url.includes('status=')),
+                    active: isActive('/comments', true) || (isActive('/comments') && !page.url.includes('status=')),
                 },
                 {
                     label: 'Moderation Queue',
-                    to: '/cms/comments/queue',
+                    to: cms('/comments/queue'),
                     icon: 'i-lucide-inbox',
-                    active: isActivePrefix('/cms/comments/queue'),
+                    active: isActivePrefix('/comments/queue'),
                 },
                 {
                     label: 'Approved',
-                    to: '/cms/comments?status=approved',
+                    to: cms('/comments?status=approved'),
                     icon: 'i-lucide-check-circle',
                     active: page.url.includes('status=approved'),
                 },
                 {
                     label: 'Spam',
-                    to: '/cms/comments?status=spam',
+                    to: cms('/comments?status=spam'),
                     icon: 'i-lucide-shield-alert',
                     active: page.url.includes('status=spam'),
                 },
@@ -416,8 +424,8 @@ const engagementNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Subscribers',
             icon: 'i-lucide-mail',
-            to: '/cms/subscribers',
-            active: isActivePrefix('/cms/subscribers'),
+            to: cms('/subscribers'),
+            active: isActivePrefix('/subscribers'),
             onSelect: () => { sidebarOpen.value = false; },
         });
     }
@@ -440,7 +448,7 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
         const userChildren: NavigationMenuItem[] = [
             {
                 label: 'All Users',
-                to: '/cms/users',
+                to: cms('/users'),
                 icon: 'i-lucide-users',
             },
         ];
@@ -448,7 +456,7 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
         if (can('users.create')) {
             userChildren.push({
                 label: 'Add New',
-                to: '/cms/users/create',
+                to: cms('/users/create'),
                 icon: 'i-lucide-user-plus',
             });
         }
@@ -456,7 +464,7 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
         if (can('roles.view')) {
             userChildren.push({
                 label: 'Roles & Permissions',
-                to: '/cms/roles',
+                to: cms('/roles'),
                 icon: 'i-lucide-shield',
             });
         }
@@ -464,9 +472,9 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Users',
             icon: 'i-lucide-users',
-            to: '/cms/users',
-            active: isActivePrefix('/cms/users') || isActivePrefix('/cms/roles'),
-            open: isActivePrefix('/cms/users') || isActivePrefix('/cms/roles'),
+            to: cms('/users'),
+            active: isActivePrefix('/users') || isActivePrefix('/roles'),
+            open: isActivePrefix('/users') || isActivePrefix('/roles'),
             children: userChildren,
         });
     }
@@ -475,8 +483,8 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Analytics',
             icon: 'i-lucide-bar-chart-3',
-            to: '/cms/analytics',
-            active: isActive('/cms/analytics'),
+            to: cms('/analytics'),
+            active: isActive('/analytics'),
             onSelect: () => { sidebarOpen.value = false; },
         });
     }
@@ -485,43 +493,43 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Settings',
             icon: 'i-lucide-settings',
-            to: '/cms/settings',
-            active: isActivePrefix('/cms/settings') || isActivePrefix('/cms/units') || isActivePrefix('/cms/ingredients'),
-            open: isActivePrefix('/cms/settings') || isActivePrefix('/cms/units') || isActivePrefix('/cms/ingredients'),
+            to: cms('/settings'),
+            active: isActivePrefix('/settings') || isActivePrefix('/units') || isActivePrefix('/ingredients'),
+            open: isActivePrefix('/settings') || isActivePrefix('/units') || isActivePrefix('/ingredients'),
             children: [
                 {
                     label: 'General',
-                    to: '/cms/settings',
+                    to: cms('/settings'),
                     icon: 'i-lucide-sliders-horizontal',
                 },
                 {
                     label: 'Languages',
-                    to: '/cms/settings/languages',
+                    to: cms('/settings/languages'),
                     icon: 'i-lucide-languages',
                 },
                 {
                     label: 'Post Types',
-                    to: '/cms/settings/post-types',
+                    to: cms('/settings/post-types'),
                     icon: 'i-lucide-file-cog',
                 },
                 {
                     label: 'Media',
-                    to: '/cms/settings/media',
+                    to: cms('/settings/media'),
                     icon: 'i-lucide-crop',
                 },
                 {
                     label: 'Section Categories',
-                    to: '/cms/settings/section-categories',
+                    to: cms('/settings/section-categories'),
                     icon: 'i-lucide-layout-grid',
                 },
                 {
                     label: 'Units',
-                    to: '/cms/units',
+                    to: cms('/units'),
                     icon: 'i-lucide-scale',
                 },
                 {
                     label: 'Ingredients',
-                    to: '/cms/ingredients',
+                    to: cms('/ingredients'),
                     icon: 'i-lucide-carrot',
                 },
             ],
@@ -715,12 +723,12 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
         {
             label: 'Profile',
             icon: 'i-lucide-user',
-            to: '/cms/profile',
+            to: cms('/profile'),
         },
         {
             label: 'Settings',
             icon: 'i-lucide-settings',
-            to: '/cms/settings',
+            to: cms('/settings'),
         },
     ],
     [
@@ -728,7 +736,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
             label: 'Log out',
             icon: 'i-lucide-log-out',
             onSelect: () => {
-                router.post('/cms/logout');
+                router.post(cms('/logout'));
             },
         },
     ],

@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { ProductSearchResult } from '../../types';
+
+const { cmsPath } = useCmsPath();
 
 const props = defineProps<{
     open: boolean;
@@ -56,7 +59,7 @@ async function searchProducts() {
         }
         params.set('limit', '20');
 
-        const response = await fetch(`/cms/layouts/homepage/search-products?${params.toString()}`);
+        const response = await fetch(cmsPath(`/layouts/homepage/search-products?${params.toString()}`));
 
         if (!response.ok) {
             throw new Error('Failed to fetch products');

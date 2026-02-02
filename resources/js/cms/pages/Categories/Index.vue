@@ -5,6 +5,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import CategoryCreateSlideover from '../../components/CategoryCreateSlideover.vue';
 import CategoryEditSlideover from '../../components/CategoryEditSlideover.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Category, CategoryTreeItem, ParentOption, PaginatedResponse, Language } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
@@ -31,6 +32,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const UButton = resolveComponent('UButton');
 const UBadge = resolveComponent('UBadge');
@@ -77,7 +79,7 @@ function bulkDelete() {
     if (selectedIds.value.length === 0) return;
 
     bulkDeleting.value = true;
-    router.delete('/cms/categories/bulk', {
+    router.delete(cmsPath('/categories/bulk'), {
         data: { ids: selectedIds.value },
         onSuccess: () => {
             bulkDeleteModalOpen.value = false;
@@ -90,7 +92,7 @@ function bulkDelete() {
 }
 
 function onSearch() {
-    router.get('/cms/categories', {
+    router.get(cmsPath('/categories'), {
         search: search.value || undefined,
     }, {
         preserveState: true,
@@ -105,7 +107,7 @@ function clearSearch() {
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get('/cms/categories', {
+    router.get(cmsPath('/categories'), {
         search: search.value || undefined,
         sort: field,
         direction: newDirection,
@@ -126,7 +128,7 @@ async function openEditSlideover(category: Category | CategoryTreeItem) {
 
     try {
         // Use fetch to get the category data with translations
-        const response = await fetch(`/cms/categories/${category.uuid}/edit`, {
+        const response = await fetch(cmsPath(`/categories/${category.uuid}/edit`), {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -155,7 +157,7 @@ function onEditClose(updated: boolean) {
 
 function deleteCategory() {
     if (categoryToDelete.value) {
-        router.delete(`/cms/categories/${categoryToDelete.value.uuid}`, {
+        router.delete(cmsPath(`/categories/${categoryToDelete.value.uuid}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 categoryToDelete.value = null;
@@ -177,7 +179,7 @@ function getRowActions(row: Category) {
             {
                 label: 'Layout',
                 icon: 'i-lucide-layout-template',
-                onSelect: () => router.visit(`/cms/layouts/categories/${row.uuid}`),
+                onSelect: () => router.visit(cmsPath(`/layouts/categories/${row.uuid}`)),
             },
         ]);
     }
@@ -515,7 +517,7 @@ const flattenedTree = computed(() => flattenTree(props.tree));
                             :items="[
                                 can('categories.edit') ? [
                                     { label: 'Edit', icon: 'i-lucide-pencil', onSelect: () => openEditSlideover(item) },
-                                    { label: 'Layout', icon: 'i-lucide-layout-template', onSelect: () => router.visit(`/cms/layouts/categories/${item.uuid}`) },
+                                    { label: 'Layout', icon: 'i-lucide-layout-template', onSelect: () => router.visit(cmsPath(`/layouts/categories/${item.uuid}`)) },
                                 ] : [],
                                 can('categories.delete') ? [{ label: 'Delete', icon: 'i-lucide-trash', color: 'error', onSelect: () => confirmDelete(item) }] : [],
                             ].filter(g => g.length > 0)"
@@ -603,7 +605,7 @@ const flattenedTree = computed(() => flattenTree(props.tree));
                             :page="categories.current_page"
                             :total="categories.total"
                             :items-per-page="categories.per_page"
-                            @update:page="(page) => router.get('/cms/categories', { ...filters, page }, { preserveState: true })"
+                            @update:page="(page) => router.get(cmsPath('/categories'), { ...filters, page }, { preserveState: true })"
                         />
                     </div>
 

@@ -4,6 +4,7 @@ import { computed, watch, ref } from 'vue';
 import DhivehiInput from './DhivehiInput.vue';
 import MediaPickerModal from './MediaPickerModal.vue';
 import type { Language } from '../types';
+import { useCmsPath } from '../composables/useCmsPath';
 
 const toast = useToast();
 
@@ -77,6 +78,8 @@ const emit = defineEmits<{
     (e: 'success'): void;
     (e: 'cancel'): void;
 }>();
+
+const { cmsPath } = useCmsPath();
 
 const isEditing = computed(() => props.mode === 'edit' && props.product?.uuid);
 const activeTab = ref(props.languages[0]?.code || 'en');
@@ -233,7 +236,7 @@ function onSubmit() {
     }));
 
     if (isEditing.value && props.product?.uuid) {
-        form.put(`/cms/products/${props.product.uuid}`, {
+        form.put(cmsPath(`/products/${props.product.uuid}`), {
             preserveScroll: true,
             onSuccess: () => {
                 toast.add({
@@ -246,7 +249,7 @@ function onSubmit() {
             },
         });
     } else {
-        form.post('/cms/products', {
+        form.post(cmsPath('/products'), {
             preserveScroll: true,
             onSuccess: () => {
                 toast.add({

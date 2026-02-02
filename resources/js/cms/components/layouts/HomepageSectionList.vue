@@ -6,7 +6,10 @@ import PostPickerModal from './PostPickerModal.vue';
 import ProductPickerModal from './ProductPickerModal.vue';
 import SectionPreview from './SectionPreview.vue';
 import MediaPickerModal from '../MediaPickerModal.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { HomepageSection, SectionTypeDefinition, HomepageSectionSlot, PostSearchResult, ProductSearchResult, LayoutContext } from '../../types';
+
+const { cmsPath } = useCmsPath();
 
 const props = defineProps<{
     modelValue: HomepageSection[];
@@ -92,7 +95,7 @@ async function fetchAssignedPosts() {
 
     try {
         // Fetch posts data from API
-        const response = await fetch(`/cms/layouts/homepage/posts-batch?ids=${Array.from(postIds).join(',')}`);
+        const response = await fetch(cmsPath(`/layouts/homepage/posts-batch?ids=${Array.from(postIds).join(',')}`));
         if (response.ok) {
             const posts: PostSearchResult[] = await response.json();
             for (const post of posts) {
@@ -133,7 +136,7 @@ async function fetchDynamicPreview(section: HomepageSection, excludePostIds: num
             params.set('excludeIds', excludePostIds.join(','));
         }
 
-        const response = await fetch(`/cms/layouts/homepage/search-posts?${params.toString()}`);
+        const response = await fetch(cmsPath(`/layouts/homepage/search-posts?${params.toString()}`));
         if (response.ok) {
             const data = await response.json();
             const posts = data.posts || [];

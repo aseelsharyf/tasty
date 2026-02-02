@@ -3,9 +3,11 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { useSettingsNav } from '../../composables/useSettingsNav';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { BreadcrumbItem } from '@nuxt/ui';
 
 const { mainNav: settingsNav } = useSettingsNav();
+const { cmsPath } = useCmsPath();
 
 interface PostTypeField {
     name: string;
@@ -189,7 +191,7 @@ function resetToDefaults() {
 const toast = useToast();
 
 function saveChanges() {
-    form.put('/cms/settings/post-types', {
+    form.put(cmsPath('/settings/post-types'), {
         preserveScroll: true,
         onSuccess: () => {
             toast.add({ title: 'Saved', description: 'Post types updated successfully.', color: 'success' });
@@ -202,7 +204,7 @@ function saveChanges() {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { label: 'Settings', to: '/cms/settings' },
+    { label: 'Settings', to: cmsPath('/settings') },
     { label: 'Post Types' },
 ];
 

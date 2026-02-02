@@ -3,6 +3,7 @@ import { Head, router, Link } from '@inertiajs/vue3';
 import { ref, computed, h, resolveComponent } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Language, PaginatedResponse } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
@@ -52,6 +53,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const UButton = resolveComponent('UButton');
 const UBadge = resolveComponent('UBadge');
@@ -92,7 +94,7 @@ function bulkDelete() {
     if (selectedIds.value.length === 0) return;
 
     bulkDeleting.value = true;
-    router.delete('/cms/products/bulk', {
+    router.delete(cmsPath('/products/bulk'), {
         data: { ids: selectedIds.value },
         onSuccess: () => {
             bulkDeleteModalOpen.value = false;
@@ -105,7 +107,7 @@ function bulkDelete() {
 }
 
 function onSearch() {
-    router.get('/cms/products', {
+    router.get(cmsPath('/products'), {
         search: search.value || undefined,
         category_id: categoryFilter.value === 'all' ? undefined : categoryFilter.value,
         sort: props.filters.sort,
@@ -122,7 +124,7 @@ function clearSearch() {
 }
 
 function onCategoryChange() {
-    router.get('/cms/products', {
+    router.get(cmsPath('/products'), {
         search: search.value || undefined,
         category_id: categoryFilter.value === 'all' ? undefined : categoryFilter.value,
         sort: props.filters.sort,
@@ -140,7 +142,7 @@ function confirmDelete(product: Product) {
 
 function deleteProduct() {
     if (productToDelete.value) {
-        router.delete(`/cms/products/${productToDelete.value.uuid}`, {
+        router.delete(cmsPath(`/products/${productToDelete.value.uuid}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 productToDelete.value = null;
@@ -150,12 +152,12 @@ function deleteProduct() {
 }
 
 function editProduct(product: Product) {
-    router.visit(`/cms/products/${product.uuid}/edit`);
+    router.visit(cmsPath(`/products/${product.uuid}/edit`));
 }
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get('/cms/products', {
+    router.get(cmsPath('/products'), {
         search: search.value || undefined,
         category_id: categoryFilter.value || undefined,
         sort: field,
@@ -399,8 +401,8 @@ const columns: TableColumn<Product>[] = [
                             v-if="can('products.create')"
                             icon="i-lucide-plus"
                             as="a"
-                            href="/cms/products/create"
-                            @click.prevent="router.visit('/cms/products/create')"
+                            :href="cmsPath('/products/create')"
+                            @click.prevent="router.visit(cmsPath('/products/create'))"
                         >
                             Add Product
                         </UButton>
@@ -498,7 +500,7 @@ const columns: TableColumn<Product>[] = [
                         :page="products.current_page"
                         :total="products.total"
                         :items-per-page="products.per_page"
-                        @update:page="(page) => router.get('/cms/products', { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/products'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 
@@ -511,8 +513,8 @@ const columns: TableColumn<Product>[] = [
                         class="mt-4"
                         variant="outline"
                         as="a"
-                        href="/cms/products/create"
-                        @click.prevent="router.visit('/cms/products/create')"
+                        :href="cmsPath('/products/create')"
+                        @click.prevent="router.visit(cmsPath('/products/create'))"
                     >
                         Create your first product
                     </UButton>

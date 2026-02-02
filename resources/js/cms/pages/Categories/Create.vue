@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import CategoryForm from '../../components/CategoryForm.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { ParentOption, Language } from '../../types';
 
 defineProps<{
@@ -9,12 +10,14 @@ defineProps<{
     languages: Language[];
 }>();
 
+const { cmsPath } = useCmsPath();
+
 function onSuccess() {
-    router.visit('/cms/categories');
+    router.visit(cmsPath('/categories'));
 }
 
 function onCancel() {
-    router.visit('/cms/categories');
+    router.visit(cmsPath('/categories'));
 }
 </script>
 

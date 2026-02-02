@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { ref, computed, h, resolveComponent } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { TableColumn } from '@nuxt/ui';
 
 interface Subscriber {
@@ -38,6 +39,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const UButton = resolveComponent('UButton');
 const UBadge = resolveComponent('UBadge');
@@ -72,7 +74,7 @@ function clearSelection() {
 }
 
 function onSearch() {
-    router.get('/cms/subscribers', {
+    router.get(cmsPath('/subscribers'), {
         search: search.value || undefined,
         status: statusFilter.value || undefined,
         sort: props.filters.sort,
@@ -90,7 +92,7 @@ function clearSearch() {
 
 function onStatusFilterChange(status: string) {
     statusFilter.value = status;
-    router.get('/cms/subscribers', {
+    router.get(cmsPath('/subscribers'), {
         search: search.value || undefined,
         status: status || undefined,
         sort: props.filters.sort,
@@ -103,7 +105,7 @@ function onStatusFilterChange(status: string) {
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get('/cms/subscribers', {
+    router.get(cmsPath('/subscribers'), {
         search: search.value || undefined,
         status: statusFilter.value || undefined,
         sort: field,
@@ -115,7 +117,7 @@ function sortBy(field: string) {
 }
 
 function toggleStatus(subscriber: Subscriber) {
-    router.post(`/cms/subscribers/${subscriber.id}/toggle-status`, {}, {
+    router.post(cmsPath(`/subscribers/${subscriber.id}/toggle-status`), {}, {
         preserveState: true,
     });
 }
@@ -127,7 +129,7 @@ function confirmDelete(subscriber: Subscriber) {
 
 function deleteSubscriber() {
     if (subscriberToDelete.value) {
-        router.delete(`/cms/subscribers/${subscriberToDelete.value.id}`, {
+        router.delete(cmsPath(`/subscribers/${subscriberToDelete.value.id}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 subscriberToDelete.value = null;
@@ -144,7 +146,7 @@ function bulkDelete() {
     if (selectedIds.value.length === 0) return;
 
     bulkDeleting.value = true;
-    router.delete('/cms/subscribers/bulk', {
+    router.delete(cmsPath('/subscribers/bulk'), {
         data: { ids: selectedIds.value },
         onSuccess: () => {
             bulkDeleteModalOpen.value = false;
@@ -164,7 +166,7 @@ function confirmBulkStatus(status: 'active' | 'inactive') {
 function bulkStatus() {
     if (selectedIds.value.length === 0) return;
 
-    router.post('/cms/subscribers/bulk-status', {
+    router.post(cmsPath('/subscribers/bulk-status'), {
         ids: selectedIds.value,
         status: bulkStatusAction.value,
     }, {
@@ -180,7 +182,7 @@ function exportSubscribers() {
     if (search.value) params.append('search', search.value);
     if (statusFilter.value) params.append('status', statusFilter.value);
 
-    window.location.href = `/cms/subscribers/export?${params.toString()}`;
+    window.location.href = cmsPath(`/subscribers/export?${params.toString()}`);
 }
 
 function getRowActions(row: Subscriber) {
@@ -477,7 +479,7 @@ const statusOptions = [
                         :page="subscribers.current_page"
                         :total="subscribers.total"
                         :items-per-page="subscribers.per_page"
-                        @update:page="(page) => router.get('/cms/subscribers', { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/subscribers'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 

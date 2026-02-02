@@ -16,6 +16,7 @@ import '../editor-tools/quote-block.css';
 import '../editor-tools/collapsible-block.css';
 import '../editor-tools/posts-block.css';
 import type { DhivehiLayout } from '../composables/useDhivehiKeyboard';
+import { useCmsPath } from '../composables/useCmsPath';
 
 // Media selection callback type
 export type MediaSelectCallback = (options: { multiple: boolean }) => Promise<MediaBlockItem[] | null>;
@@ -49,6 +50,8 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: 'update:modelValue', value: OutputData): void;
 }>();
+
+const { cmsPath } = useCmsPath();
 
 const editorRef = ref<HTMLElement | null>(null);
 const editor = shallowRef<EditorJS | null>(null);
@@ -301,7 +304,7 @@ const initEditor = async () => {
                         linkTool: {
                             class: LinkTool,
                             config: {
-                                endpoint: '/cms/api/fetch-url',
+                                endpoint: cmsPath('/api/fetch-url'),
                             },
                         },
                         list: {
@@ -339,7 +342,7 @@ const initEditor = async () => {
             linkTool: {
                 class: LinkTool,
                 config: {
-                    endpoint: '/cms/api/fetch-url',
+                    endpoint: cmsPath('/api/fetch-url'),
                 },
             },
             list: {

@@ -4,6 +4,7 @@ import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import CommentSlideover from '../../components/CommentSlideover.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Comment {
@@ -50,6 +51,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const search = ref(props.filters.search || '');
 const slideoverOpen = ref(false);
@@ -85,7 +87,7 @@ function clearSelection() {
 }
 
 function applyFilters() {
-    router.get('/cms/comments/queue', {
+    router.get(cmsPath('/comments/queue'), {
         search: search.value || undefined,
     }, {
         preserveState: true,
@@ -104,19 +106,19 @@ function openComment(comment: Comment) {
 }
 
 function approveComment(comment: Comment) {
-    router.post(`/cms/comments/${comment.uuid}/approve`, {}, {
+    router.post(cmsPath(`/comments/${comment.uuid}/approve`), {}, {
         preserveScroll: true,
     });
 }
 
 function spamComment(comment: Comment) {
-    router.post(`/cms/comments/${comment.uuid}/spam`, {}, {
+    router.post(cmsPath(`/comments/${comment.uuid}/spam`), {}, {
         preserveScroll: true,
     });
 }
 
 function trashComment(comment: Comment) {
-    router.post(`/cms/comments/${comment.uuid}/trash`, {}, {
+    router.post(cmsPath(`/comments/${comment.uuid}/trash`), {}, {
         preserveScroll: true,
     });
 }
@@ -124,7 +126,7 @@ function trashComment(comment: Comment) {
 function bulkAction(action: 'approve' | 'spam' | 'trash') {
     if (selectedUuids.value.length === 0) return;
 
-    router.post('/cms/comments/bulk', {
+    router.post(cmsPath('/comments/bulk'), {
         action,
         ids: selectedUuids.value,
     }, {
@@ -152,7 +154,7 @@ function bulkAction(action: 'approve' | 'spam' | 'trash') {
                             color="neutral"
                             variant="ghost"
                             icon="i-lucide-arrow-left"
-                            to="/cms/comments"
+                            :to="cmsPath('/comments')"
                         >
                             All Comments
                         </UButton>
@@ -296,7 +298,7 @@ function bulkAction(action: 'approve' | 'spam' | 'trash') {
                                             <span class="text-muted">on</span>
                                             <a
                                                 v-if="comment.post"
-                                                :href="`/cms/posts/${comment.post.language_code}/${comment.post.uuid}/edit`"
+                                                :href="cmsPath(`/posts/${comment.post.language_code}/${comment.post.uuid}/edit`)"
                                                 class="text-primary hover:underline font-medium truncate max-w-xs"
                                                 @click.stop
                                             >
@@ -369,7 +371,7 @@ function bulkAction(action: 'approve' | 'spam' | 'trash') {
                         :page="comments.current_page"
                         :total="comments.total"
                         :items-per-page="comments.per_page"
-                        @update:page="(page) => router.get('/cms/comments/queue', { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/comments/queue'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 
@@ -384,7 +386,7 @@ function bulkAction(action: 'approve' | 'spam' | 'trash') {
                         color="neutral"
                         variant="soft"
                         class="mt-4"
-                        to="/cms/comments"
+                        :to="cmsPath('/comments')"
                     >
                         View All Comments
                     </UButton>

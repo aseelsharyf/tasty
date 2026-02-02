@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 
 interface TargetProgress {
     current: number;
@@ -51,6 +52,8 @@ const props = defineProps<{
     isAdmin: boolean;
 }>();
 
+const { cmsPath } = useCmsPath();
+
 // Period selector
 const selectedPeriod = ref(props.periodType);
 const periodOptions = [
@@ -60,7 +63,7 @@ const periodOptions = [
 ];
 
 function changePeriod(value: string) {
-    router.get('/cms/targets', { period: value }, { preserveState: true });
+    router.get(cmsPath('/targets'), { period: value }, { preserveState: true });
 }
 
 // Add/Edit target modal
@@ -103,7 +106,7 @@ async function saveTarget() {
     try {
         if (editingTarget.value) {
             // Update existing
-            await router.put(`/cms/targets/${editingTarget.value.id}`, {
+            await router.put(cmsPath(`/targets/${editingTarget.value.id}`), {
                 target_count: targetForm.value.target_count,
             }, {
                 preserveScroll: true,
@@ -113,7 +116,7 @@ async function saveTarget() {
             });
         } else {
             // Create new
-            await router.post('/cms/targets', targetForm.value, {
+            await router.post(cmsPath('/targets'), targetForm.value, {
                 preserveScroll: true,
                 onSuccess: () => {
                     showTargetModal.value = false;
@@ -141,7 +144,7 @@ async function confirmDelete() {
 
     deleting.value = true;
     try {
-        await router.delete(`/cms/targets/${targetToDelete.value.id}`, {
+        await router.delete(cmsPath(`/targets/${targetToDelete.value.id}`), {
             preserveScroll: true,
             onSuccess: () => {
                 showDeleteModal.value = false;

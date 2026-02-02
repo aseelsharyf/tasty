@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { useCmsPath } from '../composables/useCmsPath';
 
 interface Tag {
     id: number;
@@ -56,6 +57,8 @@ const isOpen = computed({
     get: () => props.open,
     set: (value) => emit('update:open', value),
 });
+
+const { cmsPath } = useCmsPath();
 
 // Upload mode
 const uploadMode = ref<'file' | 'embed'>('file');
@@ -275,7 +278,7 @@ const hasSuccessfulUploads = ref(false); // Track if any uploads succeeded durin
 // Fetch upload configuration on mount
 onMounted(async () => {
     try {
-        const response = await fetch('/cms/media/upload-config', {
+        const response = await fetch(cmsPath('/media/upload-config'), {
             headers: {
                 'Accept': 'application/json',
                 'X-XSRF-TOKEN': getCsrfToken(),
@@ -334,7 +337,7 @@ async function uploadDirect(uploadFile: UploadFile) {
 
     appendSharedFields(formData);
 
-    const response = await fetch('/cms/media', {
+    const response = await fetch(cmsPath('/media'), {
         method: 'POST',
         body: formData,
         headers: {
@@ -360,7 +363,7 @@ async function uploadDirect(uploadFile: UploadFile) {
 // Signed URL upload (for S3)
 async function uploadWithSignedUrl(uploadFile: UploadFile) {
     // Step 1: Get signed URL
-    const signedUrlResponse = await fetch('/cms/media/signed-url', {
+    const signedUrlResponse = await fetch(cmsPath('/media/signed-url'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -440,7 +443,7 @@ async function uploadWithSignedUrl(uploadFile: UploadFile) {
         confirmData.credit_role = creditRole.value;
     }
 
-    const confirmResponse = await fetch('/cms/media/confirm-upload', {
+    const confirmResponse = await fetch(cmsPath('/media/confirm-upload'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -500,7 +503,7 @@ async function uploadEmbed() {
     appendSharedFields(formData);
 
     try {
-        const response = await fetch('/cms/media', {
+        const response = await fetch(cmsPath('/media'), {
             method: 'POST',
             body: formData,
             headers: {

@@ -5,6 +5,7 @@ import axios from 'axios';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import MediaPickerModal from '../../components/MediaPickerModal.vue';
 import DhivehiInput from '../../components/DhivehiInput.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Language } from '../../types';
 
 const toast = useToast();
@@ -71,6 +72,8 @@ const props = defineProps<{
     stores: ProductStore[];
     languages: Language[];
 }>();
+
+const { cmsPath } = useCmsPath();
 
 const activeTab = ref(props.languages[0]?.code || 'en');
 const localTags = ref<Tag[]>([...props.tags, ...props.product.tags.filter(t => !props.tags.find(pt => pt.id === t.id))]);
@@ -170,7 +173,7 @@ function regenerateSlug() {
 // Tag creation
 async function onCreateTag(name: string) {
     try {
-        const response = await axios.post('/cms/tags', { name: { en: name } });
+        const response = await axios.post(cmsPath('/tags'), { name: { en: name } });
         const newTag = response.data;
         localTags.value.push({ id: newTag.id, name: newTag.name, slug: newTag.slug });
         form.tag_ids = [...form.tag_ids, newTag.id];
@@ -207,7 +210,7 @@ async function searchTags(query: string) {
 
     isSearchingTags.value = true;
     try {
-        const response = await axios.get('/cms/tags/search', {
+        const response = await axios.get(cmsPath('/tags/search'), {
             params: {
                 q: query,
                 exclude: form.tag_ids,
@@ -301,7 +304,7 @@ async function createAndAddTag() {
 
     try {
         const langCode = props.languages[0]?.code || 'en';
-        const response = await axios.post('/cms/tags', {
+        const response = await axios.post(cmsPath('/tags'), {
             name: { [langCode]: name },
         });
         const newTag = response.data;
@@ -334,7 +337,7 @@ function onTagInputBlur() {
 
 async function onCreateFeaturedTag(name: string) {
     try {
-        const response = await axios.post('/cms/tags', { name: { en: name } });
+        const response = await axios.post(cmsPath('/tags'), { name: { en: name } });
         const newTag = response.data;
         localTags.value.push({ id: newTag.id, name: newTag.name, slug: newTag.slug });
         form.featured_tag_id = newTag.id;
@@ -424,7 +427,7 @@ function submit() {
         sku: form.sku || null,
         tag_ids: form.tag_ids,
         image_ids: form.image_ids,
-    })).put(`/cms/products/${props.product.uuid}`, {
+    })).put(cmsPath(`/products/${props.product.uuid}`), {
         preserveScroll: true,
         onSuccess: () => {
             toast.add({
@@ -438,7 +441,7 @@ function submit() {
 }
 
 function goBack() {
-    router.visit('/cms/products');
+    router.visit(cmsPath('/products'));
 }
 </script>
 

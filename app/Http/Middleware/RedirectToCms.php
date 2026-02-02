@@ -15,8 +15,39 @@ class RedirectToCms
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // This middleware is no longer needed - nginx handles URL rewriting
-        // Kept for backwards compatibility with non-nginx setups
+        $host = $request->getHost();
+        $path = $request->path();
+        $cmsDomains = config('cms.domains', []);
+        $disablePathAccess = config('cms.disable_path_access', false);
+
+        // Check if this is a CMS domain
+        $isCmsDomain = in_array($host, $cmsDomains, true);
+
+        // Block /cms path access on non-CMS domains if configured
+        if ($disablePathAccess && ! $isCmsDomain && str_starts_with($path, 'cms')) {
+            abort(404);
+        }
+
+        // Store CMS context for use in routes and views
+        app()->instance('cms.is_cms_domain', $isCmsDomain);
+        app()->instance('cms.base_path', $isCmsDomain ? '' : '/cms');
+
         return $next($request);
+    }
+
+    /**
+     * Check if the current request is on a CMS-only domain.
+     */
+    public static function isCmsDomain(): bool
+    {
+        return app()->bound('cms.is_cms_domain') ? app('cms.is_cms_domain') : false;
+    }
+
+    /**
+     * Get the CMS base path for the current request.
+     */
+    public static function getCmsBasePath(): string
+    {
+        return app()->bound('cms.base_path') ? app('cms.base_path') : '/cms';
     }
 }

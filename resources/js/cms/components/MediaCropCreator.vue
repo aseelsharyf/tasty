@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick, onUnmounted } from 'vue';
 import Cropper from 'cropperjs';
+import { useCmsPath } from '../composables/useCmsPath';
 
 const toast = useToast();
+const { cmsPath } = useCmsPath();
 
 interface CropPreset {
     name: string;
@@ -90,7 +92,7 @@ function getCsrfToken(): string {
 async function loadCrops() {
     isLoading.value = true;
     try {
-        const response = await fetch(`/cms/media/${props.mediaUuid}/crops`, {
+        const response = await fetch(cmsPath(`/media/${props.mediaUuid}/crops`), {
             headers: {
                 'Accept': 'application/json',
             },
@@ -202,8 +204,8 @@ async function saveCrop() {
     try {
         const isUpdate = editingCrop.value !== null;
         const url = isUpdate
-            ? `/cms/media/${props.mediaUuid}/crops/${editingCrop.value.uuid}`
-            : `/cms/media/${props.mediaUuid}/crops`;
+            ? cmsPath(`/media/${props.mediaUuid}/crops/${editingCrop.value.uuid}`)
+            : cmsPath(`/media/${props.mediaUuid}/crops`);
 
         const response = await fetch(url, {
             method: isUpdate ? 'PUT' : 'POST',
@@ -288,7 +290,7 @@ async function deleteCrop() {
     isDeleting.value = true;
 
     try {
-        const response = await fetch(`/cms/media/${props.mediaUuid}/crops/${cropToDelete.value.uuid}`, {
+        const response = await fetch(cmsPath(`/media/${props.mediaUuid}/crops/${cropToDelete.value.uuid}`), {
             method: 'DELETE',
             headers: {
                 'X-XSRF-TOKEN': getCsrfToken(),

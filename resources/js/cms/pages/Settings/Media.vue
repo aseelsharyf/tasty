@@ -3,10 +3,12 @@ import { Head, useForm, router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { useSettingsNav } from '../../composables/useSettingsNav';
+import { useCmsPath } from '../../composables/useCmsPath';
 
 const toast = useToast();
 
 const { mainNav: settingsNav } = useSettingsNav();
+const { cmsPath } = useCmsPath();
 
 interface CropPreset {
     name: string;
@@ -239,7 +241,7 @@ function resetToDefaults() {
 }
 
 function onSubmit() {
-    form.put('/cms/settings/media', {
+    form.put(cmsPath('/settings/media'), {
         preserveScroll: true,
         onSuccess: () => {
             toast.add({

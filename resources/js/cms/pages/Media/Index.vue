@@ -9,6 +9,7 @@ import MediaBulkUploadModal from '../../components/MediaBulkUploadModal.vue';
 import MediaBulkEditModal from '../../components/MediaBulkEditModal.vue';
 import BlurHashImage from '../../components/BlurHashImage.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { NavigationMenuItem } from '@nuxt/ui';
 import { format } from 'date-fns';
 
@@ -136,6 +137,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const search = ref(props.filters.search || '');
 const selectedType = ref(props.filters.type || '');
@@ -201,7 +203,7 @@ const categoryNavLinks = computed<NavigationMenuItem[][]>(() => {
         label: 'Trashed',
         icon: 'i-lucide-trash',
         badge: props.counts.trashed,
-        to: '/cms/media/trashed',
+        to: cmsPath('/media/trashed'),
         active: false,
     } : null;
 
@@ -288,7 +290,7 @@ watch(search, () => {
 });
 
 function applyFilters() {
-    router.get('/cms/media', {
+    router.get(cmsPath('/media'), {
         type: selectedType.value || undefined,
         search: search.value || undefined,
         tags: selectedTagIds.value.length > 0 ? selectedTagIds.value : undefined,
@@ -312,7 +314,7 @@ function clearFilters() {
     selectedCategory.value = null;
     search.value = '';
     selectedSort.value = 'newest';
-    router.get('/cms/media', {}, { preserveState: true, replace: true });
+    router.get(cmsPath('/media'), {}, { preserveState: true, replace: true });
 }
 
 function openMedia(item: MediaItem) {
@@ -336,7 +338,7 @@ function confirmDeleteMedia(item: MediaItem) {
 
 function deleteMedia() {
     if (!mediaToDelete.value) return;
-    router.delete(`/cms/media/${mediaToDelete.value.uuid}`, {
+    router.delete(cmsPath(`/media/${mediaToDelete.value.uuid}`), {
         preserveScroll: true,
         onSuccess: () => {
             deleteModalOpen.value = false;
@@ -392,7 +394,7 @@ function confirmBulkDelete() {
 }
 
 function executeBulkDelete() {
-    router.post('/cms/media/bulk', {
+    router.post(cmsPath('/media/bulk'), {
         action: 'delete',
         ids: selectedUuids.value,
     }, {
@@ -413,7 +415,7 @@ function bulkAction(action: 'move' | 'delete', folderId?: number | null) {
         return;
     }
 
-    router.post('/cms/media/bulk', {
+    router.post(cmsPath('/media/bulk'), {
         action,
         ids: selectedUuids.value,
         folder_id: folderId,
@@ -743,7 +745,7 @@ function getRowActions(item: MediaItem) {
                         :page="media.current_page"
                         :total="media.total"
                         :items-per-page="media.per_page"
-                        @update:page="(page) => router.get('/cms/media', { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/media'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
             </template>

@@ -2,11 +2,13 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { PageProps } from '../../types';
 import type { DropdownMenuItem } from '@nuxt/ui';
 
 const page = usePage<PageProps>();
 const user = computed(() => page.props.auth?.user);
+const { cmsPath } = useCmsPath();
 
 interface TargetProgress {
     current: number;
@@ -85,7 +87,7 @@ async function createPostOfType(postType: string) {
     isCreatingPost.value = true;
 
     try {
-        const response = await fetch('/cms/posts/quick-draft', {
+        const response = await fetch(cmsPath('/posts/quick-draft'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -138,7 +140,7 @@ const savingTarget = ref(false);
 async function saveTarget() {
     savingTarget.value = true;
     try {
-        await router.post('/cms/targets', targetForm.value, {
+        await router.post(cmsPath('/targets'), targetForm.value, {
             preserveScroll: true,
             onSuccess: () => {
                 showTargetModal.value = false;
@@ -193,7 +195,7 @@ const progressColor = computed(() => {
 });
 
 function editPost(post: Post) {
-    router.visit(`/cms/posts/${post.language_code}/${post.uuid}/edit`);
+    router.visit(cmsPath(`/posts/${post.language_code}/${post.uuid}/edit`));
 }
 </script>
 
@@ -440,7 +442,7 @@ function editPost(post: Post) {
                         <div v-if="recentPosts.length === 0" class="flex flex-col items-center py-8">
                             <UIcon name="i-lucide-file-text" class="size-12 text-muted mb-3" />
                             <p class="text-muted">No posts yet</p>
-                            <Link href="/cms/posts/en">
+                            <Link :href="cmsPath('/posts/en')">
                                 <UButton label="Create your first post" class="mt-4" />
                             </Link>
                         </div>
@@ -473,7 +475,7 @@ function editPost(post: Post) {
                         </div>
 
                         <div v-if="recentPosts.length > 0" class="pt-4 mt-2 border-t border-default">
-                            <Link href="/cms/posts/en">
+                            <Link :href="cmsPath('/posts/en')">
                                 <UButton
                                     color="neutral"
                                     variant="ghost"

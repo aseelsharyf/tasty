@@ -14,92 +14,133 @@ use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\TagController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/test-404', fn() => abort(404));
-Route::get('/test-500', fn() => abort(500));
-Route::get('/test-403', fn() => abort(403));
-Route::get('/test-408', fn() => abort(408));
-Route::get('/test-503', fn() => abort(503));
+Route::get('/test-404', fn () => abort(404));
+Route::get('/test-500', fn () => abort(500));
+Route::get('/test-403', fn () => abort(403));
+Route::get('/test-408', fn () => abort(408));
+Route::get('/test-503', fn () => abort(503));
 
-// CMS Routes with /cms prefix (default for all hosts)
-Route::prefix('cms')->group(base_path('routes/cms.php'));
+/*
+|--------------------------------------------------------------------------
+| CMS Routes
+|--------------------------------------------------------------------------
+|
+| CMS routes are registered based on the domain configuration:
+| - CMS domains (e.g., live.tastymaldives.com): CMS at root (/)
+| - Public domains (e.g., tasty.mv): CMS at /cms prefix
+|
+| This is determined by the CMS_DOMAINS environment variable.
+|
+*/
 
-// Homepage - uses configurable layout
-Route::get('/', HomeController::class)->name('home');
+$cmsDomains = config('cms.domains', []);
+$currentHost = request()->getHost();
+$isCmsDomain = in_array($currentHost, $cmsDomains, true);
+$isCmsOnly = config('cms.cms_only', false);
+$disablePathAccess = config('cms.disable_path_access', false);
 
-// Category routes
-Route::get('/category/{category:slug}', [
-    CategoryController::class,
-    'show',
-])->name('category.show');
+if ($isCmsDomain) {
+    // CMS domain: register CMS routes at root
+    Route::group([], base_path('routes/cms.php'));
+} elseif (! $disablePathAccess) {
+    // Public domain: register CMS routes with /cms prefix (unless disabled)
+    Route::prefix('cms')->group(base_path('routes/cms.php'));
+}
 
-// Tag routes
-Route::get('/tag/{tag:slug}', [TagController::class, 'show'])->name('tag.show');
+/*
+|--------------------------------------------------------------------------
+| Public Website Routes
+|--------------------------------------------------------------------------
+|
+| These routes are registered on:
+| - All non-CMS domains (e.g., tasty.mv)
+| - CMS domains when CMS_ONLY=false (default)
+|
+| When CMS_ONLY=true, website routes are NOT available on CMS domains.
+|
+*/
 
-// Author routes
-Route::get('/author/{author:username}', [
-    AuthorController::class,
-    'show',
-])->name('author.show');
+$showWebsite = ! $isCmsDomain || ! $isCmsOnly;
 
-// Search routes
-Route::get('/search', [SearchController::class, 'index'])->name('search');
-Route::get('/api/search', [SearchController::class, 'suggestions'])->name(
-    'search.suggestions',
-);
+if ($showWebsite) {
+    // Homepage - uses configurable layout
+    Route::get('/', HomeController::class)->name('home');
 
-// Comment routes
-Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
+    // Category routes
+    Route::get('/category/{category:slug}', [
+        CategoryController::class,
+        'show',
+    ])->name('category.show');
 
-// Social Authentication routes
-Route::get('/auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');
-Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
-Route::post('/auth/logout', [SocialAuthController::class, 'logout'])->name('auth.logout');
-Route::get('/api/auth/user', [SocialAuthController::class, 'user'])->name('api.auth.user');
-Route::post('/api/auth/profile', [SocialAuthController::class, 'updateProfile'])->name('api.auth.profile.update');
-Route::post('/api/auth/profile/remove-avatar', [SocialAuthController::class, 'removeAvatar'])->name('api.auth.profile.remove-avatar');
+    // Tag routes
+    Route::get('/tag/{tag:slug}', [TagController::class, 'show'])->name('tag.show');
 
-// Debug route - remove in production
-Route::get('/auth/debug', function () {
-    $user = auth()->user();
+    // Author routes
+    Route::get('/author/{author:username}', [
+        AuthorController::class,
+        'show',
+    ])->name('author.show');
 
-    return response()->json([
-        'authenticated' => auth()->check(),
-        'user' => $user ? [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'google_id' => $user->google_id,
-        ] : null,
-        'session_id' => session()->getId(),
-    ]);
-});
+    // Search routes
+    Route::get('/search', [SearchController::class, 'index'])->name('search');
+    Route::get('/api/search', [SearchController::class, 'suggestions'])->name(
+        'search.suggestions',
+    );
 
-// OG Image preview (for debugging)
-Route::get('/og-preview/{post:slug}', [OgImageController::class, 'preview'])->name('og.preview');
-Route::get('/og-html/{post:slug}', [OgImageController::class, 'renderHtml'])->name('og.html');
-Route::get('/og-test', [OgImageController::class, 'testPage'])->name('og.test');
+    // Comment routes
+    Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
 
-// Product routes
-Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/products/go/{product:slug}', [ProductController::class, 'redirect'])->name('products.redirect');
-Route::get('/products/category/{category:slug}', [ProductController::class, 'byCategory'])->name('products.category');
-Route::get('/products/tag/{tag:slug}', [ProductController::class, 'byTag'])->name('products.tag');
-Route::get('/products/{store:slug}', [ProductController::class, 'byStore'])->name('products.store');
-Route::get('/products/{store:slug}/load-more', [ProductController::class, 'loadMore'])->name('products.store.loadMore');
+    // Social Authentication routes
+    Route::get('/auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');
+    Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+    Route::post('/auth/logout', [SocialAuthController::class, 'logout'])->name('auth.logout');
+    Route::get('/api/auth/user', [SocialAuthController::class, 'user'])->name('api.auth.user');
+    Route::post('/api/auth/profile', [SocialAuthController::class, 'updateProfile'])->name('api.auth.profile.update');
+    Route::post('/api/auth/profile/remove-avatar', [SocialAuthController::class, 'removeAvatar'])->name('api.auth.profile.remove-avatar');
 
-// Recipe submission routes
-Route::get('/submit-recipe', [RecipeSubmissionController::class, 'create'])->name('recipes.submit');
-Route::post('/submit-recipe', [RecipeSubmissionController::class, 'store'])->name('recipes.submit.store');
-Route::get('/submit-recipe/success', [RecipeSubmissionController::class, 'success'])->name('recipes.submit.success');
-Route::get('/api/ingredients', [RecipeSubmissionController::class, 'apiIngredients'])->name('api.ingredients');
-Route::get('/api/units', [RecipeSubmissionController::class, 'apiUnits'])->name('api.units');
+    // Debug route - remove in production
+    Route::get('/auth/debug', function () {
+        $user = auth()->user();
 
-// Post routes (category/post pattern for SEO)
-Route::get('/{category}/{post}', [PostController::class, 'show'])
-    ->name('post.show')
-    ->where('category', '^(?!cms|template|storage|category|tag|api).*$');
+        return response()->json([
+            'authenticated' => auth()->check(),
+            'user' => $user ? [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'google_id' => $user->google_id,
+            ] : null,
+            'session_id' => session()->getId(),
+        ]);
+    });
 
-// Catch-all page route (must be last)
-Route::get('/{slug}', [PageController::class, 'show'])
-    ->name('page.show')
-    ->where('slug', '^(?!cms|template|storage|category|tag).*$');
+    // OG Image preview (for debugging)
+    Route::get('/og-preview/{post:slug}', [OgImageController::class, 'preview'])->name('og.preview');
+    Route::get('/og-html/{post:slug}', [OgImageController::class, 'renderHtml'])->name('og.html');
+    Route::get('/og-test', [OgImageController::class, 'testPage'])->name('og.test');
+
+    // Product routes
+    Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+    Route::get('/products/go/{product:slug}', [ProductController::class, 'redirect'])->name('products.redirect');
+    Route::get('/products/category/{category:slug}', [ProductController::class, 'byCategory'])->name('products.category');
+    Route::get('/products/tag/{tag:slug}', [ProductController::class, 'byTag'])->name('products.tag');
+    Route::get('/products/{store:slug}', [ProductController::class, 'byStore'])->name('products.store');
+    Route::get('/products/{store:slug}/load-more', [ProductController::class, 'loadMore'])->name('products.store.loadMore');
+
+    // Recipe submission routes
+    Route::get('/submit-recipe', [RecipeSubmissionController::class, 'create'])->name('recipes.submit');
+    Route::post('/submit-recipe', [RecipeSubmissionController::class, 'store'])->name('recipes.submit.store');
+    Route::get('/submit-recipe/success', [RecipeSubmissionController::class, 'success'])->name('recipes.submit.success');
+    Route::get('/api/ingredients', [RecipeSubmissionController::class, 'apiIngredients'])->name('api.ingredients');
+    Route::get('/api/units', [RecipeSubmissionController::class, 'apiUnits'])->name('api.units');
+
+    // Post routes (category/post pattern for SEO)
+    Route::get('/{category}/{post}', [PostController::class, 'show'])
+        ->name('post.show')
+        ->where('category', '^(?!cms|template|storage|category|tag|api).*$');
+
+    // Catch-all page route (must be last)
+    Route::get('/{slug}', [PageController::class, 'show'])
+        ->name('page.show')
+        ->where('slug', '^(?!cms|template|storage|category|tag).*$');
+}

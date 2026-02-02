@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 
 interface TaxonomyItem {
     id: number;
@@ -23,6 +24,8 @@ const tags = ref<TaxonomyItem[]>([]);
 const categories = ref<TaxonomyItem[]>([]);
 const loadingTags = ref(false);
 const loadingCategories = ref(false);
+
+const { cmsPath } = useCmsPath();
 
 // Determine if this is a product section
 const isProductSection = computed(() => props.contentType === 'product');
@@ -56,7 +59,7 @@ async function fetchTags() {
     if (tags.value.length > 0) return;
     loadingTags.value = true;
     try {
-        const response = await fetch('/cms/layouts/homepage/tags');
+        const response = await fetch(cmsPath('/layouts/homepage/tags'));
         const data = await response.json();
         tags.value = data.tags || [];
     } catch (error) {
@@ -71,7 +74,7 @@ async function fetchCategories() {
     if (categories.value.length > 0) return;
     loadingCategories.value = true;
     try {
-        const response = await fetch('/cms/layouts/homepage/categories');
+        const response = await fetch(cmsPath('/layouts/homepage/categories'));
         const data = await response.json();
         categories.value = data.categories || [];
     } catch (error) {

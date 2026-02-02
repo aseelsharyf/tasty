@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue';
 import axios from 'axios';
+import { useCmsPath } from './useCmsPath';
 
 export interface WorkflowState {
     key: string;
@@ -38,6 +39,7 @@ const colorMap: Record<string, string> = {
 };
 
 export function useWorkflow(config: WorkflowConfig) {
+    const { cmsPath } = useCmsPath();
     const loading = ref(false);
 
     /**
@@ -98,7 +100,7 @@ export function useWorkflow(config: WorkflowConfig) {
     ): Promise<{ success: boolean; error?: string }> {
         loading.value = true;
         try {
-            await axios.post(`/cms/workflow/versions/${versionUuid}/transition`, {
+            await axios.post(cmsPath(`/workflow/versions/${versionUuid}/transition`), {
                 to_status: toStatus,
                 comment: comment || null,
             });
@@ -119,7 +121,7 @@ export function useWorkflow(config: WorkflowConfig) {
     async function revertToVersion(versionUuid: string): Promise<{ success: boolean; error?: string }> {
         loading.value = true;
         try {
-            await axios.post(`/cms/workflow/versions/${versionUuid}/revert`);
+            await axios.post(cmsPath(`/workflow/versions/${versionUuid}/revert`));
             return { success: true };
         } catch (error: any) {
             return {
@@ -141,7 +143,7 @@ export function useWorkflow(config: WorkflowConfig) {
     ): Promise<{ success: boolean; error?: string }> {
         loading.value = true;
         try {
-            await axios.post(`/cms/workflow/${contentType}/${contentUuid}/unpublish`);
+            await axios.post(cmsPath(`/workflow/${contentType}/${contentUuid}/unpublish`));
             return { success: true };
         } catch (error: any) {
             return {

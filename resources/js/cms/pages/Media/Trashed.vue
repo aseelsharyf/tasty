@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import { formatDistanceToNow } from 'date-fns';
 
 interface MediaItem {
@@ -42,6 +43,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const search = ref(props.filters.search || '');
 const selectedItems = ref<Set<string>>(new Set());
@@ -52,7 +54,7 @@ const mediaToDelete = ref<MediaItem | null>(null);
 const bulkDeletePending = ref(false);
 
 function applySearch() {
-    router.get('/cms/media/trashed', {
+    router.get(cmsPath('/media/trashed'), {
         search: search.value || undefined,
     }, {
         preserveState: true,
@@ -93,7 +95,7 @@ const selectedUuids = computed(() => Array.from(selectedItems.value));
 const selectedCount = computed(() => selectedItems.value.size);
 
 function restoreItem(item: MediaItem) {
-    router.post(`/cms/media/${item.uuid}/restore`, {}, {
+    router.post(cmsPath(`/media/${item.uuid}/restore`), {}, {
         preserveScroll: true,
     });
 }
@@ -106,7 +108,7 @@ function confirmForceDelete(item: MediaItem) {
 
 function forceDeleteItem() {
     if (!mediaToDelete.value) return;
-    router.delete(`/cms/media/${mediaToDelete.value.uuid}/force`, {
+    router.delete(cmsPath(`/media/${mediaToDelete.value.uuid}/force`), {
         preserveScroll: true,
         onSuccess: () => {
             deleteModalOpen.value = false;
@@ -123,7 +125,7 @@ function confirmBulkForceDelete() {
 }
 
 function executeBulkForceDelete() {
-    router.post('/cms/media/bulk', {
+    router.post(cmsPath('/media/bulk'), {
         action: 'force_delete',
         ids: selectedUuids.value,
     }, {
@@ -144,7 +146,7 @@ function bulkAction(action: 'restore' | 'force_delete') {
         return;
     }
 
-    router.post('/cms/media/bulk', {
+    router.post(cmsPath('/media/bulk'), {
         action,
         ids: selectedUuids.value,
     }, {
@@ -197,7 +199,7 @@ function getRowActions(item: MediaItem) {
                             color="neutral"
                             variant="soft"
                             icon="i-lucide-arrow-left"
-                            to="/cms/media"
+                            :to="cmsPath('/media')"
                         >
                             Back to Media
                         </UButton>
@@ -370,7 +372,7 @@ function getRowActions(item: MediaItem) {
                         variant="soft"
                         icon="i-lucide-arrow-left"
                         class="mt-4"
-                        to="/cms/media"
+                        :to="cmsPath('/media')"
                     >
                         Back to Media Library
                     </UButton>
@@ -387,7 +389,7 @@ function getRowActions(item: MediaItem) {
                         :page="media.current_page"
                         :total="media.total"
                         :items-per-page="media.per_page"
-                        @update:page="(page) => router.get('/cms/media/trashed', { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/media/trashed'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
             </template>

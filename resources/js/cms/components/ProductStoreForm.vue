@@ -2,6 +2,7 @@
 import { useForm } from '@inertiajs/vue3';
 import { computed, watch, ref } from 'vue';
 import MediaPickerModal from './MediaPickerModal.vue';
+import { useCmsPath } from '../composables/useCmsPath';
 
 interface MediaItem {
     id: number;
@@ -42,6 +43,8 @@ const emit = defineEmits<{
     (e: 'cancel'): void;
 }>();
 
+const { cmsPath } = useCmsPath();
+
 const isEditing = computed(() => props.mode === 'edit' && props.store?.uuid);
 
 const businessTypeOptions = [
@@ -80,12 +83,12 @@ function removeMedia() {
 
 function onSubmit() {
     if (isEditing.value && props.store?.uuid) {
-        form.put(`/cms/product-stores/${props.store.uuid}`, {
+        form.put(cmsPath(`/product-stores/${props.store.uuid}`), {
             preserveScroll: true,
             onSuccess: () => emit('success'),
         });
     } else {
-        form.post('/cms/product-stores', {
+        form.post(cmsPath('/product-stores'), {
             preserveScroll: true,
             onSuccess: () => {
                 reset();

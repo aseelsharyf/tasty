@@ -4,8 +4,10 @@ import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import draggable from 'vuedraggable';
 import { useSettingsNav } from '../../composables/useSettingsNav';
+import { useCmsPath } from '../../composables/useCmsPath';
 
 const { mainNav: settingsNav } = useSettingsNav();
+const { cmsPath } = useCmsPath();
 
 interface WorkflowState {
     key: string;
@@ -133,7 +135,7 @@ async function saveWorkflow() {
     saving.value = true;
     try {
         await router.put(
-            `/cms/settings/workflows/${activeWorkflow.value}`,
+            cmsPath(`/settings/workflows/${activeWorkflow.value}`),
             { workflow: editingWorkflow.value },
             {
                 preserveScroll: true,
@@ -176,7 +178,7 @@ async function createWorkflow() {
     saving.value = true;
     try {
         await router.post(
-            '/cms/settings/workflows',
+            cmsPath('/settings/workflows'),
             {
                 post_type: newWorkflowPostType.value,
                 name: newWorkflowName.value,
@@ -205,7 +207,7 @@ async function deleteWorkflow(key: string) {
         return;
     }
 
-    await router.delete(`/cms/settings/workflows/${key}`, {
+    await router.delete(cmsPath(`/settings/workflows/${key}`), {
         preserveScroll: true,
         onSuccess: () => {
             if (activeWorkflow.value === key) {

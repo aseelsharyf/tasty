@@ -5,6 +5,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import SponsorCreateSlideover from '../../components/SponsorCreateSlideover.vue';
 import SponsorEditSlideover from '../../components/SponsorEditSlideover.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Language, PaginatedResponse } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
@@ -45,6 +46,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const UButton = resolveComponent('UButton');
 const UBadge = resolveComponent('UBadge');
@@ -87,7 +89,7 @@ function bulkDelete() {
     if (selectedIds.value.length === 0) return;
 
     bulkDeleting.value = true;
-    router.delete('/cms/sponsors/bulk', {
+    router.delete(cmsPath('/sponsors/bulk'), {
         data: { ids: selectedIds.value },
         onSuccess: () => {
             bulkDeleteModalOpen.value = false;
@@ -100,7 +102,7 @@ function bulkDelete() {
 }
 
 function onSearch() {
-    router.get('/cms/sponsors', {
+    router.get(cmsPath('/sponsors'), {
         search: search.value || undefined,
         sort: props.filters.sort,
         direction: props.filters.direction,
@@ -122,7 +124,7 @@ function confirmDelete(sponsor: Sponsor) {
 
 function deleteSponsor() {
     if (sponsorToDelete.value) {
-        router.delete(`/cms/sponsors/${sponsorToDelete.value.uuid}`, {
+        router.delete(cmsPath(`/sponsors/${sponsorToDelete.value.uuid}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 sponsorToDelete.value = null;
@@ -133,7 +135,7 @@ function deleteSponsor() {
 
 async function openEditSlideover(sponsor: Sponsor) {
     try {
-        const response = await fetch(`/cms/sponsors/${sponsor.uuid}/edit`, {
+        const response = await fetch(cmsPath(`/sponsors/${sponsor.uuid}/edit`), {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -160,7 +162,7 @@ function onEditClose(updated: boolean) {
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get('/cms/sponsors', {
+    router.get(cmsPath('/sponsors'), {
         search: search.value || undefined,
         sort: field,
         direction: newDirection,
@@ -464,7 +466,7 @@ const columns: TableColumn<Sponsor>[] = [
                         :page="sponsors.current_page"
                         :total="sponsors.total"
                         :items-per-page="sponsors.per_page"
-                        @update:page="(page) => router.get('/cms/sponsors', { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/sponsors'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 

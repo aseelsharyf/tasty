@@ -4,6 +4,7 @@ import { ref, computed, h, resolveComponent } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import MenuCreateSlideover from '../../components/MenuCreateSlideover.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Menu, PaginatedResponse, Language } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
@@ -18,6 +19,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const UButton = resolveComponent('UButton');
 const UBadge = resolveComponent('UBadge');
@@ -32,7 +34,7 @@ const createModalOpen = ref(false);
 const isSearching = computed(() => search.value.length > 0);
 
 function onSearch() {
-    router.get('/cms/menus', {
+    router.get(cmsPath('/menus'), {
         search: search.value || undefined,
     }, {
         preserveState: true,
@@ -47,7 +49,7 @@ function clearSearch() {
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get('/cms/menus', {
+    router.get(cmsPath('/menus'), {
         search: search.value || undefined,
         sort: field,
         direction: newDirection,
@@ -64,7 +66,7 @@ function confirmDelete(menu: Menu) {
 
 function deleteMenu() {
     if (menuToDelete.value) {
-        router.delete(`/cms/menus/${menuToDelete.value.uuid}`, {
+        router.delete(cmsPath(`/menus/${menuToDelete.value.uuid}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 menuToDelete.value = null;
@@ -74,7 +76,7 @@ function deleteMenu() {
 }
 
 function editMenu(menu: Menu) {
-    router.visit(`/cms/menus/${menu.uuid}/edit`);
+    router.visit(cmsPath(`/menus/${menu.uuid}/edit`));
 }
 
 function getRowActions(row: Menu) {
@@ -288,7 +290,7 @@ const columns: TableColumn<Menu>[] = [
                         :page="menus.current_page"
                         :total="menus.total"
                         :items-per-page="menus.per_page"
-                        @update:page="(page) => router.get('/cms/menus', { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/menus'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 

@@ -4,6 +4,7 @@ import { ref, watch, h, resolveComponent, computed } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { User, PaginatedResponse } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
@@ -19,6 +20,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const UAvatar = resolveComponent('UAvatar');
 const UBadge = resolveComponent('UBadge');
@@ -35,7 +37,7 @@ const roleFilterOptions = computed(() =>
 );
 
 function applyFilters(overrides: Record<string, any> = {}) {
-    router.get('/cms/users', {
+    router.get(cmsPath('/users'), {
         search: search.value || undefined,
         roles: selectedRoles.value.length > 0 ? selectedRoles.value : undefined,
         sort: props.filters.sort,
@@ -95,7 +97,7 @@ function confirmDelete(user: User) {
 
 function deleteUser() {
     if (userToDelete.value) {
-        router.delete(`/cms/users/${userToDelete.value.uuid}`, {
+        router.delete(cmsPath(`/users/${userToDelete.value.uuid}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 userToDelete.value = null;
@@ -112,7 +114,7 @@ function getRowActions(row: User) {
             {
                 label: 'Edit',
                 icon: 'i-lucide-pencil',
-                to: `/cms/users/${row.uuid}/edit`,
+                to: cmsPath(`/users/${row.uuid}/edit`),
             },
         ]);
     }
@@ -265,7 +267,7 @@ const columns: TableColumn<User>[] = [
                     </template>
 
                     <template #right>
-                        <Link v-if="can('users.create')" href="/cms/users/create">
+                        <Link v-if="can('users.create')" :href="cmsPath('/users/create')">
                             <UButton icon="i-lucide-plus">
                                 Add User
                             </UButton>
@@ -334,7 +336,7 @@ const columns: TableColumn<User>[] = [
                         :default-page="users.current_page"
                         :items-per-page="users.per_page"
                         :total="users.total"
-                        @update:page="(p: number) => router.get('/cms/users', { ...filters, page: p })"
+                        @update:page="(p: number) => router.get(cmsPath('/users'), { ...filters, page: p })"
                     />
                 </div>
             </template>

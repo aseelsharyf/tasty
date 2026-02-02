@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
+import { useCmsPath } from '../composables/useCmsPath';
 
 interface User {
     id: number;
@@ -48,6 +49,8 @@ const emit = defineEmits<{
     (e: 'compare', versionA: Version, versionB: Version): void;
 }>();
 
+const { cmsPath } = useCmsPath();
+
 const loading = ref(false);
 const versions = ref<Version[]>([]);
 const selectedForCompare = ref<Version | null>(null);
@@ -59,7 +62,7 @@ async function fetchHistory() {
 
     loading.value = true;
     try {
-        const response = await axios.get(`/cms/workflow/${props.contentType}/${props.contentUuid}/history`);
+        const response = await axios.get(cmsPath(`/workflow/${props.contentType}/${props.contentUuid}/history`));
         versions.value = response.data.versions;
     } catch (error) {
         console.error('Failed to fetch version history:', error);
@@ -75,7 +78,7 @@ async function revertToVersion(version: Version) {
 
     reverting.value = version.id;
     try {
-        await axios.post(`/cms/workflow/versions/${version.uuid}/revert`);
+        await axios.post(cmsPath(`/workflow/versions/${version.uuid}/revert`));
         emit('revert', version);
         await fetchHistory();
     } catch (error: any) {

@@ -9,7 +9,8 @@ export function useCmsPath() {
     const page = usePage<PagePropsWithCmsPath>();
 
     const basePath = computed(() => {
-        const path = page.props.cmsBasePath || '/cms';
+        // Use nullish coalescing to handle empty string correctly
+        const path = page.props.cmsBasePath ?? '/cms';
         // Ensure path doesn't end with slash (unless it's just '/')
         return path === '/' ? '' : path.replace(/\/$/, '');
     });

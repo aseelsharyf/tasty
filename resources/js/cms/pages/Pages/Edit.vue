@@ -2,6 +2,7 @@
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 
 const toast = useToast();
 import CodeEditor from '../../components/CodeEditor.vue';
@@ -24,6 +25,8 @@ const props = defineProps<{
     languages: Language[];
     currentLanguage: Language;
 }>();
+
+const { cmsPath } = useCmsPath();
 
 const activeTab = ref<'content' | 'settings' | 'preview'>('content');
 const deleteModalOpen = ref(false);
@@ -74,7 +77,7 @@ watch(() => form.errors, (errors) => {
 }, { deep: true });
 
 function onSubmit() {
-    form.put(`/cms/pages/${props.currentLanguage.code}/${props.page.uuid}`, {
+    form.put(cmsPath(`/pages/${props.currentLanguage.code}/${props.page.uuid}`), {
         preserveScroll: true,
         onSuccess: () => {
             // Refresh preview iframe after save
@@ -89,7 +92,7 @@ function onSubmit() {
 }
 
 function goBack() {
-    router.visit(`/cms/pages/${props.currentLanguage.code}`);
+    router.visit(cmsPath(`/pages/${props.currentLanguage.code}`));
 }
 
 function viewPage() {
@@ -97,7 +100,7 @@ function viewPage() {
 }
 
 function deletePage() {
-    router.delete(`/cms/pages/${props.currentLanguage.code}/${props.page.uuid}`);
+    router.delete(cmsPath(`/pages/${props.currentLanguage.code}/${props.page.uuid}`));
 }
 
 function refreshPreview() {

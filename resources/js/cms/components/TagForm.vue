@@ -3,6 +3,7 @@ import { useForm } from '@inertiajs/vue3';
 import { computed, watch, ref } from 'vue';
 import DhivehiInput from './DhivehiInput.vue';
 import type { Language } from '../types';
+import { useCmsPath } from '../composables/useCmsPath';
 
 interface TagWithTranslations {
     id?: number;
@@ -24,6 +25,8 @@ const emit = defineEmits<{
     (e: 'success'): void;
     (e: 'cancel'): void;
 }>();
+
+const { cmsPath } = useCmsPath();
 
 const isEditing = computed(() => props.mode === 'edit' && props.tag?.uuid);
 const activeTab = ref(props.languages[0]?.code || 'en');
@@ -75,12 +78,12 @@ function onSubmit() {
     }));
 
     if (isEditing.value && props.tag?.uuid) {
-        form.put(`/cms/tags/${props.tag.uuid}`, {
+        form.put(cmsPath(`/tags/${props.tag.uuid}`), {
             preserveScroll: true,
             onSuccess: () => emit('success'),
         });
     } else {
-        form.post('/cms/tags', {
+        form.post(cmsPath('/tags'), {
             preserveScroll: true,
             onSuccess: () => {
                 reset();

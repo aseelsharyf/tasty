@@ -4,6 +4,7 @@ import { ref, computed, h, resolveComponent } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
 import { useSettingsNav } from '../../composables/useSettingsNav';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { PaginatedResponse } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
@@ -28,6 +29,7 @@ const props = defineProps<{
 
 const { can } = usePermission();
 const { mainNav } = useSettingsNav();
+const { cmsPath } = useCmsPath();
 
 const UButton = resolveComponent('UButton');
 const UBadge = resolveComponent('UBadge');
@@ -77,7 +79,7 @@ function bulkDelete() {
     if (selectedIds.value.length === 0) return;
 
     bulkDeleting.value = true;
-    router.delete('/cms/ingredients/bulk', {
+    router.delete(cmsPath('/ingredients/bulk'), {
         data: { ids: selectedIds.value },
         onSuccess: () => {
             bulkDeleteModalOpen.value = false;
@@ -90,7 +92,7 @@ function bulkDelete() {
 }
 
 function onSearch() {
-    router.get('/cms/ingredients', {
+    router.get(cmsPath('/ingredients'), {
         search: search.value || undefined,
         sort: props.filters.sort,
         direction: props.filters.direction,
@@ -112,7 +114,7 @@ function confirmDelete(ingredient: Ingredient) {
 
 function deleteIngredient() {
     if (ingredientToDelete.value) {
-        router.delete(`/cms/ingredients/${ingredientToDelete.value.id}`, {
+        router.delete(cmsPath(`/ingredients/${ingredientToDelete.value.id}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 ingredientToDelete.value = null;
@@ -134,7 +136,7 @@ function openCreateModal() {
 
 async function openEditModal(ingredient: Ingredient) {
     try {
-        const response = await fetch(`/cms/ingredients/${ingredient.id}/edit`, {
+        const response = await fetch(cmsPath(`/ingredients/${ingredient.id}/edit`), {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -162,7 +164,7 @@ function saveIngredient() {
     saving.value = true;
     formErrors.value = {};
 
-    router.post('/cms/ingredients', form.value, {
+    router.post(cmsPath('/ingredients'), form.value, {
         onSuccess: () => {
             createModalOpen.value = false;
         },
@@ -181,7 +183,7 @@ function updateIngredient() {
     saving.value = true;
     formErrors.value = {};
 
-    router.put(`/cms/ingredients/${ingredientToEdit.value.id}`, form.value, {
+    router.put(cmsPath(`/ingredients/${ingredientToEdit.value.id}`), form.value, {
         onSuccess: () => {
             editModalOpen.value = false;
             ingredientToEdit.value = null;
@@ -197,7 +199,7 @@ function updateIngredient() {
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get('/cms/ingredients', {
+    router.get(cmsPath('/ingredients'), {
         search: search.value || undefined,
         sort: field,
         direction: newDirection,
@@ -435,7 +437,7 @@ const columns: TableColumn<Ingredient>[] = [
                         :page="ingredients.current_page"
                         :total="ingredients.total"
                         :items-per-page="ingredients.per_page"
-                        @update:page="(page) => router.get('/cms/ingredients', { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/ingredients'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 

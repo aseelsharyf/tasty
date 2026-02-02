@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { useCmsPath } from '../composables/useCmsPath';
 
 interface Tag {
     id: number;
@@ -60,6 +61,8 @@ const isOpen = computed({
     set: (value) => emit('update:open', value),
 });
 
+const { cmsPath } = useCmsPath();
+
 // Upload configuration
 const useSignedUrls = ref(false);
 const uploadConfigLoaded = ref(false);
@@ -105,7 +108,7 @@ onMounted(async () => {
 
 async function fetchUploadConfig() {
     try {
-        const response = await fetch('/cms/media/upload-config', {
+        const response = await fetch(cmsPath('/media/upload-config'), {
             headers: {
                 'Accept': 'application/json',
                 'X-XSRF-TOKEN': getCsrfToken(),
@@ -538,7 +541,7 @@ async function uploadDirect(uploadFile: BulkUploadFile) {
         formData.append('credit_role', creditRole.value);
     }
 
-    const response = await fetch('/cms/media', {
+    const response = await fetch(cmsPath('/media'), {
         method: 'POST',
         body: formData,
         headers: {
@@ -566,7 +569,7 @@ async function uploadDirect(uploadFile: BulkUploadFile) {
 // Signed URL upload (for S3)
 async function uploadWithSignedUrl(uploadFile: BulkUploadFile) {
     // Step 1: Get signed URL
-    const signedUrlResponse = await fetch('/cms/media/signed-url', {
+    const signedUrlResponse = await fetch(cmsPath('/media/signed-url'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -656,7 +659,7 @@ async function uploadWithSignedUrl(uploadFile: BulkUploadFile) {
         confirmData.credit_role = creditRole.value;
     }
 
-    const confirmResponse = await fetch('/cms/media/confirm-upload', {
+    const confirmResponse = await fetch(cmsPath('/media/confirm-upload'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

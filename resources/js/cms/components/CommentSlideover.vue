@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { formatDistanceToNow, format } from 'date-fns';
 import { usePermission } from '../composables/usePermission';
+import { useCmsPath } from '../composables/useCmsPath';
 
 interface Comment {
     id: number;
@@ -47,6 +48,7 @@ const emit = defineEmits<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const isOpen = computed({
     get: () => props.open,
@@ -82,7 +84,7 @@ function saveEdit() {
     if (!props.comment) return;
 
     isSaving.value = true;
-    router.put(`/cms/comments/${props.comment.uuid}`, {
+    router.put(cmsPath(`/comments/${props.comment.uuid}`), {
         content: editedContent.value,
     }, {
         preserveScroll: true,
@@ -194,7 +196,7 @@ function handleDelete() {
                         <div>
                             <span class="text-sm text-muted">On post:</span>
                             <a
-                                :href="`/cms/posts/${comment.post.slug}`"
+                                :href="cmsPath(`/posts/${comment.post.slug}`)"
                                 class="text-sm text-primary hover:underline block"
                             >
                                 {{ comment.post.title }}

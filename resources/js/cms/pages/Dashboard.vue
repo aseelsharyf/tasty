@@ -2,6 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../layouts/DashboardLayout.vue';
+import { useCmsPath } from '../composables/useCmsPath';
 import type { DropdownMenuItem } from '@nuxt/ui';
 
 interface RecentPost {
@@ -42,6 +43,8 @@ const props = defineProps<{
     defaultLanguage?: string;
 }>();
 
+const { cmsPath } = useCmsPath();
+
 // Create post functionality
 const isCreatingPost = ref(false);
 
@@ -58,7 +61,7 @@ async function createPostOfType(postType: string) {
     isCreatingPost.value = true;
 
     try {
-        const response = await fetch('/cms/posts/quick-draft', {
+        const response = await fetch(cmsPath('/posts/quick-draft'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -100,20 +103,20 @@ const postTypeMenuItems = computed<DropdownMenuItem[][]>(() => {
     ];
 });
 
-const quickActions: DropdownMenuItem[][] = [
+const quickActions = computed<DropdownMenuItem[][]>(() => [
     [
         {
             label: 'New User',
             icon: 'i-lucide-user-plus',
-            to: '/cms/users/create',
+            to: cmsPath('/users/create'),
         },
         {
             label: 'Upload Media',
             icon: 'i-lucide-upload',
-            to: '/cms/media/upload',
+            to: cmsPath('/media/upload'),
         },
     ],
-];
+]);
 
 function getStatusColor(status: string): string {
     switch (status) {
@@ -168,7 +171,7 @@ function formatDate(dateString: string): string {
 
                 <!-- Stats Grid -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <Link href="/cms/posts">
+                    <Link :href="cmsPath('/posts')">
                         <UPageCard variant="outline" class="hover:border-primary transition-colors">
                             <div class="flex items-center gap-4">
                                 <div class="flex items-center justify-center size-12 rounded-xl bg-primary/10">
@@ -182,7 +185,7 @@ function formatDate(dateString: string): string {
                         </UPageCard>
                     </Link>
 
-                    <Link href="/cms/posts?status=published">
+                    <Link :href="cmsPath('/posts?status=published')">
                         <UPageCard variant="outline" class="hover:border-success transition-colors">
                             <div class="flex items-center gap-4">
                                 <div class="flex items-center justify-center size-12 rounded-xl bg-success/10">
@@ -196,7 +199,7 @@ function formatDate(dateString: string): string {
                         </UPageCard>
                     </Link>
 
-                    <Link href="/cms/posts?status=pending">
+                    <Link :href="cmsPath('/posts?status=pending')">
                         <UPageCard variant="outline" class="hover:border-warning transition-colors">
                             <div class="flex items-center gap-4">
                                 <div class="flex items-center justify-center size-12 rounded-xl bg-warning/10">
@@ -210,7 +213,7 @@ function formatDate(dateString: string): string {
                         </UPageCard>
                     </Link>
 
-                    <Link href="/cms/users">
+                    <Link :href="cmsPath('/users')">
                         <UPageCard variant="outline" class="hover:border-info transition-colors">
                             <div class="flex items-center gap-4">
                                 <div class="flex items-center justify-center size-12 rounded-xl bg-info/10">
@@ -227,7 +230,7 @@ function formatDate(dateString: string): string {
 
                 <!-- Secondary Stats -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                    <Link href="/cms/posts?status=draft">
+                    <Link :href="cmsPath('/posts?status=draft')">
                         <UPageCard variant="outline" :ui="{ body: 'p-4' }" class="hover:border-primary/50 transition-colors">
                             <div class="text-center">
                                 <p class="text-2xl font-semibold text-highlighted">{{ stats.drafts }}</p>
@@ -236,7 +239,7 @@ function formatDate(dateString: string): string {
                         </UPageCard>
                     </Link>
 
-                    <Link href="/cms/posts?status=scheduled">
+                    <Link :href="cmsPath('/posts?status=scheduled')">
                         <UPageCard variant="outline" :ui="{ body: 'p-4' }" class="hover:border-primary/50 transition-colors">
                             <div class="text-center">
                                 <p class="text-2xl font-semibold text-highlighted">{{ stats.scheduled }}</p>
@@ -245,7 +248,7 @@ function formatDate(dateString: string): string {
                         </UPageCard>
                     </Link>
 
-                    <Link href="/cms/posts?post_type=article">
+                    <Link :href="cmsPath('/posts?post_type=article')">
                         <UPageCard variant="outline" :ui="{ body: 'p-4' }" class="hover:border-primary/50 transition-colors">
                             <div class="text-center">
                                 <p class="text-2xl font-semibold text-highlighted">{{ stats.articles }}</p>
@@ -254,7 +257,7 @@ function formatDate(dateString: string): string {
                         </UPageCard>
                     </Link>
 
-                    <Link href="/cms/posts?post_type=recipe">
+                    <Link :href="cmsPath('/posts?post_type=recipe')">
                         <UPageCard variant="outline" :ui="{ body: 'p-4' }" class="hover:border-primary/50 transition-colors">
                             <div class="text-center">
                                 <p class="text-2xl font-semibold text-highlighted">{{ stats.recipes }}</p>
@@ -285,7 +288,7 @@ function formatDate(dateString: string): string {
                                     New Post
                                 </UButton>
                             </UDropdownMenu>
-                            <Link href="/cms/users/create">
+                            <Link :href="cmsPath('/users/create')">
                                 <UButton
                                     color="neutral"
                                     variant="soft"
@@ -296,7 +299,7 @@ function formatDate(dateString: string): string {
                                     Add User
                                 </UButton>
                             </Link>
-                            <Link href="/cms/media/upload">
+                            <Link :href="cmsPath('/media/upload')">
                                 <UButton
                                     color="neutral"
                                     variant="soft"
@@ -307,7 +310,7 @@ function formatDate(dateString: string): string {
                                     Upload Media
                                 </UButton>
                             </Link>
-                            <Link href="/cms/settings">
+                            <Link :href="cmsPath('/settings')">
                                 <UButton
                                     color="neutral"
                                     variant="soft"
@@ -335,7 +338,7 @@ function formatDate(dateString: string): string {
                             <Link
                                 v-for="post in recentPosts"
                                 :key="post.id"
-                                :href="`/cms/posts/${post.uuid}/edit`"
+                                :href="cmsPath(`/posts/${post.uuid}/edit`)"
                                 class="flex items-center gap-3 px-4 py-3 hover:bg-elevated/50 transition-colors overflow-hidden"
                             >
                                 <div class="flex items-center justify-center size-8 rounded bg-muted/50 shrink-0">
@@ -360,7 +363,7 @@ function formatDate(dateString: string): string {
                             </Link>
                         </div>
                         <div v-if="recentPosts.length > 0" class="pt-4 mt-2 border-t border-default">
-                            <Link href="/cms/posts">
+                            <Link :href="cmsPath('/posts')">
                                 <UButton
                                     color="neutral"
                                     variant="ghost"

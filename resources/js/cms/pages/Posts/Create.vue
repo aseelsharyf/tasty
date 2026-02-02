@@ -8,6 +8,7 @@ import MediaPickerModal from '../../components/MediaPickerModal.vue';
 import type { MediaBlockItem } from '../../editor-tools/MediaBlock';
 import { useSidebar } from '../../composables/useSidebar';
 import { useDhivehiKeyboard } from '../../composables/useDhivehiKeyboard';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Category, Tag } from '../../types';
 
 interface PostTypeField {
@@ -58,6 +59,7 @@ interface Sponsor {
 
 // Sidebar control
 const { hide: hideSidebar, show: showSidebar } = useSidebar();
+const { cmsPath } = useCmsPath();
 
 const props = defineProps<{
     categories: Category[];
@@ -250,7 +252,7 @@ function performSave() {
 
     // If we already have a UUID, update the existing draft
     if (postUuid.value) {
-        form.post(`/cms/posts/${props.language.code}/${postUuid.value}`, {
+        form.post(cmsPath(`/posts/${props.language.code}/${postUuid.value}`), {
             forceFormData: true,
             headers: { 'X-HTTP-Method-Override': 'PUT' },
             preserveScroll: true,
@@ -268,7 +270,7 @@ function performSave() {
         form.transform((data) => ({
             ...data,
             status: 'draft',
-        })).post(`/cms/posts/${props.language.code}`, {
+        })).post(cmsPath(`/posts/${props.language.code}`), {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: (page: any) => {
@@ -277,7 +279,7 @@ function performSave() {
                 if (match) {
                     postUuid.value = match[1];
                     // Update URL without full navigation
-                    window.history.replaceState({}, '', `/cms/posts/${props.language.code}/${match[1]}/edit`);
+                    window.history.replaceState({}, '', cmsPath(`/posts/${props.language.code}/${match[1]}/edit`));
                 }
                 lastSaved.value = new Date();
                 hasUnsavedChanges.value = false;
@@ -450,7 +452,7 @@ async function onCreateFeaturedTag(name: string) {
 // Shared function to create a tag
 async function createTag(name: string): Promise<{ id: number; name: string; slug: string } | null> {
     try {
-        const response = await axios.post('/cms/tags', {
+        const response = await axios.post(cmsPath('/tags'), {
             name: { [props.language.code]: name },
         });
         const newTag = response.data;
@@ -544,13 +546,13 @@ function submit(status?: string) {
         form.status = status;
     }
 
-    form.post(`/cms/posts/${props.language.code}`, {
+    form.post(cmsPath(`/posts/${props.language.code}`), {
         forceFormData: true,
     });
 }
 
 function goBack() {
-    router.visit(`/cms/posts/${props.language.code}`);
+    router.visit(cmsPath(`/posts/${props.language.code}`));
 }
 </script>
 

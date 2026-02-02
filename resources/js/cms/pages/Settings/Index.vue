@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import type { NavigationMenuItem } from '@nuxt/ui';
 import { useSettingsNav } from '../../composables/useSettingsNav';
+import { useCmsPath } from '../../composables/useCmsPath';
 
 const props = defineProps<{
     tab: string;
@@ -32,16 +33,18 @@ const props = defineProps<{
 
 const activeTab = computed(() => props.tab || 'general');
 
+const { cmsPath } = useCmsPath();
+
 // Main settings pages navigation
 const { mainNav } = useSettingsNav();
 
 // Sub-tabs for general settings
 const links = computed<NavigationMenuItem[][]>(() => [[
-    { label: 'Site Info', to: '/cms/settings/general', active: activeTab.value === 'general' },
-    { label: 'SEO & Meta', to: '/cms/settings/seo', active: activeTab.value === 'seo' },
-    { label: 'OpenGraph', to: '/cms/settings/opengraph', active: activeTab.value === 'opengraph' },
-    { label: 'Favicons', to: '/cms/settings/favicons', active: activeTab.value === 'favicons' },
-    { label: 'Social Links', to: '/cms/settings/social', active: activeTab.value === 'social' },
+    { label: 'Site Info', to: cmsPath('/settings/general'), active: activeTab.value === 'general' },
+    { label: 'SEO & Meta', to: cmsPath('/settings/seo'), active: activeTab.value === 'seo' },
+    { label: 'OpenGraph', to: cmsPath('/settings/opengraph'), active: activeTab.value === 'opengraph' },
+    { label: 'Favicons', to: cmsPath('/settings/favicons'), active: activeTab.value === 'favicons' },
+    { label: 'Social Links', to: cmsPath('/settings/social'), active: activeTab.value === 'social' },
 ]]);
 
 const form = useForm({
@@ -144,7 +147,7 @@ function removeFile(field: 'og_image' | 'favicon' | 'favicon_16' | 'favicon_32' 
 }
 
 function onSubmit() {
-    form.post('/cms/settings', {
+    form.post(cmsPath('/settings'), {
         forceFormData: true,
         preserveScroll: true,
     });

@@ -2,6 +2,7 @@
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { NavigationMenuItem } from '@nuxt/ui';
 
 interface ProfileUser {
@@ -20,13 +21,15 @@ const props = defineProps<{
     user: ProfileUser;
 }>();
 
+const { cmsPath } = useCmsPath();
+
 // Tab navigation - URL based
 const activeTab = computed(() => props.tab || 'profile');
 
 const links = computed<NavigationMenuItem[][]>(() => [[
-    { label: 'Profile', icon: 'i-lucide-user', to: '/cms/profile/profile', active: activeTab.value === 'profile' },
-    { label: 'Avatar', icon: 'i-lucide-image', to: '/cms/profile/avatar', active: activeTab.value === 'avatar' },
-    { label: 'Security', icon: 'i-lucide-shield', to: '/cms/profile/security', active: activeTab.value === 'security' },
+    { label: 'Profile', icon: 'i-lucide-user', to: cmsPath('/profile/profile'), active: activeTab.value === 'profile' },
+    { label: 'Avatar', icon: 'i-lucide-image', to: cmsPath('/profile/avatar'), active: activeTab.value === 'avatar' },
+    { label: 'Security', icon: 'i-lucide-shield', to: cmsPath('/profile/security'), active: activeTab.value === 'security' },
 ]]);
 
 // Profile form
@@ -37,7 +40,7 @@ const profileForm = useForm({
 });
 
 function updateProfile() {
-    profileForm.put('/cms/profile', {
+    profileForm.put(cmsPath('/profile'), {
         preserveScroll: true,
     });
 }
@@ -69,7 +72,7 @@ function handleAvatarChange(event: Event) {
         const formData = new FormData();
         formData.append('avatar', file);
 
-        router.post('/cms/profile/avatar', formData, {
+        router.post(cmsPath('/profile/avatar'), formData, {
             preserveScroll: true,
             onSuccess: () => {
                 avatarPreview.value = null;
@@ -83,7 +86,7 @@ function handleAvatarChange(event: Event) {
 
 function removeAvatar() {
     removingAvatar.value = true;
-    router.delete('/cms/profile/avatar', {
+    router.delete(cmsPath('/profile/avatar'), {
         preserveScroll: true,
         onFinish: () => {
             removingAvatar.value = false;
@@ -103,7 +106,7 @@ const showCurrentPassword = ref(false);
 const showNewPassword = ref(false);
 
 function updatePassword() {
-    passwordForm.put('/cms/profile/password', {
+    passwordForm.put(cmsPath('/profile/password'), {
         preserveScroll: true,
         onSuccess: () => {
             passwordForm.reset();

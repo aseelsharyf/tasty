@@ -4,6 +4,7 @@ import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import HomepageSectionList from '../../components/layouts/HomepageSectionList.vue';
 import SectionTypePicker from '../../components/layouts/SectionTypePicker.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { BreadcrumbItem } from '@nuxt/ui';
 import type { HomepageSection, HomepageConfiguration, SectionTypeDefinition } from '../../types';
 
@@ -11,6 +12,8 @@ const props = defineProps<{
     configuration: HomepageConfiguration;
     sectionTypes: Record<string, SectionTypeDefinition>;
 }>();
+
+const { cmsPath } = useCmsPath();
 
 const form = useForm({
     sections: JSON.parse(JSON.stringify(props.configuration.sections)) as HomepageSection[],
@@ -109,7 +112,7 @@ function updateSections(sections: HomepageSection[]) {
 
 function saveChanges() {
     isSaving.value = true;
-    form.put('/cms/layouts/homepage', {
+    form.put(cmsPath('/layouts/homepage'), {
         preserveScroll: true,
         onSuccess: () => {
             toast.add({ title: 'Saved', description: 'Homepage layout updated successfully.', color: 'success' });

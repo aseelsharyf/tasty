@@ -3,9 +3,11 @@ import { Head, useForm, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { useSettingsNav } from '../../composables/useSettingsNav';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { BreadcrumbItem } from '@nuxt/ui';
 
 const { mainNav: settingsNav } = useSettingsNav();
+const { cmsPath } = useCmsPath();
 
 interface SeoSetting {
     id: number;
@@ -104,7 +106,7 @@ function openAddModal() {
 }
 
 function addSetting() {
-    newForm.post('/cms/settings/seo', {
+    newForm.post(cmsPath('/settings/seo'), {
         onSuccess: () => {
             addModal.value = false;
         },
@@ -136,7 +138,7 @@ function openEditModal(setting: SeoSetting) {
 function updateSetting() {
     if (!settingToEdit.value) return;
 
-    editForm.put(`/cms/settings/seo/${settingToEdit.value.id}`, {
+    editForm.put(cmsPath(`/settings/seo/${settingToEdit.value.id}`), {
         onSuccess: () => {
             editModal.value = false;
             settingToEdit.value = null;
@@ -152,7 +154,7 @@ function openDeleteModal(setting: SeoSetting) {
 function deleteSetting() {
     if (!settingToDelete.value) return;
 
-    router.delete(`/cms/settings/seo/${settingToDelete.value.id}`, {
+    router.delete(cmsPath(`/settings/seo/${settingToDelete.value.id}`), {
         onSuccess: () => {
             deleteModal.value = false;
             settingToDelete.value = null;
@@ -161,7 +163,7 @@ function deleteSetting() {
 }
 
 function toggleActive(setting: SeoSetting) {
-    router.put(`/cms/settings/seo/${setting.id}`, {
+    router.put(cmsPath(`/settings/seo/${setting.id}`), {
         ...setting,
         is_active: !setting.is_active,
     }, {
@@ -184,7 +186,7 @@ function getPageTypeColor(type: string): 'primary' | 'success' | 'warning' | 'in
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { label: 'Settings', to: '/cms/settings' },
+    { label: 'Settings', to: cmsPath('/settings') },
     { label: 'SEO Settings' },
 ];
 

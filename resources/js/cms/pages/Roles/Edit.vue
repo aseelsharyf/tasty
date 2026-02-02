@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { GroupedPermissions } from '../../types';
 import type { BreadcrumbItem } from '@nuxt/ui';
 
@@ -15,13 +17,15 @@ const props = defineProps<{
     permissions: GroupedPermissions;
 }>();
 
+const { cmsPath } = useCmsPath();
+
 const form = useForm({
     name: props.role.name,
     permissions: [...props.role.permissions],
 });
 
 function onSubmit() {
-    form.put(`/cms/roles/${props.role.id}`);
+    form.put(cmsPath(`/roles/${props.role.id}`));
 }
 
 function togglePermission(permissionName: string) {
@@ -56,10 +60,10 @@ function isModulePartiallySelected(module: string): boolean {
     return selectedCount > 0 && selectedCount < modulePermissions.length;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { label: 'Roles', to: '/cms/roles' },
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+    { label: 'Roles', to: cmsPath('/roles') },
     { label: props.role.name },
-];
+]);
 
 const isAdminRole = props.role.name === 'Admin';
 </script>
@@ -97,7 +101,7 @@ const isAdminRole = props.role.name === 'Admin';
                         >
                             <div class="flex gap-2 lg:ms-auto">
                                 <UButton
-                                    :to="'/cms/roles'"
+                                    :to="cmsPath('/roles')"
                                     color="neutral"
                                     variant="ghost"
                                 >

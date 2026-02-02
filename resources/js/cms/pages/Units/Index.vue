@@ -4,6 +4,7 @@ import { ref, computed, h, resolveComponent } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
 import { useSettingsNav } from '../../composables/useSettingsNav';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { PaginatedResponse } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
@@ -29,6 +30,7 @@ const props = defineProps<{
 
 const { can } = usePermission();
 const { mainNav } = useSettingsNav();
+const { cmsPath } = useCmsPath();
 
 const UButton = resolveComponent('UButton');
 const UBadge = resolveComponent('UBadge');
@@ -79,7 +81,7 @@ function bulkDelete() {
     if (selectedIds.value.length === 0) return;
 
     bulkDeleting.value = true;
-    router.delete('/cms/units/bulk', {
+    router.delete(cmsPath('/units/bulk'), {
         data: { ids: selectedIds.value },
         onSuccess: () => {
             bulkDeleteModalOpen.value = false;
@@ -92,7 +94,7 @@ function bulkDelete() {
 }
 
 function onSearch() {
-    router.get('/cms/units', {
+    router.get(cmsPath('/units'), {
         search: search.value || undefined,
         sort: props.filters.sort,
         direction: props.filters.direction,
@@ -114,7 +116,7 @@ function confirmDelete(unit: Unit) {
 
 function deleteUnit() {
     if (unitToDelete.value) {
-        router.delete(`/cms/units/${unitToDelete.value.id}`, {
+        router.delete(cmsPath(`/units/${unitToDelete.value.id}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 unitToDelete.value = null;
@@ -137,7 +139,7 @@ function openCreateModal() {
 
 async function openEditModal(unit: Unit) {
     try {
-        const response = await fetch(`/cms/units/${unit.id}/edit`, {
+        const response = await fetch(cmsPath(`/units/${unit.id}/edit`), {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -166,7 +168,7 @@ function saveUnit() {
     saving.value = true;
     formErrors.value = {};
 
-    router.post('/cms/units', form.value, {
+    router.post(cmsPath('/units'), form.value, {
         onSuccess: () => {
             createModalOpen.value = false;
         },
@@ -185,7 +187,7 @@ function updateUnit() {
     saving.value = true;
     formErrors.value = {};
 
-    router.put(`/cms/units/${unitToEdit.value.id}`, form.value, {
+    router.put(cmsPath(`/units/${unitToEdit.value.id}`), form.value, {
         onSuccess: () => {
             editModalOpen.value = false;
             unitToEdit.value = null;
@@ -201,7 +203,7 @@ function updateUnit() {
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get('/cms/units', {
+    router.get(cmsPath('/units'), {
         search: search.value || undefined,
         sort: field,
         direction: newDirection,
@@ -442,7 +444,7 @@ const columns: TableColumn<Unit>[] = [
                         :page="units.current_page"
                         :total="units.total"
                         :items-per-page="units.per_page"
-                        @update:page="(page) => router.get('/cms/units', { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/units'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 

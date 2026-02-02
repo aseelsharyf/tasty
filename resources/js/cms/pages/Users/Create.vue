@@ -2,12 +2,15 @@
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Role } from '../../types';
 import type { BreadcrumbItem } from '@nuxt/ui';
 
 const props = defineProps<{
     roles: Role[];
 }>();
+
+const { cmsPath } = useCmsPath();
 
 const form = useForm({
     name: '',
@@ -62,15 +65,15 @@ function removeAvatar() {
 }
 
 function onSubmit() {
-    form.post('/cms/users', {
+    form.post(cmsPath('/users'), {
         forceFormData: true,
     });
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { label: 'Users', to: '/cms/users' },
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+    { label: 'Users', to: cmsPath('/users') },
     { label: 'Create' },
-];
+]);
 </script>
 
 <template>
@@ -106,7 +109,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                         >
                             <div class="flex gap-2 lg:ms-auto">
                                 <UButton
-                                    :to="'/cms/users'"
+                                    :to="cmsPath('/users')"
                                     color="neutral"
                                     variant="ghost"
                                 >

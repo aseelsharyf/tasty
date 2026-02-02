@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 import axios from 'axios';
 import type { PaginatedResponse } from '../../types';
 
@@ -36,6 +37,8 @@ const props = defineProps<{
     filters: NotificationFilters;
     unreadCount: number;
 }>();
+
+const { cmsPath } = useCmsPath();
 
 const loading = ref(false);
 const selectedNotifications = ref<string[]>([]);
@@ -102,7 +105,7 @@ function applyFilters(newFilters: Partial<NotificationFilters>) {
         if (!params[key]) delete params[key];
     });
 
-    router.get('/cms/notifications', params, {
+    router.get(cmsPath('/notifications'), params, {
         preserveState: true,
         preserveScroll: true,
     });
@@ -113,7 +116,7 @@ async function markAsRead(notification: Notification) {
     if (!isUnread(notification)) return;
 
     try {
-        await axios.post(`/cms/notifications/${notification.uuid}/read`);
+        await axios.post(cmsPath(`/notifications/${notification.uuid}/read`));
         router.reload({ only: ['notifications', 'unreadCount'] });
     } catch (error) {
         console.error('Failed to mark as read:', error);
@@ -124,7 +127,7 @@ async function markAsRead(notification: Notification) {
 async function markAllAsRead() {
     loading.value = true;
     try {
-        await axios.post('/cms/notifications/mark-all-read');
+        await axios.post(cmsPath('/notifications/mark-all-read'));
         router.reload({ only: ['notifications', 'unreadCount'] });
     } catch (error) {
         console.error('Failed to mark all as read:', error);
@@ -136,7 +139,7 @@ async function markAllAsRead() {
 // Delete notification
 async function deleteNotification(notification: Notification) {
     try {
-        await axios.delete(`/cms/notifications/${notification.uuid}`);
+        await axios.delete(cmsPath(`/notifications/${notification.uuid}`));
         router.reload({ only: ['notifications', 'unreadCount'] });
     } catch (error) {
         console.error('Failed to delete notification:', error);
@@ -147,7 +150,7 @@ async function deleteNotification(notification: Notification) {
 async function deleteReadNotifications() {
     loading.value = true;
     try {
-        await axios.delete('/cms/notifications/read');
+        await axios.delete(cmsPath('/notifications/read'));
         router.reload({ only: ['notifications', 'unreadCount'] });
     } catch (error) {
         console.error('Failed to delete read notifications:', error);
@@ -172,7 +175,7 @@ function goToPage(page: number) {
     if (props.filters.type) params.type = props.filters.type;
     if (props.filters.filter) params.filter = props.filters.filter;
 
-    router.get('/cms/notifications', params, {
+    router.get(cmsPath('/notifications'), params, {
         preserveState: true,
         preserveScroll: true,
     });

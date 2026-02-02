@@ -5,6 +5,7 @@ import draggable from 'vuedraggable';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import DhivehiInput from '../../components/DhivehiInput.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Menu, MenuItemTreeItem, Language, CategoryOption } from '../../types';
 
 const props = defineProps<{
@@ -15,6 +16,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 // Menu settings
 const showSettingsSlideover = ref(false);
@@ -165,7 +167,7 @@ function flattenForReorder(items: MenuItemTreeItem[], parentId: number | null = 
 function onDragEnd() {
     const items = flattenForReorder(menuItems.value);
 
-    router.post(`/cms/menus/${props.menu.uuid}/items/reorder`, {
+    router.post(cmsPath(`/menus/${props.menu.uuid}/items/reorder`), {
         items,
     }, {
         preserveScroll: true,
@@ -211,7 +213,7 @@ function confirmDeleteItem(item: MenuItemTreeItem) {
 function deleteItem() {
     if (!itemToDelete.value) return;
 
-    router.delete(`/cms/menus/${props.menu.uuid}/items/${itemToDelete.value.uuid}`, {
+    router.delete(cmsPath(`/menus/${props.menu.uuid}/items/${itemToDelete.value.uuid}`), {
         preserveScroll: true,
         onSuccess: () => {
             deleteItemModalOpen.value = false;
@@ -237,7 +239,7 @@ function addItem() {
         parent_id: itemForm.parent_id,
     }));
 
-    itemForm.post(`/cms/menus/${props.menu.uuid}/items`, {
+    itemForm.post(cmsPath(`/menus/${props.menu.uuid}/items`), {
         preserveScroll: true,
         onSuccess: () => {
             showAddItemModal.value = false;
@@ -264,7 +266,7 @@ function updateItem() {
         is_active: itemForm.is_active,
     }));
 
-    itemForm.put(`/cms/menus/${props.menu.uuid}/items/${itemToEdit.value.uuid}`, {
+    itemForm.put(cmsPath(`/menus/${props.menu.uuid}/items/${itemToEdit.value.uuid}`), {
         preserveScroll: true,
         onSuccess: () => {
             showEditItemModal.value = false;
@@ -290,7 +292,7 @@ function updateSettings() {
         is_active: settingsForm.is_active,
     }));
 
-    settingsForm.put(`/cms/menus/${props.menu.uuid}`, {
+    settingsForm.put(cmsPath(`/menus/${props.menu.uuid}`), {
         preserveScroll: true,
         onSuccess: () => {
             showSettingsSlideover.value = false;
@@ -331,7 +333,7 @@ function hasSettingsTranslation(langCode: string): boolean {
                             icon="i-lucide-arrow-left"
                             color="neutral"
                             variant="ghost"
-                            to="/cms/menus"
+                            :to="cmsPath('/menus')"
                             class="shrink-0"
                         />
                     </template>

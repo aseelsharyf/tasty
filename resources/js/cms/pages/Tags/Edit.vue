@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import TagForm from '../../components/TagForm.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Tag, Language } from '../../types';
 
 const props = defineProps<{
@@ -9,12 +10,14 @@ const props = defineProps<{
     languages: Language[];
 }>();
 
+const { cmsPath } = useCmsPath();
+
 function onSuccess() {
-    router.visit('/cms/tags');
+    router.visit(cmsPath('/tags'));
 }
 
 function onCancel() {
-    router.visit('/cms/tags');
+    router.visit(cmsPath('/tags'));
 }
 </script>
 

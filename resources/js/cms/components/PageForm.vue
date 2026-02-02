@@ -2,6 +2,7 @@
 import { useForm } from '@inertiajs/vue3';
 import { computed, watch, ref } from 'vue';
 import type { Page, Author } from '../types';
+import { useCmsPath } from '../composables/useCmsPath';
 
 const props = withDefaults(defineProps<{
     page?: Page & {
@@ -21,6 +22,8 @@ const emit = defineEmits<{
     (e: 'success'): void;
     (e: 'cancel'): void;
 }>();
+
+const { cmsPath } = useCmsPath();
 
 const isEditing = computed(() => props.mode === 'edit' && props.page?.uuid);
 const activeTab = ref<'content' | 'seo'>('content');
@@ -60,12 +63,12 @@ function slugify(text: string): string {
 
 function onSubmit() {
     if (isEditing.value && props.page?.uuid) {
-        form.put(`/cms/pages/${props.page.uuid}`, {
+        form.put(cmsPath(`/pages/${props.page.uuid}`), {
             preserveScroll: true,
             onSuccess: () => emit('success'),
         });
     } else {
-        form.post('/cms/pages', {
+        form.post(cmsPath('/pages'), {
             preserveScroll: true,
             onSuccess: () => {
                 reset();

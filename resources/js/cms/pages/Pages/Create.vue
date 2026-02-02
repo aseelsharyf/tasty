@@ -2,6 +2,7 @@
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, watch, ref } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 
 const toast = useToast();
 import CodeEditor from '../../components/CodeEditor.vue';
@@ -15,6 +16,8 @@ const props = defineProps<{
     languages: Language[];
     currentLanguage: Language;
 }>();
+
+const { cmsPath } = useCmsPath();
 
 const activeTab = ref<'content' | 'settings' | 'preview'>('content');
 
@@ -65,7 +68,7 @@ watch(() => form.errors, (errors) => {
 }, { deep: true });
 
 function onSubmit() {
-    form.post(`/cms/pages/${props.currentLanguage.code}`, {
+    form.post(cmsPath(`/pages/${props.currentLanguage.code}`), {
         preserveScroll: true,
         onSuccess: () => {
             toast.add({
@@ -78,7 +81,7 @@ function onSubmit() {
 }
 
 function goBack() {
-    router.visit(`/cms/pages/${props.currentLanguage.code}`);
+    router.visit(cmsPath(`/pages/${props.currentLanguage.code}`));
 }
 
 const statusOptions = computed(() => {

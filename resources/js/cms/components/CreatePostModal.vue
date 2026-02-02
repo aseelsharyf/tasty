@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { useCmsPath } from '../composables/useCmsPath';
 
 interface Language {
     code: string;
@@ -31,6 +32,8 @@ const isOpen = computed({
     get: () => props.open,
     set: (value) => emit('update:open', value),
 });
+
+const { cmsPath } = useCmsPath();
 
 const title = ref('');
 const selectedLanguage = ref<string | null>(null);
@@ -85,7 +88,7 @@ async function createDraft() {
     errors.value = {};
 
     try {
-        const response = await fetch('/cms/posts/quick-draft', {
+        const response = await fetch(cmsPath('/posts/quick-draft'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

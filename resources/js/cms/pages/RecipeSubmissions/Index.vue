@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { ref, computed, h, resolveComponent } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { PaginatedResponse } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
@@ -45,6 +46,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const UButton = resolveComponent('UButton');
 const UBadge = resolveComponent('UBadge');
@@ -78,7 +80,7 @@ function clearSelection() {
 }
 
 function onSearch() {
-    router.get('/cms/recipe-submissions', {
+    router.get(cmsPath('/recipe-submissions'), {
         search: search.value || undefined,
         status: currentStatus.value,
         sort: props.filters.sort,
@@ -96,7 +98,7 @@ function clearSearch() {
 
 function filterByStatus(status: string) {
     currentStatus.value = status;
-    router.get('/cms/recipe-submissions', {
+    router.get(cmsPath('/recipe-submissions'), {
         search: search.value || undefined,
         status,
         sort: props.filters.sort,
@@ -109,7 +111,7 @@ function filterByStatus(status: string) {
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get('/cms/recipe-submissions', {
+    router.get(cmsPath('/recipe-submissions'), {
         search: search.value || undefined,
         status: currentStatus.value,
         sort: field,
@@ -121,18 +123,18 @@ function sortBy(field: string) {
 }
 
 function viewSubmission(submission: Submission) {
-    router.get(`/cms/recipe-submissions/${submission.uuid}`);
+    router.get(cmsPath(`/recipe-submissions/${submission.uuid}`));
 }
 
 function approveSubmission(submission: Submission) {
     if (confirm('Approve this submission?')) {
-        router.post(`/cms/recipe-submissions/${submission.uuid}/approve`);
+        router.post(cmsPath(`/recipe-submissions/${submission.uuid}/approve`));
     }
 }
 
 function rejectSubmission(submission: Submission) {
     const notes = prompt('Enter rejection notes (optional):');
-    router.post(`/cms/recipe-submissions/${submission.uuid}/reject`, { notes });
+    router.post(cmsPath(`/recipe-submissions/${submission.uuid}/reject`), { notes });
 }
 
 function confirmDelete(submission: Submission) {
@@ -142,7 +144,7 @@ function confirmDelete(submission: Submission) {
 
 function deleteSubmission() {
     if (submissionToDelete.value) {
-        router.delete(`/cms/recipe-submissions/${submissionToDelete.value.uuid}`, {
+        router.delete(cmsPath(`/recipe-submissions/${submissionToDelete.value.uuid}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 submissionToDelete.value = null;
@@ -159,7 +161,7 @@ function openBulkActionModal(action: 'approve' | 'reject' | 'delete') {
 
 function executeBulkAction() {
     processing.value = true;
-    router.post('/cms/recipe-submissions/bulk', {
+    router.post(cmsPath('/recipe-submissions/bulk'), {
         ids: selectedIds.value,
         action: bulkActionType.value,
         notes: bulkActionNotes.value,
@@ -499,7 +501,7 @@ const statusTabs = [
                         :page="submissions.current_page"
                         :total="submissions.total"
                         :items-per-page="submissions.per_page"
-                        @update:page="(page) => router.get('/cms/recipe-submissions', { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/recipe-submissions'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 

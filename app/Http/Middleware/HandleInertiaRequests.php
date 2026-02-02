@@ -41,6 +41,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'csrf_token' => csrf_token(),
+            'cmsBasePath' => RedirectToCms::getCmsBasePath(),
             'auth' => [
                 'user' => $user ? [
                     'id' => $user->id,

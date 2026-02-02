@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { usePermission } from '../composables/usePermission';
+import { useCmsPath } from '../composables/useCmsPath';
 import { formatDistanceToNow } from 'date-fns';
 import DhivehiInput from './DhivehiInput.vue';
 import MediaCropCreator from './MediaCropCreator.vue';
@@ -96,6 +97,7 @@ const emit = defineEmits<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const isOpen = computed({
     get: () => props.open,
@@ -196,7 +198,7 @@ async function onCreateTag(name: string) {
         const defaultLang = props.languages.find(l => l.is_default);
         const langCode = defaultLang?.code || 'en';
 
-        const response = await axios.post('/cms/tags', {
+        const response = await axios.post(cmsPath('/tags'), {
             name: { [langCode]: name },
         });
         const newTag = response.data;
@@ -293,7 +295,7 @@ function save() {
         data.credit_url = creditUrl.value || null;
     }
 
-    router.put(`/cms/media/${props.media.uuid}`, data, {
+    router.put(cmsPath(`/media/${props.media.uuid}`), data, {
         preserveScroll: true,
         onSuccess: () => {
             isOpen.value = false;

@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
+import { useCmsPath } from '../composables/useCmsPath';
 
 interface NotificationUser {
     id: number;
@@ -25,6 +26,8 @@ interface Notification {
     time_ago: string;
 }
 
+const { cmsPath } = useCmsPath();
+
 const notifications = ref<Notification[]>([]);
 const unreadCount = ref(0);
 const loading = ref(false);
@@ -47,7 +50,7 @@ function getNotificationColor(color: string): string {
 async function fetchRecentNotifications() {
     loading.value = true;
     try {
-        const response = await axios.get('/cms/notifications/recent');
+        const response = await axios.get(cmsPath('/notifications/recent'));
         notifications.value = response.data.notifications;
         unreadCount.value = response.data.unread_count;
     } catch (error) {
@@ -59,7 +62,7 @@ async function fetchRecentNotifications() {
 
 async function fetchUnreadCount() {
     try {
-        const response = await axios.get('/cms/notifications/unread-count');
+        const response = await axios.get(cmsPath('/notifications/unread-count'));
         unreadCount.value = response.data.count;
     } catch (error) {
         console.error('Failed to fetch unread count:', error);
@@ -70,7 +73,7 @@ async function markAsRead(notification: Notification) {
     if (notification.is_read) return;
 
     try {
-        await axios.post(`/cms/notifications/${notification.uuid}/read`);
+        await axios.post(cmsPath(`/notifications/${notification.uuid}/read`));
         notification.is_read = true;
         unreadCount.value = Math.max(0, unreadCount.value - 1);
     } catch (error) {
@@ -80,7 +83,7 @@ async function markAsRead(notification: Notification) {
 
 async function markAllAsRead() {
     try {
-        await axios.post('/cms/notifications/mark-all-read');
+        await axios.post(cmsPath('/notifications/mark-all-read'));
         notifications.value.forEach(n => n.is_read = true);
         unreadCount.value = 0;
     } catch (error) {
@@ -99,7 +102,7 @@ function handleNotificationClick(notification: Notification) {
 
 function viewAllNotifications() {
     dropdownOpen.value = false;
-    router.visit('/cms/notifications');
+    router.visit(cmsPath('/notifications'));
 }
 
 // Start polling when component is mounted

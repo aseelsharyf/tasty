@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, h, resolveComponent } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Role, GroupedPermissions } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
@@ -12,6 +13,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const UButton = resolveComponent('UButton');
 const UBadge = resolveComponent('UBadge');
@@ -27,7 +29,7 @@ function confirmDelete(role: Role) {
 
 function deleteRole() {
     if (roleToDelete.value) {
-        router.delete(`/cms/roles/${roleToDelete.value.id}`, {
+        router.delete(cmsPath(`/roles/${roleToDelete.value.id}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 roleToDelete.value = null;
@@ -44,7 +46,7 @@ function getRowActions(row: Role) {
             {
                 label: 'Edit',
                 icon: 'i-lucide-pencil',
-                to: `/cms/roles/${row.id}/edit`,
+                to: cmsPath(`/roles/${row.id}/edit`),
             },
         ]);
     }
@@ -133,7 +135,7 @@ const columns: TableColumn<Role>[] = [
                     </template>
 
                     <template #right>
-                        <Link v-if="can('roles.create')" href="/cms/roles/create">
+                        <Link v-if="can('roles.create')" :href="cmsPath('/roles/create')">
                             <UButton icon="i-lucide-plus">
                                 Add Role
                             </UButton>

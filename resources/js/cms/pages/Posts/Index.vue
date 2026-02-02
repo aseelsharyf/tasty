@@ -5,6 +5,7 @@ import { useDebounceFn } from '@vueuse/core';
 import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Post, PostCounts, PostFilters, Author, Category, PaginatedResponse } from '../../types';
 import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui';
 
@@ -48,6 +49,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 // Current language from props
 const currentLanguageCode = computed(() => props.language.code);
@@ -72,7 +74,7 @@ async function createPostOfType(postType: string) {
     isCreatingPost.value = true;
 
     try {
-        const response = await fetch('/cms/posts/quick-draft', {
+        const response = await fetch(cmsPath('/posts/quick-draft'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -119,7 +121,7 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => {
             label: 'All',
             icon: 'i-lucide-layout-list',
             badge: props.counts.all,
-            to: `/cms/posts/${currentLanguageCode.value}`,
+            to: cmsPath(`/posts/${currentLanguageCode.value}`),
             active: currentStatus.value === 'all',
             onSelect: () => changeStatus('all'),
         },
@@ -127,7 +129,7 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => {
             label: 'Drafts',
             icon: 'i-lucide-file-edit',
             badge: props.counts.draft,
-            to: `/cms/posts/${currentLanguageCode.value}?status=draft`,
+            to: cmsPath(`/posts/${currentLanguageCode.value}?status=draft`),
             active: currentStatus.value === 'draft',
             onSelect: () => changeStatus('draft'),
         },
@@ -139,7 +141,7 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => {
             label: 'Copydesk',
             icon: 'i-lucide-spell-check-2',
             badge: props.counts.copydesk,
-            to: `/cms/posts/${currentLanguageCode.value}?status=copydesk`,
+            to: cmsPath(`/posts/${currentLanguageCode.value}?status=copydesk`),
             active: currentStatus.value === 'copydesk',
             onSelect: () => changeStatus('copydesk'),
         });
@@ -150,7 +152,7 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => {
             label: 'Published',
             icon: 'i-lucide-globe',
             badge: props.counts.published,
-            to: `/cms/posts/${currentLanguageCode.value}?status=published`,
+            to: cmsPath(`/posts/${currentLanguageCode.value}?status=published`),
             active: currentStatus.value === 'published',
             onSelect: () => changeStatus('published'),
         },
@@ -158,7 +160,7 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => {
             label: 'Scheduled',
             icon: 'i-lucide-calendar-clock',
             badge: props.counts.scheduled,
-            to: `/cms/posts/${currentLanguageCode.value}?status=scheduled`,
+            to: cmsPath(`/posts/${currentLanguageCode.value}?status=scheduled`),
             active: currentStatus.value === 'scheduled',
             onSelect: () => changeStatus('scheduled'),
         },
@@ -166,7 +168,7 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => {
             label: 'Trash',
             icon: 'i-lucide-trash',
             badge: props.counts.trashed,
-            to: `/cms/posts/${currentLanguageCode.value}?status=trashed`,
+            to: cmsPath(`/posts/${currentLanguageCode.value}?status=trashed`),
             active: currentStatus.value === 'trashed',
             onSelect: () => changeStatus('trashed'),
         },
@@ -191,7 +193,7 @@ const categoryOptions = computed(() => [
 ]);
 
 function applyFilters(overrides: Record<string, any> = {}) {
-    router.get(`/cms/posts/${currentLanguageCode.value}`, {
+    router.get(cmsPath(`/posts/${currentLanguageCode.value}`), {
         status: currentStatus.value !== 'all' ? currentStatus.value : undefined,
         search: search.value || undefined,
         post_type: selectedPostType.value ?? undefined,
@@ -231,7 +233,7 @@ function confirmDelete(post: Post) {
 function deletePost() {
     if (postToDelete.value) {
         const langCode = postToDelete.value.language_code || currentLanguageCode.value;
-        router.delete(`/cms/posts/${langCode}/${postToDelete.value.uuid}`, {
+        router.delete(cmsPath(`/posts/${langCode}/${postToDelete.value.uuid}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 postToDelete.value = null;
@@ -242,27 +244,27 @@ function deletePost() {
 
 function restorePost(post: Post) {
     const langCode = post.language_code || currentLanguageCode.value;
-    router.post(`/cms/posts/${langCode}/${post.uuid}/restore`);
+    router.post(cmsPath(`/posts/${langCode}/${post.uuid}/restore`));
 }
 
 function forceDeletePost(post: Post) {
     const langCode = post.language_code || currentLanguageCode.value;
-    router.delete(`/cms/posts/${langCode}/${post.uuid}/force`);
+    router.delete(cmsPath(`/posts/${langCode}/${post.uuid}/force`));
 }
 
 function publishPost(post: Post) {
     const langCode = post.language_code || currentLanguageCode.value;
-    router.post(`/cms/posts/${langCode}/${post.uuid}/publish`);
+    router.post(cmsPath(`/posts/${langCode}/${post.uuid}/publish`));
 }
 
 function unpublishPost(post: Post) {
     const langCode = post.language_code || currentLanguageCode.value;
-    router.post(`/cms/posts/${langCode}/${post.uuid}/unpublish`);
+    router.post(cmsPath(`/posts/${langCode}/${post.uuid}/unpublish`));
 }
 
 function editPost(post: Post) {
     const langCode = post.language_code || currentLanguageCode.value;
-    router.visit(`/cms/posts/${langCode}/${post.uuid}/edit`);
+    router.visit(cmsPath(`/posts/${langCode}/${post.uuid}/edit`));
 }
 
 function getStatusColor(status: string): 'success' | 'warning' | 'primary' | 'info' | 'neutral' {
@@ -377,7 +379,7 @@ function getRowActions(post: Post) {
                 {
                     label: 'Edit',
                     icon: 'i-lucide-pencil',
-                    to: `/cms/posts/${langCode}/${post.uuid}/edit`,
+                    to: cmsPath(`/posts/${langCode}/${post.uuid}/edit`),
                 },
             ]);
         }
@@ -738,7 +740,7 @@ function formatDate(dateStr: string) {
                         :default-page="posts.current_page"
                         :items-per-page="posts.per_page"
                         :total="posts.total"
-                        @update:page="(p: number) => router.get(`/cms/posts/${currentLanguageCode}`, { ...filters, page: p })"
+                        @update:page="(p: number) => router.get(cmsPath(`/posts/${currentLanguageCode}`), { ...filters, page: p })"
                     />
                 </div>
             </template>

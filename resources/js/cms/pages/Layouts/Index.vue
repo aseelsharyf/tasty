@@ -2,6 +2,7 @@
 import { Head, router, Link } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
 
 interface LayoutItem {
     id: number;
@@ -25,6 +26,8 @@ const props = defineProps<{
     allCategories: BasicItem[];
     allTags: BasicItem[];
 }>();
+
+const { cmsPath } = useCmsPath();
 
 // Modal state
 const showCreateModal = ref(false);
@@ -84,8 +87,8 @@ function goToLayout() {
     if (!selectedItem.value || !selectedType.value) return;
 
     const path = selectedType.value === 'category'
-        ? `/cms/layouts/categories/${selectedItem.value.uuid}`
-        : `/cms/layouts/tags/${selectedItem.value.uuid}`;
+        ? cmsPath(`/layouts/categories/${selectedItem.value.uuid}`)
+        : cmsPath(`/layouts/tags/${selectedItem.value.uuid}`);
 
     showCreateModal.value = false;
     router.visit(path);
@@ -162,7 +165,7 @@ const totalConfigured = computed(() =>
                             <Link
                                 v-for="category in categoriesWithLayouts"
                                 :key="category.uuid"
-                                :href="`/cms/layouts/categories/${category.uuid}`"
+                                :href="cmsPath(`/layouts/categories/${category.uuid}`)"
                                 class="flex items-center justify-between p-4 rounded-lg border border-default hover:border-primary hover:bg-elevated/50 transition-colors"
                             >
                                 <div class="flex items-center gap-3">
@@ -199,7 +202,7 @@ const totalConfigured = computed(() =>
                             <Link
                                 v-for="tag in tagsWithLayouts"
                                 :key="tag.uuid"
-                                :href="`/cms/layouts/tags/${tag.uuid}`"
+                                :href="cmsPath(`/layouts/tags/${tag.uuid}`)"
                                 class="flex items-center justify-between p-4 rounded-lg border border-default hover:border-primary hover:bg-elevated/50 transition-colors"
                             >
                                 <div class="flex items-center gap-3">

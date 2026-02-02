@@ -3,6 +3,9 @@ import { useForm } from '@inertiajs/vue3';
 import { computed, watch, ref } from 'vue';
 import DhivehiInput from './DhivehiInput.vue';
 import type { Menu, Language } from '../types';
+import { useCmsPath } from '../composables/useCmsPath';
+
+const { cmsPath } = useCmsPath();
 
 const props = withDefaults(defineProps<{
     menu?: Menu;
@@ -82,12 +85,12 @@ function onSubmit() {
     }));
 
     if (isEditing.value && props.menu?.uuid) {
-        form.put(`/cms/menus/${props.menu.uuid}`, {
+        form.put(cmsPath(`/menus/${props.menu.uuid}`), {
             preserveScroll: true,
             onSuccess: () => emit('success'),
         });
     } else {
-        form.post('/cms/menus', {
+        form.post(cmsPath('/menus'), {
             preserveScroll: true,
             onSuccess: () => {
                 emit('success');

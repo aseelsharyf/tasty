@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 import BlurHashImage from './BlurHashImage.vue';
+import { useCmsPath } from '../composables/useCmsPath';
 
 interface CropVersion {
     id: number;
@@ -91,6 +92,8 @@ const emit = defineEmits<{
     'select': [items: MediaItem[]];
 }>();
 
+const { cmsPath } = useCmsPath();
+
 const isOpen = computed({
     get: () => props.open,
     set: (value) => emit('update:open', value),
@@ -164,7 +167,7 @@ async function loadMedia(page = 1) {
     params.set('page', String(page));
 
     try {
-        const response = await fetch(`/cms/media/picker?${params.toString()}`, {
+        const response = await fetch(cmsPath(`/media/picker?${params.toString()}`), {
             headers: {
                 'Accept': 'application/json',
             },
@@ -231,7 +234,7 @@ async function loadTags() {
     if (availableTags.value.length > 0) return; // Already loaded
     isLoadingTags.value = true;
     try {
-        const response = await fetch('/cms/media/tags', {
+        const response = await fetch(cmsPath('/media/tags'), {
             headers: { 'Accept': 'application/json' },
         });
         if (response.ok) {
@@ -253,7 +256,7 @@ async function loadCategories() {
         return;
     }
     try {
-        const response = await fetch('/cms/media/categories', {
+        const response = await fetch(cmsPath('/media/categories'), {
             headers: { 'Accept': 'application/json' },
         });
         if (response.ok) {
@@ -284,7 +287,7 @@ const tagOptions = computed(() => {
 // Create a new tag
 async function createTag(name: string): Promise<Tag | null> {
     try {
-        const response = await fetch('/cms/tags', {
+        const response = await fetch(cmsPath('/tags'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -378,7 +381,7 @@ async function searchTagsApi(query: string) {
         });
         excludeIds.forEach(id => params.append('exclude[]', String(id)));
 
-        const response = await fetch(`/cms/tags/search?${params.toString()}`, {
+        const response = await fetch(cmsPath(`/tags/search?${params.toString()}`), {
             headers: { 'Accept': 'application/json' },
         });
         if (response.ok) {
@@ -573,7 +576,7 @@ async function uploadAll() {
     });
 
     try {
-        const response = await fetch('/cms/media', {
+        const response = await fetch(cmsPath('/media'), {
             method: 'POST',
             body: formData,
             headers: {

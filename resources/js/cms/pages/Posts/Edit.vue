@@ -14,6 +14,7 @@ import type { MediaBlockItem, FocalPoint } from '../../editor-tools/MediaBlock';
 import { useSidebar } from '../../composables/useSidebar';
 import { useDhivehiKeyboard } from '../../composables/useDhivehiKeyboard';
 import { useWorkflow, type WorkflowConfig } from '../../composables/useWorkflow';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Category, Tag, PostTypeOption, Post } from '../../types';
 
 interface CropVersion {
@@ -80,6 +81,7 @@ interface WorkflowConfig {
 
 // Sidebar control
 const { hide: hideSidebar, show: showSidebar } = useSidebar();
+const { cmsPath } = useCmsPath();
 
 interface PostTypeConfig {
     key: string;
@@ -192,7 +194,7 @@ function startHeartbeat() {
 
     heartbeatTimer.value = setInterval(async () => {
         try {
-            await axios.post(`/cms/posts/${props.post.uuid}/lock/heartbeat`);
+            await axios.post(cmsPath(`/posts/${props.post.uuid}/lock/heartbeat`));
         } catch (error) {
             console.error('Failed to send heartbeat:', error);
             // If heartbeat fails, we may have lost the lock
@@ -213,7 +215,7 @@ function stopHeartbeat() {
 async function releaseLock() {
     if (!lockStatus.value.isMine) return;
     try {
-        await axios.post(`/cms/posts/${props.post.uuid}/lock/release`);
+        await axios.post(cmsPath(`/posts/${props.post.uuid}/lock/release`));
     } catch (error) {
         console.error('Failed to release lock:', error);
     }
@@ -223,7 +225,7 @@ async function releaseLock() {
 async function takeOverEditing() {
     isTakingOver.value = true;
     try {
-        const response = await axios.post(`/cms/posts/${props.post.uuid}/lock/force`);
+        const response = await axios.post(cmsPath(`/posts/${props.post.uuid}/lock/force`));
         if (response.data.success) {
             lockStatus.value = {
                 canEdit: true,
@@ -602,7 +604,7 @@ const currentVersionLabel = computed(() => {
 // Switch to a different version via URL
 function switchToVersion(versionUuid: string) {
     if (versionUuid === currentVersionUuid.value) return;
-    const url = `/cms/posts/${props.post.language_code}/${props.post.uuid}/edit?version=${versionUuid}`;
+    const url = cmsPath(`/posts/${props.post.language_code}/${props.post.uuid}/edit?version=${versionUuid}`);
     router.visit(url, { preserveState: false });
 }
 
@@ -621,7 +623,7 @@ async function confirmMakeVersionLive() {
 
     revertingVersion.value = true;
     try {
-        await axios.post(`/cms/workflow/versions/${pendingMakeLiveVersionUuid.value}/make-live`);
+        await axios.post(cmsPath(`/workflow/versions/${pendingMakeLiveVersionUuid.value}/make-live`));
         showMakeLiveModal.value = false;
         // Reload the page to get the new version
         router.reload({ preserveState: false });
@@ -1110,7 +1112,7 @@ function manualSave() {
     isSaving.value = true;
 
     const langCode = props.language?.code || props.post.language_code || 'en';
-    form.post(`/cms/posts/${langCode}/${props.post.uuid}`, {
+    form.post(cmsPath(`/posts/${langCode}/${props.post.uuid}`), {
         forceFormData: true,
         headers: { 'X-HTTP-Method-Override': 'PUT' },
         preserveScroll: true,
@@ -1270,7 +1272,7 @@ async function searchTags(query: string) {
 
     isSearchingTags.value = true;
     try {
-        const response = await axios.get('/cms/tags/search', {
+        const response = await axios.get(cmsPath('/tags/search'), {
             params: {
                 q: query,
                 exclude: form.tags,
@@ -1396,7 +1398,7 @@ async function onCreateFeaturedTag(name: string) {
 async function createTag(name: string): Promise<{ id: number; name: string; slug: string } | null> {
     try {
         const langCode = props.language?.code || props.post.language_code || 'en';
-        const response = await axios.post('/cms/tags', {
+        const response = await axios.post(cmsPath('/tags'), {
             name: { [langCode]: name },
         });
         const newTag = response.data;
@@ -1507,7 +1509,7 @@ const timeAgo = computed(() => {
 
 function submit() {
     const langCode = props.language?.code || props.post.language_code || 'en';
-    form.post(`/cms/posts/${langCode}/${props.post.uuid}`, {
+    form.post(cmsPath(`/posts/${langCode}/${props.post.uuid}`), {
         forceFormData: true,
         headers: {
             'X-HTTP-Method-Override': 'PUT',
@@ -1517,7 +1519,7 @@ function submit() {
 
 function goBack() {
     const langCode = props.language?.code || props.post.language_code || 'en';
-    router.visit(`/cms/posts/${langCode}`);
+    router.visit(cmsPath(`/posts/${langCode}`));
 }
 
 function openDeleteModal() {
@@ -1527,7 +1529,7 @@ function openDeleteModal() {
 function deletePost() {
     isDeleting.value = true;
     const langCode = props.language?.code || props.post.language_code || 'en';
-    router.delete(`/cms/posts/${langCode}/${props.post.uuid}`, {
+    router.delete(cmsPath(`/posts/${langCode}/${props.post.uuid}`), {
         onSuccess: () => {
             deleteModalOpen.value = false;
             isDeleting.value = false;
@@ -1603,7 +1605,7 @@ async function createNewDraftVersion() {
 
     creatingNewDraft.value = true;
     try {
-        await axios.post(`/cms/workflow/versions/${sourceVersionUuid}/revert`);
+        await axios.post(cmsPath(`/workflow/versions/${sourceVersionUuid}/revert`));
         toast.add({ title: 'Draft Created', description: 'New draft version created. You can now make changes.', color: 'success' });
         refreshPage();
     } catch (error: any) {
@@ -1633,7 +1635,7 @@ function openPreview() {
     // Use the current version being edited, not the active (published) version
     const langCode = props.language?.code || props.post.language_code || 'en';
     const versionParam = currentVersionUuid.value ? `?version=${currentVersionUuid.value}` : '';
-    window.open(`/cms/preview/${langCode}/${props.post.uuid}${versionParam}`, '_blank');
+    window.open(cmsPath(`/preview/${langCode}/${props.post.uuid}${versionParam}`), '_blank');
 }
 
 function openDiff() {
@@ -1923,7 +1925,7 @@ function openDiff() {
                             <!-- Hidden form for submitting preview data -->
                             <form
                                 ref="previewFormRef"
-                                action="/cms/api/preview/post"
+                                :action="cmsPath('/api/preview/post')"
                                 method="POST"
                                 target="preview-iframe"
                                 class="hidden"

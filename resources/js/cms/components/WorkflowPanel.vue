@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
+import { useCmsPath } from '../composables/useCmsPath';
 
 interface WorkflowState {
     key: string;
@@ -49,6 +50,8 @@ const emit = defineEmits<{
     (e: 'refresh'): void;
 }>();
 
+const { cmsPath } = useCmsPath();
+
 const loading = ref(false);
 const availableTransitions = ref<Transition[]>([]);
 const transitionModalOpen = ref(false);
@@ -96,7 +99,7 @@ async function fetchAvailableTransitions() {
 
     loading.value = true;
     try {
-        const response = await axios.get(`/cms/workflow/versions/${props.currentVersionUuid}/transitions`);
+        const response = await axios.get(cmsPath(`/workflow/versions/${props.currentVersionUuid}/transitions`));
         availableTransitions.value = response.data.transitions;
     } catch (error) {
         console.error('Failed to fetch transitions:', error);
@@ -120,7 +123,7 @@ async function performTransition() {
 
     submittingTransition.value = true;
     try {
-        await axios.post(`/cms/workflow/versions/${props.currentVersionUuid}/transition`, {
+        await axios.post(cmsPath(`/workflow/versions/${props.currentVersionUuid}/transition`), {
             to_status: selectedTransition.value.to,
             comment: transitionComment.value || null,
         });

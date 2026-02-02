@@ -5,6 +5,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import ProductStoreCreateSlideover from '../../components/ProductStoreCreateSlideover.vue';
 import ProductStoreEditSlideover from '../../components/ProductStoreEditSlideover.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { PaginatedResponse } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
@@ -44,6 +45,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const UButton = resolveComponent('UButton');
 const UBadge = resolveComponent('UBadge');
@@ -92,7 +94,7 @@ function bulkDelete() {
     if (selectedIds.value.length === 0) return;
 
     bulkDeleting.value = true;
-    router.delete('/cms/product-stores/bulk', {
+    router.delete(cmsPath('/product-stores/bulk'), {
         data: { ids: selectedIds.value },
         onSuccess: () => {
             bulkDeleteModalOpen.value = false;
@@ -105,7 +107,7 @@ function bulkDelete() {
 }
 
 function onSearch() {
-    router.get('/cms/product-stores', {
+    router.get(cmsPath('/product-stores'), {
         search: search.value || undefined,
         sort: props.filters.sort,
         direction: props.filters.direction,
@@ -127,7 +129,7 @@ function confirmDelete(store: ProductStore) {
 
 function deleteStore() {
     if (storeToDelete.value) {
-        router.delete(`/cms/product-stores/${storeToDelete.value.uuid}`, {
+        router.delete(cmsPath(`/product-stores/${storeToDelete.value.uuid}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 storeToDelete.value = null;
@@ -138,7 +140,7 @@ function deleteStore() {
 
 async function openEditSlideover(store: ProductStore) {
     try {
-        const response = await fetch(`/cms/product-stores/${store.uuid}/edit`, {
+        const response = await fetch(cmsPath(`/product-stores/${store.uuid}/edit`), {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -165,7 +167,7 @@ function onEditClose(updated: boolean) {
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get('/cms/product-stores', {
+    router.get(cmsPath('/product-stores'), {
         search: search.value || undefined,
         sort: field,
         direction: newDirection,
@@ -437,7 +439,7 @@ const columns: TableColumn<ProductStore>[] = [
                         :page="stores.current_page"
                         :total="stores.total"
                         :items-per-page="stores.per_page"
-                        @update:page="(page) => router.get('/cms/product-stores', { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/product-stores'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 

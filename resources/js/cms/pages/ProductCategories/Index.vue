@@ -5,6 +5,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import ProductCategoryCreateSlideover from '../../components/ProductCategoryCreateSlideover.vue';
 import ProductCategoryEditSlideover from '../../components/ProductCategoryEditSlideover.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Language, PaginatedResponse } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
@@ -54,6 +55,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const UButton = resolveComponent('UButton');
 const UBadge = resolveComponent('UBadge');
@@ -97,7 +99,7 @@ function bulkDelete() {
     if (selectedIds.value.length === 0) return;
 
     bulkDeleting.value = true;
-    router.delete('/cms/product-categories/bulk', {
+    router.delete(cmsPath('/product-categories/bulk'), {
         data: { ids: selectedIds.value },
         onSuccess: () => {
             bulkDeleteModalOpen.value = false;
@@ -110,7 +112,7 @@ function bulkDelete() {
 }
 
 function onSearch() {
-    router.get('/cms/product-categories', {
+    router.get(cmsPath('/product-categories'), {
         search: search.value || undefined,
         sort: props.filters.sort,
         direction: props.filters.direction,
@@ -132,7 +134,7 @@ function confirmDelete(category: ProductCategory) {
 
 function deleteCategory() {
     if (categoryToDelete.value) {
-        router.delete(`/cms/product-categories/${categoryToDelete.value.uuid}`, {
+        router.delete(cmsPath(`/product-categories/${categoryToDelete.value.uuid}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 categoryToDelete.value = null;
@@ -143,7 +145,7 @@ function deleteCategory() {
 
 async function openEditSlideover(category: ProductCategory) {
     try {
-        const response = await fetch(`/cms/product-categories/${category.uuid}/edit`, {
+        const response = await fetch(cmsPath(`/product-categories/${category.uuid}/edit`), {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -171,7 +173,7 @@ function onEditClose(updated: boolean) {
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get('/cms/product-categories', {
+    router.get(cmsPath('/product-categories'), {
         search: search.value || undefined,
         sort: field,
         direction: newDirection,
@@ -484,7 +486,7 @@ const columns: TableColumn<ProductCategory>[] = [
                         :page="categories.current_page"
                         :total="categories.total"
                         :items-per-page="categories.per_page"
-                        @update:page="(page) => router.get('/cms/product-categories', { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/product-categories'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 

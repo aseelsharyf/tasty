@@ -5,6 +5,7 @@ import { useDebounceFn } from '@vueuse/core';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import CommentSlideover from '../../components/CommentSlideover.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { NavigationMenuItem } from '@nuxt/ui';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -69,6 +70,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const search = ref(props.filters.search || '');
 const selectedStatus = ref(props.filters.status || '');
@@ -97,7 +99,7 @@ const searchPosts = useDebounceFn(async (query: string) => {
 
     isLoadingPosts.value = true;
     try {
-        const response = await fetch(`/cms/comments/search-posts?q=${encodeURIComponent(query)}`);
+        const response = await fetch(cmsPath(`/comments/search-posts?q=${encodeURIComponent(query)}`));
         const results = await response.json();
         postOptions.value = results;
     } catch (error) {
@@ -118,7 +120,7 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => [[
         label: 'All',
         icon: 'i-lucide-messages-square',
         badge: props.counts.all,
-        to: '/cms/comments',
+        to: cmsPath('/comments'),
         active: !selectedStatus.value,
         onSelect: () => changeStatus(''),
     },
@@ -126,7 +128,7 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => [[
         label: 'Pending',
         icon: 'i-lucide-clock',
         badge: props.counts.pending,
-        to: '/cms/comments?status=pending',
+        to: cmsPath('/comments?status=pending'),
         active: selectedStatus.value === 'pending',
         onSelect: () => changeStatus('pending'),
     },
@@ -134,7 +136,7 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => [[
         label: 'Approved',
         icon: 'i-lucide-check-circle',
         badge: props.counts.approved,
-        to: '/cms/comments?status=approved',
+        to: cmsPath('/comments?status=approved'),
         active: selectedStatus.value === 'approved',
         onSelect: () => changeStatus('approved'),
     },
@@ -142,7 +144,7 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => [[
         label: 'Spam',
         icon: 'i-lucide-shield-alert',
         badge: props.counts.spam,
-        to: '/cms/comments?status=spam',
+        to: cmsPath('/comments?status=spam'),
         active: selectedStatus.value === 'spam',
         onSelect: () => changeStatus('spam'),
     },
@@ -150,7 +152,7 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => [[
         label: 'Trashed',
         icon: 'i-lucide-trash',
         badge: props.counts.trashed,
-        to: '/cms/comments?status=trashed',
+        to: cmsPath('/comments?status=trashed'),
         active: selectedStatus.value === 'trashed',
         onSelect: () => changeStatus('trashed'),
     },
@@ -166,7 +168,7 @@ function changeStatus(status: string) {
 }
 
 function applyFilters() {
-    router.get('/cms/comments', {
+    router.get(cmsPath('/comments'), {
         status: selectedStatus.value || undefined,
         post_id: selectedPostId.value || undefined,
         search: search.value || undefined,
@@ -187,12 +189,12 @@ function clearFilters() {
     selectedStatus.value = '';
     selectedPostId.value = '';
     search.value = '';
-    router.get('/cms/comments', {}, { preserveState: true, replace: true });
+    router.get(cmsPath('/comments'), {}, { preserveState: true, replace: true });
 }
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get('/cms/comments', {
+    router.get(cmsPath('/comments'), {
         ...props.filters,
         sort: field,
         direction: newDirection,
@@ -208,32 +210,32 @@ function openComment(comment: Comment) {
 }
 
 function approveComment(comment: Comment) {
-    router.post(`/cms/comments/${comment.uuid}/approve`, {}, {
+    router.post(cmsPath(`/comments/${comment.uuid}/approve`), {}, {
         preserveScroll: true,
     });
 }
 
 function spamComment(comment: Comment) {
-    router.post(`/cms/comments/${comment.uuid}/spam`, {}, {
+    router.post(cmsPath(`/comments/${comment.uuid}/spam`), {}, {
         preserveScroll: true,
     });
 }
 
 function trashComment(comment: Comment) {
-    router.post(`/cms/comments/${comment.uuid}/trash`, {}, {
+    router.post(cmsPath(`/comments/${comment.uuid}/trash`), {}, {
         preserveScroll: true,
     });
 }
 
 function restoreComment(comment: Comment) {
-    router.post(`/cms/comments/${comment.uuid}/restore`, {}, {
+    router.post(cmsPath(`/comments/${comment.uuid}/restore`), {}, {
         preserveScroll: true,
     });
 }
 
 function deleteComment(comment: Comment) {
     if (confirm('Are you sure you want to permanently delete this comment?')) {
-        router.delete(`/cms/comments/${comment.uuid}`, {
+        router.delete(cmsPath(`/comments/${comment.uuid}`), {
             preserveScroll: true,
         });
     }
@@ -362,7 +364,7 @@ function cardBulkAction(action: 'approve' | 'spam' | 'trash' | 'delete') {
         return;
     }
 
-    router.post('/cms/comments/bulk', {
+    router.post(cmsPath('/comments/bulk'), {
         action,
         ids: selectedUuids.value,
     }, {
@@ -391,7 +393,7 @@ function cardBulkAction(action: 'approve' | 'spam' | 'trash' | 'delete') {
                             color="primary"
                             variant="soft"
                             icon="i-lucide-inbox"
-                            :to="'/cms/comments/queue'"
+                            :to="cmsPath('/comments/queue')"
                         >
                             Moderation Queue
                             <UBadge color="primary" size="sm" class="ml-1">
@@ -575,7 +577,7 @@ function cardBulkAction(action: 'approve' | 'spam' | 'trash' | 'delete') {
                                             <span class="text-muted">on</span>
                                             <a
                                                 v-if="comment.post"
-                                                :href="`/cms/posts/${comment.post.language_code}/${comment.post.uuid}/edit`"
+                                                :href="cmsPath(`/posts/${comment.post.language_code}/${comment.post.uuid}/edit`)"
                                                 class="text-primary hover:underline font-medium truncate max-w-xs"
                                                 @click.stop
                                             >
@@ -698,7 +700,7 @@ function cardBulkAction(action: 'approve' | 'spam' | 'trash' | 'delete') {
                         :page="comments.current_page"
                         :total="comments.total"
                         :items-per-page="comments.per_page"
-                        @update:page="(page) => router.get('/cms/comments', { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/comments'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 

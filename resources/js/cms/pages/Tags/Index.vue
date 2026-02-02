@@ -5,6 +5,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import TagCreateSlideover from '../../components/TagCreateSlideover.vue';
 import TagEditSlideover from '../../components/TagEditSlideover.vue';
 import { usePermission } from '../../composables/usePermission';
+import { useCmsPath } from '../../composables/useCmsPath';
 import type { Tag, PaginatedResponse, Language } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
@@ -23,6 +24,7 @@ const props = defineProps<{
 }>();
 
 const { can } = usePermission();
+const { cmsPath } = useCmsPath();
 
 const UButton = resolveComponent('UButton');
 const UBadge = resolveComponent('UBadge');
@@ -64,7 +66,7 @@ function bulkDelete() {
     if (selectedIds.value.length === 0) return;
 
     bulkDeleting.value = true;
-    router.delete('/cms/tags/bulk', {
+    router.delete(cmsPath('/tags/bulk'), {
         data: { ids: selectedIds.value },
         onSuccess: () => {
             bulkDeleteModalOpen.value = false;
@@ -77,7 +79,7 @@ function bulkDelete() {
 }
 
 function onSearch() {
-    router.get('/cms/tags', {
+    router.get(cmsPath('/tags'), {
         search: search.value || undefined,
         sort: props.filters.sort,
         direction: props.filters.direction,
@@ -99,7 +101,7 @@ function confirmDelete(tag: Tag) {
 
 function deleteTag() {
     if (tagToDelete.value) {
-        router.delete(`/cms/tags/${tagToDelete.value.uuid}`, {
+        router.delete(cmsPath(`/tags/${tagToDelete.value.uuid}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 tagToDelete.value = null;
@@ -111,7 +113,7 @@ function deleteTag() {
 async function openEditSlideover(tag: Tag) {
     try {
         // Fetch full tag data with translations via AJAX
-        const response = await fetch(`/cms/tags/${tag.uuid}/edit`, {
+        const response = await fetch(cmsPath(`/tags/${tag.uuid}/edit`), {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -138,7 +140,7 @@ function onEditClose(updated: boolean) {
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
-    router.get('/cms/tags', {
+    router.get(cmsPath('/tags'), {
         search: search.value || undefined,
         sort: field,
         direction: newDirection,
@@ -161,7 +163,7 @@ function getRowActions(row: Tag) {
             {
                 label: 'Layout',
                 icon: 'i-lucide-layout-template',
-                onSelect: () => router.visit(`/cms/layouts/tags/${row.uuid}`),
+                onSelect: () => router.visit(cmsPath(`/layouts/tags/${row.uuid}`)),
             },
         ]);
     }
@@ -403,7 +405,7 @@ const columns: TableColumn<Tag>[] = [
                         :page="tags.current_page"
                         :total="tags.total"
                         :items-per-page="tags.per_page"
-                        @update:page="(page) => router.get('/cms/tags', { ...filters, page }, { preserveState: true })"
+                        @update:page="(page) => router.get(cmsPath('/tags'), { ...filters, page }, { preserveState: true })"
                     />
                 </div>
 

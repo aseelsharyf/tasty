@@ -8,8 +8,10 @@ import {
     formatDate,
     type WorkflowConfig,
 } from '../composables/useWorkflow';
+import { useCmsPath } from '../composables/useCmsPath';
 
 const toast = useToast();
+const { cmsPath } = useCmsPath();
 
 // === Type Definitions ===
 
@@ -256,7 +258,7 @@ async function fetchComments() {
     if (!props.currentVersionUuid) return;
     commentsLoading.value = true;
     try {
-        const response = await axios.get(`/cms/workflow/versions/${props.currentVersionUuid}/comments`);
+        const response = await axios.get(cmsPath(`/workflow/versions/${props.currentVersionUuid}/comments`));
         comments.value = response.data.comments;
     } catch (error) {
         console.error('Failed to fetch comments:', error);
@@ -269,7 +271,7 @@ async function addComment() {
     if (!props.currentVersionUuid || !newComment.value.trim()) return;
     submittingComment.value = true;
     try {
-        const response = await axios.post(`/cms/workflow/versions/${props.currentVersionUuid}/comments`, {
+        const response = await axios.post(cmsPath(`/workflow/versions/${props.currentVersionUuid}/comments`), {
             content: newComment.value,
             type: commentType.value,
         });
@@ -285,7 +287,7 @@ async function addComment() {
 
 async function resolveComment(comment: Comment) {
     try {
-        await axios.post(`/cms/workflow/comments/${comment.uuid}/resolve`);
+        await axios.post(cmsPath(`/workflow/comments/${comment.uuid}/resolve`));
         comment.is_resolved = true;
     } catch (error) {
         console.error('Failed to resolve comment:', error);
@@ -294,7 +296,7 @@ async function resolveComment(comment: Comment) {
 
 async function unresolveComment(comment: Comment) {
     try {
-        await axios.post(`/cms/workflow/comments/${comment.uuid}/unresolve`);
+        await axios.post(cmsPath(`/workflow/comments/${comment.uuid}/unresolve`));
         comment.is_resolved = false;
     } catch (error) {
         console.error('Failed to unresolve comment:', error);
@@ -314,7 +316,7 @@ async function fetchVersions() {
     if (!props.contentUuid) return;
     versionsLoading.value = true;
     try {
-        const response = await axios.get(`/cms/workflow/${props.contentType}/${props.contentUuid}/history`);
+        const response = await axios.get(cmsPath(`/workflow/${props.contentType}/${props.contentUuid}/history`));
         versions.value = response.data.versions;
     } catch (error) {
         console.error('Failed to fetch versions:', error);
@@ -327,7 +329,7 @@ async function revertToVersion(version: Version) {
     if (!confirm(`Revert to version ${version.version_number}?`)) return;
     reverting.value = version.id;
     try {
-        await axios.post(`/cms/workflow/versions/${version.uuid}/revert`);
+        await axios.post(cmsPath(`/workflow/versions/${version.uuid}/revert`));
         toast.add({ title: 'Reverted', description: `Reverted to version ${version.version_number}`, color: 'success' });
         emit('refresh');
         await fetchVersions();
@@ -350,7 +352,7 @@ function toggleExpand(versionId: number) {
 async function createDraftFromVersion(version: Version) {
     creatingDraft.value = true;
     try {
-        await axios.post(`/cms/workflow/versions/${version.uuid}/revert`);
+        await axios.post(cmsPath(`/workflow/versions/${version.uuid}/revert`));
         toast.add({ title: 'Draft Created', description: `New draft created from version ${version.version_number}`, color: 'success' });
         emit('create-draft');
         emit('refresh');
@@ -429,7 +431,7 @@ async function fetchTransitions() {
     if (!props.currentVersionUuid) return;
     transitionsLoading.value = true;
     try {
-        const response = await axios.get(`/cms/workflow/versions/${props.currentVersionUuid}/transitions`);
+        const response = await axios.get(cmsPath(`/workflow/versions/${props.currentVersionUuid}/transitions`));
         availableTransitions.value = response.data.transitions;
     } catch (error) {
         console.error('Failed to fetch transitions:', error);
@@ -449,7 +451,7 @@ async function performTransition() {
     if (!props.currentVersionUuid || !selectedTransition.value) return;
     submittingTransition.value = true;
     try {
-        await axios.post(`/cms/workflow/versions/${props.currentVersionUuid}/transition`, {
+        await axios.post(cmsPath(`/workflow/versions/${props.currentVersionUuid}/transition`), {
             to_status: selectedTransition.value.to,
             comment: transitionComment.value || null,
         });

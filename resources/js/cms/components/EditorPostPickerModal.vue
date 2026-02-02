@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
+import { useCmsPath } from '../composables/useCmsPath';
 import type { PostBlockItem } from '../editor-tools/PostsBlock';
 
 interface PostSearchResult {
@@ -33,6 +34,8 @@ const emit = defineEmits<{
     'update:open': [value: boolean];
     select: [posts: PostBlockItem[]];
 }>();
+
+const { cmsPath } = useCmsPath();
 
 const isOpen = computed({
     get: () => props.open,
@@ -96,7 +99,7 @@ async function searchPosts() {
         }
         params.set('limit', '20');
 
-        const response = await fetch(`/cms/layouts/homepage/search-posts?${params.toString()}`);
+        const response = await fetch(cmsPath(`/layouts/homepage/search-posts?${params.toString()}`));
 
         if (!response.ok) {
             throw new Error('Failed to fetch posts');

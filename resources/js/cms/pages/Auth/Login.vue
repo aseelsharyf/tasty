@@ -2,6 +2,9 @@
 import { useForm } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import TastyLogo from '../../components/TastyLogo.vue';
+import { useCmsPath } from '../../composables/useCmsPath';
+
+const { cmsPath } = useCmsPath();
 
 interface DevUser {
     name: string;
@@ -62,7 +65,7 @@ watch(selectedDevUserEmail, (email) => {
 });
 
 function onSubmit() {
-    form.post('/cms/login', {
+    form.post(cmsPath('/login'), {
         onFinish: () => form.reset('password'),
     });
 }

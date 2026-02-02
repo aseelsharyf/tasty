@@ -4,6 +4,7 @@ import { computed, watch, ref } from 'vue';
 import DhivehiInput from './DhivehiInput.vue';
 import MediaPickerModal from './MediaPickerModal.vue';
 import type { Language } from '../types';
+import { useCmsPath } from '../composables/useCmsPath';
 
 interface MediaItem {
     id: number;
@@ -42,6 +43,8 @@ const emit = defineEmits<{
     (e: 'success'): void;
     (e: 'cancel'): void;
 }>();
+
+const { cmsPath } = useCmsPath();
 
 const isEditing = computed(() => props.mode === 'edit' && props.sponsor?.uuid);
 const activeTab = ref(props.languages[0]?.code || 'en');
@@ -140,12 +143,12 @@ function onSubmit() {
     }));
 
     if (isEditing.value && props.sponsor?.uuid) {
-        form.put(`/cms/sponsors/${props.sponsor.uuid}`, {
+        form.put(cmsPath(`/sponsors/${props.sponsor.uuid}`), {
             preserveScroll: true,
             onSuccess: () => emit('success'),
         });
     } else {
-        form.post('/cms/sponsors', {
+        form.post(cmsPath('/sponsors'), {
             preserveScroll: true,
             onSuccess: () => {
                 reset();

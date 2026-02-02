@@ -4,6 +4,7 @@ import { computed, watch, ref } from 'vue';
 import DhivehiInput from './DhivehiInput.vue';
 import MediaPickerModal from './MediaPickerModal.vue';
 import type { ParentOption, Language } from '../types';
+import { useCmsPath } from '../composables/useCmsPath';
 
 interface FeaturedImage {
     id: number;
@@ -38,6 +39,8 @@ const emit = defineEmits<{
     (e: 'success'): void;
     (e: 'cancel'): void;
 }>();
+
+const { cmsPath } = useCmsPath();
 
 const isEditing = computed(() => props.mode === 'edit' && props.category?.uuid);
 const activeTab = ref(props.languages[0]?.code || 'en');
@@ -129,12 +132,12 @@ function onSubmit() {
     }));
 
     if (isEditing.value && props.category?.uuid) {
-        form.put(`/cms/categories/${props.category.uuid}`, {
+        form.put(cmsPath(`/categories/${props.category.uuid}`), {
             preserveScroll: true,
             onSuccess: () => emit('success'),
         });
     } else {
-        form.post('/cms/categories', {
+        form.post(cmsPath('/categories'), {
             preserveScroll: true,
             onSuccess: () => {
                 reset();
