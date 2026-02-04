@@ -133,6 +133,8 @@ const page = usePage();
 interface Sponsor {
     id: number;
     name: string;
+    label: string;
+    logo_url: string | null;
 }
 
 interface Author {
@@ -1378,6 +1380,10 @@ const sponsorOptions = computed(() =>
     props.sponsors.map((sponsor) => ({ label: sponsor.name, value: sponsor.id }))
 );
 
+const selectedSponsor = computed(() =>
+    form.sponsor_id ? props.sponsors.find((s) => s.id === form.sponsor_id) : null
+);
+
 // Create a new tag inline (for multi-select tags) - kept for featured tag
 async function onCreateTag(name: string) {
     const newTag = await createTag(name);
@@ -1948,6 +1954,7 @@ function openDiff() {
                                 <input type="hidden" name="post_type" :value="form.post_type || 'article'" />
                                 <input type="hidden" name="custom_fields" :value="JSON.stringify(form.custom_fields || {})" />
                                 <input type="hidden" name="cover_video" :value="selectedCoverVideo ? JSON.stringify(selectedCoverVideo) : ''" />
+                                <input type="hidden" name="sponsor_id" :value="form.sponsor_id || ''" />
                             </form>
 
                             <!-- Preview iframe -->
@@ -2318,6 +2325,62 @@ function openDiff() {
                                 <div v-else-if="!selectedCoverVideo" class="w-full h-24 border border-dashed border-default rounded-lg flex flex-col items-center justify-center gap-2">
                                     <UIcon name="i-lucide-video-off" class="size-6 text-muted" />
                                     <span class="text-xs text-muted">No cover video</span>
+                                </div>
+                            </div>
+
+                            <!-- Sponsor Badge -->
+                            <div v-if="sponsorOptions.length > 0" class="flex justify-center mb-6">
+                                <USelectMenu
+                                    v-if="!isReadOnly"
+                                    v-model="form.sponsor_id"
+                                    :items="sponsorOptions"
+                                    value-key="value"
+                                    searchable
+                                    :search-input="{ placeholder: 'Search sponsors...' }"
+                                    :ui="{ base: 'border-0 ring-0 shadow-none focus:ring-0', trailing: 'hidden', content: 'min-w-56' }"
+                                >
+                                    <button
+                                        type="button"
+                                        class="bg-white dark:bg-gray-900 px-4 py-2 rounded-full flex items-center gap-3"
+                                    >
+                                        <template v-if="selectedSponsor">
+                                            <span class="text-sm text-gray-500 dark:text-gray-400">{{ selectedSponsor.label }}</span>
+                                            <template v-if="selectedSponsor.logo_url">
+                                                <img :src="selectedSponsor.logo_url" :alt="selectedSponsor.name" class="h-6 object-contain" />
+                                            </template>
+                                            <template v-else>
+                                                <span class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ selectedSponsor.name }}</span>
+                                            </template>
+                                        </template>
+                                        <template v-else>
+                                            <span class="text-sm text-gray-400 dark:text-gray-500">Select sponsor</span>
+                                        </template>
+                                        <UIcon name="i-lucide-chevron-down" class="size-4 text-gray-400" />
+                                    </button>
+                                    <template v-if="selectedSponsor" #content-bottom>
+                                        <div class="p-1 border-t border-default">
+                                            <button
+                                                type="button"
+                                                class="w-full px-2 py-1.5 text-sm text-error hover:bg-error/10 rounded flex items-center gap-2 transition-colors"
+                                                @click.stop="form.sponsor_id = null"
+                                            >
+                                                <UIcon name="i-lucide-x" class="size-4" />
+                                                Remove sponsor
+                                            </button>
+                                        </div>
+                                    </template>
+                                </USelectMenu>
+                                <div
+                                    v-else-if="selectedSponsor"
+                                    class="bg-white dark:bg-gray-900 px-4 py-2 rounded-full flex items-center gap-3"
+                                >
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ selectedSponsor.label }}</span>
+                                    <template v-if="selectedSponsor.logo_url">
+                                        <img :src="selectedSponsor.logo_url" :alt="selectedSponsor.name" class="h-6 object-contain" />
+                                    </template>
+                                    <template v-else>
+                                        <span class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ selectedSponsor.name }}</span>
+                                    </template>
                                 </div>
                             </div>
 
@@ -2922,23 +2985,6 @@ function openDiff() {
 
                             <!-- Additional Settings -->
                             <div class="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
-                                <!-- Sponsor (if available) -->
-                                <div v-if="sponsorOptions.length > 0" class="flex items-center gap-3">
-                                    <UIcon name="i-lucide-handshake" class="size-5 text-muted" />
-                                    <USelectMenu
-                                        v-model="form.sponsor_id"
-                                        :items="sponsorOptions"
-                                        value-key="value"
-                                        placeholder="Add sponsor"
-                                        searchable
-                                        :clear="!isReadOnly"
-                                        size="md"
-                                        :disabled="isReadOnly"
-                                        :ui="{ content: 'min-w-56' }"
-                                        class="min-w-48"
-                                    />
-                                </div>
-
                                 <!-- Allow Comments Toggle -->
                                 <div class="flex items-center gap-3">
                                     <UIcon name="i-lucide-message-circle" class="size-5 text-muted" />

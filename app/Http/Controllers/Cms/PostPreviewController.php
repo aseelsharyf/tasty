@@ -8,6 +8,7 @@ use App\Models\ContentVersion;
 use App\Models\Language;
 use App\Models\Post;
 use App\Models\Setting;
+use App\Models\Sponsor;
 use App\Models\Tag;
 use App\Models\User;
 use App\Services\PostTemplateRegistry;
@@ -63,6 +64,7 @@ class PostPreviewController extends Controller
             'post_type' => ['nullable', 'string'],
             'custom_fields' => ['nullable', 'array'],
             'cover_video' => ['nullable', 'array'],
+            'sponsor_id' => ['nullable', 'integer'],
         ]);
 
         $template = $validated['template'] ?? 'default';
@@ -173,6 +175,15 @@ class PostPreviewController extends Controller
             $post->setRelation('coverVideo', null);
         }
 
+        // Set sponsor relationship from preview data
+        $sponsorId = $validated['sponsor_id'] ?? null;
+        if ($sponsorId) {
+            $sponsor = Sponsor::with('featuredMedia')->find($sponsorId);
+            $post->setRelation('sponsor', $sponsor);
+        } else {
+            $post->setRelation('sponsor', null);
+        }
+
         return view('templates.posts.preview', [
             'post' => $post,
             'template' => $template,
@@ -241,7 +252,7 @@ class PostPreviewController extends Controller
     public function show(Request $request, string $language, Post $post): View
     {
         // Load relationships
-        $post->load(['author', 'categories', 'tags', 'featuredMedia', 'coverVideo']);
+        $post->load(['author', 'categories', 'tags', 'featuredMedia', 'coverVideo', 'sponsor.featuredMedia']);
 
         // Optionally load a specific version and apply snapshot to model
         $versionUuid = $request->query('version');

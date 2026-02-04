@@ -239,9 +239,11 @@ class PostController extends Controller
 
         $tags = Tag::orderByTranslatedName($language)->get()->map(fn ($tag) => $this->formatTagForSelect($tag));
 
-        $sponsors = Sponsor::active()->ordered()->get()->map(fn ($sponsor) => [
+        $sponsors = Sponsor::active()->ordered()->with('featuredMedia')->get()->map(fn ($sponsor) => [
             'id' => $sponsor->id,
             'name' => $sponsor->name,
+            'label' => $sponsor->label ?: __('Supported by'),
+            'logo_url' => $sponsor->featured_image_url,
         ]);
 
         // Get post types from settings
@@ -387,9 +389,11 @@ class PostController extends Controller
 
         $tags = Tag::orderByTranslatedName($language)->get()->map(fn ($tag) => $this->formatTagForSelect($tag));
 
-        $sponsors = Sponsor::active()->ordered()->get()->map(fn ($sponsor) => [
+        $sponsors = Sponsor::active()->ordered()->with('featuredMedia')->get()->map(fn ($sponsor) => [
             'id' => $sponsor->id,
             'name' => $sponsor->name,
+            'label' => $sponsor->label ?: __('Supported by'),
+            'logo_url' => $sponsor->featured_image_url,
         ]);
 
         $lang = $post->language ?? Language::getDefault();
