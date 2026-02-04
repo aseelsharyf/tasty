@@ -1067,3 +1067,21 @@
         }
     }
 }
+
+/* Ad Slot Styling */
+.ad-slot {
+    overflow: hidden;
+    border-radius: 0.375rem; /* rounded-md */
+}
+
+/* Force rounded corners on injected ad content */
+.ad-slot > center,
+.ad-slot .ad-slot-container,
+.ad-slot [id^="ad-slot-"] {
+    overflow: hidden;
+    border-radius: 0.375rem;
+}
+
+.ad-slot img {
+    border-radius: 0.375rem;
+}
