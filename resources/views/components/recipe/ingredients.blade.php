@@ -14,7 +14,7 @@
 
     {{-- Ingredient Sections --}}
     @if(!empty($ingredients) && is_array($ingredients))
-        <div class="space-y-0">
+        <div class="space-y-6">
             @foreach($ingredients as $section)
                 @if(!empty($section['section']) && !empty($section['items']))
                     <x-blocks.collapsible
