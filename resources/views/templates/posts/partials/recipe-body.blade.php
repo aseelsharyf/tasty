@@ -16,12 +16,12 @@
     $hasMetadata = $prepTime || $cookTime || $servings;
 @endphp
 
-<div class="w-full bg-off-white pt-8">
-    <div class="max-w-[1200px] mx-auto px-4 lg:px-8">
+<div class="w-full bg-off-white">
+    <div class="max-w-[1200px] mx-auto px-4 lg:px-8 pt-16">
 
         {{-- Introduction (from custom_fields, separate from excerpt) --}}
         @if($introduction)
-            <div class="max-w-[894px] mx-auto text-center mb-12 pt-4 {{ $isRtl ? 'font-dhivehi' : '' }}">
+            <div class="max-w-[894px] mx-auto text-center mb-12 {{ $isRtl ? 'font-dhivehi' : '' }}">
                 <p class="text-body-lg text-tasty-blue-black/90" dir="{{ $isRtl ? 'rtl' : 'ltr' }}">
                     {{ $introduction }}
                 </p>
