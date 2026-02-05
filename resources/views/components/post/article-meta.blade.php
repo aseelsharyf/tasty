@@ -12,7 +12,7 @@
     $photographer = $post->getCustomField('photographer');
 @endphp
 
-<div class="pt-16">
+<div class="pt-16 pb-12">
     <div class="max-w-[1440px] mx-auto px-4 lg:px-10">
         <div class="flex flex-col gap-8 items-center">
             
