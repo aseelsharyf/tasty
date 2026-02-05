@@ -31,8 +31,8 @@
         <div class="w-full {{ request()->routeIs('post.show', 'cms.posts.preview', 'cms.api.preview.post') ? 'bg-off-white' : 'bg-gray-100' }}">
             <x-layout.nav-bar></x-layout.nav-bar>
 
-            {{-- Add spacer for pages without hero sections (category/tag pages) --}}
-            @if(request()->routeIs('category.*') || request()->routeIs('tag.*'))
+            {{-- Add spacer for pages without hero sections (category/tag/author pages) --}}
+            @if(request()->routeIs('category.*') || request()->routeIs('tag.*') || request()->routeIs('author.*'))
                 <div class="h-[96px] md:h-[112px]"></div>
             @endif
 

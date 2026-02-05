@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Actions\Posts\BasePostsAction;
+use App\Actions\Posts\GetPostsByAuthor;
 use App\Actions\Posts\GetPostsByCategory;
 use App\Actions\Posts\GetPostsByTag;
 use App\Actions\Posts\GetRecentPosts;
@@ -23,6 +24,7 @@ class PostsController extends Controller
         'trending' => GetTrendingPosts::class,
         'byTag' => GetPostsByTag::class,
         'byCategory' => GetPostsByCategory::class,
+        'byAuthor' => GetPostsByAuthor::class,
     ];
 
     /**
@@ -31,7 +33,7 @@ class PostsController extends Controller
     public function loadMore(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'action' => 'required|string|in:recent,trending,byTag,byCategory',
+            'action' => 'required|string|in:recent,trending,byTag,byCategory,byAuthor',
             'page' => 'integer|min:1',
             'perPage' => 'integer|min:1|max:20',
             'excludeIds' => 'array',
@@ -43,6 +45,7 @@ class PostsController extends Controller
             'categories' => 'nullable|array',
             'categories.*' => 'string',
             'sectionType' => 'nullable|string|max:50',
+            'author' => 'nullable|string|max:255',
         ]);
 
         $actionClass = $this->actions[$validated['action']];
@@ -60,6 +63,7 @@ class PostsController extends Controller
             'tags' => $tags,
             'categories' => $categories,
             'sectionType' => $validated['sectionType'] ?? null,
+            'author' => $validated['author'] ?? null,
         ];
 
         return response()->json($action->getResponse($params));

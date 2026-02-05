@@ -16,6 +16,19 @@
     <div class="w-full max-w-[1880px] mx-auto pt-24 pb-32 max-xl:pt-10 max-lg:pb-24 px-10 max-lg:px-5">
         <div class="flex flex-col items-center">
             {{-- Intro Image --}}
+            @if($imageStyle === 'author')
+            <div class="w-[200px] h-[200px] max-xl:w-[150px] max-xl:h-[150px] rounded-full overflow-hidden flex items-center justify-center bg-tasty-yellow">
+                @if($introImage)
+                <img
+                    src="{{ $introImage }}"
+                    alt="{{ $introImageAlt }}"
+                    class="w-full h-full object-cover"
+                >
+                @else
+                <span class="font-display text-[64px] max-xl:text-[48px] text-blue-black">{{ $authorInitials }}</span>
+                @endif
+            </div>
+            @else
             <div class="w-full max-w-[300px] h-[286px] max-xl:h-[182px] max-xl:max-w-[200px] flex items-center justify-center">
                 <img
                     src="{{ $introImage }}"
@@ -24,13 +37,14 @@
                     style="mix-blend-mode: darken;"
                 >
             </div>
+            @endif
             {{-- Title & Description --}}
-            <div class="flex flex-col gap-4 items-center text-center text-blue-black w-full max-w-[450px] mt-5">
+            <div class="flex flex-col gap-4 items-center text-center text-blue-black w-full {{ $imageStyle === 'author' ? '' : 'max-w-[450px]' }} mt-5">
                 <div class="flex flex-col items-center">
                     @if($titleSmall)
                         <span class="font-display text-[36px] leading-[1.1] tracking-[-0.04em] max-xl:text-[24px]">{{ $titleSmall }}</span>
                     @endif
-                    <h2 class="font-display text-[80px] leading-[1] tracking-[-0.04em] uppercase max-xl:text-[48px]">{{ $titleLarge }}</h2>
+                    <h2 class="font-display text-[80px] leading-[1] tracking-[-0.04em] uppercase max-xl:text-[48px] {{ $imageStyle === 'author' ? 'whitespace-nowrap' : '' }}">{{ $titleLarge }}</h2>
                 </div>
                 <p class="text-body-md">{{ $description }}</p>
             </div>
@@ -50,6 +64,19 @@
             {{-- Intro Section - takes left 50% like hero image --}}
             <div class="w-1/2 flex flex-col gap-5 items-center justify-center max-xl:w-full">
                 {{-- Intro Image --}}
+                @if($imageStyle === 'author')
+                <div class="w-[280px] h-[280px] max-xl:w-[180px] max-xl:h-[180px] max-md:w-[150px] max-md:h-[150px] rounded-full overflow-hidden flex items-center justify-center bg-tasty-yellow">
+                    @if($introImage)
+                    <img
+                        src="{{ $introImage }}"
+                        alt="{{ $introImageAlt }}"
+                        class="w-full h-full object-cover"
+                    >
+                    @else
+                    <span class="font-display text-[80px] max-xl:text-[56px] max-md:text-[48px] text-blue-black">{{ $authorInitials }}</span>
+                    @endif
+                </div>
+                @else
                 <div class="w-full max-w-[450px] h-[429.5px] max-xl:h-[182px] max-xl:max-w-[300px] max-md:max-w-[200px] flex items-center justify-center">
                     <img
                         src="{{ $introImage }}"
@@ -58,13 +85,14 @@
                         style="mix-blend-mode: darken;"
                     >
                 </div>
+                @endif
                 {{-- Title & Description --}}
-                <div class="flex flex-col gap-4 items-center text-center text-blue-black w-full max-w-[450px]">
+                <div class="flex flex-col gap-4 items-center text-center text-blue-black w-full {{ $imageStyle === 'author' ? '' : 'max-w-[450px]' }}">
                     <div class="flex flex-col items-center">
                         @if($titleSmall)
                             <span class="font-display text-[48px] leading-[1.1] tracking-[-0.04em] uppercase max-xl:text-[24px]">{{ $titleSmall }}</span>
                         @endif
-                        <h2 class="font-display text-[74px] leading-[1] tracking-[-0.04em] uppercase max-xl:text-[36px]">{{ $titleLarge }}</h2>
+                        <h2 class="font-display text-[74px] leading-[1] tracking-[-0.04em] uppercase max-xl:text-[36px] {{ $imageStyle === 'author' ? 'whitespace-nowrap' : '' }}">{{ $titleLarge }}</h2>
                     </div>
                     <p class="text-body-md">{{ $description }}</p>
                 </div>

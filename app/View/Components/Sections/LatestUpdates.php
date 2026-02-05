@@ -2,6 +2,7 @@
 
 namespace App\View\Components\Sections;
 
+use App\Actions\Posts\GetPostsByAuthor;
 use App\Actions\Posts\GetPostsByCategory;
 use App\Actions\Posts\GetPostsByTag;
 use App\Actions\Posts\GetRecentPosts;
@@ -24,7 +25,7 @@ class LatestUpdates extends Component
         return 'latest-updates';
     }
 
-    public string $introImage;
+    public ?string $introImage;
 
     public string $introImageAlt;
 
@@ -54,12 +55,17 @@ class LatestUpdates extends Component
 
     public bool $hasMorePosts = true;
 
+    public string $imageStyle;
+
+    public string $authorInitials;
+
     /** @var array<string, class-string> */
     protected array $actions = [
         'recent' => GetRecentPosts::class,
         'trending' => GetTrendingPosts::class,
         'byTag' => GetPostsByTag::class,
         'byCategory' => GetPostsByCategory::class,
+        'byAuthor' => GetPostsByAuthor::class,
     ];
 
     /**
@@ -74,7 +80,7 @@ class LatestUpdates extends Component
      * @param  array<int, array<string, mixed>>  $staticContent  Index => content mapping for static slots
      */
     public function __construct(
-        string $introImage = '',
+        ?string $introImage = '',
         string $introImageAlt = '',
         string $titleSmall = 'Latest',
         string $titleLarge = 'Updates',
@@ -96,11 +102,13 @@ class LatestUpdates extends Component
         int $dynamicCount = 0,
         string $action = '',
         array $params = [],
+        string $imageStyle = 'default',
+        string $authorInitials = '',
     ) {
         // Initialize post tracker to prevent duplicates across sections
         $this->initPostTracker();
 
-        $this->introImage = $introImage ?: asset('images/latest-updates.png');
+        $this->introImage = $imageStyle === 'author' ? $introImage : ($introImage ?: asset('images/latest-updates.png'));
         $this->introImageAlt = $introImageAlt;
         $this->titleSmall = $titleSmall;
         $this->titleLarge = $titleLarge;
@@ -109,6 +117,8 @@ class LatestUpdates extends Component
         $this->loadAction = $action ?: $loadAction ?: 'recent';
         $this->loadParams = ! empty($params) ? $params : $loadParams;
         $this->showLoadMore = $showLoadMore;
+        $this->imageStyle = $imageStyle;
+        $this->authorInitials = $authorInitials;
 
         // New hybrid slot mode: mix of manual, static, and dynamic slots
         if ($totalSlots > 0 || count($manualPostIds) > 0 || count($staticContent) > 0) {
