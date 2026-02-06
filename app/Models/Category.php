@@ -127,6 +127,24 @@ class Category extends Model
     }
 
     /**
+     * Get all descendant category IDs (children, grandchildren, etc.).
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    public function descendantIds(): \Illuminate\Support\Collection
+    {
+        $ids = collect();
+        $children = $this->children;
+
+        foreach ($children as $child) {
+            $ids->push($child->id);
+            $ids = $ids->merge($child->descendantIds());
+        }
+
+        return $ids;
+    }
+
+    /**
      * Get all ancestors of this category.
      *
      * @return \Illuminate\Support\Collection<int, Category>

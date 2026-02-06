@@ -3,6 +3,7 @@
 namespace App\Actions\Posts;
 
 use App\Actions\Posts\Concerns\FiltersBySectionCategories;
+use App\Models\Category;
 use App\Models\Post;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -28,12 +29,22 @@ class GetPostsByCategory extends BasePostsAction
             $categorySlugs = [$params['category']];
         }
 
+        // Include sub-category IDs so posts from child categories are returned
+        $categoryIds = collect();
+        if (count($categorySlugs) > 0) {
+            $categories = Category::whereIn('slug', $categorySlugs)->get();
+            foreach ($categories as $category) {
+                $categoryIds->push($category->id);
+                $categoryIds = $categoryIds->merge($category->descendantIds());
+            }
+        }
+
         $query = Post::query()
             ->published()
             ->with(['author', 'categories', 'tags'])
-            ->when(count($categorySlugs) > 0, fn ($q) => $q->whereHas(
+            ->when($categoryIds->isNotEmpty(), fn ($q) => $q->whereHas(
                 'categories',
-                fn ($q) => $q->whereIn('slug', $categorySlugs)
+                fn ($q) => $q->whereIn('categories.id', $categoryIds)
             ))
             ->when(count($excludeIds) > 0, fn ($q) => $q->whereNotIn('id', $excludeIds))
             ->orderByDesc('published_at');

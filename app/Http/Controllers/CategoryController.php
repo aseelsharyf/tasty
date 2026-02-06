@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Post;
 use App\Services\Layouts\SectionDataResolver;
 use App\Services\SeoService;
 use Illuminate\Contracts\View\View;
@@ -29,9 +30,12 @@ class CategoryController extends Controller
             return $this->renderCustomLayout($category);
         }
 
-        // Fallback to default view
-        $posts = $category->posts()
+        // Fallback to default view — include posts from sub-categories
+        $categoryIds = collect([$category->id])->merge($category->descendantIds());
+
+        $posts = Post::query()
             ->published()
+            ->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $categoryIds))
             ->with(['author', 'categories', 'tags', 'featuredMedia'])
             ->latest('published_at')
             ->paginate(12);

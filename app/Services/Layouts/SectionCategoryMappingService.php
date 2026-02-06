@@ -103,11 +103,21 @@ class SectionCategoryMappingService
     public function getAllMappings(): array
     {
         return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
-            return SectionCategoryMapping::query()
+            $mappings = SectionCategoryMapping::query()
                 ->get()
-                ->groupBy('section_type')
-                ->map(fn ($mappings) => $mappings->pluck('category_id')->toArray())
-                ->toArray();
+                ->groupBy('section_type');
+
+            return $mappings->map(function ($sectionMappings) {
+                $ids = $sectionMappings->pluck('category_id')->toArray();
+
+                // Include descendant category IDs so sub-categories are covered
+                $categories = Category::whereIn('id', $ids)->get();
+                foreach ($categories as $category) {
+                    $ids = array_merge($ids, $category->descendantIds()->toArray());
+                }
+
+                return array_values(array_unique($ids));
+            })->toArray();
         });
     }
 
@@ -120,10 +130,18 @@ class SectionCategoryMappingService
     public function getAllReservedCategoryIds(): array
     {
         return Cache::remember(self::CACHE_KEY.'_reserved', self::CACHE_TTL, function () {
-            return SectionCategoryMapping::query()
+            $ids = SectionCategoryMapping::query()
                 ->distinct()
                 ->pluck('category_id')
                 ->toArray();
+
+            // Include descendant category IDs
+            $categories = Category::whereIn('id', $ids)->get();
+            foreach ($categories as $category) {
+                $ids = array_merge($ids, $category->descendantIds()->toArray());
+            }
+
+            return array_values(array_unique($ids));
         });
     }
 
