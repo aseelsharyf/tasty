@@ -13,7 +13,7 @@
                 <div class="flex flex-col gap-3 items-center w-full max-w-4xl 2xl:gap-5">
                     @if($kicker)
                         <a href="{{ $buttonUrl }}" class="hover:opacity-80 transition-opacity">
-                            <p class="font-display text-[130px] leading-[1] tracking-[-0.04em] uppercase text-{{ $textColor }} max-lg:text-[48px]">
+                            <p class="font-display text-[145px] leading-[1] tracking-[-0.04em] uppercase text-{{ $textColor }} max-lg:text-[56px]">
                                 {{ $kicker }}
                             </p>
                         </a>
