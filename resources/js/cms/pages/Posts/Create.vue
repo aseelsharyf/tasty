@@ -740,7 +740,7 @@ function goBack() {
                                 v-model="form.excerpt"
                                 :placeholder="placeholders.excerpt"
                                 rows="1"
-                                maxlength="160"
+                                maxlength="300"
                                 :dir="textDirection"
                                 :class="[
                                     'w-full text-muted bg-transparent border-0 outline-none placeholder:text-muted/30 mb-1 resize-none overflow-hidden',
@@ -751,8 +751,8 @@ function goBack() {
                                 @keydown="onDhivehiKeyDown"
                             />
                             <div class="flex items-center justify-end">
-                                <span :class="['text-xs', (form.excerpt?.length || 0) > 160 ? 'text-error' : 'text-muted']">
-                                    {{ 160 - (form.excerpt?.length || 0) }} left
+                                <span :class="['text-xs', (form.excerpt?.length || 0) > 300 ? 'text-error' : 'text-muted']">
+                                    {{ 300 - (form.excerpt?.length || 0) }} left
                                 </span>
                             </div>
 

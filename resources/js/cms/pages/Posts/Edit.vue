@@ -2465,7 +2465,7 @@ function openDiff() {
                                 v-model="form.excerpt"
                                 :placeholder="placeholders.excerpt"
                                 rows="1"
-                                maxlength="160"
+                                maxlength="300"
                                 :dir="textDirection"
                                 :readonly="isReadOnly"
                                 :class="[
@@ -2479,10 +2479,10 @@ function openDiff() {
                             />
                             <div class="flex items-center justify-end h-4 mb-3">
                                 <span
-                                    v-if="(form.excerpt?.length || 0) > 120"
-                                    :class="['text-xs', (form.excerpt?.length || 0) > 160 ? 'text-error' : 'text-muted/60']"
+                                    v-if="(form.excerpt?.length || 0) > 260"
+                                    :class="['text-xs', (form.excerpt?.length || 0) > 300 ? 'text-error' : 'text-muted/60']"
                                 >
-                                    {{ 160 - (form.excerpt?.length || 0) }}
+                                    {{ 300 - (form.excerpt?.length || 0) }}
                                 </span>
                             </div>
 

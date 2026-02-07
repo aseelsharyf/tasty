@@ -52,7 +52,7 @@ class UpdatePostRequest extends FormRequest
                 'max:255',
                 Rule::unique('posts', 'slug')->ignore($this->route('post')),
             ],
-            'excerpt' => ['nullable', 'string', 'max:160'],
+            'excerpt' => ['nullable', 'string', 'max:300'],
             'content' => ['nullable', 'array'],
             'post_type' => ['nullable', Rule::in($validPostTypes)],
             'template' => ['nullable', 'string', 'max:50', function ($attribute, $value, $fail) {
@@ -96,7 +96,7 @@ class UpdatePostRequest extends FormRequest
         return [
             'title.max' => 'Headline should be 70 characters or less.',
             'subtitle.max' => 'Subheading should be 120 characters or less.',
-            'excerpt.max' => 'Summary should be 160 characters or less.',
+            'excerpt.max' => 'Summary should be 300 characters or less.',
             'slug.unique' => 'This slug is already in use. Please choose a different one.',
             'scheduled_at.after' => 'Scheduled date must be in the future.',
             'featured_image.max' => 'Featured image must be less than 5MB.',

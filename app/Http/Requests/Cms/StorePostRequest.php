@@ -28,7 +28,7 @@ class StorePostRequest extends FormRequest
             'kicker' => ['nullable', 'string', 'max:100'],
             'subtitle' => ['nullable', 'string', 'max:120'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:posts,slug'],
-            'excerpt' => ['nullable', 'string', 'max:160'],
+            'excerpt' => ['nullable', 'string', 'max:300'],
             'content' => ['nullable', 'array'],
             'post_type' => ['required', Rule::in($validPostTypes)],
             'status' => ['required', Rule::in([
@@ -59,7 +59,7 @@ class StorePostRequest extends FormRequest
         return [
             'title.max' => 'Headline should be 70 characters or less.',
             'subtitle.max' => 'Subheading should be 120 characters or less.',
-            'excerpt.max' => 'Summary should be 160 characters or less.',
+            'excerpt.max' => 'Summary should be 300 characters or less.',
             'slug.unique' => 'This slug is already in use. Please choose a different one.',
             'scheduled_at.after' => 'Scheduled date must be in the future.',
             'featured_image.max' => 'Featured image must be less than 5MB.',
