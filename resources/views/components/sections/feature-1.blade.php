@@ -21,11 +21,11 @@
             <div class="flex flex-col gap-3 max-lg:gap-2 max-w-4xl">
                 @if($kicker)
                     <a href="{{ $buttonUrl }}" class="hover:opacity-80 transition-opacity">
-                        <p class="font-display text-[130px] leading-[1] tracking-[-0.04em] text-{{ $textColor }} uppercase max-lg:text-[48px]">{{ $kicker }}</p>
+                        <p class="font-display text-[115px] leading-[1] tracking-[-0.04em] text-{{ $textColor }} uppercase max-lg:text-[48px]">{{ $kicker }}</p>
                     </a>
                 @endif
                 @if($title)
-                    <h2 class="font-display text-[56px] leading-[1.1] tracking-[-0.04em] text-{{ $textColor }} max-lg:text-[24px]">{{ $title }}</h2>
+                    <h2 class="font-display text-[55px] leading-[1.1] tracking-[-0.04em] text-{{ $textColor }} max-lg:text-[24px]">{{ $title }}</h2>
                 @endif
             </div>
 

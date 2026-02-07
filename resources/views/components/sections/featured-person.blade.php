@@ -3,7 +3,7 @@
 @php
     // Handle both Post model and static array
     $isStatic = is_array($post);
-    $kicker = $isStatic ? ($post['kicker'] ?? '') : $post->kicker;
+    $kicker = $isStatic ? ($post['kicker'] ?? $post['name'] ?? '') : $post->kicker;
     $title = $isStatic ? ($post['title'] ?? '') : $post->title;
     $excerpt = $isStatic ? ($post['excerpt'] ?? $post['description'] ?? '') : $post->excerpt;
     $url = $isStatic ? ($post['url'] ?? '#') : $post->url;

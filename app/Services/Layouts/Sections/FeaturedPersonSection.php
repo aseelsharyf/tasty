@@ -74,15 +74,15 @@ class FeaturedPersonSection extends AbstractSectionDefinition
     public function slotSchema(): array
     {
         return [
-            'name' => [
+            'kicker' => [
                 'type' => 'text',
-                'label' => 'Person Name',
-                'placeholder' => 'Enter person name',
+                'label' => 'Kicker (Large Text)',
+                'placeholder' => 'Enter large header text',
             ],
             'title' => [
                 'type' => 'text',
-                'label' => 'Title/Position',
-                'placeholder' => 'Enter title or position',
+                'label' => 'Title',
+                'placeholder' => 'Enter title',
             ],
             'description' => [
                 'type' => 'textarea',

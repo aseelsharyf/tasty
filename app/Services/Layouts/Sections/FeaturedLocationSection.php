@@ -96,10 +96,15 @@ class FeaturedLocationSection extends AbstractSectionDefinition
     public function slotSchema(): array
     {
         return [
+            'kicker' => [
+                'type' => 'text',
+                'label' => 'Kicker (Large Text)',
+                'placeholder' => 'Enter large header text (e.g. CEYLON)',
+            ],
             'title' => [
                 'type' => 'text',
-                'label' => 'Location Name',
-                'placeholder' => 'Enter location name',
+                'label' => 'Title',
+                'placeholder' => 'Enter title',
             ],
             'description' => [
                 'type' => 'textarea',
