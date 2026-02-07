@@ -866,8 +866,8 @@
         width: 100%;
         height: calc(100vh - 80px + 150px);
 
-        /* Background image */
-        background: var(--featured-location-image) lightgray 50% / cover no-repeat;
+        /* Background image with CMS focal point */
+        background: var(--featured-location-image) lightgray var(--featured-location-position, center) / cover no-repeat;
     }
 
     @media (min-width: 1024px) {
@@ -883,9 +883,9 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
 
-        /* Slightly wider than viewport for a gentle curve clipped by parent overflow:hidden */
+        /* Mobile: keep original height so curve is visible */
         width: 130%;
         height: calc(100vh - 80px);
         border-radius: 1500px 1500px 0 0;
@@ -894,10 +894,11 @@
 
     @media (min-width: 1024px) {
         .featured-location-content {
-            justify-content: center;
+            justify-content: flex-start;
             padding-top: 0;
+            margin-top: 0;
             width: 130%;
-            height: calc(100vh - 80px);
+            height: calc(100vh + 200px);
             border-radius: 5000px 5000px 0 0;
             flex-shrink: 0;
         }
@@ -922,6 +923,7 @@
     /* Featured Person Image Section */
     .featured-person-image-wrapper {
         width: 100%;
+        max-width: 100vw;
         display: flex;
         justify-content: center;
         overflow: hidden;
@@ -938,12 +940,12 @@
         overflow: hidden;
         transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 
-        /* Mobile: 100% width with aspect ratio */
-        width: 100%;
+        /* Mobile: wider than viewport for gentle curve */
+        width: 130%;
         aspect-ratio: 432 / 322;
         border-radius: 1500px 1500px 0 0;
 
-        /* Image as background */
+        /* Image as background with CMS focal point */
         background:
             linear-gradient(
                 180deg,
@@ -951,14 +953,13 @@
                 rgba(255, 231, 98, 0.5) 80%,
                 var(--color-tasty-yellow) 100%
             ),
-            var(--featured-person-image) lightgray 50% / cover no-repeat;
+            var(--featured-person-image) lightgray var(--featured-person-position, center) / cover no-repeat;
     }
 
     @media (min-width: 1024px) {
         .featured-person-image-container {
-            /* Fill viewport height minus navbar */
-            width: 100%;
-            height: calc(100vh - 80px);
+            width: 130%;
+            height: calc(100vh + 200px);
             aspect-ratio: unset;
             border-radius: 5000px 5000px 0 0;
             max-width: none;
@@ -968,6 +969,7 @@
     /* Feature 1 Image Section */
     .feature-1-image-wrapper {
         width: 100%;
+        max-width: 100vw;
         display: flex;
         justify-content: center;
         overflow: hidden;
@@ -984,8 +986,8 @@
         overflow: hidden;
         transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 
-        /* Mobile: 100% width with aspect ratio */
-        width: 100%;
+        /* Mobile: wider than viewport for gentle curve */
+        width: 130%;
         aspect-ratio: 432 / 322;
         border-radius: 1500px 1500px 0 0;
 
@@ -997,14 +999,13 @@
                 rgba(255, 231, 98, 0.5) 80%,
                 var(--color-tasty-yellow) 100%
             ),
-            var(--feature-1-image) lightgray 50% / cover no-repeat;
+            var(--feature-1-image) lightgray var(--feature-1-position, center) / cover no-repeat;
     }
 
     @media (min-width: 1024px) {
         .feature-1-image-container {
-            /* Fill viewport height minus navbar */
-            width: 100%;
-            height: calc(100vh - 80px);
+            width: 130%;
+            height: calc(100vh + 200px);
             aspect-ratio: unset;
             border-radius: 5000px 5000px 0 0;
             max-width: none;
@@ -1034,8 +1035,8 @@
         width: 100%;
         height: calc(100vh - 80px + 150px);
 
-        /* Background image */
-        background: var(--feature-2-image) lightgray 50% / cover no-repeat;
+        /* Background image with CMS focal point */
+        background: var(--feature-2-image) lightgray var(--feature-2-position, center) / cover no-repeat;
     }
 
     @media (min-width: 1024px) {
@@ -1051,10 +1052,10 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        padding-top: 60px;
+        justify-content: flex-start;
+        padding-top: 300px;
 
-        /* Slightly wider than viewport for a gentle curve clipped by parent overflow:hidden */
+        /* Mobile: keep original height so curve is visible */
         width: 130%;
         height: calc(100vh - 80px);
         border-radius: 1500px 1500px 0 0;
@@ -1063,10 +1064,11 @@
 
     @media (min-width: 1024px) {
         .feature-2-content {
-            justify-content: center;
+            justify-content: flex-start;
             padding-top: 0;
+            margin-top: 0;
             width: 130%;
-            height: calc(100vh - 80px);
+            height: calc(100vh + 200px);
             border-radius: 5000px 5000px 0 0;
             flex-shrink: 0;
         }

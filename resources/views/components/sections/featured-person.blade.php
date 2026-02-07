@@ -8,13 +8,15 @@
     $excerpt = $isStatic ? ($post['excerpt'] ?? $post['description'] ?? '') : $post->excerpt;
     $url = $isStatic ? ($post['url'] ?? '#') : $post->url;
     $image = $isStatic ? ($post['image'] ?? '') : $post->featured_image_url;
+    $anchor = $isStatic ? null : $post->featured_image_anchor;
+    $imagePosition = $anchor ? ($anchor['x'] ?? 50) . '% ' . ($anchor['y'] ?? 50) . '%' : 'center';
     $category = $isStatic ? null : $post->categories->first();
 @endphp
 
 {{-- Curved Hero Image Section --}}
 @if($image)
 <section class="featured-person-image-wrapper">
-    <a href="{{ $url }}" class="featured-person-image-container" style="--featured-person-image: url('{{ $image }}');"></a>
+    <a href="{{ $url }}" class="featured-person-image-container" style="--featured-person-image: url('{{ $image }}'); --featured-person-position: {{ $imagePosition }};"></a>
 </section>
 @endif
 

@@ -33,6 +33,8 @@ class FeaturedLocation extends Component
 
     public string $imageAlt;
 
+    public string $imagePosition;
+
     public string $kicker;
 
     public string $title;
@@ -328,6 +330,8 @@ class FeaturedLocation extends Component
     {
         $this->image = $post->featured_image_url ?? '';
         $this->imageAlt = $post->title;
+        $anchor = $post->featured_image_anchor;
+        $this->imagePosition = $anchor ? ($anchor['x'] ?? 50).'% '.($anchor['y'] ?? 50).'%' : 'center';
         $this->kicker = $post->kicker ?? '';
         $this->title = $post->title;
         $this->tag1 = 'TASTY FEATURE';
@@ -349,6 +353,7 @@ class FeaturedLocation extends Component
     {
         $this->image = $data['image'] ?? '';
         $this->imageAlt = $data['imageAlt'] ?? $data['kicker'] ?? '';
+        $this->imagePosition = $data['imagePosition'] ?? 'center';
         $this->kicker = $data['kicker'] ?? '';
         $this->title = $data['title'] ?? '';
         $this->tag1 = $data['tag1'] ?? 'TASTY FEATURE';
@@ -368,6 +373,7 @@ class FeaturedLocation extends Component
         $this->post = null;
         $this->image = '';
         $this->imageAlt = '';
+        $this->imagePosition = 'center';
         $this->kicker = '';
         $this->title = '';
         $this->tag1 = 'TASTY FEATURE';
