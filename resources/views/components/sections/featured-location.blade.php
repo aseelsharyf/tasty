@@ -8,7 +8,7 @@
     >
         {{-- Yellow curved content area --}}
         <div class="featured-location-content {{ $bgColorClass }}" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
-            <div class="w-max-4xl flex flex-col items-center justify-center text-center gap-10 max-lg:gap-6 w-full h-full">
+            <div class="flex flex-col items-center justify-center text-center gap-10 max-lg:gap-6 w-full h-full max-w-[100vw] px-10 max-lg:px-5">
                 {{-- Kicker (large) & Title (below) --}}
                 <div class="flex flex-col gap-3 items-center w-full max-w-4xl 2xl:gap-5">
                     @if($kicker)
@@ -59,7 +59,7 @@
 
     {{-- Carousel of additional posts - separate section below the curve --}}
     @if($carouselPosts->isNotEmpty())
-        <div class="w-full {{ $bgColorClass }} pb-16 max-lg:pb-10 pt-10 lg:pt-16" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+        <div class="w-full {{ $bgColorClass }} pb-16 max-lg:pb-10 pt-10 lg:pt-16 -mt-[300px] lg:-mt-[170px] relative z-10" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
             <div class="scroll-container pb-8 max-lg:pb-6">
                 <div class="flex items-start justify-center min-w-max px-10 max-lg:px-5 max-lg:gap-8">
                     @foreach($carouselPosts as $carouselPost)

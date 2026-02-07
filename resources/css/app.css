@@ -882,10 +882,11 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-end;
+        padding-bottom: 80px;
 
-        /* Mobile: same curve as featured-person */
-        width: 100%;
+        /* Slightly wider than viewport for a gentle curve clipped by parent overflow:hidden */
+        width: 130%;
         height: calc(100vh - 80px);
         border-radius: 1500px 1500px 0 0;
         flex-shrink: 0;
@@ -893,8 +894,9 @@
 
     @media (min-width: 1024px) {
         .featured-location-content {
-            /* Same height and curve as featured-person */
-            width: 100%;
+            justify-content: center;
+            padding-bottom: 0;
+            width: 130%;
             height: calc(100vh - 80px);
             border-radius: 5000px 5000px 0 0;
             flex-shrink: 0;
@@ -1048,10 +1050,11 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-end;
+        padding-bottom: 80px;
 
-        /* Mobile: same curve as featured-location */
-        width: 100%;
+        /* Slightly wider than viewport for a gentle curve clipped by parent overflow:hidden */
+        width: 130%;
         height: calc(100vh - 80px);
         border-radius: 1500px 1500px 0 0;
         flex-shrink: 0;
@@ -1059,8 +1062,9 @@
 
     @media (min-width: 1024px) {
         .feature-2-content {
-            /* Same height and curve as featured-location */
-            width: 100%;
+            justify-content: center;
+            padding-bottom: 0;
+            width: 130%;
             height: calc(100vh - 80px);
             border-radius: 5000px 5000px 0 0;
             flex-shrink: 0;
