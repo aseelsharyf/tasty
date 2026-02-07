@@ -623,9 +623,9 @@ function formatDate(dateStr: string) {
 
                                     <!-- Status & Type Badges -->
                                     <div class="flex flex-wrap items-center gap-2 mt-2">
-                                        <!-- Workflow Status - prominent for editorial visibility -->
+                                        <!-- Workflow Status - only show editorial statuses (review, copydesk, approved, rejected) -->
                                         <UBadge
-                                            v-if="post.workflow_status && post.workflow_status !== post.status"
+                                            v-if="post.workflow_status && !['draft', 'published'].includes(post.workflow_status) && post.workflow_status !== post.status"
                                             :color="getWorkflowStatusColor(post.workflow_status)"
                                             variant="soft"
                                             size="xs"

@@ -66,11 +66,14 @@ class PostController extends Controller
         };
 
         // Role-based filtering:
+        // - All: Exclude all drafts (drafts only appear in the Draft tab)
         // - Draft: All users see only their own drafts
         // - Copydesk: Only Editors/Admins can view (writers cannot access)
         // - Published: Everyone can see (read-only for non-authors/non-editors)
         // - Trashed: Users see only their own trashed posts, Editors/Admins see all
-        if ($status === 'draft') {
+        if ($status === 'all') {
+            $query->where('status', '!=', Post::STATUS_DRAFT);
+        } elseif ($status === 'draft') {
             // Drafts always show only current user's posts
             $query->where('author_id', $user->id);
         } elseif ($status === 'copydesk') {
@@ -158,9 +161,9 @@ class PostController extends Controller
         $baseQuery = fn () => Post::where('language_code', $language);
 
         if ($isEditorOrAdmin) {
-            // Editors and Admins see all posts except drafts (always user-specific)
+            // Editors and Admins see all non-draft posts (drafts only in Draft tab)
             $counts = [
-                'all' => $baseQuery()->withoutTrashed()->count(),
+                'all' => $baseQuery()->withoutTrashed()->where('status', '!=', Post::STATUS_DRAFT)->count(),
                 'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk'])->where('author_id', $user->id)->count(),
                 'copydesk' => $baseQuery()->inEditorialReview()->count(),
                 'published' => $baseQuery()->where('status', Post::STATUS_PUBLISHED)->count(),
@@ -170,10 +173,7 @@ class PostController extends Controller
         } else {
             // Writers see only their own drafts/trashed, all published, but no copydesk
             $counts = [
-                'all' => $baseQuery()->withoutTrashed()->where(function ($q) use ($user) {
-                    $q->where('author_id', $user->id)
-                        ->orWhere('status', Post::STATUS_PUBLISHED);
-                })->count(),
+                'all' => $baseQuery()->withoutTrashed()->where('status', '!=', Post::STATUS_DRAFT)->count(),
                 'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk'])->where('author_id', $user->id)->count(),
                 'copydesk' => 0, // Writers cannot see copydesk
                 'published' => $baseQuery()->where('status', Post::STATUS_PUBLISHED)->count(),

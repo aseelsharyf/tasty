@@ -131,6 +131,7 @@ class LayoutController extends Controller
             'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
             'sectionType' => ['nullable', 'string', 'max:50'],
             'excludeIds' => ['nullable', 'string'], // Comma-separated list of IDs to exclude
+            'manual' => ['nullable', 'boolean'], // Skip reserved-category exclusion for manual selection
         ]);
 
         $query = Post::query()
@@ -166,8 +167,9 @@ class LayoutController extends Controller
             if ($allowedCategoryIds !== null) {
                 // Section has specific categories - only show posts from those categories
                 $query->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $allowedCategoryIds));
-            } else {
-                // Section has no restrictions - exclude posts from categories reserved by other sections
+            } elseif (empty($validated['manual'])) {
+                // For dynamic auto-fill only: exclude posts from categories reserved by other sections.
+                // Manual selection skips this so users can pick any post.
                 $reservedCategoryIds = $this->mappingService->getCategoryIdsReservedByOtherSections($validated['sectionType']);
 
                 if (! empty($reservedCategoryIds)) {

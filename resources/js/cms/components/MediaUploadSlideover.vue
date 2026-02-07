@@ -37,6 +37,8 @@ interface UploadFile {
     status: 'pending' | 'uploading' | 'success' | 'error';
     error: string | null;
     category: string;
+    title: string;
+    caption: string;
 }
 
 const props = defineProps<{
@@ -79,6 +81,8 @@ const embedCategory = ref(props.defaultCategory || 'media');
 const defaultFileCategory = ref(props.defaultCategory || 'media');
 
 // Common fields
+const title = ref('');
+const caption = ref('');
 const selectedTags = ref<Array<{ value: number | string; label: string }>>([]);
 const creditType = ref<'user' | 'external'>('external');
 const creditUserId = ref<string>('');
@@ -235,6 +239,8 @@ function addFiles(files: File[]) {
             status: 'pending',
             error: null,
             category: parseCategoryFromFilename(file.name),
+            title: title.value,
+            caption: caption.value,
         };
 
         uploadFiles.value.push(uploadFile);
@@ -422,6 +428,14 @@ async function uploadWithSignedUrl(uploadFile: UploadFile) {
         category: uploadFile.category,
     };
 
+    if (title.value) {
+        confirmData.title = title.value;
+    }
+
+    if (caption.value) {
+        confirmData.caption = caption.value;
+    }
+
     if (tagIds.length > 0) {
         confirmData.tag_ids = tagIds;
     }
@@ -463,8 +477,16 @@ async function uploadWithSignedUrl(uploadFile: UploadFile) {
     hasSuccessfulUploads.value = true;
 }
 
-// Append shared tags/credit fields to FormData
+// Append shared fields to FormData
 function appendSharedFields(formData: FormData) {
+    if (title.value) {
+        formData.append('title', title.value);
+    }
+
+    if (caption.value) {
+        formData.append('caption', caption.value);
+    }
+
     for (const tag of selectedTags.value) {
         if (typeof tag.value === 'number') {
             formData.append('tag_ids[]', String(tag.value));
@@ -542,6 +564,8 @@ function resetForm() {
     embedError.value = null;
     defaultFileCategory.value = props.defaultCategory || 'media';
     embedCategory.value = props.defaultCategory || 'media';
+    title.value = '';
+    caption.value = '';
     selectedTags.value = [];
     creditType.value = 'external';
     creditUserId.value = '';
@@ -801,6 +825,26 @@ const errorCount = computed(() => uploadFiles.value.filter(f => f.status === 'er
                             />
                         </UFormField>
 
+                        <!-- Title -->
+                        <UFormField label="Title">
+                            <UInput
+                                v-model="title"
+                                placeholder="Enter default title..."
+                                class="w-full"
+                            />
+                        </UFormField>
+
+                        <!-- Caption -->
+                        <UFormField label="Caption">
+                            <UTextarea
+                                v-model="caption"
+                                placeholder="Enter default caption..."
+                                class="w-full"
+                                autoresize
+                                :rows="2"
+                            />
+                        </UFormField>
+
                         <!-- Tags -->
                         <UFormField label="Tags">
                             <div class="space-y-2">
@@ -911,7 +955,7 @@ const errorCount = computed(() => uploadFiles.value.filter(f => f.status === 'er
                         type="button"
                         color="primary"
                         :loading="isUploading"
-                        :disabled="uploadFiles.length === 0 || isUploading"
+                        :disabled="uploadFiles.length === 0 || !title.trim() || isUploading"
                         @click.stop="uploadAll"
                     >
                         Upload {{ uploadFiles.length }} File{{ uploadFiles.length !== 1 ? 's' : '' }}

@@ -61,7 +61,7 @@ const dynamicPreviewPosts = ref<Record<string, PostSearchResult[]>>({});
 // Track all post IDs used across sections (manual + dynamic) in order
 const usedPostIdsPerSection = ref<Record<string, number[]>>({});
 
-// Compute all assigned post IDs across all sections (excluding the currently editing slot)
+// Compute all manually assigned post IDs across all sections (excluding the currently editing slot)
 const excludedPostIds = computed(() => {
     const ids: number[] = [];
     for (const section of props.modelValue) {

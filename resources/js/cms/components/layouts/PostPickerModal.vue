@@ -59,6 +59,7 @@ async function searchPosts() {
             params.set('query', searchQuery.value);
         }
         params.set('limit', '20');
+        params.set('manual', '1');
         if (props.sectionType) {
             params.set('sectionType', props.sectionType);
         }
