@@ -864,7 +864,7 @@
 
         /* Mobile: full width - taller to show image above curve */
         width: 100%;
-        height: calc(100vh - 80px + 150px);
+        height: 90vh;
 
         /* Background image with CMS focal point */
         background: var(--featured-location-image) lightgray var(--featured-location-position, center) / cover no-repeat;
@@ -887,7 +887,7 @@
 
         /* Mobile: keep original height so curve is visible */
         width: 130%;
-        height: calc(100vh - 80px);
+        height: 60vh;
         border-radius: 1500px 1500px 0 0;
         flex-shrink: 0;
     }
@@ -1033,7 +1033,7 @@
 
         /* Mobile: full width - taller to show image above curve */
         width: 100%;
-        height: calc(100vh - 80px + 150px);
+        height: 90vh;
 
         /* Background image with CMS focal point */
         background: var(--feature-2-image) lightgray var(--feature-2-position, center) / cover no-repeat;
@@ -1053,11 +1053,10 @@
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        padding-top: 300px;
 
         /* Mobile: keep original height so curve is visible */
         width: 130%;
-        height: calc(100vh - 80px);
+        height: 60vh;
         border-radius: 1500px 1500px 0 0;
         flex-shrink: 0;
     }
