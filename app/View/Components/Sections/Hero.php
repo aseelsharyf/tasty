@@ -37,6 +37,8 @@ class Hero extends Component
 
     public string $alignment;
 
+    public string $imagePosition = '50% 50%';
+
     // Manual mode properties
     public bool $manual;
 
@@ -158,6 +160,14 @@ class Hero extends Component
             } else {
                 $this->post = $this->fetchPostViaAction($action, $params);
             }
+        }
+
+        // Set image position from post's focal point
+        if ($this->post) {
+            $anchor = $this->post->featured_image_anchor;
+            $this->imagePosition = $anchor
+                ? ($anchor['x'] ?? 50) . '% ' . ($anchor['y'] ?? 50) . '%'
+                : '50% 50%';
         }
 
         // Mark post as used so other sections don't show it

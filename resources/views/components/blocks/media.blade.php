@@ -171,12 +171,12 @@
             </figure>
         @elseif($singleImageDisplay === 'portrait')
             {{-- Portrait: Centered with narrower max-width for portrait images --}}
-            <figure class="max-w-[500px] w-full mx-auto px-4 lg:px-0">
-                <div class="overflow-hidden border border-tasty-blue-black/10">
+            <figure class="max-w-[900px] w-full mx-auto px-4 lg:px-0">
+                <div class="overflow-hidden border border-tasty-blue-black/10 aspect-[3/4]">
                     <img
                         src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
                         alt="{{ $item['alt_text'] ?? '' }}"
-                        class="w-full h-auto"
+                        class="w-full h-full object-cover"
                         style="object-position: {{ $objectPosition }};"
                     />
                 </div>

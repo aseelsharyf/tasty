@@ -39,7 +39,8 @@
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"
-                    class="absolute inset-0 w-full h-full object-cover object-top"
+                    class="absolute inset-0 w-full h-full object-cover"
+                    style="object-position: {{ $imagePosition }};"
                 >
             </div>
         @else
@@ -48,6 +49,7 @@
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"
                     class="absolute inset-0 w-full h-full object-cover"
+                    style="object-position: {{ $imagePosition }};"
                 >
             </a>
         @endif

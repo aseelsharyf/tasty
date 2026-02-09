@@ -113,7 +113,7 @@ export default class MediaBlock implements BlockTool {
             gridColumns: 3,
             gap: 'md',
             displayWidth: 'default',
-            singleImageDisplay: 'fullWidth',
+            singleImageDisplay: 'contained',
         };
 
         if (data && typeof data === 'object') {
