@@ -8,7 +8,7 @@
     >
         {{-- Curved content area --}}
         <div class="feature-2-content pt-[100px] lg:pt-0 {{ $bgColorClass }}" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
-            <div class="flex flex-col items-center justify-start lg:justify-center text-center gap-10 max-lg:gap-6 w-full h-full max-w-[100vw] px-10 max-lg:px-5 lg:-mt-[100px]">
+            <div class="flex flex-col items-center justify-start lg:justify-center text-center gap-10 max-lg:gap-6 w-full h-full max-w-[100vw] px-10 max-lg:px-5 max-lg:pb-20 lg:-mt-[100px]">
                 {{-- Kicker (large) & Title (below) --}}
                 <div class="flex flex-col gap-3 items-center w-full max-w-4xl 2xl:gap-5">
                     @if($kicker)
