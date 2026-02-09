@@ -57,7 +57,7 @@ class PostController extends Controller
 
         // Filter by status
         match ($status) {
-            'draft' => $query->draft()->whereNotIn('workflow_status', ['review', 'copydesk']),
+            'draft' => $query->draft()->whereNotIn('workflow_status', ['review', 'copydesk', 'approved']),
             'copydesk' => $query->inEditorialReview(),
             'published' => $query->where('status', Post::STATUS_PUBLISHED),
             'scheduled' => $query->where('status', Post::STATUS_SCHEDULED),
@@ -164,7 +164,7 @@ class PostController extends Controller
             // Editors and Admins see all non-draft posts (drafts only in Draft tab)
             $counts = [
                 'all' => $baseQuery()->withoutTrashed()->where('status', '!=', Post::STATUS_DRAFT)->count(),
-                'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk'])->where('author_id', $user->id)->count(),
+                'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk', 'approved'])->where('author_id', $user->id)->count(),
                 'copydesk' => $baseQuery()->inEditorialReview()->count(),
                 'published' => $baseQuery()->where('status', Post::STATUS_PUBLISHED)->count(),
                 'scheduled' => $baseQuery()->where('status', Post::STATUS_SCHEDULED)->count(),
@@ -174,7 +174,7 @@ class PostController extends Controller
             // Writers see only their own drafts/trashed, all published, but no copydesk
             $counts = [
                 'all' => $baseQuery()->withoutTrashed()->where('status', '!=', Post::STATUS_DRAFT)->count(),
-                'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk'])->where('author_id', $user->id)->count(),
+                'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk', 'approved'])->where('author_id', $user->id)->count(),
                 'copydesk' => 0, // Writers cannot see copydesk
                 'published' => $baseQuery()->where('status', Post::STATUS_PUBLISHED)->count(),
                 'scheduled' => $baseQuery()->where('status', Post::STATUS_SCHEDULED)->where('author_id', $user->id)->count(),

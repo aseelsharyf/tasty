@@ -1,14 +1,14 @@
 {{-- The Spread Section --}}
 @if($posts->isNotEmpty())
 <section
-    class="w-full {{ $bgColorClass }} py-16 max-lg:py-10"
+    class="w-full {{ $bgColorClass }} py-16 max-lg:py-[50px]"
     @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif
     x-data="spreadScroll()"
     x-init="initScroll()"
 >
     {{-- Mobile Intro - Shows on mobile when intro is enabled --}}
     @if($showIntro)
-        <div class="hidden max-lg:flex flex-col items-center justify-center gap-5 px-5 pb-8">
+        <div class="hidden max-lg:flex flex-col items-center justify-center gap-5 px-5 pb-20">
             @if($introImage)
                 <div class="w-full h-[182px]">
                     <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" class="w-full h-full object-contain" style="mix-blend-mode: darken;">
@@ -68,7 +68,7 @@
         </div>
 
         {{-- Mobile: Grid Layout --}}
-        <div class="hidden max-lg:block px-5 pb-6">
+        <div class="hidden max-lg:block px-5">
             <div class="grid grid-cols-2 gap-5">
                 @foreach($posts as $index => $post)
                     <x-cards.spread

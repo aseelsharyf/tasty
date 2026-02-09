@@ -247,7 +247,7 @@ class Post extends Model implements HasMedia
     public function scopeInEditorialReview(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_DRAFT)
-            ->whereIn('workflow_status', ['review', 'copydesk']);
+            ->whereIn('workflow_status', ['review', 'copydesk', 'approved']);
     }
 
     public function scopePublished(Builder $query): Builder

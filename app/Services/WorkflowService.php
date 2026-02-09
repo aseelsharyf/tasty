@@ -56,6 +56,7 @@ class WorkflowService
                 ['key' => 'draft', 'label' => 'Draft', 'color' => 'gray', 'icon' => 'i-lucide-file-edit'],
                 ['key' => 'copydesk', 'label' => 'Copy Desk', 'color' => 'blue', 'icon' => 'i-lucide-spell-check'],
                 ['key' => 'review', 'label' => 'Copy Desk', 'color' => 'blue', 'icon' => 'i-lucide-spell-check'], // Legacy alias
+                ['key' => 'approved', 'label' => 'Approved', 'color' => 'emerald', 'icon' => 'i-lucide-check-circle'],
                 ['key' => 'published', 'label' => 'Published', 'color' => 'green', 'icon' => 'i-lucide-globe'],
             ],
             'transitions' => [
@@ -63,8 +64,14 @@ class WorkflowService
                 ['from' => 'draft', 'to' => 'copydesk', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Submit for Review'],
                 // Editor rejects back to draft
                 ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Request Revisions'],
-                // Editor publishes from copydesk
+                // Editor approves (stays in copydesk view until published)
+                ['from' => 'copydesk', 'to' => 'approved', 'roles' => ['Editor', 'Admin'], 'label' => 'Approve'],
+                // Editor publishes from copydesk directly
                 ['from' => 'copydesk', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
+                // Editor publishes an approved post
+                ['from' => 'approved', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
+                // Editor sends approved post back for revisions
+                ['from' => 'approved', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Request Revisions'],
                 // Editor can publish directly from draft (skip copydesk)
                 ['from' => 'draft', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
                 // Unpublish back to draft

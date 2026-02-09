@@ -149,6 +149,7 @@
         font-family: var(--font-sans);
         color: var(--color-blue-black);
         background-color: var(--color-off-white);
+        overflow-x: clip;
     }
 
     h1,

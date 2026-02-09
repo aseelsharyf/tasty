@@ -59,7 +59,7 @@
 
     {{-- Carousel of additional posts - separate section below the curve --}}
     @if($carouselPosts->isNotEmpty())
-        <div class="w-full {{ $bgColorClass }} pb-16 max-lg:pb-10 pt-16 max-lg:pt-12 -mt-[150px] lg:-mt-[450px] relative z-10" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
+        <div class="w-full {{ $bgColorClass }} pb-16 max-lg:pb-[50px] pt-16 max-lg:pt-[50px] -mt-[150px] lg:-mt-[450px] relative z-10" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
             <div class="scroll-container pb-8 max-lg:pb-6">
                 <div class="flex items-start justify-center min-w-max px-10 max-lg:px-5 max-lg:gap-8">
                     @foreach($carouselPosts as $carouselPost)
