@@ -481,8 +481,8 @@
     padding: 12px 20px;
     border-radius: 100px;
     font-family: var(--font-sans);
-    font-size: 20px;
-    line-height: 26px;
+    font-size: 16px;
+    line-height: 24px;
     transition: all 0.2s ease;
 }
 
@@ -490,21 +490,12 @@
     .btn {
         gap: 12px;
         padding: 16px 32px;
-        font-size: 16px;
-        line-height: 24px;
     }
 }
 
 .btn svg {
-    width: 24px;
-    height: 24px;
-}
-
-@media (min-width: 1024px) {
-    .btn svg {
-        width: 20px;
-        height: 20px;
-    }
+    width: 20px;
+    height: 20px;
 }
 
 /* Arrow icon hover effect - moves right on button hover */
