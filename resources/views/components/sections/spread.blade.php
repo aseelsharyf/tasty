@@ -1,4 +1,5 @@
 {{-- The Spread Section --}}
+@if($posts->isNotEmpty())
 <section
     class="w-full {{ $bgColorClass }} py-16 max-lg:py-10"
     @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif
@@ -121,6 +122,7 @@
         </div>
     @endif
 </section>
+@endif
 
 @once
 @push('scripts')
