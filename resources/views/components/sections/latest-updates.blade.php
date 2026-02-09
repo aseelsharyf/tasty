@@ -184,11 +184,11 @@
         <div class="flex justify-center mt-16 max-lg:mt-10" x-show="hasMore" x-cloak>
             <button
                 @click="loadMore()"
-                class="btn btn-yellow !pl-[18px] !pr-5 !py-3 !gap-2 !text-[20px] !leading-[26px] lg:!px-8 lg:!py-4 lg:!gap-3 lg:!text-base lg:!leading-normal"
+                class="btn btn-yellow"
                 :disabled="loading"
                 :class="{ 'opacity-50 cursor-not-allowed': loading }"
             >
-                <svg x-show="!loading" class="!w-6 !h-6 lg:!w-5 lg:!h-5" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg x-show="!loading" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
                 <svg x-show="loading" class="animate-spin !w-6 !h-6 lg:!w-5 lg:!h-5" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

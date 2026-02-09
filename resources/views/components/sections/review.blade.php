@@ -290,7 +290,7 @@
         <div class="flex justify-center" x-show="hasMore" x-cloak>
             <button
                 @click="loadMore()"
-                class="btn btn-yellow !pl-[18px] !pr-5 !py-3 !gap-2 !text-[20px] !leading-[26px] lg:!px-8 lg:!py-4 lg:!gap-3 lg:!text-base lg:!leading-normal"
+                class="btn btn-yellow"
                 :disabled="loading"
                 :class="{ 'opacity-50 cursor-not-allowed': loading }"
             >

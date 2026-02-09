@@ -141,6 +141,10 @@
 }
 
 @layer base {
+    [x-cloak] {
+        display: none !important;
+    }
+
     html {
         scroll-behavior: smooth;
     }
@@ -473,18 +477,34 @@
 .btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 10px 16px;
+    gap: 8px;
+    padding: 12px 20px;
     border-radius: 100px;
     font-family: var(--font-sans);
-    font-size: 14px;
-    line-height: 20px;
+    font-size: 20px;
+    line-height: 26px;
     transition: all 0.2s ease;
 }
 
+@media (min-width: 1024px) {
+    .btn {
+        gap: 12px;
+        padding: 16px 32px;
+        font-size: 16px;
+        line-height: 24px;
+    }
+}
+
 .btn svg {
-    width: 16px;
-    height: 16px;
+    width: 24px;
+    height: 24px;
+}
+
+@media (min-width: 1024px) {
+    .btn svg {
+        width: 20px;
+        height: 20px;
+    }
 }
 
 /* Arrow icon hover effect - moves right on button hover */
@@ -888,11 +908,11 @@
 
         /* Mobile: auto height to fit all content, min-height for the curve */
         width: 130%;
-        min-height: 60vh;
+        min-height: 70vh;
         height: auto;
         border-radius: 1500px 1500px 0 0;
         flex-shrink: 0;
-        padding-bottom: 120px;
+        padding-bottom: 80px;
     }
 
     @media (min-width: 1024px) {

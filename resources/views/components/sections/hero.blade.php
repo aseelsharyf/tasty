@@ -101,8 +101,8 @@
             </div>
 
             {{-- Button --}}
-            <a href="{{ $heroUrl }}" class="btn btn-{{ $buttonColor }} !pl-[18px] !pr-5 !py-3 !gap-2 !text-[20px] !leading-[26px] lg:!px-8 lg:!py-4 lg:!gap-3 lg:!text-base lg:!leading-normal">
-                <svg class="!w-6 !h-6 lg:!w-5 lg:!h-5" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <a href="{{ $heroUrl }}" class="btn btn-{{ $buttonColor }}">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
                 <span>{{ $buttonText }}</span>
