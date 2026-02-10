@@ -111,6 +111,7 @@ const currentStatus = ref(props.filters.status || 'all');
 const selectedPostType = ref<string | null>(props.filters.post_type || null);
 const selectedAuthor = ref<string | null>(props.filters.author?.toString() || null);
 const selectedCategory = ref<string | null>(props.filters.category?.toString() || null);
+const showAllDrafts = ref(props.filters.show_all === '1' || props.filters.show_all === true);
 const deleteModalOpen = ref(false);
 const postToDelete = ref<Post | null>(null);
 
@@ -132,6 +133,14 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => {
             to: cmsPath(`/posts/${currentLanguageCode.value}?status=draft`),
             active: currentStatus.value === 'draft',
             onSelect: () => changeStatus('draft'),
+        },
+        {
+            label: 'Unpublished',
+            icon: 'i-lucide-eye-off',
+            badge: props.counts.unpublished,
+            to: cmsPath(`/posts/${currentLanguageCode.value}?status=unpublished`),
+            active: currentStatus.value === 'unpublished',
+            onSelect: () => changeStatus('unpublished'),
         },
     ];
 
@@ -199,6 +208,7 @@ function applyFilters(overrides: Record<string, any> = {}) {
         post_type: selectedPostType.value ?? undefined,
         author: selectedAuthor.value ?? undefined,
         category: selectedCategory.value ?? undefined,
+        show_all: showAllDrafts.value && currentStatus.value === 'draft' ? '1' : undefined,
         sort: props.filters.sort,
         direction: props.filters.direction,
         ...overrides,
@@ -222,6 +232,9 @@ watch([selectedPostType, selectedAuthor, selectedCategory], () => {
 
 function changeStatus(status: string) {
     currentStatus.value = status;
+    if (status !== 'draft') {
+        showAllDrafts.value = false;
+    }
     applyFilters({ status: status !== 'all' ? status : undefined });
 }
 
@@ -273,6 +286,8 @@ function getStatusColor(status: string): 'success' | 'warning' | 'primary' | 'in
             return 'success';
         case 'draft':
             return 'neutral';
+        case 'unpublished':
+            return 'warning';
         case 'pending':
             return 'warning';
         case 'scheduled':
@@ -506,6 +521,16 @@ function formatDate(dateStr: string) {
                         <UIcon :name="isRtlLanguage ? 'i-lucide-align-right' : 'i-lucide-align-left'" class="size-3.5" />
                         {{ language.name }}
                     </UBadge>
+
+                    <UButton
+                        v-if="currentStatus === 'draft' && userCapabilities.isEditorOrAdmin"
+                        :icon="showAllDrafts ? 'i-lucide-users' : 'i-lucide-user'"
+                        :variant="showAllDrafts ? 'soft' : 'ghost'"
+                        size="sm"
+                        @click="showAllDrafts = !showAllDrafts; applyFilters()"
+                    >
+                        {{ showAllDrafts ? 'All Authors' : 'My Drafts' }}
+                    </UButton>
 
                     <div class="text-sm text-muted ml-auto">
                         {{ posts.total }} post{{ posts.total !== 1 ? 's' : '' }}

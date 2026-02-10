@@ -143,6 +143,7 @@ export interface Post {
 export interface PostCounts {
     all: number;
     draft: number;
+    unpublished: number;
     copydesk: number;
     published: number;
     scheduled: number;
@@ -158,6 +159,7 @@ export interface PostFilters {
     language?: string;
     sort?: string;
     direction?: 'asc' | 'desc';
+    show_all?: string | boolean;
 }
 
 export interface PostTypeOption {

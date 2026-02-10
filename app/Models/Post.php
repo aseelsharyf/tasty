@@ -22,6 +22,8 @@ class Post extends Model implements HasMedia
 
     public const STATUS_DRAFT = 'draft';
 
+    public const STATUS_UNPUBLISHED = 'unpublished';
+
     public function getRouteKeyName(): string
     {
         return 'uuid';
@@ -240,6 +242,11 @@ class Post extends Model implements HasMedia
         return $query->where('status', self::STATUS_DRAFT);
     }
 
+    public function scopeUnpublished(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_UNPUBLISHED);
+    }
+
     /**
      * Scope to get posts that are in editorial review (review or copydesk workflow status).
      * These are posts that editors need to review.
@@ -362,6 +369,11 @@ class Post extends Model implements HasMedia
         return $this->status === self::STATUS_DRAFT;
     }
 
+    public function isUnpublished(): bool
+    {
+        return $this->status === self::STATUS_UNPUBLISHED;
+    }
+
     public function isInEditorialReview(): bool
     {
         return $this->status === self::STATUS_DRAFT
@@ -413,7 +425,7 @@ class Post extends Model implements HasMedia
     public function unpublish(): void
     {
         $this->update([
-            'status' => self::STATUS_DRAFT,
+            'status' => self::STATUS_UNPUBLISHED,
             'published_at' => null,
         ]);
     }

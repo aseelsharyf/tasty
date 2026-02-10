@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ContentVersion;
+use App\Models\Post;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\WorkflowTransition;
@@ -184,7 +185,7 @@ class WorkflowService
                 if ($fromStatus === ContentVersion::STATUS_PUBLISHED && $toStatus === ContentVersion::STATUS_DRAFT) {
                     $version->deactivate();
                     $content->update([
-                        'status' => 'draft',
+                        'status' => Post::STATUS_UNPUBLISHED,
                         'published_at' => null,
                         'active_version_id' => null,
                         'draft_version_id' => $version->id, // Set this version as the draft version for editing
@@ -255,7 +256,7 @@ class WorkflowService
 
             // Update content status
             $content->update([
-                'status' => 'draft',
+                'status' => Post::STATUS_UNPUBLISHED,
                 'published_at' => null,
                 'workflow_status' => ContentVersion::STATUS_DRAFT,
                 'active_version_id' => null,

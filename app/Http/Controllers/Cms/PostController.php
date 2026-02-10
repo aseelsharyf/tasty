@@ -56,8 +56,12 @@ class PostController extends Controller
             ]);
 
         // Filter by status
+        $showAll = $request->boolean('show_all');
         match ($status) {
-            'draft' => $query->draft()->whereNotIn('workflow_status', ['review', 'copydesk', 'approved']),
+            'draft' => $showAll && $isEditorOrAdmin
+                ? $query->draft()
+                : $query->draft()->whereNotIn('workflow_status', ['review', 'copydesk', 'approved']),
+            'unpublished' => $query->unpublished(),
             'copydesk' => $query->inEditorialReview(),
             'published' => $query->where('status', Post::STATUS_PUBLISHED),
             'scheduled' => $query->where('status', Post::STATUS_SCHEDULED),
@@ -66,15 +70,21 @@ class PostController extends Controller
         };
 
         // Role-based filtering:
-        // - All: Exclude all drafts (drafts only appear in the Draft tab)
+        // - All: Exclude drafts and unpublished (they have their own tabs)
         // - Draft: All users see only their own drafts
+        // - Unpublished: Editors/Admins see all, writers see only their own
         // - Copydesk: Only Editors/Admins can view (writers cannot access)
         // - Published: Everyone can see (read-only for non-authors/non-editors)
         // - Trashed: Users see only their own trashed posts, Editors/Admins see all
         if ($status === 'all') {
-            $query->where('status', '!=', Post::STATUS_DRAFT);
+            $query->whereNotIn('status', [Post::STATUS_DRAFT, Post::STATUS_UNPUBLISHED]);
         } elseif ($status === 'draft') {
-            // Drafts always show only current user's posts
+            // By default show only own drafts; editors/admins can pass show_all=1 to see everyone's
+            if (! $isEditorOrAdmin || ! $request->boolean('show_all')) {
+                $query->where('author_id', $user->id);
+            }
+        } elseif ($status === 'unpublished' && ! $isEditorOrAdmin) {
+            // Non-editors can only see their own unpublished posts
             $query->where('author_id', $user->id);
         } elseif ($status === 'copydesk') {
             // Copydesk is only for editors/admins
@@ -161,21 +171,21 @@ class PostController extends Controller
         $baseQuery = fn () => Post::where('language_code', $language);
 
         if ($isEditorOrAdmin) {
-            // Editors and Admins see all non-draft posts (drafts only in Draft tab)
             $counts = [
-                'all' => $baseQuery()->withoutTrashed()->where('status', '!=', Post::STATUS_DRAFT)->count(),
+                'all' => $baseQuery()->withoutTrashed()->whereNotIn('status', [Post::STATUS_DRAFT, Post::STATUS_UNPUBLISHED])->count(),
                 'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk', 'approved'])->where('author_id', $user->id)->count(),
+                'unpublished' => $baseQuery()->unpublished()->count(),
                 'copydesk' => $baseQuery()->inEditorialReview()->count(),
                 'published' => $baseQuery()->where('status', Post::STATUS_PUBLISHED)->count(),
                 'scheduled' => $baseQuery()->where('status', Post::STATUS_SCHEDULED)->count(),
                 'trashed' => $baseQuery()->onlyTrashed()->count(),
             ];
         } else {
-            // Writers see only their own drafts/trashed, all published, but no copydesk
             $counts = [
-                'all' => $baseQuery()->withoutTrashed()->where('status', '!=', Post::STATUS_DRAFT)->count(),
+                'all' => $baseQuery()->withoutTrashed()->whereNotIn('status', [Post::STATUS_DRAFT, Post::STATUS_UNPUBLISHED])->count(),
                 'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk', 'approved'])->where('author_id', $user->id)->count(),
-                'copydesk' => 0, // Writers cannot see copydesk
+                'unpublished' => $baseQuery()->unpublished()->where('author_id', $user->id)->count(),
+                'copydesk' => 0,
                 'published' => $baseQuery()->where('status', Post::STATUS_PUBLISHED)->count(),
                 'scheduled' => $baseQuery()->where('status', Post::STATUS_SCHEDULED)->where('author_id', $user->id)->count(),
                 'trashed' => $baseQuery()->onlyTrashed()->where('author_id', $user->id)->count(),
@@ -206,7 +216,7 @@ class PostController extends Controller
             'counts' => $counts,
             'authors' => $authors,
             'categories' => $categories,
-            'filters' => $request->only(['status', 'search', 'post_type', 'author', 'category', 'sort', 'direction']),
+            'filters' => $request->only(['status', 'search', 'post_type', 'author', 'category', 'sort', 'direction', 'show_all']),
             'language' => [
                 'code' => $lang->code,
                 'name' => $lang->name,
