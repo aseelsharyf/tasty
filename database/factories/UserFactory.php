@@ -34,7 +34,28 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'type' => User::TYPE_USER,
         ];
+    }
+
+    /**
+     * Set the user type to staff.
+     */
+    public function staff(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'type' => User::TYPE_STAFF,
+        ]);
+    }
+
+    /**
+     * Set the user type to contributor.
+     */
+    public function contributor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'type' => User::TYPE_CONTRIBUTOR,
+        ]);
     }
 
     /**

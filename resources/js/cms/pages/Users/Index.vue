@@ -5,17 +5,19 @@ import { useDebounceFn } from '@vueuse/core';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { usePermission } from '../../composables/usePermission';
 import { useCmsPath } from '../../composables/useCmsPath';
-import type { User, PaginatedResponse } from '../../types';
+import type { User, PaginatedResponse, UserTypeCounts } from '../../types';
 import type { TableColumn } from '@nuxt/ui';
 
 const props = defineProps<{
     users: PaginatedResponse<User>;
     roles: string[];
+    typeCounts: UserTypeCounts;
     filters: {
         search?: string;
         sort?: string;
         direction?: 'asc' | 'desc';
         roles?: string[];
+        type?: string;
     };
 }>();
 
@@ -40,6 +42,7 @@ function applyFilters(overrides: Record<string, any> = {}) {
     router.get(cmsPath('/users'), {
         search: search.value || undefined,
         roles: selectedRoles.value.length > 0 ? selectedRoles.value : undefined,
+        type: props.filters.type || undefined,
         sort: props.filters.sort,
         direction: props.filters.direction,
         ...overrides,
@@ -277,6 +280,54 @@ const columns: TableColumn<User>[] = [
             </template>
 
             <template #body>
+                <!-- Type Tabs -->
+                <div class="flex items-center gap-1 mb-4 border-b border-default -mx-4 px-4">
+                    <Link
+                        :href="cmsPath('/users')"
+                        :class="[
+                            'px-3 py-2 text-sm font-medium border-b-2 transition-colors',
+                            !filters.type
+                                ? 'border-primary text-primary'
+                                : 'border-transparent text-muted hover:text-highlighted hover:border-muted',
+                        ]"
+                    >
+                        All <span class="text-xs text-muted ml-1">({{ typeCounts.all }})</span>
+                    </Link>
+                    <Link
+                        :href="cmsPath('/users?type=staff')"
+                        :class="[
+                            'px-3 py-2 text-sm font-medium border-b-2 transition-colors',
+                            filters.type === 'staff'
+                                ? 'border-primary text-primary'
+                                : 'border-transparent text-muted hover:text-highlighted hover:border-muted',
+                        ]"
+                    >
+                        Staff <span class="text-xs text-muted ml-1">({{ typeCounts.staff }})</span>
+                    </Link>
+                    <Link
+                        :href="cmsPath('/users?type=contributor')"
+                        :class="[
+                            'px-3 py-2 text-sm font-medium border-b-2 transition-colors',
+                            filters.type === 'contributor'
+                                ? 'border-primary text-primary'
+                                : 'border-transparent text-muted hover:text-highlighted hover:border-muted',
+                        ]"
+                    >
+                        Contributors <span class="text-xs text-muted ml-1">({{ typeCounts.contributor }})</span>
+                    </Link>
+                    <Link
+                        :href="cmsPath('/users?type=user')"
+                        :class="[
+                            'px-3 py-2 text-sm font-medium border-b-2 transition-colors',
+                            filters.type === 'user'
+                                ? 'border-primary text-primary'
+                                : 'border-transparent text-muted hover:text-highlighted hover:border-muted',
+                        ]"
+                    >
+                        Users <span class="text-xs text-muted ml-1">({{ typeCounts.user }})</span>
+                    </Link>
+                </div>
+
                 <div class="flex flex-wrap items-center gap-3 mb-4">
                     <UInput
                         v-model="search"

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cms;
 
 use App\Http\Controllers\Controller;
+use App\Models\Badge;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,6 +40,9 @@ class UserController extends Controller
                     $q->whereIn('name', (array) $roles);
                 });
             })
+            ->when($request->type, function ($query, $type) {
+                $query->where('type', $type);
+            })
             ->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc')
             ->paginate(10)
             ->withQueryString()
@@ -49,6 +53,7 @@ class UserController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'username' => $user->username,
+                    'type' => $user->type,
                     'avatar_url' => $user->avatar_url ?? $user->avatar,
                     'google_id' => $user->google_id,
                     'roles' => $user->roles->pluck('name'),
@@ -59,10 +64,18 @@ class UserController extends Controller
 
         $roles = Role::orderBy('name')->pluck('name');
 
+        $typeCounts = [
+            'all' => User::count(),
+            'staff' => User::staff()->count(),
+            'contributor' => User::contributors()->count(),
+            'user' => User::regularUsers()->count(),
+        ];
+
         return Inertia::render('Users/Index', [
             'users' => $users,
             'roles' => $roles,
-            'filters' => $request->only(['search', 'sort', 'direction', 'roles']),
+            'typeCounts' => $typeCounts,
+            'filters' => $request->only(['search', 'sort', 'direction', 'roles', 'type']),
         ]);
     }
 
@@ -77,6 +90,11 @@ class UserController extends Controller
 
         return Inertia::render('Users/Create', [
             'roles' => $roles,
+            'userTypes' => [
+                ['value' => User::TYPE_STAFF, 'label' => 'Staff'],
+                ['value' => User::TYPE_CONTRIBUTOR, 'label' => 'Contributor'],
+                ['value' => User::TYPE_USER, 'label' => 'User'],
+            ],
         ]);
     }
 
@@ -90,6 +108,7 @@ class UserController extends Controller
             'avatar' => ['nullable', 'image', 'max:2048'],
             'roles' => ['array'],
             'roles.*' => ['string', 'exists:roles,name'],
+            'type' => ['nullable', 'string', 'in:staff,contributor,user'],
         ]);
 
         $user = User::create([
@@ -97,6 +116,7 @@ class UserController extends Controller
             'email' => $validated['email'],
             'username' => $validated['username'] ?? null,
             'password' => Hash::make($validated['password']),
+            'type' => $validated['type'] ?? User::TYPE_STAFF,
         ]);
 
         if (! empty($validated['roles'])) {
@@ -119,7 +139,7 @@ class UserController extends Controller
 
     public function edit(User $user): Response
     {
-        $user->load('roles');
+        $user->load(['roles', 'badges']);
 
         $roles = Role::all()->map(function ($role) {
             return [
@@ -128,6 +148,14 @@ class UserController extends Controller
             ];
         });
 
+        $availableBadges = Badge::active()->ordered()->get()->map(fn (Badge $badge) => [
+            'id' => $badge->id,
+            'name' => $badge->name,
+            'slug' => $badge->slug,
+            'icon' => $badge->icon,
+            'color' => $badge->color,
+        ]);
+
         return Inertia::render('Users/Edit', [
             'user' => [
                 'id' => $user->id,
@@ -135,14 +163,22 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'username' => $user->username,
+                'type' => $user->type,
                 'avatar_url' => $user->avatar_url ?? $user->avatar,
                 'avatar' => $user->avatar,
                 'google_id' => $user->google_id,
                 'roles' => $user->roles->pluck('name'),
+                'badges' => $user->badges->pluck('id'),
                 'created_at' => $user->created_at,
                 'updated_at' => $user->updated_at,
             ],
             'roles' => $roles,
+            'availableBadges' => $availableBadges,
+            'userTypes' => [
+                ['value' => User::TYPE_STAFF, 'label' => 'Staff'],
+                ['value' => User::TYPE_CONTRIBUTOR, 'label' => 'Contributor'],
+                ['value' => User::TYPE_USER, 'label' => 'User'],
+            ],
         ]);
     }
 
@@ -157,12 +193,16 @@ class UserController extends Controller
             'remove_avatar' => ['nullable', 'boolean'],
             'roles' => ['array'],
             'roles.*' => ['string', 'exists:roles,name'],
+            'type' => ['nullable', 'string', 'in:staff,contributor,user'],
+            'badges' => ['nullable', 'array'],
+            'badges.*' => ['integer', 'exists:badges,id'],
         ]);
 
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'username' => $validated['username'],
+            'type' => $validated['type'] ?? $user->type,
         ]);
 
         if (! empty($validated['password'])) {
@@ -172,6 +212,10 @@ class UserController extends Controller
         }
 
         $user->syncRoles($validated['roles'] ?? []);
+
+        if (array_key_exists('badges', $validated)) {
+            $user->badges()->sync($validated['badges'] ?? []);
+        }
 
         if ($request->hasFile('avatar')) {
             // Store avatar directly on the user model (simpler than media library for this use case)

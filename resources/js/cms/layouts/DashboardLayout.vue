@@ -451,6 +451,16 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
                 to: cms('/users'),
                 icon: 'i-lucide-users',
             },
+            {
+                label: 'Staff',
+                to: cms('/users?type=staff'),
+                icon: 'i-lucide-shield-check',
+            },
+            {
+                label: 'Contributors',
+                to: cms('/users?type=contributor'),
+                icon: 'i-lucide-chef-hat',
+            },
         ];
 
         if (can('users.create')) {
@@ -496,6 +506,7 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
             to: cms('/settings'),
             active: isActivePrefix('/settings') || isActivePrefix('/units') || isActivePrefix('/ingredients'),
             open: isActivePrefix('/settings') || isActivePrefix('/units') || isActivePrefix('/ingredients'),
+
             children: [
                 {
                     label: 'General',
@@ -536,6 +547,11 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
                     label: 'Ad Placements',
                     to: cms('/settings/ad-placements'),
                     icon: 'i-lucide-megaphone',
+                },
+                {
+                    label: 'Badges',
+                    to: cms('/settings/badges'),
+                    icon: 'i-lucide-award',
                 },
             ],
         });

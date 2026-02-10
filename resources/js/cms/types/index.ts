@@ -1,12 +1,40 @@
+export type UserType = 'staff' | 'contributor' | 'user';
+
+export interface UserTypeCounts {
+    all: number;
+    staff: number;
+    contributor: number;
+    user: number;
+}
+
+export interface Badge {
+    id: number;
+    uuid: string;
+    name: string;
+    slug: string;
+    icon?: string | null;
+    color: string;
+    description?: string | null;
+    is_active: boolean;
+    order: number;
+    created_at?: string;
+    updated_at?: string;
+    translated_locales?: string[];
+    name_translations?: Record<string, string>;
+    description_translations?: Record<string, string>;
+}
+
 export interface User {
     id: number;
     uuid: string;
     name: string;
     email: string;
     username: string;
+    type?: UserType;
     email_verified_at?: string;
     avatar_url?: string | null;
     roles: string[];
+    badges?: number[];
     permissions: string[];
     created_at: string;
     updated_at: string;

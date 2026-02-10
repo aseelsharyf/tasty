@@ -23,6 +23,7 @@ class AuthController extends Controller
                 ->limit(10)
                 ->get()
                 ->map(fn ($user) => [
+                    'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->roles->first()?->name ?? 'User',
@@ -38,6 +39,20 @@ class AuthController extends Controller
     public function login(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
+        $request->session()->regenerate();
+
+        return redirect()->intended(route('cms.dashboard'));
+    }
+
+    public function devLogin(Request $request): RedirectResponse
+    {
+        abort_unless(app()->environment('local'), 404);
+
+        $request->validate([
+            'id' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        Auth::loginUsingId($request->integer('id'));
         $request->session()->regenerate();
 
         return redirect()->intended(route('cms.dashboard'));

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Cms\AdPlacementController;
 use App\Http\Controllers\Cms\Api\FetchUrlController;
 use App\Http\Controllers\Cms\AuthController;
+use App\Http\Controllers\Cms\BadgeController;
 use App\Http\Controllers\Cms\CategoryController;
 use App\Http\Controllers\Cms\CmsProductController;
 use App\Http\Controllers\Cms\CommentBanController;
@@ -41,6 +42,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'showLogin'])->name('cms.login');
     Route::post('login', [AuthController::class, 'login'])->name('cms.login.store');
+    Route::post('dev-login', [AuthController::class, 'devLogin'])->name('cms.dev-login');
 });
 
 // CMS Protected Routes (Authenticated + CMS Access)
@@ -484,6 +486,19 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::get('ad-placements/{adPlacement}/edit', [AdPlacementController::class, 'edit'])->name('cms.ad-placements.edit');
         Route::put('ad-placements/{adPlacement}', [AdPlacementController::class, 'update'])->name('cms.ad-placements.update');
         Route::delete('ad-placements/{adPlacement}', [AdPlacementController::class, 'destroy'])->name('cms.ad-placements.destroy');
+    });
+
+    // Badges Management
+    Route::middleware('permission:badges.view')->group(function () {
+        Route::delete('settings/badges/bulk', [BadgeController::class, 'bulkDestroy'])->name('cms.badges.bulk-destroy');
+        Route::resource('settings/badges', BadgeController::class)->except(['show'])->names([
+            'index' => 'cms.badges.index',
+            'create' => 'cms.badges.create',
+            'store' => 'cms.badges.store',
+            'edit' => 'cms.badges.edit',
+            'update' => 'cms.badges.update',
+            'destroy' => 'cms.badges.destroy',
+        ]);
     });
 
     // Workflow Routes

@@ -122,6 +122,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'subscribers.edit',
             'subscribers.delete',
             'subscribers.export',
+
+            // Badges
+            'badges.view',
+            'badges.create',
+            'badges.edit',
+            'badges.delete',
         ];
 
         // Create permissions
@@ -200,6 +206,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'subscribers.edit',
             'subscribers.delete',
             'subscribers.export',
+            'badges.view',
+            'badges.create',
+            'badges.edit',
+            'badges.delete',
         ]);
 
         // Create Editor role
@@ -244,6 +254,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'workflow.comment',
             'workflow.publish',
             'workflow.revert',
+            'badges.view',
+            'badges.create',
+            'badges.edit',
         ]);
 
         // Create Writer role
@@ -261,6 +274,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'workflow.view',
             'workflow.transition', // Limited transitions defined in workflow config
             'workflow.comment',
+            'badges.view',
         ]);
 
         // Create Photographer role

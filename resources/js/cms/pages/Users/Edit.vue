@@ -3,12 +3,27 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import { useCmsPath } from '../../composables/useCmsPath';
-import type { User, Role } from '../../types';
+import type { User, Role, Badge } from '../../types';
 import type { BreadcrumbItem } from '@nuxt/ui';
+
+interface UserTypeOption {
+    value: string;
+    label: string;
+}
+
+interface AvailableBadge {
+    id: number;
+    name: string;
+    slug: string;
+    icon?: string | null;
+    color: string;
+}
 
 const props = defineProps<{
     user: User;
     roles: Role[];
+    availableBadges: AvailableBadge[];
+    userTypes: UserTypeOption[];
 }>();
 
 const { cmsPath } = useCmsPath();
@@ -22,12 +37,28 @@ const form = useForm({
     avatar: null as File | null,
     remove_avatar: false,
     roles: [...(props.user.roles || [])],
+    type: props.user.type || 'user',
+    badges: [...(props.user.badges || [])] as number[],
 });
 
 const roleOptions = computed(() => {
     return props.roles.map((role) => ({
         label: role.name,
         value: role.name,
+    }));
+});
+
+const typeOptions = computed(() => {
+    return props.userTypes.map((type) => ({
+        label: type.label,
+        value: type.value,
+    }));
+});
+
+const badgeOptions = computed(() => {
+    return props.availableBadges.map((badge) => ({
+        label: badge.name,
+        value: badge.id,
     }));
 });
 
@@ -101,7 +132,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
             </template>
 
             <template #body>
-                <div class="flex flex-col gap-4 sm:gap-6 lg:gap-12 w-full lg:max-w-2xl mx-auto">
+                <div class="flex flex-col gap-4 sm:gap-6 lg:gap-8 w-full lg:max-w-2xl mx-auto">
                     <UForm
                         id="edit-user"
                         :state="form"
@@ -144,64 +175,55 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
                             variant="subtle"
                             class="mb-4"
                         >
-                            <div class="flex max-sm:flex-col justify-between items-start gap-4">
-                                <div class="flex-1">
-                                    <p class="text-sm text-muted">
-                                        Upload a profile picture. Max size: 2MB. Supported formats: JPG, PNG, GIF.
-                                    </p>
-                                </div>
-                                <div class="w-full sm:max-w-xs">
-                                    <div class="flex items-center gap-4">
-                                        <UAvatar :src="displayAvatar" :alt="user.name" size="xl" />
-                                        <div class="flex flex-col gap-2">
-                                            <label>
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    class="hidden"
-                                                    @change="handleAvatarChange"
-                                                >
-                                                <UButton
-                                                    as="span"
-                                                    color="neutral"
-                                                    variant="outline"
-                                                    size="xs"
-                                                    icon="i-lucide-upload"
-                                                    class="cursor-pointer"
-                                                >
-                                                    Upload
-                                                </UButton>
-                                            </label>
-                                            <UButton
-                                                v-if="avatarPreview || hasExistingAvatar"
-                                                color="error"
-                                                variant="ghost"
-                                                size="xs"
-                                                icon="i-lucide-trash"
-                                                @click="removeAvatar"
-                                            >
-                                                Remove
-                                            </UButton>
-                                            <UButton
-                                                v-if="avatarRemoved"
-                                                color="neutral"
-                                                variant="ghost"
-                                                size="xs"
-                                                icon="i-lucide-undo"
-                                                @click="undoRemoveAvatar"
-                                            >
-                                                Undo
-                                            </UButton>
-                                        </div>
-                                    </div>
-                                    <p v-if="avatarRemoved" class="text-warning text-sm mt-2">
-                                        Avatar will be removed when you save.
-                                    </p>
-                                    <p v-if="form.errors.avatar" class="text-error text-sm mt-2">
-                                        {{ form.errors.avatar }}
-                                    </p>
+                            <div class="flex items-center gap-4">
+                                <UAvatar :src="displayAvatar" :alt="user.name" size="xl" />
+                                <div class="flex flex-col gap-2">
+                                    <label>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            class="hidden"
+                                            @change="handleAvatarChange"
+                                        >
+                                        <UButton
+                                            as="span"
+                                            color="neutral"
+                                            variant="outline"
+                                            size="xs"
+                                            icon="i-lucide-upload"
+                                            class="cursor-pointer"
+                                        >
+                                            Upload
+                                        </UButton>
+                                    </label>
+                                    <UButton
+                                        v-if="avatarPreview || hasExistingAvatar"
+                                        color="error"
+                                        variant="ghost"
+                                        size="xs"
+                                        icon="i-lucide-trash"
+                                        @click="removeAvatar"
+                                    >
+                                        Remove
+                                    </UButton>
+                                    <UButton
+                                        v-if="avatarRemoved"
+                                        color="neutral"
+                                        variant="ghost"
+                                        size="xs"
+                                        icon="i-lucide-undo"
+                                        @click="undoRemoveAvatar"
+                                    >
+                                        Undo
+                                    </UButton>
                                 </div>
                             </div>
+                            <p v-if="avatarRemoved" class="text-warning text-sm mt-2">
+                                Avatar will be removed when you save.
+                            </p>
+                            <p v-if="form.errors.avatar" class="text-error text-sm mt-2">
+                                {{ form.errors.avatar }}
+                            </p>
                         </UPageCard>
 
                         <UPageCard
@@ -210,89 +232,119 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
                             variant="subtle"
                             class="mb-4"
                         >
-                            <UFormField
-                                name="name"
-                                label="Name"
-                                description="The user's full name."
-                                :error="form.errors.name"
-                                required
-                                class="flex max-sm:flex-col justify-between items-start gap-4"
-                                :ui="{ container: 'w-full sm:max-w-xs' }"
-                            >
-                                <UInput
-                                    v-model="form.name"
-                                    placeholder="John Doe"
-                                    autocomplete="off"
-                                    :disabled="form.processing"
-                                />
-                            </UFormField>
-                            <USeparator />
-                            <UFormField
-                                name="email"
-                                label="Email"
-                                description="Used to sign in and receive notifications."
-                                :error="form.errors.email"
-                                required
-                                class="flex max-sm:flex-col justify-between items-start gap-4"
-                                :ui="{ container: 'w-full sm:max-w-xs' }"
-                            >
-                                <UInput
-                                    v-model="form.email"
-                                    type="email"
-                                    placeholder="john@example.com"
-                                    autocomplete="off"
-                                    :disabled="form.processing"
-                                />
-                            </UFormField>
-                            <USeparator />
-                            <UFormField
-                                name="username"
-                                label="Username"
-                                description="SEO-friendly URL slug."
-                                :error="form.errors.username"
-                                required
-                                class="flex max-sm:flex-col justify-between items-start gap-4"
-                                :ui="{ container: 'w-full sm:max-w-xs' }"
-                            >
-                                <UInput
-                                    v-model="form.username"
-                                    placeholder="john-doe"
-                                    autocomplete="off"
-                                    :disabled="form.processing"
+                            <div class="flex flex-col gap-4">
+                                <UFormField
+                                    name="name"
+                                    label="Name"
+                                    :error="form.errors.name"
+                                    required
                                 >
-                                    <template #leading>
-                                        <span class="text-muted">@</span>
+                                    <UInput
+                                        v-model="form.name"
+                                        placeholder="John Doe"
+                                        autocomplete="off"
+                                        class="w-full"
+                                        :disabled="form.processing"
+                                    />
+                                </UFormField>
+
+                                <UFormField
+                                    name="email"
+                                    label="Email"
+                                    :error="form.errors.email"
+                                    required
+                                >
+                                    <UInput
+                                        v-model="form.email"
+                                        type="email"
+                                        placeholder="john@example.com"
+                                        autocomplete="off"
+                                        class="w-full"
+                                        :disabled="form.processing"
+                                    />
+                                </UFormField>
+
+                                <UFormField
+                                    name="username"
+                                    label="Username"
+                                    :error="form.errors.username"
+                                    required
+                                >
+                                    <UInput
+                                        v-model="form.username"
+                                        placeholder="john-doe"
+                                        autocomplete="off"
+                                        class="w-full"
+                                        :disabled="form.processing"
+                                    >
+                                        <template #leading>
+                                            <span class="text-muted">@</span>
+                                        </template>
+                                    </UInput>
+                                    <template #hint>
+                                        <span class="text-xs text-muted">Only lowercase letters, numbers, and hyphens</span>
                                     </template>
-                                </UInput>
-                                <template #hint>
-                                    <span class="text-xs text-muted">Only lowercase letters, numbers, and hyphens</span>
-                                </template>
-                            </UFormField>
+                                </UFormField>
+                            </div>
                         </UPageCard>
 
                         <UPageCard
-                            title="Roles"
-                            description="Manage user roles and permissions."
+                            title="Type & Roles"
+                            description="Manage user type, roles, and permissions."
                             variant="subtle"
                             class="mb-4"
                         >
-                            <UFormField
-                                name="roles"
-                                label="Assigned Roles"
-                                description="Select the roles for this user."
-                                :error="form.errors.roles"
-                                class="flex max-sm:flex-col justify-between items-start gap-4"
-                                :ui="{ container: 'w-full sm:max-w-xs' }"
-                            >
-                                <USelectMenu
-                                    v-model="form.roles"
-                                    :items="roleOptions"
-                                    multiple
-                                    placeholder="Select roles..."
-                                    value-key="value"
-                                    :disabled="form.processing"
-                                />
-                            </UFormField>
+                            <div class="flex flex-col gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <UFormField
+                                        name="type"
+                                        label="User Type"
+                                        :error="form.errors.type"
+                                    >
+                                        <USelectMenu
+                                            v-model="form.type"
+                                            :items="typeOptions"
+                                            placeholder="Select type..."
+                                            value-key="value"
+                                            class="w-full"
+                                            :disabled="form.processing"
+                                        />
+                                    </UFormField>
+
+                                    <UFormField
+                                        name="roles"
+                                        label="Assigned Roles"
+                                        :error="form.errors.roles"
+                                    >
+                                        <USelectMenu
+                                            v-model="form.roles"
+                                            :items="roleOptions"
+                                            multiple
+                                            placeholder="Select roles..."
+                                            value-key="value"
+                                            class="w-full"
+                                            :disabled="form.processing"
+                                        />
+                                    </UFormField>
+                                </div>
+
+                                <UFormField
+                                    v-if="availableBadges.length > 0"
+                                    name="badges"
+                                    label="Assigned Badges"
+                                    :error="form.errors.badges"
+                                >
+                                    <USelectMenu
+                                        v-model="form.badges"
+                                        :items="badgeOptions"
+                                        multiple
+                                        placeholder="Select badges..."
+                                        value-key="value"
+                                        class="w-full"
+                                        :disabled="form.processing"
+                                    />
+                                </UFormField>
+                            </div>
                         </UPageCard>
 
                         <UPageCard
@@ -326,50 +378,48 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
                             description="Update password. Leave blank to keep current password."
                             variant="subtle"
                         >
-                            <UFormField
-                                name="password"
-                                label="New Password"
-                                description="Must be at least 8 characters."
-                                :error="form.errors.password"
-                                class="flex max-sm:flex-col justify-between items-start gap-4"
-                                :ui="{ container: 'w-full sm:max-w-xs' }"
-                            >
-                                <UInput
-                                    v-model="form.password"
-                                    :type="showPassword ? 'text' : 'password'"
-                                    placeholder="Enter new password"
-                                    autocomplete="new-password"
-                                    :disabled="form.processing"
+                            <div class="flex flex-col gap-4">
+                                <UFormField
+                                    name="password"
+                                    label="New Password"
+                                    :error="form.errors.password"
                                 >
-                                    <template #trailing>
-                                        <UButton
-                                            type="button"
-                                            color="neutral"
-                                            variant="ghost"
-                                            size="xs"
-                                            :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                            @click="showPassword = !showPassword"
-                                        />
-                                    </template>
-                                </UInput>
-                            </UFormField>
-                            <USeparator />
-                            <UFormField
-                                name="password_confirmation"
-                                label="Confirm Password"
-                                description="Re-enter the new password."
-                                :error="form.errors.password_confirmation"
-                                class="flex max-sm:flex-col justify-between items-start gap-4"
-                                :ui="{ container: 'w-full sm:max-w-xs' }"
-                            >
-                                <UInput
-                                    v-model="form.password_confirmation"
-                                    :type="showPassword ? 'text' : 'password'"
-                                    placeholder="Confirm new password"
-                                    autocomplete="new-password"
-                                    :disabled="form.processing"
-                                />
-                            </UFormField>
+                                    <UInput
+                                        v-model="form.password"
+                                        :type="showPassword ? 'text' : 'password'"
+                                        placeholder="Enter new password"
+                                        autocomplete="new-password"
+                                        class="w-full"
+                                        :disabled="form.processing"
+                                    >
+                                        <template #trailing>
+                                            <UButton
+                                                type="button"
+                                                color="neutral"
+                                                variant="ghost"
+                                                size="xs"
+                                                :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                                @click="showPassword = !showPassword"
+                                            />
+                                        </template>
+                                    </UInput>
+                                </UFormField>
+
+                                <UFormField
+                                    name="password_confirmation"
+                                    label="Confirm Password"
+                                    :error="form.errors.password_confirmation"
+                                >
+                                    <UInput
+                                        v-model="form.password_confirmation"
+                                        :type="showPassword ? 'text' : 'password'"
+                                        placeholder="Confirm new password"
+                                        autocomplete="new-password"
+                                        class="w-full"
+                                        :disabled="form.processing"
+                                    />
+                                </UFormField>
+                            </div>
                         </UPageCard>
                     </UForm>
                 </div>

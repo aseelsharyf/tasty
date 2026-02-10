@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
+import { useForm, router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import TastyLogo from '../../components/TastyLogo.vue';
 import { useCmsPath } from '../../composables/useCmsPath';
@@ -7,6 +7,7 @@ import { useCmsPath } from '../../composables/useCmsPath';
 const { cmsPath } = useCmsPath();
 
 interface DevUser {
+    id: number;
     name: string;
     email: string;
     role: string;
@@ -24,7 +25,8 @@ const form = useForm({
 });
 
 const showPassword = ref(false);
-const selectedDevUserEmail = ref<string | null>(null);
+const selectedDevUserId = ref<number | null>(null);
+const devLoginProcessing = ref(false);
 
 const roleColors: Record<string, string> = {
     Admin: 'error',
@@ -46,21 +48,23 @@ const roleIcons: Record<string, string> = {
 const devUserOptions = computed(() => {
     return props.devUsers?.map(user => ({
         label: user.name,
-        value: user.email,
+        value: user.id,
+        email: user.email,
         suffix: user.role,
         icon: roleIcons[user.role] || 'i-lucide-user',
     })) || [];
 });
 
-// Watch for dev user selection and auto-login
-watch(selectedDevUserEmail, (email) => {
-    if (email) {
-        form.email = email;
-        form.password = 'password';
-        // Auto-submit after a brief delay for visual feedback
-        setTimeout(() => {
-            onSubmit();
-        }, 150);
+// Watch for dev user selection and auto-login by ID
+watch(selectedDevUserId, (id) => {
+    if (id) {
+        devLoginProcessing.value = true;
+        router.post(cmsPath('/dev-login'), { id }, {
+            onFinish: () => {
+                devLoginProcessing.value = false;
+                selectedDevUserId.value = null;
+            },
+        });
     }
 });
 
@@ -95,14 +99,14 @@ function onSubmit() {
                         </div>
 
                         <USelectMenu
-                            v-model="selectedDevUserEmail"
+                            v-model="selectedDevUserId"
                             :items="devUserOptions"
                             value-key="value"
                             placeholder="Select a user to login..."
                             icon="i-lucide-user"
                             size="lg"
                             class="w-full"
-                            :loading="form.processing"
+                            :loading="devLoginProcessing"
                         >
                             <template #item="{ item }">
                                 <div class="flex items-center gap-3 w-full py-1">
@@ -118,7 +122,7 @@ function onSubmit() {
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <p class="font-medium truncate">{{ item.label }}</p>
-                                        <p class="text-xs text-muted truncate">{{ item.value }}</p>
+                                        <p class="text-xs text-muted truncate">{{ item.email }}</p>
                                     </div>
                                     <UBadge
                                         :color="(roleColors[item.suffix] as any) || 'neutral'"
@@ -131,7 +135,7 @@ function onSubmit() {
                             </template>
                         </USelectMenu>
 
-                        <p v-if="form.processing" class="text-xs text-center text-muted mt-3">
+                        <p v-if="devLoginProcessing" class="text-xs text-center text-muted mt-3">
                             <UIcon name="i-lucide-loader-2" class="size-3 animate-spin inline mr-1" />
                             Signing in...
                         </p>

@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasUuid;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -17,6 +19,12 @@ class User extends Authenticatable implements HasMedia
 {
     use HasFactory, HasRoles, HasUuid, InteractsWithMedia, Notifiable;
 
+    public const TYPE_STAFF = 'staff';
+
+    public const TYPE_CONTRIBUTOR = 'contributor';
+
+    public const TYPE_USER = 'user';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -29,6 +37,7 @@ class User extends Authenticatable implements HasMedia
         'username',
         'google_id',
         'avatar',
+        'type',
     ];
 
     /**
@@ -122,6 +131,37 @@ class User extends Authenticatable implements HasMedia
         } catch (\Symfony\Component\Routing\Exception\RouteNotFoundException) {
             return '#';
         }
+    }
+
+    // Scopes
+
+    public function scopeStaff(Builder $query): Builder
+    {
+        return $query->where('type', self::TYPE_STAFF);
+    }
+
+    public function scopeContributors(Builder $query): Builder
+    {
+        return $query->where('type', self::TYPE_CONTRIBUTOR);
+    }
+
+    public function scopeRegularUsers(Builder $query): Builder
+    {
+        return $query->where('type', self::TYPE_USER);
+    }
+
+    // Helpers
+
+    public function isStaff(): bool
+    {
+        return $this->type === self::TYPE_STAFF;
+    }
+
+    // Relationships
+
+    public function badges(): BelongsToMany
+    {
+        return $this->belongsToMany(Badge::class)->withTimestamps();
     }
 
     /**
