@@ -189,8 +189,14 @@ function toggleSelect(item: MediaItem) {
         }
         selectedItems.value = new Set(selectedItems.value);
     } else {
-        // Single select mode
-        selectedItems.value = new Set([item.uuid]);
+        // Single select mode - select and confirm immediately
+        if (item.has_crops && item.crops && item.crops.length > 0) {
+            cropSelectorItem.value = item;
+            showCropSelector.value = true;
+        } else {
+            emit('select', [item]);
+            isOpen.value = false;
+        }
     }
 }
 
