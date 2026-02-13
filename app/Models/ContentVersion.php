@@ -15,15 +15,21 @@ class ContentVersion extends Model
 
     public const STATUS_DRAFT = 'draft';
 
-    public const STATUS_REVIEW = 'review';
-
     public const STATUS_COPYDESK = 'copydesk';
 
-    public const STATUS_APPROVED = 'approved';
+    public const STATUS_PARKED = 'parked';
 
     public const STATUS_REJECTED = 'rejected';
 
+    public const STATUS_SCHEDULED = 'scheduled';
+
     public const STATUS_PUBLISHED = 'published';
+
+    /** @deprecated Use STATUS_COPYDESK instead */
+    public const STATUS_REVIEW = 'copydesk';
+
+    /** @deprecated Use STATUS_PARKED instead */
+    public const STATUS_APPROVED = 'parked';
 
     protected $fillable = [
         'versionable_type',
@@ -158,9 +164,9 @@ class ContentVersion extends Model
         return $query->ofStatus(self::STATUS_DRAFT);
     }
 
-    public function scopeApproved($query)
+    public function scopeParked($query)
     {
-        return $query->ofStatus(self::STATUS_APPROVED);
+        return $query->ofStatus(self::STATUS_PARKED);
     }
 
     // Helpers
@@ -180,9 +186,15 @@ class ContentVersion extends Model
         return $this->workflow_status === self::STATUS_COPYDESK;
     }
 
+    public function isParked(): bool
+    {
+        return $this->workflow_status === self::STATUS_PARKED;
+    }
+
+    /** @deprecated Use isParked() instead */
     public function isApproved(): bool
     {
-        return $this->workflow_status === self::STATUS_APPROVED;
+        return $this->isParked();
     }
 
     public function isRejected(): bool
@@ -197,6 +209,6 @@ class ContentVersion extends Model
 
     public function canBePublished(): bool
     {
-        return $this->isApproved();
+        return $this->isParked();
     }
 }

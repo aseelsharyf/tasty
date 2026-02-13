@@ -5,6 +5,7 @@ import { usePermission } from '../composables/usePermission';
 import { useSidebar } from '../composables/useSidebar';
 import { useCmsPath } from '../composables/useCmsPath';
 import TastyLogo from '../components/TastyLogo.vue';
+import NotificationDropdown from '../components/NotificationDropdown.vue';
 import type { PageProps } from '../types';
 import type { NavigationMenuItem, DropdownMenuItem, CommandPaletteItem, CommandPaletteGroup } from '@nuxt/ui';
 
@@ -897,6 +898,8 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
 
                 <template #footer="{ collapsed }">
                     <div class="flex items-center gap-2" :class="collapsed ? 'flex-col' : ''">
+                        <!-- Notifications -->
+                        <NotificationDropdown />
                         <!-- User Dropdown -->
                         <UDropdownMenu
                             :items="userMenuItems"

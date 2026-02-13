@@ -242,23 +242,36 @@ class Setting extends Model
             'states' => [
                 ['key' => 'draft', 'label' => 'Draft', 'color' => 'neutral', 'icon' => 'i-lucide-file-edit'],
                 ['key' => 'copydesk', 'label' => 'Copy Desk', 'color' => 'info', 'icon' => 'i-lucide-spell-check'],
-                ['key' => 'review', 'label' => 'Copy Desk', 'color' => 'info', 'icon' => 'i-lucide-spell-check'], // Legacy alias
+                ['key' => 'parked', 'label' => 'Parked', 'color' => 'emerald', 'icon' => 'i-lucide-archive'],
+                ['key' => 'scheduled', 'label' => 'Scheduled', 'color' => 'warning', 'icon' => 'i-lucide-calendar-clock'],
                 ['key' => 'published', 'label' => 'Published', 'color' => 'success', 'icon' => 'i-lucide-globe'],
             ],
             'transitions' => [
-                // Writer submits draft for review (goes directly to copydesk)
-                ['from' => 'draft', 'to' => 'copydesk', 'roles' => ['Writer', 'Editor', 'Admin', 'Developer'], 'label' => 'Submit for Review'],
+                // Writer submits draft for review
+                ['from' => 'draft', 'to' => 'copydesk', 'roles' => ['Writer', 'Editor', 'Admin', 'Developer'], 'label' => 'Send to Copy Desk'],
+                // Writer withdraws from copydesk back to draft
+                ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Writer'], 'label' => 'Withdraw'],
                 // Editor rejects back to draft
-                ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Request Revisions'],
+                ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Reject'],
+                // Editor parks (approved, banked for later)
+                ['from' => 'copydesk', 'to' => 'parked', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Park'],
                 // Editor publishes from copydesk
                 ['from' => 'copydesk', 'to' => 'published', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Publish'],
+                // Editor schedules from copydesk
+                ['from' => 'copydesk', 'to' => 'scheduled', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Schedule'],
+                // Editor publishes a parked post
+                ['from' => 'parked', 'to' => 'published', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Publish'],
+                // Editor sends parked post back to draft
+                ['from' => 'parked', 'to' => 'draft', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Send Back'],
                 // Editor can publish directly from draft (skip copydesk)
                 ['from' => 'draft', 'to' => 'published', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Publish'],
-                // Unpublish back to draft
-                ['from' => 'published', 'to' => 'draft', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Unpublish'],
-                // Legacy: handle old 'review' status - treat same as copydesk
-                ['from' => 'review', 'to' => 'draft', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Request Revisions'],
-                ['from' => 'review', 'to' => 'published', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Publish'],
+                // Unpublish goes to copydesk (not draft)
+                ['from' => 'published', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Unpublish'],
+                // Scheduled post actions
+                ['from' => 'scheduled', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Unschedule'],
+                ['from' => 'scheduled', 'to' => 'published', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Publish Now'],
+                // Legacy: handle old 'review' status
+                ['from' => 'review', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Send to Copy Desk'],
             ],
             'publish_roles' => ['Editor', 'Admin', 'Developer'],
             'edit_published_roles' => ['Editor', 'Admin', 'Developer'],

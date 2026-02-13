@@ -22,16 +22,14 @@ class Post extends Model implements HasMedia
 
     public const STATUS_DRAFT = 'draft';
 
-    public const STATUS_UNPUBLISHED = 'unpublished';
+    public const STATUS_PUBLISHED = 'published';
+
+    public const STATUS_SCHEDULED = 'scheduled';
 
     public function getRouteKeyName(): string
     {
         return 'uuid';
     }
-
-    public const STATUS_PUBLISHED = 'published';
-
-    public const STATUS_SCHEDULED = 'scheduled';
 
     public const TYPE_ARTICLE = 'article';
 
@@ -65,6 +63,7 @@ class Post extends Model implements HasMedia
         'meta_description',
         'allow_comments',
         'show_author',
+        'scheduled_copydesk_at',
     ];
 
     protected $appends = [
@@ -82,6 +81,7 @@ class Post extends Model implements HasMedia
             'featured_image_anchor' => 'array',
             'published_at' => 'datetime',
             'scheduled_at' => 'datetime',
+            'scheduled_copydesk_at' => 'datetime',
             'allow_comments' => 'boolean',
             'show_author' => 'boolean',
         ];
@@ -242,19 +242,30 @@ class Post extends Model implements HasMedia
         return $query->where('status', self::STATUS_DRAFT);
     }
 
-    public function scopeUnpublished(Builder $query): Builder
-    {
-        return $query->where('status', self::STATUS_UNPUBLISHED);
-    }
-
     /**
-     * Scope to get posts that are in editorial review (review or copydesk workflow status).
-     * These are posts that editors need to review.
+     * Scope to get posts that are in copydesk (editorial review).
      */
     public function scopeInEditorialReview(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_DRAFT)
-            ->whereIn('workflow_status', ['review', 'copydesk', 'approved']);
+            ->where('workflow_status', 'copydesk');
+    }
+
+    /**
+     * Scope alias for copydesk status.
+     */
+    public function scopeCopydesk(Builder $query): Builder
+    {
+        return $this->scopeInEditorialReview($query);
+    }
+
+    /**
+     * Scope to get parked posts (approved, banked for later).
+     */
+    public function scopeParked(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_DRAFT)
+            ->where('workflow_status', 'parked');
     }
 
     public function scopePublished(Builder $query): Builder
@@ -369,15 +380,16 @@ class Post extends Model implements HasMedia
         return $this->status === self::STATUS_DRAFT;
     }
 
-    public function isUnpublished(): bool
-    {
-        return $this->status === self::STATUS_UNPUBLISHED;
-    }
-
     public function isInEditorialReview(): bool
     {
         return $this->status === self::STATUS_DRAFT
-            && in_array($this->workflow_status, ['review', 'copydesk']);
+            && $this->workflow_status === 'copydesk';
+    }
+
+    public function isParked(): bool
+    {
+        return $this->status === self::STATUS_DRAFT
+            && $this->workflow_status === 'parked';
     }
 
     public function isRecipe(): bool
@@ -425,8 +437,9 @@ class Post extends Model implements HasMedia
     public function unpublish(): void
     {
         $this->update([
-            'status' => self::STATUS_UNPUBLISHED,
+            'status' => self::STATUS_DRAFT,
             'published_at' => null,
+            'workflow_status' => 'copydesk',
         ]);
     }
 

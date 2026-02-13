@@ -180,6 +180,11 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::post('posts/quick-draft', [PostController::class, 'quickDraft'])
             ->name('cms.posts.quick-draft');
 
+        // Show redirects to edit (no separate show page in CMS)
+        Route::get('posts/{language}/{post}', fn (string $language, string $post) => redirect()->route('cms.posts.edit', ['language' => $language, 'post' => $post]))
+            ->name('cms.posts.show')
+            ->where('language', '[a-zA-Z]{2,5}');
+
         // Edit/Update/Delete (language-agnostic since post already has language)
         Route::get('posts/{language}/{post}/edit', [PostController::class, 'edit'])
             ->name('cms.posts.edit')

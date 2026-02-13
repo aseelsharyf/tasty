@@ -84,22 +84,29 @@ trait HasWorkflow
             'name' => 'Default Editorial Workflow',
             'states' => [
                 ['key' => 'draft', 'label' => 'Draft', 'color' => 'gray', 'icon' => 'i-lucide-file-edit'],
-                ['key' => 'review', 'label' => 'Editorial Review', 'color' => 'yellow', 'icon' => 'i-lucide-eye'],
                 ['key' => 'copydesk', 'label' => 'Copy Desk', 'color' => 'blue', 'icon' => 'i-lucide-spell-check'],
-                ['key' => 'approved', 'label' => 'Approved', 'color' => 'green', 'icon' => 'i-lucide-check-circle'],
-                ['key' => 'rejected', 'label' => 'Needs Revision', 'color' => 'red', 'icon' => 'i-lucide-alert-circle'],
+                ['key' => 'parked', 'label' => 'Parked', 'color' => 'emerald', 'icon' => 'i-lucide-archive'],
+                ['key' => 'scheduled', 'label' => 'Scheduled', 'color' => 'yellow', 'icon' => 'i-lucide-calendar-clock'],
+                ['key' => 'published', 'label' => 'Published', 'color' => 'green', 'icon' => 'i-lucide-globe'],
             ],
             'transitions' => [
-                ['from' => 'draft', 'to' => 'review', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Submit for Review'],
+                ['from' => 'draft', 'to' => 'copydesk', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Send to Copy Desk'],
+                ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Writer'], 'label' => 'Withdraw'],
+                ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Reject'],
+                ['from' => 'copydesk', 'to' => 'parked', 'roles' => ['Editor', 'Admin'], 'label' => 'Park'],
+                ['from' => 'copydesk', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
+                ['from' => 'copydesk', 'to' => 'scheduled', 'roles' => ['Editor', 'Admin'], 'label' => 'Schedule'],
+                ['from' => 'parked', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
+                ['from' => 'parked', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Send Back'],
+                ['from' => 'draft', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
+                ['from' => 'published', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Unpublish'],
+                ['from' => 'scheduled', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Unschedule'],
+                ['from' => 'scheduled', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish Now'],
+                // Legacy: handle old 'review' status
                 ['from' => 'review', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Send to Copy Desk'],
-                ['from' => 'review', 'to' => 'rejected', 'roles' => ['Editor', 'Admin'], 'label' => 'Request Revisions'],
-                ['from' => 'copydesk', 'to' => 'approved', 'roles' => ['Editor', 'Admin'], 'label' => 'Approve'],
-                ['from' => 'copydesk', 'to' => 'rejected', 'roles' => ['Editor', 'Admin'], 'label' => 'Request Revisions'],
-                ['from' => 'rejected', 'to' => 'review', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Resubmit'],
-                ['from' => 'approved', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
-                ['from' => 'published', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Unpublish'],
             ],
             'publish_roles' => ['Editor', 'Admin'],
+            'edit_published_roles' => ['Editor', 'Admin'],
         ];
     }
 
@@ -161,8 +168,8 @@ trait HasWorkflow
     {
         $draftVersion = $this->draftVersion;
 
-        // Check if the draft version is editable (draft status OR any in-progress workflow status like copydesk/review)
-        $editableStatuses = [ContentVersion::STATUS_DRAFT, 'review', 'copydesk', 'rejected'];
+        // Check if the draft version is editable (any workflow status — versioning is opt-in)
+        $editableStatuses = [ContentVersion::STATUS_DRAFT, 'copydesk', 'parked', 'rejected', 'published', 'scheduled'];
         $isEditable = $draftVersion
             && in_array($draftVersion->workflow_status, $editableStatuses)
             && $draftVersion->versionable_type === static::class

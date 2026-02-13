@@ -7,7 +7,6 @@ use App\Http\Requests\Cms\QuickDraftRequest;
 use App\Http\Requests\Cms\StorePostRequest;
 use App\Http\Requests\Cms\UpdatePostRequest;
 use App\Models\Category;
-use App\Models\ContentVersion;
 use App\Models\Language;
 use App\Models\Post;
 use App\Models\PostEditLock;
@@ -34,7 +33,7 @@ class PostController extends Controller
         // Set locale for translatable models
         app()->setLocale($language);
 
-        $status = $request->get('status', 'all');
+        $status = $request->get('status', 'draft');
         $sortField = $request->get('sort', 'created_at');
         $sortDirection = $request->get('direction', 'desc');
 
@@ -58,42 +57,43 @@ class PostController extends Controller
         // Filter by status
         $showAll = $request->boolean('show_all');
         match ($status) {
-            'draft' => $showAll && $isEditorOrAdmin
-                ? $query->draft()
-                : $query->draft()->whereNotIn('workflow_status', ['review', 'copydesk', 'approved']),
-            'unpublished' => $query->unpublished(),
+            // Draft tab: status=draft AND workflow_status IN (draft, rejected) — excludes copydesk/parked
+            'draft' => $query->draft()->whereIn('workflow_status', ['draft', 'rejected']),
+            // Copydesk tab: workflow_status=copydesk
             'copydesk' => $query->inEditorialReview(),
+            // Parked tab: workflow_status=parked (editors only)
+            'parked' => $query->parked(),
             'published' => $query->where('status', Post::STATUS_PUBLISHED),
             'scheduled' => $query->where('status', Post::STATUS_SCHEDULED),
             'trashed' => $query->onlyTrashed(),
-            default => $query->withoutTrashed(),
+            default => $query->draft()->whereIn('workflow_status', ['draft', 'rejected']),
         };
 
         // Role-based filtering:
-        // - All: Exclude drafts and unpublished (they have their own tabs)
-        // - Draft: All users see only their own drafts
-        // - Unpublished: Editors/Admins see all, writers see only their own
-        // - Copydesk: Only Editors/Admins can view (writers cannot access)
-        // - Published: Everyone can see (read-only for non-authors/non-editors)
-        // - Trashed: Users see only their own trashed posts, Editors/Admins see all
-        if ($status === 'all') {
-            $query->whereNotIn('status', [Post::STATUS_DRAFT, Post::STATUS_UNPUBLISHED]);
-        } elseif ($status === 'draft') {
-            // By default show only own drafts; editors/admins can pass show_all=1 to see everyone's
-            if (! $isEditorOrAdmin || ! $request->boolean('show_all')) {
+        // - Draft: Writers see only their own; editors can pass show_all=1
+        // - Copydesk: Writers see their own posts; editors see all
+        // - Parked: Editors/Admins only
+        // - Published: Everyone can see
+        // - Scheduled: Writers see their own; editors see all
+        // - Trashed: Writers see own; editors see all
+        if ($status === 'draft') {
+            if (! $isEditorOrAdmin || ! $showAll) {
                 $query->where('author_id', $user->id);
             }
-        } elseif ($status === 'unpublished' && ! $isEditorOrAdmin) {
-            // Non-editors can only see their own unpublished posts
-            $query->where('author_id', $user->id);
         } elseif ($status === 'copydesk') {
-            // Copydesk is only for editors/admins
             if (! $isEditorOrAdmin) {
-                // Non-editors cannot see copydesk - return empty result
+                // Writers can see their own copydesk posts
+                $query->where('author_id', $user->id);
+            }
+        } elseif ($status === 'parked') {
+            if (! $isEditorOrAdmin) {
                 $query->whereRaw('1 = 0');
             }
+        } elseif ($status === 'scheduled') {
+            if (! $isEditorOrAdmin) {
+                $query->where('author_id', $user->id);
+            }
         } elseif ($status === 'trashed' && ! $isEditorOrAdmin) {
-            // Non-editors can only see their own trashed posts
             $query->where('author_id', $user->id);
         }
 
@@ -172,20 +172,18 @@ class PostController extends Controller
 
         if ($isEditorOrAdmin) {
             $counts = [
-                'all' => $baseQuery()->withoutTrashed()->whereNotIn('status', [Post::STATUS_DRAFT, Post::STATUS_UNPUBLISHED])->count(),
-                'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk', 'approved'])->where('author_id', $user->id)->count(),
-                'unpublished' => $baseQuery()->unpublished()->count(),
+                'draft' => $baseQuery()->draft()->whereIn('workflow_status', ['draft', 'rejected'])->where('author_id', $user->id)->count(),
                 'copydesk' => $baseQuery()->inEditorialReview()->count(),
+                'parked' => $baseQuery()->parked()->count(),
                 'published' => $baseQuery()->where('status', Post::STATUS_PUBLISHED)->count(),
                 'scheduled' => $baseQuery()->where('status', Post::STATUS_SCHEDULED)->count(),
                 'trashed' => $baseQuery()->onlyTrashed()->count(),
             ];
         } else {
             $counts = [
-                'all' => $baseQuery()->withoutTrashed()->whereNotIn('status', [Post::STATUS_DRAFT, Post::STATUS_UNPUBLISHED])->count(),
-                'draft' => $baseQuery()->draft()->whereNotIn('workflow_status', ['review', 'copydesk', 'approved'])->where('author_id', $user->id)->count(),
-                'unpublished' => $baseQuery()->unpublished()->where('author_id', $user->id)->count(),
-                'copydesk' => 0,
+                'draft' => $baseQuery()->draft()->whereIn('workflow_status', ['draft', 'rejected'])->where('author_id', $user->id)->count(),
+                'copydesk' => $baseQuery()->inEditorialReview()->where('author_id', $user->id)->count(),
+                'parked' => 0,
                 'published' => $baseQuery()->where('status', Post::STATUS_PUBLISHED)->count(),
                 'scheduled' => $baseQuery()->where('status', Post::STATUS_SCHEDULED)->where('author_id', $user->id)->count(),
                 'trashed' => $baseQuery()->onlyTrashed()->where('author_id', $user->id)->count(),
@@ -603,40 +601,10 @@ class PostController extends Controller
         $isEditorOrAdmin = $user->hasAnyRole(['Admin', 'Editor', 'Developer']);
         $isPublished = $post->status === Post::STATUS_PUBLISHED;
 
-        // For non-editors on published posts, only update the draft version
-        if ($isPublished && ! $isEditorOrAdmin) {
-            // Post is published and user is not editor/admin - only update draft version
-            $contentSnapshot = [
-                'title' => $validated['title'],
-                'kicker' => $validated['kicker'] ?? null,
-                'subtitle' => $validated['subtitle'] ?? null,
-                'excerpt' => $validated['excerpt'] ?? null,
-                'content' => $validated['content'] ?? null,
-                'template' => $validated['template'] ?? $post->template,
-                'meta_title' => $validated['meta_title'] ?? null,
-                'meta_description' => $validated['meta_description'] ?? null,
-                'featured_media_id' => $validated['featured_media_id'] ?? null,
-                'cover_video_id' => $validated['cover_video_id'] ?? null,
-                'featured_image_anchor' => $validated['featured_image_anchor'] ?? $post->featured_image_anchor ?? ['x' => 50, 'y' => 0],
-                'featured_tag_id' => $validated['featured_tag_id'] ?? null,
-                'sponsor_id' => $validated['sponsor_id'] ?? null,
-                'custom_fields' => $validated['custom_fields'] ?? null,
-                'allow_comments' => $validated['allow_comments'] ?? true,
-                'show_author' => $validated['show_author'] ?? true,
-                'category_ids' => ! empty($validated['category_id']) ? [$validated['category_id']] : [],
-                'tag_ids' => $validated['tags'] ?? [],
-            ];
-
-            $newVersion = $post->updateDraftVersion($contentSnapshot);
-
-            return redirect()->route('cms.posts.edit', [
-                'language' => $language,
-                'post' => $post,
-                'version' => $newVersion?->uuid,
-            ])->with('success', 'Draft saved. Changes will apply when published.');
+        // Writers cannot edit posts in copydesk, parked, published, or scheduled status
+        if (! $isEditorOrAdmin && in_array($post->workflow_status, ['copydesk', 'parked', 'published', 'scheduled'])) {
+            abort(403, 'You cannot edit this post in its current workflow status.');
         }
-
-        // For editors/admins on published posts, update the post directly AND update active version
 
         // Build update data
         $updateData = [
@@ -684,39 +652,17 @@ class PostController extends Controller
             $post->clearMediaCollection('featured');
         }
 
-        // Build content snapshot for versioning
+        // Update the current version's snapshot in-place (no new version created)
         $contentSnapshot = $post->buildContentSnapshot();
-
-        // Create a new version, preserving the workflow status if not published
-        // This ensures that posts in copydesk/review stay in that status when saved
-        $newVersion = $post->createVersion($contentSnapshot, 'Saved by '.$user->name, null, ! $isPublished);
-
-        // For editors/admins, if the post is published, also update the active version
-        if ($isEditorOrAdmin && $isPublished) {
-            // First, unmark ALL other versions as not active (only one can be active at a time)
-            ContentVersion::where('versionable_type', Post::class)
-                ->where('versionable_id', $post->id)
-                ->where('id', '!=', $newVersion->id)
-                ->update(['is_active' => false]);
-
-            // Mark the new version as active (published)
-            $newVersion->update([
-                'workflow_status' => 'published',
-                'is_active' => true,
-            ]);
-
-            // Update post to point to new active version
-            $post->update([
-                'active_version_id' => $newVersion->id,
-                'draft_version_id' => $newVersion->id,
-            ]);
+        $currentVersion = $post->draftVersion ?? $post->activeVersion;
+        if ($currentVersion) {
+            $currentVersion->update(['content_snapshot' => $contentSnapshot]);
         }
 
-        // Redirect to the edit page with the new version UUID so the user sees their saved changes
         return redirect()->route('cms.posts.edit', [
             'language' => $language,
             'post' => $post,
-            'version' => $newVersion->uuid,
+            'version' => $currentVersion?->uuid,
         ])->with('success', $isPublished ? 'Post updated and published.' : 'Post saved.');
     }
 
@@ -759,7 +705,7 @@ class PostController extends Controller
         $post->unpublish();
 
         return redirect()->back()
-            ->with('success', 'Post unpublished.');
+            ->with('success', 'Post unpublished and moved to Copy Desk.');
     }
 
     public function restore(string $language, string $uuid): RedirectResponse

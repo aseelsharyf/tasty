@@ -107,7 +107,7 @@ function getCsrfToken(): string {
 }
 
 const search = ref(props.filters.search || '');
-const currentStatus = ref(props.filters.status || 'all');
+const currentStatus = ref(props.filters.status || 'draft');
 const selectedPostType = ref<string | null>(props.filters.post_type || null);
 const selectedAuthor = ref<string | null>(props.filters.author?.toString() || null);
 const selectedCategory = ref<string | null>(props.filters.category?.toString() || null);
@@ -119,14 +119,6 @@ const postToDelete = ref<Post | null>(null);
 const statusLinks = computed<NavigationMenuItem[][]>(() => {
     const items: NavigationMenuItem[] = [
         {
-            label: 'All',
-            icon: 'i-lucide-layout-list',
-            badge: props.counts.all,
-            to: cmsPath(`/posts/${currentLanguageCode.value}`),
-            active: currentStatus.value === 'all',
-            onSelect: () => changeStatus('all'),
-        },
-        {
             label: 'Drafts',
             icon: 'i-lucide-file-edit',
             badge: props.counts.draft,
@@ -134,25 +126,27 @@ const statusLinks = computed<NavigationMenuItem[][]>(() => {
             active: currentStatus.value === 'draft',
             onSelect: () => changeStatus('draft'),
         },
-        {
-            label: 'Unpublished',
-            icon: 'i-lucide-eye-off',
-            badge: props.counts.unpublished,
-            to: cmsPath(`/posts/${currentLanguageCode.value}?status=unpublished`),
-            active: currentStatus.value === 'unpublished',
-            onSelect: () => changeStatus('unpublished'),
-        },
     ];
 
-    // Only show Copydesk tab for editors/admins
+    // Copydesk tab visible to all users (writers see their own posts)
+    items.push({
+        label: 'Copydesk',
+        icon: 'i-lucide-spell-check-2',
+        badge: props.counts.copydesk,
+        to: cmsPath(`/posts/${currentLanguageCode.value}?status=copydesk`),
+        active: currentStatus.value === 'copydesk',
+        onSelect: () => changeStatus('copydesk'),
+    });
+
+    // Parked tab only for editors/admins
     if (props.userCapabilities.isEditorOrAdmin) {
         items.push({
-            label: 'Copydesk',
-            icon: 'i-lucide-spell-check-2',
-            badge: props.counts.copydesk,
-            to: cmsPath(`/posts/${currentLanguageCode.value}?status=copydesk`),
-            active: currentStatus.value === 'copydesk',
-            onSelect: () => changeStatus('copydesk'),
+            label: 'Parked',
+            icon: 'i-lucide-archive',
+            badge: props.counts.parked,
+            to: cmsPath(`/posts/${currentLanguageCode.value}?status=parked`),
+            active: currentStatus.value === 'parked',
+            onSelect: () => changeStatus('parked'),
         });
     }
 
@@ -203,7 +197,7 @@ const categoryOptions = computed(() => [
 
 function applyFilters(overrides: Record<string, any> = {}) {
     router.get(cmsPath(`/posts/${currentLanguageCode.value}`), {
-        status: currentStatus.value !== 'all' ? currentStatus.value : undefined,
+        status: currentStatus.value !== 'draft' ? currentStatus.value : undefined,
         search: search.value || undefined,
         post_type: selectedPostType.value ?? undefined,
         author: selectedAuthor.value ?? undefined,
@@ -235,7 +229,7 @@ function changeStatus(status: string) {
     if (status !== 'draft') {
         showAllDrafts.value = false;
     }
-    applyFilters({ status: status !== 'all' ? status : undefined });
+    applyFilters({ status: status !== 'draft' ? status : undefined });
 }
 
 function confirmDelete(post: Post) {
@@ -286,10 +280,6 @@ function getStatusColor(status: string): 'success' | 'warning' | 'primary' | 'in
             return 'success';
         case 'draft':
             return 'neutral';
-        case 'unpublished':
-            return 'warning';
-        case 'pending':
-            return 'warning';
         case 'scheduled':
             return 'info';
         default:
@@ -301,14 +291,14 @@ function getWorkflowStatusColor(status: string): 'success' | 'warning' | 'primar
     switch (status) {
         case 'draft':
             return 'neutral';
-        case 'review':
-            return 'warning';
         case 'copydesk':
             return 'info';
-        case 'approved':
+        case 'parked':
             return 'primary';
         case 'rejected':
             return 'error';
+        case 'scheduled':
+            return 'warning';
         case 'published':
             return 'success';
         default:
@@ -319,10 +309,10 @@ function getWorkflowStatusColor(status: string): 'success' | 'warning' | 'primar
 function getWorkflowStatusLabel(status: string): string {
     const labels: Record<string, string> = {
         draft: 'Draft',
-        review: 'In Review',
         copydesk: 'Copydesk',
-        approved: 'Approved',
+        parked: 'Parked',
         rejected: 'Needs Revision',
+        scheduled: 'Scheduled',
         published: 'Published',
     };
     return labels[status] || status;
@@ -331,10 +321,10 @@ function getWorkflowStatusLabel(status: string): string {
 function getWorkflowStatusIcon(status: string): string {
     const icons: Record<string, string> = {
         draft: 'i-lucide-file-edit',
-        review: 'i-lucide-eye',
         copydesk: 'i-lucide-spell-check-2',
-        approved: 'i-lucide-check-circle',
+        parked: 'i-lucide-archive',
         rejected: 'i-lucide-alert-circle',
+        scheduled: 'i-lucide-calendar-clock',
         published: 'i-lucide-globe',
     };
     return icons[status] || 'i-lucide-circle';
@@ -660,6 +650,7 @@ function formatDate(dateStr: string) {
                                             {{ getWorkflowStatusLabel(post.workflow_status) }}
                                         </UBadge>
                                         <UBadge
+                                            v-if="!post.workflow_status || ['draft', 'published'].includes(post.workflow_status) || post.workflow_status === post.status"
                                             :color="getStatusColor(post.status)"
                                             variant="subtle"
                                             size="xs"

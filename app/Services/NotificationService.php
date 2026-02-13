@@ -125,12 +125,37 @@ class NotificationService
 
         // Determine notification type and recipients based on transition
         match ($toStatus) {
-            'review' => $this->notifyWorkflowSubmitted($post, $version, $performedBy, $actionUrl),
-            'approved' => $this->notifyWorkflowApproved($post, $author, $performedBy, $actionUrl, $comment),
-            'rejected' => $this->notifyWorkflowRejected($post, $author, $performedBy, $actionUrl, $comment),
+            'copydesk' => $this->notifyWorkflowSubmitted($post, $version, $performedBy, $actionUrl),
+            'draft' => $this->handleDraftTransitionNotification($post, $author, $performedBy, $fromStatus, $actionUrl, $comment),
+            'parked' => $this->notifyWorkflowParked($post, $author, $performedBy, $actionUrl, $comment),
             'published' => $this->notifyWorkflowPublished($post, $author, $performedBy, $actionUrl),
             default => null,
         };
+    }
+
+    /**
+     * Handle notifications for transitions back to draft.
+     * Distinguishes between writer withdraw (no notification) and editor reject.
+     */
+    protected function handleDraftTransitionNotification(
+        Post $post,
+        ?User $author,
+        User $performedBy,
+        string $fromStatus,
+        string $actionUrl,
+        ?string $comment
+    ): void {
+        if ($fromStatus !== 'copydesk') {
+            return;
+        }
+
+        // If performed by the author themselves, it's a withdraw — no notification needed
+        if ($author && $performedBy->id === $author->id) {
+            return;
+        }
+
+        // Otherwise it's an editor reject — notify the author
+        $this->notifyWorkflowRejected($post, $author, $performedBy, $actionUrl, $comment);
     }
 
     /**
@@ -164,23 +189,23 @@ class NotificationService
     }
 
     /**
-     * Notify author when their post is approved.
+     * Notify author when their post is parked (approved, banked for later).
      */
-    protected function notifyWorkflowApproved(Post $post, ?User $author, User $approvedBy, string $actionUrl, ?string $comment): void
+    protected function notifyWorkflowParked(Post $post, ?User $author, User $parkedBy, string $actionUrl, ?string $comment): void
     {
-        if (! $author || $author->id === $approvedBy->id) {
+        if (! $author || $author->id === $parkedBy->id) {
             return;
         }
 
         $this->notify($author, [
             'type' => CmsNotification::TYPE_WORKFLOW_APPROVED,
-            'title' => 'Your post was approved!',
-            'body' => $comment ?: "\"{$post->title}\" is ready to publish",
+            'title' => 'Your post was approved and parked',
+            'body' => $comment ?: "\"{$post->title}\" has been approved and banked for later publishing",
             'notifiable_type' => Post::class,
             'notifiable_id' => $post->id,
             'action_url' => $actionUrl,
             'action_label' => 'View Post',
-            'triggered_by' => $approvedBy->id,
+            'triggered_by' => $parkedBy->id,
         ]);
     }
 

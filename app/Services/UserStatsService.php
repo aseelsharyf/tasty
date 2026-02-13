@@ -31,7 +31,7 @@ class UserStatsService
             ->count();
 
         $inReview = $postsQuery->clone()
-            ->whereIn('workflow_status', ['review', 'copydesk'])
+            ->where('workflow_status', 'copydesk')
             ->count();
 
         $drafts = $postsQuery->clone()
@@ -140,7 +140,7 @@ class UserStatsService
         $publishedThisMonth = Post::where('status', Post::STATUS_PUBLISHED)
             ->whereBetween('published_at', [$from, $to])
             ->count();
-        $pendingReview = Post::whereIn('workflow_status', ['review', 'copydesk'])->count();
+        $pendingReview = Post::where('workflow_status', 'copydesk')->count();
 
         // Writer stats
         $totalWriters = User::role(['Writer', 'Editor', 'Admin'])->count();

@@ -42,10 +42,10 @@ class WorkflowService
     /**
      * Get the default workflow configuration.
      *
-     * Simplified workflow:
-     * - Writer: Draft -> CopyDesk (submit for review)
-     * - Editor: CopyDesk -> Reject (back to draft) OR Publish directly
-     * - Editor: Can write and publish directly, can always edit even published posts
+     * Simplified workflow: Draft → Copy Desk → Published, with Parked status.
+     * - Writer: Draft → Copy Desk (submit for review)
+     * - Editor: Copy Desk → Reject (back to draft), Park (approved for later), or Publish
+     * - Editor: Can publish directly from draft, can always edit even published posts
      *
      * @return array<string, mixed>
      */
@@ -56,31 +56,36 @@ class WorkflowService
             'states' => [
                 ['key' => 'draft', 'label' => 'Draft', 'color' => 'gray', 'icon' => 'i-lucide-file-edit'],
                 ['key' => 'copydesk', 'label' => 'Copy Desk', 'color' => 'blue', 'icon' => 'i-lucide-spell-check'],
-                ['key' => 'review', 'label' => 'Copy Desk', 'color' => 'blue', 'icon' => 'i-lucide-spell-check'], // Legacy alias
-                ['key' => 'approved', 'label' => 'Approved', 'color' => 'emerald', 'icon' => 'i-lucide-check-circle'],
+                ['key' => 'parked', 'label' => 'Parked', 'color' => 'emerald', 'icon' => 'i-lucide-archive'],
+                ['key' => 'scheduled', 'label' => 'Scheduled', 'color' => 'yellow', 'icon' => 'i-lucide-calendar-clock'],
                 ['key' => 'published', 'label' => 'Published', 'color' => 'green', 'icon' => 'i-lucide-globe'],
             ],
             'transitions' => [
-                // Writer submits draft for review (goes directly to copydesk)
-                ['from' => 'draft', 'to' => 'copydesk', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Submit for Review'],
-                // Editor rejects back to draft
-                ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Request Revisions'],
-                // Editor approves (stays in copydesk view until published)
-                ['from' => 'copydesk', 'to' => 'approved', 'roles' => ['Editor', 'Admin'], 'label' => 'Approve'],
+                // Writer submits draft for review
+                ['from' => 'draft', 'to' => 'copydesk', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Send to Copy Desk'],
+                // Writer withdraws from copydesk back to draft (only if not published/scheduled)
+                ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Writer'], 'label' => 'Withdraw'],
+                // Editor rejects back to draft (sends notification to writer)
+                ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Reject'],
+                // Editor parks (approved, banked for later)
+                ['from' => 'copydesk', 'to' => 'parked', 'roles' => ['Editor', 'Admin'], 'label' => 'Park'],
                 // Editor publishes from copydesk directly
                 ['from' => 'copydesk', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
-                // Editor publishes an approved post
-                ['from' => 'approved', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
-                // Editor sends approved post back for revisions
-                ['from' => 'approved', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Request Revisions'],
+                // Editor schedules from copydesk
+                ['from' => 'copydesk', 'to' => 'scheduled', 'roles' => ['Editor', 'Admin'], 'label' => 'Schedule'],
+                // Editor publishes a parked post
+                ['from' => 'parked', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
+                // Editor sends parked post back to draft
+                ['from' => 'parked', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Send Back'],
                 // Editor can publish directly from draft (skip copydesk)
                 ['from' => 'draft', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
-                // Unpublish back to draft
-                ['from' => 'published', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Unpublish'],
-                // Legacy: handle old 'review' status - treat same as copydesk
+                // Unpublish goes to copydesk (not draft)
+                ['from' => 'published', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Unpublish'],
+                // Scheduled post actions
+                ['from' => 'scheduled', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Unschedule'],
+                ['from' => 'scheduled', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish Now'],
+                // Legacy: handle old 'review' status
                 ['from' => 'review', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Send to Copy Desk'],
-                ['from' => 'review', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Request Revisions'],
-                ['from' => 'review', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
             ],
             'publish_roles' => ['Editor', 'Admin'],
             'edit_published_roles' => ['Editor', 'Admin'],
@@ -149,17 +154,31 @@ class WorkflowService
             throw new \Exception("User is not allowed to transition to '{$toStatus}'");
         }
 
-        // Validate requirements before approval - category and tags must be set
-        if ($toStatus === ContentVersion::STATUS_APPROVED) {
-            $content = $version->versionable;
-            if ($content) {
-                $this->validateApprovalRequirements($content, $version);
+        $fromStatus = $version->workflow_status;
+        $content = $version->versionable;
+
+        // Writer withdraw validation: can't withdraw if post is published or scheduled
+        if ($fromStatus === 'copydesk' && $toStatus === ContentVersion::STATUS_DRAFT && $this->isWriterAction($user)) {
+            if ($content && in_array($content->status, [Post::STATUS_PUBLISHED, Post::STATUS_SCHEDULED])) {
+                throw new \Exception('Cannot withdraw a post that is already published or scheduled');
             }
         }
 
-        return DB::transaction(function () use ($version, $toStatus, $comment, $user) {
-            $fromStatus = $version->workflow_status;
+        // Validate requirements before parking - category and tags must be set
+        if ($toStatus === ContentVersion::STATUS_PARKED) {
+            if ($content) {
+                $this->validateParkRequirements($content, $version);
+            }
+        }
 
+        // Scheduling requires a scheduled_at date on the post
+        if ($toStatus === 'scheduled') {
+            if ($content && empty($content->scheduled_at)) {
+                throw new \Exception('A scheduled date must be set before scheduling');
+            }
+        }
+
+        return DB::transaction(function () use ($version, $toStatus, $comment, $user, $fromStatus, $content) {
             // Create the transition record
             $transition = $version->transitions()->create([
                 'from_status' => $fromStatus,
@@ -171,8 +190,6 @@ class WorkflowService
             // Update version status
             $version->update(['workflow_status' => $toStatus]);
 
-            // Update the parent content's workflow status
-            $content = $version->versionable;
             if ($content) {
                 $content->update(['workflow_status' => $toStatus]);
 
@@ -181,14 +198,29 @@ class WorkflowService
                     $this->publishVersion($version);
                 }
 
-                // If unpublishing (to draft), deactivate the version and set it as the draft version
-                if ($fromStatus === ContentVersion::STATUS_PUBLISHED && $toStatus === ContentVersion::STATUS_DRAFT) {
+                // If scheduling, update the content's status to scheduled
+                if ($toStatus === 'scheduled') {
+                    $content->update([
+                        'status' => Post::STATUS_SCHEDULED,
+                    ]);
+                }
+
+                // Unpublish: published → copydesk
+                if ($fromStatus === ContentVersion::STATUS_PUBLISHED && $toStatus === 'copydesk') {
                     $version->deactivate();
                     $content->update([
-                        'status' => Post::STATUS_UNPUBLISHED,
+                        'status' => Post::STATUS_DRAFT,
                         'published_at' => null,
                         'active_version_id' => null,
-                        'draft_version_id' => $version->id, // Set this version as the draft version for editing
+                        'draft_version_id' => $version->id,
+                    ]);
+                }
+
+                // Unschedule: scheduled → copydesk
+                if ($fromStatus === 'scheduled' && $toStatus === 'copydesk') {
+                    $content->update([
+                        'status' => Post::STATUS_DRAFT,
+                        'scheduled_at' => null,
                     ]);
                 }
 
@@ -207,12 +239,23 @@ class WorkflowService
     }
 
     /**
-     * Publish an approved version.
+     * Check if the user is acting as a Writer (not an Editor/Admin).
+     */
+    protected function isWriterAction(User $user): bool
+    {
+        $roles = $user->getRoleNames()->toArray();
+
+        return in_array('Writer', $roles) && empty(array_intersect($roles, ['Editor', 'Admin', 'Developer']));
+    }
+
+    /**
+     * Publish a version.
      */
     public function publishVersion(ContentVersion $version): void
     {
-        if (! $version->isApproved() && ! $version->isPublished()) {
-            throw new \Exception('Only approved versions can be published');
+        $allowedStatuses = [ContentVersion::STATUS_PUBLISHED, ContentVersion::STATUS_PARKED, ContentVersion::STATUS_COPYDESK, 'scheduled'];
+        if (! in_array($version->workflow_status, $allowedStatuses)) {
+            throw new \Exception('Version cannot be published from its current status');
         }
 
         // Validate that content has required fields before publishing
@@ -243,7 +286,7 @@ class WorkflowService
     }
 
     /**
-     * Unpublish content.
+     * Unpublish content — moves to copydesk, not draft.
      */
     public function unpublish(Model $content): void
     {
@@ -252,14 +295,16 @@ class WorkflowService
             $activeVersion = $content->activeVersion;
             if ($activeVersion) {
                 $activeVersion->deactivate();
+                $activeVersion->update(['workflow_status' => 'copydesk']);
             }
 
-            // Update content status
+            // Update content status — goes to copydesk for editorial review
             $content->update([
-                'status' => Post::STATUS_UNPUBLISHED,
+                'status' => Post::STATUS_DRAFT,
                 'published_at' => null,
-                'workflow_status' => ContentVersion::STATUS_DRAFT,
+                'workflow_status' => 'copydesk',
                 'active_version_id' => null,
+                'draft_version_id' => $activeVersion?->id ?? $content->draft_version_id,
             ]);
         });
     }
@@ -455,9 +500,9 @@ class WorkflowService
         $userRoles = $user->getRoleNames()->toArray();
 
         $hasRole = ! empty(array_intersect($userRoles, $publishRoles));
-        $hasApprovedVersion = $content->draftVersion && $content->draftVersion->isApproved();
+        $hasParkedVersion = $content->draftVersion && $content->draftVersion->isParked();
 
-        return $hasRole && $hasApprovedVersion;
+        return $hasRole && $hasParkedVersion;
     }
 
     /**
@@ -493,41 +538,36 @@ class WorkflowService
     }
 
     /**
-     * Validate that content meets approval requirements.
-     * Category and tags must be set before a post can be approved.
+     * Validate that content meets parking requirements.
+     * Category and tags must be set before a post can be parked.
      *
      * @throws \Exception
      */
-    protected function validateApprovalRequirements(Model $content, ContentVersion $version): void
+    protected function validateParkRequirements(Model $content, ContentVersion $version): void
     {
         $errors = [];
 
-        // Get category and tags from the version snapshot first,
-        // but fallback to the content model if snapshot is empty
-        // (this handles cases where tags/categories were added after version submission)
         $snapshot = $version->content_snapshot ?? [];
 
         // Check for category
         if (method_exists($content, 'categories')) {
             $categoryIds = $snapshot['category_ids'] ?? [];
-            // Fallback to content model if snapshot is empty
             if (empty($categoryIds) && method_exists($content, 'categories')) {
                 $categoryIds = $content->categories()->pluck('categories.id')->toArray();
             }
             if (empty($categoryIds)) {
-                $errors[] = 'A category must be assigned before approval';
+                $errors[] = 'A category must be assigned before parking';
             }
         }
 
         // Check for tags
         if (method_exists($content, 'tags')) {
             $tagIds = $snapshot['tag_ids'] ?? [];
-            // Fallback to content model if snapshot is empty
             if (empty($tagIds)) {
                 $tagIds = $content->tags()->pluck('tags.id')->toArray();
             }
             if (empty($tagIds)) {
-                $errors[] = 'At least one tag must be assigned before approval';
+                $errors[] = 'At least one tag must be assigned before parking';
             }
         }
 

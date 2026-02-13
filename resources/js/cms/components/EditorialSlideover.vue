@@ -220,9 +220,9 @@ const existingDraftVersion = computed(() => {
     return props.versionsList?.find(v => v.is_draft && !v.is_active) || null;
 });
 
-// Check if current version is approved (can be published)
+// Check if current version is parked (can be published)
 const isCurrentVersionApproved = computed(() => {
-    return props.workflowStatus === 'approved';
+    return props.workflowStatus === 'parked';
 });
 
 const flattenedCategories = computed(() => {
@@ -775,37 +775,16 @@ const commentTypeOptions = [
                             </div>
                         </div>
 
-                        <!-- Published Post Actions -->
+                        <!-- Published Post Info -->
                         <div v-if="isPublished" class="p-4 rounded-lg bg-elevated border border-default">
                             <div class="flex items-start gap-3">
-                                <UIcon name="i-lucide-lock" class="size-5 text-muted shrink-0 mt-0.5" />
+                                <UIcon name="i-lucide-globe" class="size-5 text-primary shrink-0 mt-0.5" />
                                 <div class="flex-1">
                                     <p class="text-sm font-medium">This post is published</p>
                                     <p class="text-xs text-muted mt-1">
-                                        Published content is read-only. To make changes, {{ existingDraftVersion ? 'edit the existing draft' : 'create a new draft version' }} or unpublish the post first.
+                                        Changes you save will update the live post directly.
                                     </p>
                                     <div class="flex flex-wrap gap-2 mt-3">
-                                        <!-- Show "Edit Draft" if draft exists, otherwise "Create New Draft" -->
-                                        <UButton
-                                            v-if="existingDraftVersion"
-                                            size="sm"
-                                            color="primary"
-                                            icon="i-lucide-edit"
-                                            @click="emit('version-switch', existingDraftVersion.uuid); emit('update:open', false)"
-                                        >
-                                            Edit Draft (v{{ existingDraftVersion.version_number }})
-                                        </UButton>
-                                        <UButton
-                                            v-else
-                                            size="sm"
-                                            color="primary"
-                                            icon="i-lucide-file-plus"
-                                            :loading="creatingDraft"
-                                            @click="createNewDraft"
-                                        >
-                                            Create New Draft
-                                        </UButton>
-                                        <!-- Show Unpublish button if transitions are loaded -->
                                         <UButton
                                             v-if="availableTransitions.some(t => t.to === 'draft')"
                                             size="sm"
@@ -816,31 +795,19 @@ const commentTypeOptions = [
                                         >
                                             Unpublish
                                         </UButton>
-                                        <!-- Show loading state while fetching transitions -->
-                                        <UButton
-                                            v-else-if="transitionsLoading"
-                                            size="sm"
-                                            color="neutral"
-                                            variant="soft"
-                                            icon="i-lucide-loader-2"
-                                            disabled
-                                        >
-                                            <UIcon name="i-lucide-loader-2" class="animate-spin mr-1" />
-                                            Loading...
-                                        </UButton>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Approved Version - Publish Action -->
+                        <!-- Parked Version - Publish Action -->
                         <div v-else-if="isCurrentVersionApproved" class="p-4 rounded-lg bg-success/10 border border-success/20">
                             <div class="flex items-start gap-3">
-                                <UIcon name="i-lucide-check-circle" class="size-5 text-success shrink-0 mt-0.5" />
+                                <UIcon name="i-lucide-archive" class="size-5 text-success shrink-0 mt-0.5" />
                                 <div class="flex-1">
-                                    <p class="text-sm font-medium text-success">Ready to Publish</p>
+                                    <p class="text-sm font-medium text-success">Parked — Ready to Publish</p>
                                     <p class="text-xs text-muted mt-1">
-                                        This version has been approved and is ready to be published.
+                                        This version has been approved and parked for later publishing.
                                     </p>
                                     <div class="flex flex-wrap gap-2 mt-3">
                                         <UButton

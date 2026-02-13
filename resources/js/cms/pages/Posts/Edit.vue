@@ -7,7 +7,6 @@ import BlockEditor, { type MediaSelectCallback, type PostSelectCallback, type Fo
 import MediaPickerModal from '../../components/MediaPickerModal.vue';
 import EditorPostPickerModal from '../../components/EditorPostPickerModal.vue';
 import type { PostBlockItem } from '../../editor-tools/PostsBlock';
-import NotificationDropdown from '../../components/NotificationDropdown.vue';
 import EditorialSlideover from '../../components/EditorialSlideover.vue';
 import ImageAnchorPicker from '../../components/ImageAnchorPicker.vue';
 import type { MediaBlockItem, FocalPoint } from '../../editor-tools/MediaBlock';
@@ -319,24 +318,21 @@ const isEditorOrAdmin = computed(() => {
     return userRoles.value.includes('Editor') || userRoles.value.includes('Admin');
 });
 
-// Versions that can be edited: draft, copydesk (for editors), or rejected
+// Versions that can be edited: draft/rejected (for writers), all (for editors)
 const isCurrentVersionEditable = computed(() => {
     const status = currentVersionInfo.value?.workflow_status;
-    // Editors can edit any version (draft, copydesk, even published)
+    // Editors can edit any version (draft, copydesk, parked, even published)
     if (isEditorOrAdmin.value) return true;
-    // Writers can only edit draft or rejected versions
+    // Writers can only edit draft and rejected versions
     return status === 'draft' || status === 'rejected';
 });
 
-// Read-only if locked by someone else OR if non-editor viewing non-editable version
+// Read-only if locked by someone else OR if writer on restricted status
 const isReadOnly = computed(() => {
-    // If locked by someone else, it's read-only
     if (isLockedByOther.value && !canTakeOver.value) return true;
-    // Editors can always edit - they edit the current version directly
     if (isEditorOrAdmin.value) return false;
-    // For non-editors: read-only if viewing active version or non-editable version
-    if (isCurrentVersionActive.value) return true;
-    if (!isCurrentVersionEditable.value) return true;
+    const ws = workflowStatus.value;
+    if (['copydesk', 'parked', 'published', 'scheduled'].includes(ws)) return true;
     return false;
 });
 
@@ -514,11 +510,35 @@ const currentWorkflowState = computed(() => workflow.getState(workflowStatus.val
 // Available workflow transitions from current state (filtered by user roles)
 const availableTransitions = computed(() => workflow.getAvailableTransitions(workflowStatus.value, userRoles.value));
 
+// Reject modal state
+const rejectModalOpen = ref(false);
+const rejectComment = ref('');
+const isRejecting = ref(false);
+
+// Schedule modal state
+const scheduleModalOpen = ref(false);
+const scheduleDate = ref('');
+const isScheduling = ref(false);
+const pendingScheduleTransition = ref<{ from: string; to: string; label: string } | null>(null);
+
 // Workflow transition handling
 async function performQuickTransition(transition: { from: string; to: string; label: string }) {
     if (!currentVersionUuid.value) {
         toast.add({ title: 'Error', description: 'Save the post first before transitioning', color: 'error' });
         return;
+    }
+
+    // For editor reject transitions, open the reject modal (requires comment)
+    if (transition.to === 'draft' && transition.from === 'copydesk' && transition.label === 'Reject') {
+        rejectComment.value = '';
+        rejectModalOpen.value = true;
+        return;
+    }
+
+    // Auto-save unsaved changes before transitioning
+    if (hasUnsavedChanges.value && !isReadOnly.value) {
+        const saved = await savePost();
+        if (!saved) return;
     }
 
     const result = await workflow.transition(currentVersionUuid.value, transition.to);
@@ -528,6 +548,58 @@ async function performQuickTransition(transition: { from: string; to: string; la
         refreshPage();
     } else {
         toast.add({ title: 'Error', description: result.error || 'Transition failed', color: 'error' });
+    }
+}
+
+// Reject with comment
+async function submitReject() {
+    if (!currentVersionUuid.value || !rejectComment.value.trim()) return;
+
+    isRejecting.value = true;
+    const result = await workflow.transition(currentVersionUuid.value, 'draft', rejectComment.value);
+    if (result.success) {
+        toast.add({ title: 'Rejected', description: 'Post sent back to writer with feedback', color: 'success' });
+        workflowStatus.value = 'draft';
+        rejectModalOpen.value = false;
+        refreshPage();
+    } else {
+        toast.add({ title: 'Error', description: result.error || 'Reject failed', color: 'error' });
+    }
+    isRejecting.value = false;
+}
+
+// Open schedule modal
+function openScheduleModal(transition: { from: string; to: string; label: string }) {
+    pendingScheduleTransition.value = transition;
+    // Pre-fill with existing scheduled_at or default to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(9, 0, 0, 0);
+    scheduleDate.value = form.scheduled_at || tomorrow.toISOString().slice(0, 16);
+    scheduleModalOpen.value = true;
+}
+
+// Submit schedule
+async function submitSchedule() {
+    if (!currentVersionUuid.value || !scheduleDate.value || !pendingScheduleTransition.value) return;
+
+    isScheduling.value = true;
+    try {
+        // First set scheduled_at on the post, then transition
+        await axios.post(cmsPath(`/workflow/versions/${currentVersionUuid.value}/transition`), {
+            to_status: 'scheduled',
+            scheduled_at: scheduleDate.value,
+        });
+
+        form.scheduled_at = scheduleDate.value;
+        toast.add({ title: 'Scheduled', description: `Post scheduled for ${new Date(scheduleDate.value).toLocaleString()}`, color: 'success' });
+        workflowStatus.value = 'scheduled';
+        scheduleModalOpen.value = false;
+        refreshPage();
+    } catch (error: any) {
+        toast.add({ title: 'Error', description: error.response?.data?.message || 'Schedule failed', color: 'error' });
+    } finally {
+        isScheduling.value = false;
     }
 }
 
@@ -564,7 +636,7 @@ const versionDropdownItems = computed(() => {
     });
 });
 
-// Build dropdown items with "Make Live" action for non-active versions
+// Build dropdown items with "Make Live" and "Create Draft" actions
 const versionDropdownMenuItems = computed(() => {
     // Version list items
     const versionItems = versionDropdownItems.value.map(v => ({
@@ -573,21 +645,30 @@ const versionDropdownMenuItems = computed(() => {
         onSelect: () => switchToVersion(v.value),
     }));
 
+    const actions: { label: string; icon: string; color?: 'primary'; onSelect: () => void }[] = [];
+
     // Check if viewing a non-active version on a published post
     const currentVersion = versionDropdownItems.value.find(v => v.is_current);
     if (currentVersion && !currentVersion.is_active && props.post.status === 'published') {
-        // Put "Make Live" action at the TOP so it's always visible
-        return [
-            [
-                {
-                    label: 'Make this version live',
-                    icon: 'i-lucide-rocket',
-                    color: 'primary' as const,
-                    onSelect: () => openMakeLiveModal(currentVersion.value),
-                },
-            ],
-            versionItems,
-        ];
+        actions.push({
+            label: 'Make this version live',
+            icon: 'i-lucide-rocket',
+            color: 'primary' as const,
+            onSelect: () => openMakeLiveModal(currentVersion.value),
+        });
+    }
+
+    // "Create Draft" action when post is published
+    if (props.post.status === 'published') {
+        actions.push({
+            label: existingDraftVersion.value ? 'Switch to Draft' : 'Create New Draft',
+            icon: 'i-lucide-file-plus',
+            onSelect: () => createNewDraftVersion(),
+        });
+    }
+
+    if (actions.length > 0) {
+        return [actions, versionItems];
     }
 
     return [versionItems];
@@ -1094,56 +1175,58 @@ watch(
     { deep: true }
 );
 
+// Save the post, returns a promise that resolves to true on success
+function savePost(): Promise<boolean> {
+    return new Promise((resolve) => {
+        if (!lockStatus.value.isMine || isReadOnly.value) { resolve(false); return; }
+        if (!form.title.trim()) {
+            toast.add({ title: 'Cannot save', description: 'Please add a title first', color: 'warning' });
+            resolve(false);
+            return;
+        }
+        if (form.processing || isSaving.value) { resolve(false); return; }
+
+        isSaving.value = true;
+        const langCode = props.language?.code || props.post.language_code || 'en';
+        form.post(cmsPath(`/posts/${langCode}/${props.post.uuid}`), {
+            forceFormData: true,
+            headers: { 'X-HTTP-Method-Override': 'PUT' },
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                lastSaved.value = new Date();
+                hasUnsavedChanges.value = false;
+                isSaving.value = false;
+                toast.add({ title: 'Saved', description: 'Your changes have been saved', color: 'success', duration: 2000 });
+                resolve(true);
+            },
+            onError: (errors) => {
+                isSaving.value = false;
+                const errorMessages = Object.values(errors).flat();
+                if (errorMessages.length > 0) {
+                    const description = errorMessages.length === 1
+                        ? errorMessages[0]
+                        : `${errorMessages.length} issues need attention`;
+                    toast.add({
+                        title: 'Unable to save',
+                        description: description as string,
+                        color: 'error',
+                        duration: 5000,
+                    });
+                } else {
+                    toast.add({ title: 'Error', description: 'Failed to save changes', color: 'error' });
+                }
+                resolve(false);
+            },
+        });
+    });
+}
+
 // Manual save function
 function manualSave() {
-    // Don't save if we don't have the lock
-    if (!lockStatus.value.isMine) return;
-
-    // Don't save published posts (read-only)
+    // Don't save if read-only
     if (isReadOnly.value) return;
-
-    // Only save if there's a title
-    if (!form.title.trim()) {
-        toast.add({ title: 'Cannot save', description: 'Please add a title first', color: 'warning' });
-        return;
-    }
-
-    // Don't save while already saving
-    if (form.processing || isSaving.value) return;
-
-    isSaving.value = true;
-
-    const langCode = props.language?.code || props.post.language_code || 'en';
-    form.post(cmsPath(`/posts/${langCode}/${props.post.uuid}`), {
-        forceFormData: true,
-        headers: { 'X-HTTP-Method-Override': 'PUT' },
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-            lastSaved.value = new Date();
-            hasUnsavedChanges.value = false;
-            isSaving.value = false;
-            toast.add({ title: 'Saved', description: 'Your changes have been saved', color: 'success', duration: 2000 });
-        },
-        onError: (errors) => {
-            isSaving.value = false;
-            // Show specific validation errors
-            const errorMessages = Object.values(errors).flat();
-            if (errorMessages.length > 0) {
-                const description = errorMessages.length === 1
-                    ? errorMessages[0]
-                    : `${errorMessages.length} issues need attention`;
-                toast.add({
-                    title: 'Unable to save',
-                    description: description as string,
-                    color: 'error',
-                    duration: 5000,
-                });
-            } else {
-                toast.add({ title: 'Error', description: 'Failed to save changes', color: 'error' });
-            }
-        },
-    });
+    savePost();
 }
 
 // Keyboard shortcuts (Escape for fullscreen, Cmd/Ctrl+S for save)
@@ -1553,16 +1636,16 @@ function openUnpublishModal() {
     unpublishModalOpen.value = true;
 }
 
-// Quick unpublish - uses dedicated unpublish endpoint
+// Quick unpublish - uses dedicated unpublish endpoint (goes to copydesk, not draft)
 async function unpublishPost() {
     isUnpublishing.value = true;
     try {
         const result = await workflow.unpublish('posts', props.post.uuid);
         if (result.success) {
-            toast.add({ title: 'Unpublished', description: 'Post has been unpublished and moved to draft', color: 'success' });
-            workflowStatus.value = 'draft';
+            toast.add({ title: 'Unpublished', description: 'Post has been unpublished and moved to Copy Desk', color: 'success' });
+            workflowStatus.value = 'copydesk';
             unpublishModalOpen.value = false;
-            // Full page reload to ensure all props are updated correctly (including post.status for isReadOnly)
+            // Full page reload to ensure all props are updated correctly
             router.visit(window.location.href, { preserveState: false });
         } else {
             toast.add({ title: 'Error', description: result.error || 'Failed to unpublish', color: 'error' });
@@ -1622,7 +1705,7 @@ async function createNewDraftVersion() {
     }
 }
 
-// Publish the current approved version
+// Publish the current parked version
 async function publishApprovedVersion() {
     if (!currentVersionUuid.value) return;
 
@@ -1681,7 +1764,7 @@ function openDiff() {
                             </UBadge>
                             <!-- Version Switcher Dropdown -->
                             <UDropdownMenu
-                                v-if="versionDropdownItems.length > 1"
+                                v-if="versionDropdownItems.length > 1 || post.status === 'published'"
                                 :items="versionDropdownMenuItems"
                                 :ui="{ content: 'w-56', viewport: 'max-h-60' }"
                             >
@@ -1696,39 +1779,6 @@ function openDiff() {
                                     {{ currentVersionLabel }}
                                 </UButton>
                             </UDropdownMenu>
-                            <!-- Workflow Actions Dropdown -->
-                            <UDropdownMenu
-                                v-if="availableTransitions.length > 0"
-                                :items="availableTransitions.map(t => ({
-                                    label: t.label,
-                                    icon: 'i-lucide-arrow-right',
-                                    onSelect: () => performQuickTransition(t),
-                                }))"
-                            >
-                                <UButton
-                                    color="primary"
-                                    variant="soft"
-                                    size="xs"
-                                    trailing-icon="i-lucide-chevron-down"
-                                    class="shrink-0"
-                                    :loading="transitionLoading"
-                                >
-                                    <UIcon name="i-lucide-workflow" class="size-3 mr-1" />
-                                    <span class="hidden sm:inline">Actions</span>
-                                </UButton>
-                            </UDropdownMenu>
-                            <!-- Quick Unpublish button for published posts -->
-                            <UButton
-                                v-if="isPublished"
-                                color="error"
-                                variant="soft"
-                                size="xs"
-                                class="shrink-0 hidden md:flex"
-                                @click="openUnpublishModal"
-                            >
-                                <UIcon name="i-lucide-globe-lock" class="size-3 mr-1" />
-                                <span class="hidden lg:inline">Unpublish</span>
-                            </UButton>
                             <UBadge
                                 v-if="language"
                                 :color="isRtl ? 'warning' : 'primary'"
@@ -1771,9 +1821,6 @@ function openDiff() {
                                 />
                             </UTooltip>
 
-                            <!-- Notifications -->
-                            <NotificationDropdown />
-
                             <!-- Editorial Slideover Toggle -->
                             <UButton
                                 color="neutral"
@@ -1793,7 +1840,7 @@ function openDiff() {
                             />
 
                             <UButton
-                                v-if="!isReadOnly && workflowStatus !== 'approved'"
+                                v-if="!isReadOnly"
                                 color="primary"
                                 size="sm"
                                 :loading="form.processing || isSaving"
@@ -1803,9 +1850,9 @@ function openDiff() {
                                 {{ hasUnsavedChanges ? 'Save' : 'Saved' }}
                             </UButton>
 
-                            <!-- Publish Button for Approved Versions -->
+                            <!-- Publish Button for Parked Versions -->
                             <UButton
-                                v-if="workflowStatus === 'approved'"
+                                v-if="workflowStatus === 'parked'"
                                 color="success"
                                 size="sm"
                                 :loading="transitionLoading"
@@ -1858,13 +1905,6 @@ function openDiff() {
                                 title="Compare with Live"
                             />
 
-                            <!-- Word count indicator -->
-                            <div class="hidden sm:flex items-center gap-1.5 text-xs text-muted px-2">
-                                <UIcon name="i-lucide-file-text" class="size-3.5" />
-                                <span>{{ wordCount }} words</span>
-                                <span class="text-muted/50">·</span>
-                                <span>{{ readingTime }}</span>
-                            </div>
                         </div>
                     </template>
                 </UDashboardNavbar>
@@ -1968,86 +2008,6 @@ function openDiff() {
 
                         <!-- Edit Mode -->
                         <div v-else :class="['mx-auto py-12 px-6 md:pl-20 md:pr-8', isFullscreen ? 'max-w-screen-2xl' : 'max-w-4xl']">
-                            <!-- Read-only notice -->
-                            <div v-if="isReadOnly" class="mb-6 p-4 rounded-lg bg-elevated border border-default">
-                                <div class="flex items-start gap-3">
-                                    <UIcon name="i-lucide-lock" class="size-5 text-muted shrink-0 mt-0.5" />
-                                    <div class="flex-1">
-                                        <p class="text-sm font-medium">
-                                            {{ isCurrentVersionActive ? 'This is the published version' : 'This version is in review' }}
-                                        </p>
-                                        <p class="text-xs text-muted mt-1">
-                                            <template v-if="isCurrentVersionActive">
-                                                Published content is read-only. To make changes, {{ existingDraftVersion ? 'edit the existing draft' : 'create a new draft version' }}.
-                                            </template>
-                                            <template v-else>
-                                                This version is currently in the workflow ({{ currentVersionInfo?.workflow_status }}). Only draft versions can be edited.
-                                            </template>
-                                        </p>
-                                        <!-- Actions for published version -->
-                                        <div v-if="isCurrentVersionActive" class="flex flex-wrap gap-2 mt-3">
-                                            <!-- Show "Edit Draft" if draft exists, otherwise "Create New Draft" -->
-                                            <UButton
-                                                v-if="existingDraftVersion"
-                                                size="sm"
-                                                color="primary"
-                                                icon="i-lucide-edit"
-                                                @click="switchToVersion(existingDraftVersion.uuid)"
-                                            >
-                                                Edit Draft (v{{ existingDraftVersion.version_number }})
-                                            </UButton>
-                                            <UButton
-                                                v-else
-                                                size="sm"
-                                                color="primary"
-                                                icon="i-lucide-file-plus"
-                                                :loading="creatingNewDraft"
-                                                @click="createNewDraftVersion"
-                                            >
-                                                Create New Draft
-                                            </UButton>
-                                            <UButton
-                                                size="sm"
-                                                color="error"
-                                                variant="soft"
-                                                icon="i-lucide-globe-lock"
-                                                @click="openUnpublishModal"
-                                            >
-                                                Unpublish
-                                            </UButton>
-                                        </div>
-                                        <!-- Actions for version in workflow (review, copydesk, approved, etc.) -->
-                                        <div v-else class="flex flex-wrap gap-2 mt-3">
-                                            <!-- Show available workflow transitions -->
-                                            <UButton
-                                                v-for="transition in availableTransitions"
-                                                :key="`${transition.from}-${transition.to}`"
-                                                size="sm"
-                                                :color="workflow.getStateColor(transition.to)"
-                                                variant="soft"
-                                                :loading="transitionLoading"
-                                                @click="performQuickTransition(transition)"
-                                            >
-                                                <template #leading>
-                                                    <UIcon name="i-lucide-arrow-right" class="size-4" />
-                                                </template>
-                                                {{ transition.label }}
-                                            </UButton>
-                                            <!-- If there's a draft version, offer to switch to it -->
-                                            <UButton
-                                                v-if="existingDraftVersion"
-                                                size="sm"
-                                                color="primary"
-                                                icon="i-lucide-edit"
-                                                @click="switchToVersion(existingDraftVersion.uuid)"
-                                            >
-                                                Edit Draft (v{{ existingDraftVersion.version_number }})
-                                            </UButton>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
                             <!-- Validation Errors Alert -->
                             <div v-if="Object.keys(form.errors).length > 0" class="mb-6 p-4 rounded-lg bg-error/10 border border-error/20">
                                 <div class="flex items-start gap-3">
@@ -2085,6 +2045,105 @@ function openDiff() {
                                         <UIcon name="i-lucide-rocket" class="size-4 mr-1" />
                                         Make Live
                                     </UButton>
+                                </div>
+                            </div>
+
+                            <!-- Workflow Actions -->
+                            <div class="mb-6 flex flex-wrap items-center gap-4">
+                                <div v-if="(availableTransitions.length > 0 && !isReadOnly) || (isReadOnly && !isEditorOrAdmin && workflowStatus === 'copydesk')" class="flex flex-wrap items-center gap-2">
+                                    <template v-for="transition in availableTransitions" :key="`body-${transition.from}-${transition.to}-${transition.label}`">
+                                        <UButton
+                                            v-if="transition.to === 'published'"
+                                            size="sm"
+                                            color="success"
+                                            variant="soft"
+                                            :loading="transitionLoading"
+                                            @click="performQuickTransition(transition)"
+                                        >
+                                            <template #leading>
+                                                <UIcon name="i-lucide-rocket" class="size-3.5" />
+                                            </template>
+                                            {{ transition.label }}
+                                        </UButton>
+                                        <UButton
+                                            v-else-if="transition.to === 'parked'"
+                                            size="sm"
+                                            color="primary"
+                                            variant="soft"
+                                            :loading="transitionLoading"
+                                            @click="performQuickTransition(transition)"
+                                        >
+                                            <template #leading>
+                                                <UIcon name="i-lucide-archive" class="size-3.5" />
+                                            </template>
+                                            Park
+                                        </UButton>
+                                        <UButton
+                                            v-else-if="transition.to === 'scheduled'"
+                                            size="sm"
+                                            color="info"
+                                            variant="soft"
+                                            :loading="transitionLoading"
+                                            @click="openScheduleModal(transition)"
+                                        >
+                                            <template #leading>
+                                                <UIcon name="i-lucide-calendar-clock" class="size-3.5" />
+                                            </template>
+                                            Schedule
+                                        </UButton>
+                                        <UButton
+                                            v-else-if="transition.to === 'draft' && transition.from === 'copydesk' && transition.label === 'Reject'"
+                                            size="sm"
+                                            color="error"
+                                            variant="soft"
+                                            :loading="transitionLoading"
+                                            @click="performQuickTransition(transition)"
+                                        >
+                                            <template #leading>
+                                                <UIcon name="i-lucide-x" class="size-3.5" />
+                                            </template>
+                                            Reject
+                                        </UButton>
+                                        <UButton
+                                            v-else-if="transition.to === 'draft' && transition.from === 'copydesk' && transition.label === 'Withdraw'"
+                                            size="sm"
+                                            color="neutral"
+                                            variant="soft"
+                                            :loading="transitionLoading"
+                                            @click="performQuickTransition(transition)"
+                                        >
+                                            <template #leading>
+                                                <UIcon name="i-lucide-undo-2" class="size-3.5" />
+                                            </template>
+                                            Withdraw
+                                        </UButton>
+                                        <UButton
+                                            v-else-if="transition.to === 'copydesk'"
+                                            size="sm"
+                                            :color="transition.from === 'published' || transition.from === 'scheduled' ? 'error' : 'primary'"
+                                            variant="soft"
+                                            :loading="transitionLoading"
+                                            @click="transition.from === 'published' ? openUnpublishModal() : performQuickTransition(transition)"
+                                        >
+                                            <template #leading>
+                                                <UIcon :name="transition.from === 'published' ? 'i-lucide-globe-lock' : 'i-lucide-send'" class="size-3.5" />
+                                            </template>
+                                            {{ transition.label }}
+                                        </UButton>
+                                        <UButton
+                                            v-else
+                                            size="sm"
+                                            :color="workflow.getStateColor(transition.to)"
+                                            variant="soft"
+                                            :loading="transitionLoading"
+                                            @click="performQuickTransition(transition)"
+                                        >
+                                            <template #leading>
+                                                <UIcon name="i-lucide-arrow-right" class="size-3.5" />
+                                            </template>
+                                            {{ transition.label }}
+                                        </UButton>
+                                    </template>
                                 </div>
                             </div>
 
@@ -2168,28 +2227,10 @@ function openDiff() {
                                 </div>
                             </div>
 
-                            <!-- Workflow Actions (compact bar) -->
+                            <!-- Author & Options -->
                             <div class="mb-6 flex flex-wrap items-center gap-4">
-                                <div v-if="availableTransitions.length > 0 && !isReadOnly" class="flex flex-wrap items-center gap-2">
-                                    <span class="text-xs text-muted">Actions:</span>
-                                    <UButton
-                                        v-for="transition in availableTransitions"
-                                        :key="`${transition.from}-${transition.to}`"
-                                        size="xs"
-                                        :color="workflow.getStateColor(transition.to)"
-                                        variant="soft"
-                                        :loading="transitionLoading"
-                                        @click="performQuickTransition(transition)"
-                                    >
-                                        <template #leading>
-                                            <UIcon name="i-lucide-arrow-right" class="size-3" />
-                                        </template>
-                                        {{ transition.label }}
-                                    </UButton>
-                                </div>
-
                                 <!-- Author Selector (for users with assign-author permission) -->
-                                <div v-if="props.canAssignAuthor && authorOptions.length > 0" class="flex items-center gap-2 ml-auto">
+                                <div v-if="props.canAssignAuthor && authorOptions.length > 0" class="flex items-center gap-2">
                                     <span class="text-xs text-muted">Author:</span>
                                     <USelectMenu
                                         v-model="form.author_id"
@@ -2506,6 +2547,14 @@ function openDiff() {
                                     @keydown="onDhivehiKeyDown"
                                 />
                             </template>
+
+                            <!-- Word count indicator -->
+                            <div class="flex items-center gap-2 text-xs text-muted mb-4">
+                                <UIcon name="i-lucide-file-text" class="size-3.5" />
+                                <span>{{ wordCount }} words</span>
+                                <span class="text-muted/50">·</span>
+                                <span>{{ readingTime }}</span>
+                            </div>
 
                             <!-- Separator before Content Editor -->
                             <div class="border-t border-gray-200 dark:border-gray-700 my-4 mb-8"></div>
@@ -3191,7 +3240,7 @@ function openDiff() {
 
                     <p class="text-sm">
                         Are you sure you want to unpublish <strong>"{{ post.title }}"</strong>?
-                        The post will be moved back to draft status and will no longer be visible to the public.
+                        The post will be moved to Copy Desk and will no longer be visible to the public.
                     </p>
 
                     <template #footer>
@@ -3202,6 +3251,97 @@ function openDiff() {
                             <UButton color="error" :loading="isUnpublishing" @click="unpublishPost">
                                 <UIcon name="i-lucide-globe-lock" class="size-4 mr-1" />
                                 Unpublish
+                            </UButton>
+                        </div>
+                    </template>
+                </UCard>
+            </template>
+        </UModal>
+
+        <!-- Reject Modal -->
+        <UModal v-model:open="rejectModalOpen">
+            <template #content>
+                <UCard>
+                    <template #header>
+                        <div class="flex items-center gap-3">
+                            <div class="size-10 rounded-full flex items-center justify-center bg-error/10">
+                                <UIcon name="i-lucide-message-circle-x" class="size-5 text-error" />
+                            </div>
+                            <div>
+                                <h3 class="text-base font-semibold">Reject Post</h3>
+                                <p class="text-sm text-muted">Send this post back to the writer with feedback</p>
+                            </div>
+                        </div>
+                    </template>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5">Reason for rejection</label>
+                            <UTextarea
+                                v-model="rejectComment"
+                                placeholder="Explain what needs to be changed..."
+                                :rows="4"
+                                class="w-full"
+                                autofocus
+                            />
+                        </div>
+                    </div>
+                    <template #footer>
+                        <div class="flex justify-end gap-2">
+                            <UButton color="neutral" variant="ghost" @click="rejectModalOpen = false">
+                                Cancel
+                            </UButton>
+                            <UButton
+                                color="error"
+                                :loading="isRejecting"
+                                :disabled="!rejectComment.trim()"
+                                @click="submitReject"
+                            >
+                                Reject
+                            </UButton>
+                        </div>
+                    </template>
+                </UCard>
+            </template>
+        </UModal>
+
+        <!-- Schedule Modal -->
+        <UModal v-model:open="scheduleModalOpen">
+            <template #content>
+                <UCard>
+                    <template #header>
+                        <div class="flex items-center gap-3">
+                            <div class="size-10 rounded-full flex items-center justify-center bg-info/10">
+                                <UIcon name="i-lucide-calendar-clock" class="size-5 text-info" />
+                            </div>
+                            <div>
+                                <h3 class="text-base font-semibold">Schedule Publication</h3>
+                                <p class="text-sm text-muted">Set when this post should be published</p>
+                            </div>
+                        </div>
+                    </template>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5">Publish date & time</label>
+                            <UInput
+                                v-model="scheduleDate"
+                                type="datetime-local"
+                                class="w-full"
+                            />
+                        </div>
+                    </div>
+                    <template #footer>
+                        <div class="flex justify-end gap-2">
+                            <UButton color="neutral" variant="ghost" @click="scheduleModalOpen = false">
+                                Cancel
+                            </UButton>
+                            <UButton
+                                color="info"
+                                :loading="isScheduling"
+                                :disabled="!scheduleDate"
+                                @click="submitSchedule"
+                            >
+                                <UIcon name="i-lucide-calendar-clock" class="size-4 mr-1" />
+                                Schedule
                             </UButton>
                         </div>
                     </template>

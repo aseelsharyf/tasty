@@ -27,9 +27,18 @@ class WorkflowController extends Controller
         $validated = $request->validate([
             'to_status' => ['required', 'string'],
             'comment' => ['nullable', 'string', 'max:1000'],
+            'scheduled_at' => ['nullable', 'date'],
         ]);
 
         try {
+            // If scheduling, set the scheduled_at on the post first
+            if ($validated['to_status'] === 'scheduled' && ! empty($validated['scheduled_at'])) {
+                $content = $version->versionable;
+                if ($content) {
+                    $content->update(['scheduled_at' => $validated['scheduled_at']]);
+                }
+            }
+
             $transition = $this->workflowService->transition(
                 $version,
                 $validated['to_status'],

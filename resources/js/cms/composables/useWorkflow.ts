@@ -35,6 +35,7 @@ const colorMap: Record<string, string> = {
     yellow: 'warning',
     blue: 'info',
     green: 'success',
+    emerald: 'success',
     red: 'error',
 };
 

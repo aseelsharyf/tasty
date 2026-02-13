@@ -82,7 +82,7 @@ class DashboardController extends Controller
 
         // Get posts pending review
         $pendingReview = Post::with(['author:id,name'])
-            ->whereIn('workflow_status', ['review', 'copydesk'])
+            ->where('workflow_status', 'copydesk')
             ->orderByDesc('updated_at')
             ->take(5)
             ->get(['id', 'uuid', 'title', 'workflow_status', 'author_id', 'language_code', 'updated_at'])

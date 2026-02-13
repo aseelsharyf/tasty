@@ -37,10 +37,8 @@ class FixUnpublishedPosts extends Command
             $posts->map(fn ($p) => [$p->id, $p->title, $p->slug])->toArray()
         );
 
-        $count = Post::whereIn('id', $posts->pluck('id'))
-            ->update(['status' => Post::STATUS_UNPUBLISHED]);
-
-        $this->info("Updated {$count} post(s) to 'unpublished' status.");
+        // Previously published posts stay as drafts (unpublished status removed)
+        $this->info("Found {$posts->count()} post(s). These posts remain as drafts.");
 
         return self::SUCCESS;
     }

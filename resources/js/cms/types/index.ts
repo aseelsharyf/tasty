@@ -150,8 +150,8 @@ export interface Post {
     excerpt?: string;
     content?: any;
     post_type: 'article' | 'recipe';
-    status: 'draft' | 'pending' | 'published' | 'scheduled';
-    workflow_status?: 'draft' | 'review' | 'copydesk' | 'approved' | 'rejected' | 'published';
+    status: 'draft' | 'published' | 'scheduled';
+    workflow_status?: 'draft' | 'copydesk' | 'parked' | 'rejected' | 'scheduled' | 'published';
     language_code?: string;
     author?: Author | null;
     categories?: Category[];
@@ -169,10 +169,9 @@ export interface Post {
 }
 
 export interface PostCounts {
-    all: number;
     draft: number;
-    unpublished: number;
     copydesk: number;
+    parked: number;
     published: number;
     scheduled: number;
     trashed: number;
