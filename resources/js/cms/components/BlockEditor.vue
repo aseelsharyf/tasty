@@ -241,7 +241,14 @@ const initEditor = async () => {
         // Define which inline tools are available globally
         inlineToolbar: ['bold', 'italic', 'link'],
         tools: {
-            // Order: Text (default paragraph), Header, Media, Quote, Collapsible, then others
+            // Order: List, Heading, Media, Collapsible, Quote, Code, Posts, then rest
+            list: {
+                class: List,
+                inlineToolbar: true,
+                config: {
+                    defaultStyle: 'unordered',
+                },
+            },
             header: {
                 class: Header,
                 config: {
@@ -258,23 +265,19 @@ const initEditor = async () => {
                     onSetFocalPoint: props.onSetFocalPoint,
                 },
             },
-            quote: {
-                class: QuoteBlock,
-                inlineToolbar: ['bold', 'italic'],
-                config: {
-                    quotePlaceholder: quotePlaceholder,
-                    captionPlaceholder: quoteCaptionPlaceholder,
-                    authorTitlePlaceholder: isRtlMode ? 'މަގާމު ނުވަތަ ޓައިޓަލް' : 'Title or role',
-                    onSelectMedia: props.onSelectMedia,
-                },
-            },
             collapsible: {
                 class: CollapsibleBlock,
                 config: {
                     placeholder: isRtlMode ? 'ސެކްޝަން ޓައިޓަލް...' : 'Enter section title...',
                     onSelectMedia: props.onSelectMedia,
-                    // Provide tools for nested editor (excluding collapsible to prevent infinite nesting)
                     getToolsConfig: () => ({
+                        list: {
+                            class: List,
+                            inlineToolbar: true,
+                            config: {
+                                defaultStyle: 'unordered',
+                            },
+                        },
                         header: {
                             class: Header,
                             config: {
@@ -301,28 +304,6 @@ const initEditor = async () => {
                                 onSelectMedia: props.onSelectMedia,
                             },
                         },
-                        linkTool: {
-                            class: LinkTool,
-                            config: {
-                                endpoint: cmsPath('/api/fetch-url'),
-                            },
-                        },
-                        list: {
-                            class: List,
-                            inlineToolbar: true,
-                            config: {
-                                defaultStyle: 'unordered',
-                            },
-                        },
-                        delimiter: Delimiter,
-                        table: {
-                            class: Table,
-                            inlineToolbar: true,
-                            config: {
-                                rows: 2,
-                                cols: 3,
-                            },
-                        },
                         code: {
                             class: Code,
                             config: {
@@ -336,29 +317,32 @@ const initEditor = async () => {
                                 onSelectPosts: props.onSelectPosts,
                             },
                         },
+                        linkTool: {
+                            class: LinkTool,
+                            config: {
+                                endpoint: cmsPath('/api/fetch-url'),
+                            },
+                        },
+                        delimiter: Delimiter,
+                        table: {
+                            class: Table,
+                            inlineToolbar: true,
+                            config: {
+                                rows: 2,
+                                cols: 3,
+                            },
+                        },
                     }),
                 },
             },
-            linkTool: {
-                class: LinkTool,
+            quote: {
+                class: QuoteBlock,
+                inlineToolbar: ['bold', 'italic'],
                 config: {
-                    endpoint: cmsPath('/api/fetch-url'),
-                },
-            },
-            list: {
-                class: List,
-                inlineToolbar: true,
-                config: {
-                    defaultStyle: 'unordered',
-                },
-            },
-            delimiter: Delimiter,
-            table: {
-                class: Table,
-                inlineToolbar: true,
-                config: {
-                    rows: 2,
-                    cols: 3,
+                    quotePlaceholder: quotePlaceholder,
+                    captionPlaceholder: quoteCaptionPlaceholder,
+                    authorTitlePlaceholder: isRtlMode ? 'މަގާމު ނުވަތަ ޓައިޓަލް' : 'Title or role',
+                    onSelectMedia: props.onSelectMedia,
                 },
             },
             code: {
@@ -372,6 +356,21 @@ const initEditor = async () => {
                 config: {
                     placeholder: isRtlMode ? 'ޕੋސްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
                     onSelectPosts: props.onSelectPosts,
+                },
+            },
+            linkTool: {
+                class: LinkTool,
+                config: {
+                    endpoint: cmsPath('/api/fetch-url'),
+                },
+            },
+            delimiter: Delimiter,
+            table: {
+                class: Table,
+                inlineToolbar: true,
+                config: {
+                    rows: 2,
+                    cols: 3,
                 },
             },
         },
@@ -606,12 +605,24 @@ h4.ce-header {
     color: var(--ui-primary);
 }
 
+/* Keep block content below popovers/toolbars */
+.ce-block {
+    position: relative;
+    z-index: 0;
+}
+
+/* Toolbar must sit above all block content */
+.ce-toolbar {
+    z-index: 4 !important;
+}
+
 /* Popover / Block menu (+ button dropdown) */
 .ce-popover {
     background-color: var(--ui-bg);
     border: 1px solid var(--ui-border);
     border-radius: var(--ui-radius);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 100 !important;
 }
 
 .dark .ce-popover {
