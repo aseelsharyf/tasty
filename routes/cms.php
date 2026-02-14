@@ -217,6 +217,7 @@ Route::middleware(['auth', 'cms'])->group(function () {
             Route::post('heartbeat', [PostEditLockController::class, 'heartbeat'])->name('cms.posts.lock.heartbeat');
             Route::post('release', [PostEditLockController::class, 'release'])->name('cms.posts.lock.release');
             Route::post('force', [PostEditLockController::class, 'forceAcquire'])->name('cms.posts.lock.force');
+            Route::post('force-release', [PostEditLockController::class, 'forceRelease'])->name('cms.posts.lock.force-release');
         });
     });
 

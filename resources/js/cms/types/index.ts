@@ -166,6 +166,7 @@ export interface Post {
     created_at: string;
     updated_at: string;
     deleted_at?: string | null;
+    edit_lock?: { user_id: number; user_name: string } | null;
 }
 
 export interface PostCounts {

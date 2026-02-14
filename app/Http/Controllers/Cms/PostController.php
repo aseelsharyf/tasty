@@ -52,6 +52,7 @@ class PostController extends Controller
                 'author' => fn ($q) => $q->select('id', 'name')->with('media'),
                 'categories:id,name,slug',
                 'tags:id,name,slug',
+                'editLock.user:id,name',
             ]);
 
         // Filter by status
@@ -172,6 +173,10 @@ class PostController extends Controller
                 'language_code' => $post->language_code,
                 'deleted_at' => $post->deleted_at,
                 'workflow_status' => $post->workflow_status ?? 'draft',
+                'edit_lock' => $post->editLock && ! $post->editLock->isStale() ? [
+                    'user_id' => $post->editLock->user_id,
+                    'user_name' => $post->editLock->user->name ?? 'Unknown',
+                ] : null,
             ]);
 
         // Get counts for status tabs (filtered by language and user role)

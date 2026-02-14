@@ -88,6 +88,27 @@ class PostEditLockController extends Controller
     }
 
     /**
+     * Force release a lock (Admin/Developer only).
+     */
+    public function forceRelease(Post $post): JsonResponse
+    {
+        $user = auth()->user();
+
+        if (! $user->hasAnyRole(['Admin', 'Developer'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to force release locks.',
+            ], 403);
+        }
+
+        $released = PostEditLock::release($post);
+
+        return response()->json([
+            'success' => $released,
+        ]);
+    }
+
+    /**
      * Force acquire a lock (take over from another user).
      */
     public function forceAcquire(Post $post): JsonResponse

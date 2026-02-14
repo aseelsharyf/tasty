@@ -115,6 +115,9 @@ const selectedCategory = ref<string | null>(props.filters.category?.toString() |
 const showAllDrafts = ref(props.filters.show_all === '1' || props.filters.show_all === true);
 const deleteModalOpen = ref(false);
 const postToDelete = ref<Post | null>(null);
+const unlockingPostId = ref<number | null>(null);
+const unlockModalOpen = ref(false);
+const postToUnlock = ref<Post | null>(null);
 
 // Navigation menu items for status tabs
 const statusLinks = computed<NavigationMenuItem[][]>(() => {
@@ -270,6 +273,37 @@ function restorePost(post: Post) {
 function forceDeletePost(post: Post) {
     const langCode = post.language_code || currentLanguageCode.value;
     router.delete(cmsPath(`/posts/${langCode}/${post.uuid}/force`));
+}
+
+function confirmUnlock(post: Post) {
+    postToUnlock.value = post;
+    unlockModalOpen.value = true;
+}
+
+async function forceUnlock() {
+    if (!postToUnlock.value) return;
+    const post = postToUnlock.value;
+    unlockingPostId.value = post.id;
+    try {
+        const response = await fetch(cmsPath(`/posts/${post.uuid}/lock/force-release`), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-XSRF-TOKEN': getCsrfToken(),
+                'Accept': 'application/json',
+            },
+        });
+
+        if (response.ok) {
+            post.edit_lock = null;
+        }
+    } catch (e) {
+        console.error('Force unlock error:', e);
+    } finally {
+        unlockingPostId.value = null;
+        unlockModalOpen.value = false;
+        postToUnlock.value = null;
+    }
 }
 
 function publishPost(post: Post) {
@@ -697,6 +731,29 @@ function formatDate(dateStr: string) {
                                             Trashed
                                         </UBadge>
                                     </div>
+
+                                    <!-- Edit Lock Indicator -->
+                                    <div
+                                        v-if="post.edit_lock && post.edit_lock.user_id !== userCapabilities.userId"
+                                        class="flex items-center gap-1.5 mt-2"
+                                        @click.stop
+                                    >
+                                        <span class="relative flex size-2">
+                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning-400 opacity-75" />
+                                            <span class="relative inline-flex rounded-full size-2 bg-warning-500" />
+                                        </span>
+                                        <span class="text-xs text-warning-600 dark:text-warning-400">
+                                            Being edited by {{ post.edit_lock.user_name }}
+                                        </span>
+                                        <button
+                                            v-if="userCapabilities.isAdminOrDeveloper"
+                                            class="text-xs text-muted hover:text-warning-600 dark:hover:text-warning-400 transition-colors"
+                                            title="Force unlock"
+                                            @click="confirmUnlock(post)"
+                                        >
+                                            <UIcon name="i-lucide-lock-open" class="size-3.5" />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <!-- Actions -->
@@ -815,6 +872,42 @@ function formatDate(dateStr: string) {
                             @click="deletePost"
                         >
                             Move to Trash
+                        </UButton>
+                    </div>
+                </UCard>
+            </template>
+        </UModal>
+
+        <!-- Unlock Confirmation Modal -->
+        <UModal v-model:open="unlockModalOpen">
+            <template #content>
+                <UCard :ui="{ body: 'p-6' }">
+                    <div class="flex items-start gap-4">
+                        <div class="flex items-center justify-center size-12 rounded-full bg-warning/10 shrink-0">
+                            <UIcon name="i-lucide-lock-open" class="size-6 text-warning" />
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-highlighted">Force Unlock</h3>
+                            <p class="mt-2 text-sm text-muted">
+                                <strong class="text-highlighted">{{ postToUnlock?.edit_lock?.user_name }}</strong> is currently editing <strong class="text-highlighted">{{ postToUnlock?.title }}</strong>. Unlocking may cause them to lose unsaved changes.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-6">
+                        <UButton
+                            color="neutral"
+                            variant="outline"
+                            @click="unlockModalOpen = false"
+                        >
+                            Cancel
+                        </UButton>
+                        <UButton
+                            color="warning"
+                            :loading="unlockingPostId !== null"
+                            @click="forceUnlock"
+                        >
+                            Unlock
                         </UButton>
                     </div>
                 </UCard>
