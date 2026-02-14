@@ -97,7 +97,7 @@ trait HasWorkflow
                 ['from' => 'copydesk', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
                 ['from' => 'copydesk', 'to' => 'scheduled', 'roles' => ['Editor', 'Admin'], 'label' => 'Schedule'],
                 ['from' => 'parked', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
-                ['from' => 'parked', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Send Back'],
+                ['from' => 'parked', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Send to Copy Desk'],
                 // ['from' => 'draft', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
                 ['from' => 'published', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Unpublish'],
                 ['from' => 'scheduled', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Unschedule'],
