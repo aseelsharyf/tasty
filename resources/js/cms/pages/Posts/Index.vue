@@ -33,6 +33,7 @@ interface PostType {
 
 interface UserCapabilities {
     isEditorOrAdmin: boolean;
+    isAdminOrDeveloper: boolean;
     userId: number;
 }
 
@@ -117,16 +118,28 @@ const postToDelete = ref<Post | null>(null);
 
 // Navigation menu items for status tabs
 const statusLinks = computed<NavigationMenuItem[][]>(() => {
-    const items: NavigationMenuItem[] = [
-        {
-            label: 'Drafts',
-            icon: 'i-lucide-file-edit',
-            badge: props.counts.draft,
-            to: cmsPath(`/posts/${currentLanguageCode.value}?status=draft`),
-            active: currentStatus.value === 'draft',
-            onSelect: () => changeStatus('draft'),
-        },
-    ];
+    const items: NavigationMenuItem[] = [];
+
+    // All Posts tab - Admin/Developer only
+    if (props.userCapabilities.isAdminOrDeveloper) {
+        items.push({
+            label: 'All',
+            icon: 'i-lucide-layout-list',
+            badge: props.counts.all,
+            to: cmsPath(`/posts/${currentLanguageCode.value}?status=all`),
+            active: currentStatus.value === 'all',
+            onSelect: () => changeStatus('all'),
+        });
+    }
+
+    items.push({
+        label: 'Drafts',
+        icon: 'i-lucide-file-edit',
+        badge: props.counts.draft,
+        to: cmsPath(`/posts/${currentLanguageCode.value}?status=draft`),
+        active: currentStatus.value === 'draft',
+        onSelect: () => changeStatus('draft'),
+    });
 
     // Copydesk tab visible to all users (writers see their own posts)
     items.push({
@@ -229,7 +242,7 @@ function changeStatus(status: string) {
     if (status !== 'draft') {
         showAllDrafts.value = false;
     }
-    applyFilters({ status: status !== 'draft' ? status : undefined });
+    applyFilters({ status: status !== 'draft' ? status : undefined, page: undefined });
 }
 
 function confirmDelete(post: Post) {
@@ -638,9 +651,20 @@ function formatDate(dateStr: string) {
 
                                     <!-- Status & Type Badges -->
                                     <div class="flex flex-wrap items-center gap-2 mt-2">
+                                        <!-- In "All" view, always show workflow status -->
+                                        <UBadge
+                                            v-if="currentStatus === 'all'"
+                                            :color="getWorkflowStatusColor(post.workflow_status || post.status)"
+                                            variant="soft"
+                                            size="xs"
+                                            class="gap-1"
+                                        >
+                                            <UIcon :name="getWorkflowStatusIcon(post.workflow_status || post.status)" class="size-3" />
+                                            {{ getWorkflowStatusLabel(post.workflow_status || post.status) }}
+                                        </UBadge>
                                         <!-- Workflow Status - only show editorial statuses (review, copydesk, approved, rejected) -->
                                         <UBadge
-                                            v-if="post.workflow_status && !['draft', 'published'].includes(post.workflow_status) && post.workflow_status !== post.status"
+                                            v-else-if="post.workflow_status && !['draft', 'published'].includes(post.workflow_status) && post.workflow_status !== post.status"
                                             :color="getWorkflowStatusColor(post.workflow_status)"
                                             variant="soft"
                                             size="xs"
@@ -650,7 +674,7 @@ function formatDate(dateStr: string) {
                                             {{ getWorkflowStatusLabel(post.workflow_status) }}
                                         </UBadge>
                                         <UBadge
-                                            v-if="!post.workflow_status || ['draft', 'published'].includes(post.workflow_status) || post.workflow_status === post.status"
+                                            v-else-if="!post.workflow_status || ['draft', 'published'].includes(post.workflow_status) || post.workflow_status === post.status"
                                             :color="getStatusColor(post.status)"
                                             variant="subtle"
                                             size="xs"

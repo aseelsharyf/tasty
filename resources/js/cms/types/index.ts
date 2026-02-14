@@ -169,6 +169,7 @@ export interface Post {
 }
 
 export interface PostCounts {
+    all?: number | null;
     draft: number;
     copydesk: number;
     parked: number;

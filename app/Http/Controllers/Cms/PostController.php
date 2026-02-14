@@ -57,6 +57,8 @@ class PostController extends Controller
         // Filter by status
         $showAll = $request->boolean('show_all');
         match ($status) {
+            // All tab: no status filter (Admin/Developer only)
+            'all' => null,
             // Draft tab: status=draft AND workflow_status IN (draft, rejected) — excludes copydesk/parked
             'draft' => $query->draft()->whereIn('workflow_status', ['draft', 'rejected']),
             // Copydesk tab: workflow_status=copydesk
@@ -70,13 +72,18 @@ class PostController extends Controller
         };
 
         // Role-based filtering:
+        // - All: Admin/Developer only
         // - Draft: Writers see only their own; editors can pass show_all=1
         // - Copydesk: Writers see their own posts; editors see all
         // - Parked: Editors/Admins only
         // - Published: Everyone can see
         // - Scheduled: Writers see their own; editors see all
         // - Trashed: Writers see own; editors see all
-        if ($status === 'draft') {
+        if ($status === 'all') {
+            if (! $user->hasAnyRole(['Admin', 'Developer'])) {
+                abort(403);
+            }
+        } elseif ($status === 'draft') {
             if (! $isEditorOrAdmin || ! $showAll) {
                 $query->where('author_id', $user->id);
             }
@@ -170,8 +177,11 @@ class PostController extends Controller
         // Get counts for status tabs (filtered by language and user role)
         $baseQuery = fn () => Post::where('language_code', $language);
 
+        $isAdminOrDeveloper = $user->hasAnyRole(['Admin', 'Developer']);
+
         if ($isEditorOrAdmin) {
             $counts = [
+                'all' => $isAdminOrDeveloper ? $baseQuery()->count() : null,
                 'draft' => $baseQuery()->draft()->whereIn('workflow_status', ['draft', 'rejected'])->where('author_id', $user->id)->count(),
                 'copydesk' => $baseQuery()->inEditorialReview()->count(),
                 'parked' => $baseQuery()->parked()->count(),
@@ -226,6 +236,7 @@ class PostController extends Controller
             'postTypes' => $postTypes,
             'userCapabilities' => [
                 'isEditorOrAdmin' => $isEditorOrAdmin,
+                'isAdminOrDeveloper' => $isAdminOrDeveloper,
                 'userId' => $user->id,
             ],
         ]);

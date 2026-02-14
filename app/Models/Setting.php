@@ -249,8 +249,7 @@ class Setting extends Model
             'transitions' => [
                 // Writer submits draft for review
                 ['from' => 'draft', 'to' => 'copydesk', 'roles' => ['Writer', 'Editor', 'Admin', 'Developer'], 'label' => 'Send to Copy Desk'],
-                // Writer withdraws from copydesk back to draft
-                ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Writer'], 'label' => 'Withdraw'],
+                // ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Writer'], 'label' => 'Withdraw'],
                 // Editor rejects back to draft
                 ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Reject'],
                 // Editor parks (approved, banked for later)

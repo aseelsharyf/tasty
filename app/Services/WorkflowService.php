@@ -63,8 +63,7 @@ class WorkflowService
             'transitions' => [
                 // Writer submits draft for review
                 ['from' => 'draft', 'to' => 'copydesk', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Send to Copy Desk'],
-                // Writer withdraws from copydesk back to draft (only if not published/scheduled)
-                ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Writer'], 'label' => 'Withdraw'],
+                // ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Writer'], 'label' => 'Withdraw'],
                 // Editor rejects back to draft (sends notification to writer)
                 ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Reject'],
                 // Editor parks (approved, banked for later)

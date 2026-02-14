@@ -91,7 +91,7 @@ trait HasWorkflow
             ],
             'transitions' => [
                 ['from' => 'draft', 'to' => 'copydesk', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Send to Copy Desk'],
-                ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Writer'], 'label' => 'Withdraw'],
+                // ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Writer'], 'label' => 'Withdraw'],
                 ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Reject'],
                 ['from' => 'copydesk', 'to' => 'parked', 'roles' => ['Editor', 'Admin'], 'label' => 'Park'],
                 ['from' => 'copydesk', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
