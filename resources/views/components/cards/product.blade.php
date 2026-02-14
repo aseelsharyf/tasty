@@ -1,9 +1,9 @@
-<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-8 w-[426px] aspect-[426/626] max-lg:w-full max-lg:aspect-auto max-lg:h-auto">
+<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-6 w-[426px] max-lg:w-full">
     {{-- Main card link (covers entire card) --}}
     <a href="{{ $url }}" class="absolute inset-0 z-0" aria-label="{{ $title }}"></a>
 
-    {{-- Image container: fixed proportion of card height --}}
-    <div class="relative h-[55%] max-lg:h-[250px] bg-white rounded-lg flex items-end justify-center p-6 mb-6">
+    {{-- Image container --}}
+    <div class="relative h-[300px] max-lg:h-[250px] bg-white rounded-lg flex items-end justify-center p-6 mb-4">
         <img
             src="{{ $image }}"
             alt="{{ $imageAlt }}"
@@ -26,7 +26,7 @@
     </div>
 
     {{-- Content --}}
-    <div class="flex flex-col items-center gap-4 px-8 max-lg:px-6 text-center flex-1">
+    <div class="flex flex-col items-center gap-3 px-8 max-lg:px-6 text-center">
         {{-- Store Logo --}}
         @if($storeLogo)
             @if($storeUrl)
