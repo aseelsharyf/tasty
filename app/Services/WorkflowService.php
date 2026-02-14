@@ -77,8 +77,7 @@ class WorkflowService
                 ['from' => 'parked', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
                 // Editor sends parked post back to draft
                 ['from' => 'parked', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Send Back'],
-                // Editor can publish directly from draft (skip copydesk)
-                ['from' => 'draft', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
+                // ['from' => 'draft', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
                 // Unpublish goes to copydesk (not draft)
                 ['from' => 'published', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Unpublish'],
                 // Scheduled post actions

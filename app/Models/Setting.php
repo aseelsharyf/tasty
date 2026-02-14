@@ -263,8 +263,7 @@ class Setting extends Model
                 ['from' => 'parked', 'to' => 'published', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Publish'],
                 // Editor sends parked post back to draft
                 ['from' => 'parked', 'to' => 'draft', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Send Back'],
-                // Editor can publish directly from draft (skip copydesk)
-                ['from' => 'draft', 'to' => 'published', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Publish'],
+                // ['from' => 'draft', 'to' => 'published', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Publish'],
                 // Unpublish goes to copydesk (not draft)
                 ['from' => 'published', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Unpublish'],
                 // Scheduled post actions

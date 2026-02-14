@@ -569,7 +569,12 @@ async function submitReject() {
 }
 
 // Open schedule modal
-function openScheduleModal(transition: { from: string; to: string; label: string }) {
+async function openScheduleModal(transition: { from: string; to: string; label: string }) {
+    // Auto-save before opening schedule modal
+    if (hasUnsavedChanges.value && !isReadOnly.value) {
+        const saved = await savePost();
+        if (!saved) return;
+    }
     pendingScheduleTransition.value = transition;
     // Pre-fill with existing scheduled_at or default to tomorrow
     const tomorrow = new Date();
@@ -1908,6 +1913,131 @@ function openDiff() {
                         </div>
                     </template>
                 </UDashboardNavbar>
+
+                <!-- Workflow Actions Bar -->
+                <div
+                    v-if="(availableTransitions.length > 0 && !isReadOnly) || (isReadOnly && !isEditorOrAdmin && workflowStatus === 'copydesk')"
+                    class="border-b border-default bg-[var(--ui-bg)]"
+                >
+                    <div class="flex items-center justify-between px-4 sm:px-6 h-11">
+                        <!-- Left: Status badge + description -->
+                        <div class="flex items-center gap-3">
+                            <UBadge
+                                :color="workflow.getStateColor(workflowStatus)"
+                                variant="subtle"
+                                size="md"
+                                class="shrink-0"
+                            >
+                                <UIcon :name="currentWorkflowState.icon" class="size-3.5 mr-1.5" />
+                                {{ currentWorkflowState.label }}
+                            </UBadge>
+                            <span class="text-sm text-muted hidden sm:inline">
+                                <template v-if="workflowStatus === 'draft'">Ready for action</template>
+                                <template v-else-if="workflowStatus === 'copydesk'">In editorial review</template>
+                                <template v-else-if="workflowStatus === 'parked'">Approved, awaiting publish</template>
+                                <template v-else-if="workflowStatus === 'published'">Currently live</template>
+                                <template v-else-if="workflowStatus === 'scheduled'">Scheduled for publish</template>
+                            </span>
+                        </div>
+
+                        <!-- Right: Action buttons -->
+                        <div class="flex items-center gap-2">
+                            <template v-for="transition in availableTransitions" :key="`bar-${transition.from}-${transition.to}-${transition.label}`">
+                                <UButton
+                                    v-if="transition.to === 'published'"
+                                    size="md"
+                                    color="success"
+                                    variant="soft"
+                                    :loading="transitionLoading"
+                                    @click="performQuickTransition(transition)"
+                                >
+                                    <template #leading>
+                                        <UIcon name="i-lucide-rocket" class="size-4" />
+                                    </template>
+                                    {{ transition.label }}
+                                </UButton>
+                                <UButton
+                                    v-else-if="transition.to === 'parked'"
+                                    size="md"
+                                    color="neutral"
+                                    variant="soft"
+                                    :loading="transitionLoading"
+                                    @click="performQuickTransition(transition)"
+                                >
+                                    <template #leading>
+                                        <UIcon name="i-lucide-archive" class="size-4" />
+                                    </template>
+                                    Park
+                                </UButton>
+                                <UButton
+                                    v-else-if="transition.to === 'scheduled'"
+                                    size="md"
+                                    color="info"
+                                    variant="soft"
+                                    :loading="transitionLoading"
+                                    @click="openScheduleModal(transition)"
+                                >
+                                    <template #leading>
+                                        <UIcon name="i-lucide-calendar-clock" class="size-4" />
+                                    </template>
+                                    Schedule
+                                </UButton>
+                                <UButton
+                                    v-else-if="transition.to === 'draft' && transition.from === 'copydesk' && transition.label === 'Reject'"
+                                    size="md"
+                                    color="error"
+                                    variant="soft"
+                                    :loading="transitionLoading"
+                                    @click="performQuickTransition(transition)"
+                                >
+                                    <template #leading>
+                                        <UIcon name="i-lucide-x" class="size-4" />
+                                    </template>
+                                    Reject
+                                </UButton>
+                                <UButton
+                                    v-else-if="transition.to === 'draft' && transition.from === 'copydesk' && transition.label === 'Withdraw'"
+                                    size="md"
+                                    color="neutral"
+                                    variant="soft"
+                                    :loading="transitionLoading"
+                                    @click="performQuickTransition(transition)"
+                                >
+                                    <template #leading>
+                                        <UIcon name="i-lucide-undo-2" class="size-4" />
+                                    </template>
+                                    Withdraw
+                                </UButton>
+                                <UButton
+                                    v-else-if="transition.to === 'copydesk'"
+                                    size="md"
+                                    :color="transition.from === 'published' || transition.from === 'scheduled' ? 'error' : 'primary'"
+                                    variant="soft"
+                                    :loading="transitionLoading"
+                                    @click="transition.from === 'published' ? openUnpublishModal() : performQuickTransition(transition)"
+                                >
+                                    <template #leading>
+                                        <UIcon :name="transition.from === 'published' ? 'i-lucide-globe-lock' : 'i-lucide-send'" class="size-4" />
+                                    </template>
+                                    {{ transition.label }}
+                                </UButton>
+                                <UButton
+                                    v-else
+                                    size="md"
+                                    :color="workflow.getStateColor(transition.to)"
+                                    variant="soft"
+                                    :loading="transitionLoading"
+                                    @click="performQuickTransition(transition)"
+                                >
+                                    <template #leading>
+                                        <UIcon name="i-lucide-arrow-right" class="size-4" />
+                                    </template>
+                                    {{ transition.label }}
+                                </UButton>
+                            </template>
+                        </div>
+                    </div>
+                </div>
             </template>
 
             <template #body>
@@ -2045,105 +2175,6 @@ function openDiff() {
                                         <UIcon name="i-lucide-rocket" class="size-4 mr-1" />
                                         Make Live
                                     </UButton>
-                                </div>
-                            </div>
-
-                            <!-- Workflow Actions -->
-                            <div class="mb-6 flex flex-wrap items-center gap-4">
-                                <div v-if="(availableTransitions.length > 0 && !isReadOnly) || (isReadOnly && !isEditorOrAdmin && workflowStatus === 'copydesk')" class="flex flex-wrap items-center gap-2">
-                                    <template v-for="transition in availableTransitions" :key="`body-${transition.from}-${transition.to}-${transition.label}`">
-                                        <UButton
-                                            v-if="transition.to === 'published'"
-                                            size="sm"
-                                            color="success"
-                                            variant="soft"
-                                            :loading="transitionLoading"
-                                            @click="performQuickTransition(transition)"
-                                        >
-                                            <template #leading>
-                                                <UIcon name="i-lucide-rocket" class="size-3.5" />
-                                            </template>
-                                            {{ transition.label }}
-                                        </UButton>
-                                        <UButton
-                                            v-else-if="transition.to === 'parked'"
-                                            size="sm"
-                                            color="primary"
-                                            variant="soft"
-                                            :loading="transitionLoading"
-                                            @click="performQuickTransition(transition)"
-                                        >
-                                            <template #leading>
-                                                <UIcon name="i-lucide-archive" class="size-3.5" />
-                                            </template>
-                                            Park
-                                        </UButton>
-                                        <UButton
-                                            v-else-if="transition.to === 'scheduled'"
-                                            size="sm"
-                                            color="info"
-                                            variant="soft"
-                                            :loading="transitionLoading"
-                                            @click="openScheduleModal(transition)"
-                                        >
-                                            <template #leading>
-                                                <UIcon name="i-lucide-calendar-clock" class="size-3.5" />
-                                            </template>
-                                            Schedule
-                                        </UButton>
-                                        <UButton
-                                            v-else-if="transition.to === 'draft' && transition.from === 'copydesk' && transition.label === 'Reject'"
-                                            size="sm"
-                                            color="error"
-                                            variant="soft"
-                                            :loading="transitionLoading"
-                                            @click="performQuickTransition(transition)"
-                                        >
-                                            <template #leading>
-                                                <UIcon name="i-lucide-x" class="size-3.5" />
-                                            </template>
-                                            Reject
-                                        </UButton>
-                                        <UButton
-                                            v-else-if="transition.to === 'draft' && transition.from === 'copydesk' && transition.label === 'Withdraw'"
-                                            size="sm"
-                                            color="neutral"
-                                            variant="soft"
-                                            :loading="transitionLoading"
-                                            @click="performQuickTransition(transition)"
-                                        >
-                                            <template #leading>
-                                                <UIcon name="i-lucide-undo-2" class="size-3.5" />
-                                            </template>
-                                            Withdraw
-                                        </UButton>
-                                        <UButton
-                                            v-else-if="transition.to === 'copydesk'"
-                                            size="sm"
-                                            :color="transition.from === 'published' || transition.from === 'scheduled' ? 'error' : 'primary'"
-                                            variant="soft"
-                                            :loading="transitionLoading"
-                                            @click="transition.from === 'published' ? openUnpublishModal() : performQuickTransition(transition)"
-                                        >
-                                            <template #leading>
-                                                <UIcon :name="transition.from === 'published' ? 'i-lucide-globe-lock' : 'i-lucide-send'" class="size-3.5" />
-                                            </template>
-                                            {{ transition.label }}
-                                        </UButton>
-                                        <UButton
-                                            v-else
-                                            size="sm"
-                                            :color="workflow.getStateColor(transition.to)"
-                                            variant="soft"
-                                            :loading="transitionLoading"
-                                            @click="performQuickTransition(transition)"
-                                        >
-                                            <template #leading>
-                                                <UIcon name="i-lucide-arrow-right" class="size-3.5" />
-                                            </template>
-                                            {{ transition.label }}
-                                        </UButton>
-                                    </template>
                                 </div>
                             </div>
 
@@ -2547,14 +2578,6 @@ function openDiff() {
                                     @keydown="onDhivehiKeyDown"
                                 />
                             </template>
-
-                            <!-- Word count indicator -->
-                            <div class="flex items-center gap-2 text-xs text-muted mb-4">
-                                <UIcon name="i-lucide-file-text" class="size-3.5" />
-                                <span>{{ wordCount }} words</span>
-                                <span class="text-muted/50">·</span>
-                                <span>{{ readingTime }}</span>
-                            </div>
 
                             <!-- Separator before Content Editor -->
                             <div class="border-t border-gray-200 dark:border-gray-700 my-4 mb-8"></div>
@@ -3030,6 +3053,14 @@ function openDiff() {
                                         No tags added.
                                     </p>
                                 </div>
+                            </div>
+
+                            <!-- Word count & reading time -->
+                            <div class="mt-4 flex items-center gap-2 text-xs text-muted">
+                                <UIcon name="i-lucide-file-text" class="size-3.5" />
+                                <span>{{ wordCount }} words</span>
+                                <span class="text-muted/50">·</span>
+                                <span>{{ readingTime }}</span>
                             </div>
 
                             <!-- Additional Settings -->

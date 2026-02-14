@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -14,6 +15,16 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Remove all old workflow configs from settings so the hardcoded defaults are used
+        $workflowKeys = DB::table('settings')->where('key', 'like', 'workflow.%')->pluck('key');
+        DB::table('settings')->where('key', 'like', 'workflow.%')->delete();
+
+        // Clear cached settings so the app uses hardcoded defaults immediately
+        foreach ($workflowKeys as $key) {
+            Cache::forget("setting.{$key}");
+        }
+        Cache::forget('settings.group.workflow');
+
         // Add scheduled_copydesk_at column
         Schema::table('posts', function (Blueprint $table) {
             $table->timestamp('scheduled_copydesk_at')->nullable()->after('scheduled_at');
