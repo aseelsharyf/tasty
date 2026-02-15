@@ -3,7 +3,7 @@
     <a href="{{ $url }}" class="absolute inset-0 z-0" aria-label="{{ $title }}"></a>
 
     {{-- Image container --}}
-    <div class="relative aspect-[3/4] max-lg:aspect-[3/4] bg-white rounded-lg flex items-end justify-center p-6 mb-4">
+    <div class="relative aspect-[4/4] max-lg:aspect-[4/4] bg-white rounded-lg flex items-end justify-center p-6 mb-4">
         <img
             src="{{ $image }}"
             alt="{{ $imageAlt }}"
