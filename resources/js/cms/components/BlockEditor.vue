@@ -243,15 +243,7 @@ const initEditor = async () => {
         // Define which inline tools are available globally
         inlineToolbar: ['bold', 'italic', 'link'],
         tools: {
-            // Order: Header, Media, Collapsible, Quote, HTML Embed, Code, Posts, List, Link Tool, Delimiter, Table
-            header: {
-                class: Header,
-                config: {
-                    placeholder: headerPlaceholder,
-                    levels: [2, 3, 4],
-                    defaultLevel: 2,
-                },
-            },
+            // Order: Text (built-in), Media, Heading, Quote, Collapsible, Bullet List, Numbered List, Posts, Social Embed / HTML, Code, Link Tool, Table, Delimiter
             media: {
                 class: MediaBlock,
                 config: {
@@ -260,26 +252,44 @@ const initEditor = async () => {
                     onSetFocalPoint: props.onSetFocalPoint,
                 },
             },
+            header: {
+                class: Header,
+                config: {
+                    placeholder: headerPlaceholder,
+                    levels: [2, 3, 4],
+                    defaultLevel: 2,
+                },
+            },
+            quote: {
+                class: QuoteBlock,
+                inlineToolbar: ['bold', 'italic'],
+                config: {
+                    quotePlaceholder: quotePlaceholder,
+                    captionPlaceholder: quoteCaptionPlaceholder,
+                    authorTitlePlaceholder: isRtlMode ? 'މަގާމު ނުވަތަ ޓައިޓަލް' : 'Title or role',
+                    onSelectMedia: props.onSelectMedia,
+                },
+            },
             collapsible: {
                 class: CollapsibleBlock,
                 config: {
                     placeholder: isRtlMode ? 'ސެކްޝަން ޓައިޓަލް...' : 'Enter section title...',
                     onSelectMedia: props.onSelectMedia,
                     getToolsConfig: () => ({
-                        header: {
-                            class: Header,
-                            config: {
-                                placeholder: headerPlaceholder,
-                                levels: [2, 3, 4],
-                                defaultLevel: 3,
-                            },
-                        },
                         media: {
                             class: MediaBlock,
                             config: {
                                 placeholder: isRtlMode ? 'މީޑީއާ އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add media',
                                 onSelectMedia: props.onSelectMedia,
                                 onSetFocalPoint: props.onSetFocalPoint,
+                            },
+                        },
+                        header: {
+                            class: Header,
+                            config: {
+                                placeholder: headerPlaceholder,
+                                levels: [2, 3, 4],
+                                defaultLevel: 3,
                             },
                         },
                         quote: {
@@ -290,6 +300,20 @@ const initEditor = async () => {
                                 captionPlaceholder: quoteCaptionPlaceholder,
                                 authorTitlePlaceholder: isRtlMode ? 'މަގާމު ނުވަތަ ޓައިޓަލް' : 'Title or role',
                                 onSelectMedia: props.onSelectMedia,
+                            },
+                        },
+                        list: {
+                            class: List,
+                            inlineToolbar: true,
+                            config: {
+                                defaultStyle: 'unordered',
+                            },
+                        },
+                        posts: {
+                            class: PostsBlock,
+                            config: {
+                                placeholder: isRtlMode ? 'ޕੋسްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
+                                onSelectPosts: props.onSelectPosts,
                             },
                         },
                         htmlEmbed: {
@@ -304,27 +328,12 @@ const initEditor = async () => {
                                 placeholder: codePlaceholder,
                             },
                         },
-                        posts: {
-                            class: PostsBlock,
-                            config: {
-                                placeholder: isRtlMode ? 'ޕੋسްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
-                                onSelectPosts: props.onSelectPosts,
-                            },
-                        },
-                        list: {
-                            class: List,
-                            inlineToolbar: true,
-                            config: {
-                                defaultStyle: 'unordered',
-                            },
-                        },
                         linkTool: {
                             class: LinkTool,
                             config: {
                                 endpoint: cmsPath('/api/fetch-url'),
                             },
                         },
-                        delimiter: Delimiter,
                         table: {
                             class: Table,
                             inlineToolbar: true,
@@ -333,17 +342,34 @@ const initEditor = async () => {
                                 cols: 3,
                             },
                         },
+                        delimiter: Delimiter,
                     }),
                 },
             },
-            quote: {
-                class: QuoteBlock,
-                inlineToolbar: ['bold', 'italic'],
+            list: {
+                class: List,
+                inlineToolbar: true,
+                toolbox: [
+                    {
+                        title: 'Bullet List',
+                        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><line x1="9" x2="19" y1="7" y2="7" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="9" x2="19" y1="12" y2="12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="9" x2="19" y1="17" y2="17" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 17H4.99002"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 12H4.99002"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 7H4.99002"/></svg>',
+                        data: { style: 'unordered' },
+                    },
+                    {
+                        title: 'Numbered List',
+                        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><line x1="12" x2="19" y1="7" y2="7" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="12" x2="19" y1="12" y2="12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="12" x2="19" y1="17" y2="17" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M7.79999 14L7.79999 7.2135C7.79999 7.12872 7.7011 7.0824 7.63597 7.13668L4.79999 9.5"/></svg>',
+                        data: { style: 'ordered' },
+                    },
+                ],
                 config: {
-                    quotePlaceholder: quotePlaceholder,
-                    captionPlaceholder: quoteCaptionPlaceholder,
-                    authorTitlePlaceholder: isRtlMode ? 'މަގާމު ނުވަތަ ޓައިޓަލް' : 'Title or role',
-                    onSelectMedia: props.onSelectMedia,
+                    defaultStyle: 'unordered',
+                },
+            },
+            posts: {
+                class: PostsBlock,
+                config: {
+                    placeholder: isRtlMode ? 'ޕੋسްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
+                    onSelectPosts: props.onSelectPosts,
                 },
             },
             htmlEmbed: {
@@ -358,27 +384,12 @@ const initEditor = async () => {
                     placeholder: codePlaceholder,
                 },
             },
-            posts: {
-                class: PostsBlock,
-                config: {
-                    placeholder: isRtlMode ? 'ޕੋسްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
-                    onSelectPosts: props.onSelectPosts,
-                },
-            },
-            list: {
-                class: List,
-                inlineToolbar: true,
-                config: {
-                    defaultStyle: 'unordered',
-                },
-            },
             linkTool: {
                 class: LinkTool,
                 config: {
                     endpoint: cmsPath('/api/fetch-url'),
                 },
             },
-            delimiter: Delimiter,
             table: {
                 class: Table,
                 inlineToolbar: true,
@@ -387,6 +398,7 @@ const initEditor = async () => {
                     cols: 3,
                 },
             },
+            delimiter: Delimiter,
         },
         onChange: async () => {
             if (editor.value && isReady.value) {
