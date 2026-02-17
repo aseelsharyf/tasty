@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\UserTarget;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class UserStatsService
@@ -20,7 +21,18 @@ class UserStatsService
     {
         $from = $from ?? now()->startOfMonth();
         $to = $to ?? now()->endOfMonth();
+        $cacheKey = "dashboard:writer:{$user->id}:".$from->format('Y-m-d');
 
+        return Cache::remember($cacheKey, 300, fn () => $this->computeWriterStats($user, $from, $to));
+    }
+
+    /**
+     * Compute writer stats (called within cache closure).
+     *
+     * @return array<string, mixed>
+     */
+    protected function computeWriterStats(User $user, Carbon $from, Carbon $to): array
+    {
         $postsQuery = Post::where('author_id', $user->id);
 
         // Basic counts
@@ -128,67 +140,70 @@ class UserStatsService
     {
         $from = $from ?? now()->startOfMonth();
         $to = $to ?? now()->endOfMonth();
+        $cacheKey = 'dashboard:admin:'.$from->format('Y-m-d').':'.$to->format('Y-m-d');
 
-        // Overall counts
-        $totalPosts = Post::withoutTrashed()->count();
-        $publishedToday = Post::where('status', Post::STATUS_PUBLISHED)
-            ->whereDate('published_at', today())
-            ->count();
-        $publishedThisWeek = Post::where('status', Post::STATUS_PUBLISHED)
-            ->whereBetween('published_at', [now()->startOfWeek(), now()->endOfWeek()])
-            ->count();
-        $publishedThisMonth = Post::where('status', Post::STATUS_PUBLISHED)
-            ->whereBetween('published_at', [$from, $to])
-            ->count();
-        $pendingReview = Post::where('workflow_status', 'copydesk')->count();
+        return Cache::remember($cacheKey, 300, function () use ($from, $to) {
+            // Overall counts
+            $totalPosts = Post::withoutTrashed()->count();
+            $publishedToday = Post::where('status', Post::STATUS_PUBLISHED)
+                ->whereDate('published_at', today())
+                ->count();
+            $publishedThisWeek = Post::where('status', Post::STATUS_PUBLISHED)
+                ->whereBetween('published_at', [now()->startOfWeek(), now()->endOfWeek()])
+                ->count();
+            $publishedThisMonth = Post::where('status', Post::STATUS_PUBLISHED)
+                ->whereBetween('published_at', [$from, $to])
+                ->count();
+            $pendingReview = Post::where('workflow_status', 'copydesk')->count();
 
-        // Writer stats
-        $totalWriters = User::role(['Writer', 'Editor', 'Admin'])->count();
-        $activeWriters = Post::whereBetween('created_at', [now()->subDays(7), now()])
-            ->distinct('author_id')
-            ->count('author_id');
+            // Writer stats
+            $totalWriters = User::role(['Writer', 'Editor', 'Admin'])->count();
+            $activeWriters = Post::whereBetween('created_at', [now()->subDays(7), now()])
+                ->distinct('author_id')
+                ->count('author_id');
 
-        // Top writers this month
-        $topWriters = $this->getTopWriters($from, $to, 5);
+            // Top writers this month
+            $topWriters = $this->getTopWriters($from, $to, 5);
 
-        // Posts per day (for chart)
-        $postsPerDay = $this->getPostsPerDay(14);
+            // Posts per day (for chart)
+            $postsPerDay = $this->getPostsPerDay(14);
 
-        // Posts by type
-        $postsByType = Post::withoutTrashed()
-            ->select('post_type', DB::raw('count(*) as count'))
-            ->groupBy('post_type')
-            ->get()
-            ->map(fn ($item) => [
-                'type' => $item->post_type,
-                'count' => $item->count,
-            ])
-            ->toArray();
+            // Posts by type
+            $postsByType = Post::withoutTrashed()
+                ->select('post_type', DB::raw('count(*) as count'))
+                ->groupBy('post_type')
+                ->get()
+                ->map(fn ($item) => [
+                    'type' => $item->post_type,
+                    'count' => $item->count,
+                ])
+                ->toArray();
 
-        // Posts by workflow status
-        $postsByStatus = Post::withoutTrashed()
-            ->select('workflow_status', DB::raw('count(*) as count'))
-            ->groupBy('workflow_status')
-            ->get()
-            ->map(fn ($item) => [
-                'status' => $item->workflow_status ?? 'none',
-                'count' => $item->count,
-            ])
-            ->toArray();
+            // Posts by workflow status
+            $postsByStatus = Post::withoutTrashed()
+                ->select('workflow_status', DB::raw('count(*) as count'))
+                ->groupBy('workflow_status')
+                ->get()
+                ->map(fn ($item) => [
+                    'status' => $item->workflow_status ?? 'none',
+                    'count' => $item->count,
+                ])
+                ->toArray();
 
-        return [
-            'total_posts' => $totalPosts,
-            'published_today' => $publishedToday,
-            'published_this_week' => $publishedThisWeek,
-            'published_this_month' => $publishedThisMonth,
-            'pending_review' => $pendingReview,
-            'total_writers' => $totalWriters,
-            'active_writers' => $activeWriters,
-            'top_writers' => $topWriters,
-            'posts_per_day' => $postsPerDay,
-            'posts_by_type' => $postsByType,
-            'posts_by_status' => $postsByStatus,
-        ];
+            return [
+                'total_posts' => $totalPosts,
+                'published_today' => $publishedToday,
+                'published_this_week' => $publishedThisWeek,
+                'published_this_month' => $publishedThisMonth,
+                'pending_review' => $pendingReview,
+                'total_writers' => $totalWriters,
+                'active_writers' => $activeWriters,
+                'top_writers' => $topWriters,
+                'posts_per_day' => $postsPerDay,
+                'posts_by_type' => $postsByType,
+                'posts_by_status' => $postsByStatus,
+            ];
+        });
     }
 
     /**
@@ -409,5 +424,14 @@ class UserStatsService
                     'target_id' => $target?->id,
                 ];
             });
+    }
+
+    /**
+     * Flush admin dashboard cache.
+     */
+    public static function flushAdminDashboardCache(): void
+    {
+        $key = 'dashboard:admin:'.now()->startOfMonth()->format('Y-m-d').':'.now()->endOfMonth()->format('Y-m-d');
+        Cache::forget($key);
     }
 }

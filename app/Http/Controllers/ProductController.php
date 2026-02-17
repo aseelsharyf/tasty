@@ -7,12 +7,15 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductClick;
 use App\Models\ProductStore;
+use App\Services\AnalyticsService;
+use App\Services\PublicCacheService;
 use App\Services\SeoService;
 use App\Support\BotDetector;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 
 class ProductController extends Controller
 {
@@ -23,47 +26,60 @@ class ProductController extends Controller
     /**
      * Display all products with category filters.
      */
-    public function index(): View
+    public function index(): Response
     {
-        $this->seo->setProductsIndex();
+        $page = request()->integer('page', 1);
 
-        $categories = ProductCategory::query()
-            ->active()
-            ->ordered()
-            ->get();
+        $html = Cache::remember("public:products:index:page:{$page}", PublicCacheService::productTtl(), function () {
+            $this->seo->setProductsIndex();
 
-        $products = Product::query()
-            ->active()
-            ->ordered()
-            ->with(['featuredMedia', 'tags', 'category', 'store'])
-            ->paginate(12);
+            $categories = ProductCategory::query()
+                ->active()
+                ->ordered()
+                ->get();
 
-        return view('products.index', [
-            'categories' => $categories,
-            'products' => $products,
-            'currentCategory' => null,
-        ]);
+            $products = Product::query()
+                ->active()
+                ->ordered()
+                ->with(['featuredMedia', 'tags', 'category', 'store'])
+                ->paginate(12);
+
+            return view('products.index', [
+                'categories' => $categories,
+                'products' => $products,
+                'currentCategory' => null,
+            ])->render();
+        });
+
+        return new Response($html);
     }
 
     /**
      * Display all products from a specific store with pagination.
      */
-    public function byStore(ProductStore $store): View
+    public function byStore(ProductStore $store): Response
     {
         abort_unless($store->is_active, 404);
 
-        $this->seo->setProductStore($store);
+        $page = request()->integer('page', 1);
+        $cacheKey = "public:products:store:{$store->slug}:page:{$page}";
 
-        $products = $store->products()
-            ->active()
-            ->ordered()
-            ->with(['featuredMedia', 'tags', 'category', 'store'])
-            ->paginate(12);
+        $html = Cache::remember($cacheKey, PublicCacheService::productTtl(), function () use ($store) {
+            $this->seo->setProductStore($store);
 
-        return view('products.store', [
-            'store' => $store,
-            'products' => $products,
-        ]);
+            $products = $store->products()
+                ->active()
+                ->ordered()
+                ->with(['featuredMedia', 'tags', 'category', 'store'])
+                ->paginate(12);
+
+            return view('products.store', [
+                'store' => $store,
+                'products' => $products,
+            ])->render();
+        });
+
+        return new Response($html);
     }
 
     /**
@@ -103,58 +119,72 @@ class ProductController extends Controller
     /**
      * Display products for a specific category.
      */
-    public function byCategory(ProductCategory $category): View
+    public function byCategory(ProductCategory $category): Response
     {
         abort_unless($category->is_active, 404);
 
-        $this->seo->setProductCategory($category);
+        $page = request()->integer('page', 1);
+        $cacheKey = "public:products:category:{$category->slug}:page:{$page}";
 
-        $categories = ProductCategory::query()
-            ->active()
-            ->ordered()
-            ->get();
+        $html = Cache::remember($cacheKey, PublicCacheService::productTtl(), function () use ($category) {
+            $this->seo->setProductCategory($category);
 
-        $products = $category->products()
-            ->active()
-            ->ordered()
-            ->with(['featuredMedia', 'tags', 'category', 'store'])
-            ->paginate(12);
+            $categories = ProductCategory::query()
+                ->active()
+                ->ordered()
+                ->get();
 
-        return view('products.category', [
-            'categories' => $categories,
-            'products' => $products,
-            'currentCategory' => $category,
-        ]);
+            $products = $category->products()
+                ->active()
+                ->ordered()
+                ->with(['featuredMedia', 'tags', 'category', 'store'])
+                ->paginate(12);
+
+            return view('products.category', [
+                'categories' => $categories,
+                'products' => $products,
+                'currentCategory' => $category,
+            ])->render();
+        });
+
+        return new Response($html);
     }
 
     /**
      * Display products for a specific tag.
      */
-    public function byTag(\App\Models\Tag $tag): View
+    public function byTag(\App\Models\Tag $tag): Response
     {
-        $this->seo->setBasic($tag->name.' Products', "Browse products tagged with {$tag->name}");
+        $page = request()->integer('page', 1);
+        $cacheKey = "public:products:tag:{$tag->slug}:page:{$page}";
 
-        $categories = ProductCategory::query()
-            ->active()
-            ->ordered()
-            ->get();
+        $html = Cache::remember($cacheKey, PublicCacheService::productTtl(), function () use ($tag) {
+            $this->seo->setBasic($tag->name.' Products', "Browse products tagged with {$tag->name}");
 
-        $products = Product::query()
-            ->active()
-            ->ordered()
-            ->where(function ($query) use ($tag) {
-                $query->where('featured_tag_id', $tag->id)
-                    ->orWhereHas('tags', fn ($q) => $q->where('tags.id', $tag->id));
-            })
-            ->with(['featuredMedia', 'tags', 'category', 'store'])
-            ->paginate(12);
+            $categories = ProductCategory::query()
+                ->active()
+                ->ordered()
+                ->get();
 
-        return view('products.index', [
-            'categories' => $categories,
-            'products' => $products,
-            'currentCategory' => null,
-            'currentTag' => $tag,
-        ]);
+            $products = Product::query()
+                ->active()
+                ->ordered()
+                ->where(function ($query) use ($tag) {
+                    $query->where('featured_tag_id', $tag->id)
+                        ->orWhereHas('tags', fn ($q) => $q->where('tags.id', $tag->id));
+                })
+                ->with(['featuredMedia', 'tags', 'category', 'store'])
+                ->paginate(12);
+
+            return view('products.index', [
+                'categories' => $categories,
+                'products' => $products,
+                'currentCategory' => null,
+                'currentTag' => $tag,
+            ])->render();
+        });
+
+        return new Response($html);
     }
 
     /**
@@ -187,6 +217,8 @@ class ProductController extends Controller
         abort_unless($product->is_active, 404);
 
         ProductClick::record($product, auth()->id());
+
+        AnalyticsService::flushProductCache();
 
         return redirect()->away($product->affiliate_url);
     }

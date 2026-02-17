@@ -3,6 +3,7 @@
 namespace App\Services\Layouts;
 
 use App\Models\Setting;
+use App\Services\PublicCacheService;
 use Illuminate\Support\Str;
 
 class HomepageConfigurationService
@@ -42,6 +43,8 @@ class HomepageConfigurationService
         $config['updatedBy'] = $userId;
 
         Setting::set('layouts.homepage', $config, 'layouts');
+
+        PublicCacheService::flushPostCaches();
     }
 
     /**

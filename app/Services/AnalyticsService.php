@@ -7,10 +7,14 @@ use App\Models\PostView;
 use App\Models\ProductClick;
 use App\Models\ProductView;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class AnalyticsService
 {
+    /** Cache TTL in seconds (15 minutes). */
+    private const CACHE_TTL = 900;
+
     /**
      * Get full article analytics for a given period.
      *
@@ -18,15 +22,17 @@ class AnalyticsService
      */
     public function getArticleAnalytics(string $period = '30d'): array
     {
-        [$from, $to] = $this->parsePeriod($period);
+        return Cache::remember("analytics:articles:{$period}", self::CACHE_TTL, function () use ($period) {
+            [$from, $to] = $this->parsePeriod($period);
 
-        return [
-            'summary' => $this->getArticleSummaryStats(),
-            'top_articles' => $this->getTopArticles($from, $to, 10),
-            'views_over_time' => $this->getArticleViewsOverTime($period),
-            'views_by_type' => $this->getArticleViewsByType($from, $to),
-            'views_by_category' => $this->getArticleViewsByCategory($from, $to),
-        ];
+            return [
+                'summary' => $this->getArticleSummaryStats(),
+                'top_articles' => $this->getTopArticles($from, $to, 10),
+                'views_over_time' => $this->getArticleViewsOverTime($period),
+                'views_by_type' => $this->getArticleViewsByType($from, $to),
+                'views_by_category' => $this->getArticleViewsByCategory($from, $to),
+            ];
+        });
     }
 
     /**
@@ -160,12 +166,14 @@ class AnalyticsService
      */
     public function getAuthorAnalytics(string $period = '30d'): array
     {
-        [$from, $to] = $this->parsePeriod($period);
+        return Cache::remember("analytics:authors:{$period}", self::CACHE_TTL, function () use ($period) {
+            [$from, $to] = $this->parsePeriod($period);
 
-        return [
-            'leaderboard' => $this->getAuthorLeaderboard($from, $to, 15),
-            'publishing_trend' => $this->getAuthorPublishingTrend($period),
-        ];
+            return [
+                'leaderboard' => $this->getAuthorLeaderboard($from, $to, 15),
+                'publishing_trend' => $this->getAuthorPublishingTrend($period),
+            ];
+        });
     }
 
     /**
@@ -253,16 +261,18 @@ class AnalyticsService
      */
     public function getProductAnalytics(string $period = '30d'): array
     {
-        [$from, $to] = $this->parsePeriod($period);
+        return Cache::remember("analytics:products:{$period}", self::CACHE_TTL, function () use ($period) {
+            [$from, $to] = $this->parsePeriod($period);
 
-        return [
-            'summary' => $this->getProductSummaryStats($from, $to),
-            'top_by_views' => $this->getTopProductsByViews($from, $to, 10),
-            'top_by_clicks' => $this->getTopProductsByClicks($from, $to, 10),
-            'over_time' => $this->getProductViewsAndClicksOverTime($period),
-            'by_store' => $this->getProductsByStore($from, $to),
-            'by_category' => $this->getProductsByCategory($from, $to),
-        ];
+            return [
+                'summary' => $this->getProductSummaryStats($from, $to),
+                'top_by_views' => $this->getTopProductsByViews($from, $to, 10),
+                'top_by_clicks' => $this->getTopProductsByClicks($from, $to, 10),
+                'over_time' => $this->getProductViewsAndClicksOverTime($period),
+                'by_store' => $this->getProductsByStore($from, $to),
+                'by_category' => $this->getProductsByCategory($from, $to),
+            ];
+        });
     }
 
     /**
@@ -449,5 +459,26 @@ class AnalyticsService
             '90d' => 90,
             default => 30,
         };
+    }
+
+    /**
+     * Flush all analytics caches.
+     */
+    public static function flushArticleCache(): void
+    {
+        foreach (['7d', '30d', '90d'] as $period) {
+            Cache::forget("analytics:articles:{$period}");
+            Cache::forget("analytics:authors:{$period}");
+        }
+    }
+
+    /**
+     * Flush product analytics caches.
+     */
+    public static function flushProductCache(): void
+    {
+        foreach (['7d', '30d', '90d'] as $period) {
+            Cache::forget("analytics:products:{$period}");
+        }
     }
 }

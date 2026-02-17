@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\PostView;
 use App\Models\ProductView;
+use App\Services\AnalyticsService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -20,7 +21,7 @@ class RecordViewJob implements ShouldQueue
 
     public function handle(): void
     {
-        match ($this->data['type']) {
+        $result = match ($this->data['type']) {
             'post' => PostView::record([
                 'post_id' => $this->data['model_id'],
                 'user_id' => $this->data['user_id'],
@@ -39,5 +40,14 @@ class RecordViewJob implements ShouldQueue
             ]),
             default => null,
         };
+
+        // Only flush cache if a new view was actually recorded (not deduplicated)
+        if ($result !== null) {
+            match ($this->data['type']) {
+                'post' => AnalyticsService::flushArticleCache(),
+                'product' => AnalyticsService::flushProductCache(),
+                default => null,
+            };
+        }
     }
 }

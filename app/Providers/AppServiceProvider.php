@@ -5,9 +5,13 @@ namespace App\Providers;
 use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\Page;
+use App\Models\Post;
+use App\Models\Product;
 use App\Observers\MenuItemObserver;
 use App\Observers\MenuObserver;
 use App\Observers\PageObserver;
+use App\Observers\PostObserver;
+use App\Observers\ProductObserver;
 use App\Services\Layouts\UsedPostTracker;
 use Illuminate\Support\ServiceProvider;
 
@@ -31,5 +35,7 @@ class AppServiceProvider extends ServiceProvider
         Menu::observe(MenuObserver::class);
         MenuItem::observe(MenuItemObserver::class);
         Page::observe(PageObserver::class);
+        Post::observe(PostObserver::class);
+        Product::observe(ProductObserver::class);
     }
 }

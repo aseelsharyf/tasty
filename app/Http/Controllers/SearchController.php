@@ -6,8 +6,10 @@ use App\Models\Category;
 use App\Models\Post;
 use App\Models\Tag;
 use App\Models\User;
+use App\Services\PublicCacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class SearchController extends Controller
@@ -53,50 +55,55 @@ class SearchController extends Controller
             return response()->json(['results' => []]);
         }
 
-        $results = $this->performSearch($query, 'all', 5);
+        $cacheKey = 'public:search:suggestions:'.md5($query);
 
-        // Format results for dropdown
-        $formatted = [];
+        $formatted = Cache::remember($cacheKey, PublicCacheService::searchTtl(), function () use ($query) {
+            $results = $this->performSearch($query, 'all', 5);
 
-        foreach ($results['posts'] as $post) {
-            $formatted[] = [
-                'type' => 'post',
-                'title' => $post->title,
-                'subtitle' => $post->categories->first()?->name ?? 'Article',
-                'url' => $post->url,
-                'image' => $post->featured_image_thumb,
-            ];
-        }
+            $formatted = [];
 
-        foreach ($results['categories'] as $category) {
-            $formatted[] = [
-                'type' => 'category',
-                'title' => $category->name,
-                'subtitle' => $category->posts_count.' posts',
-                'url' => route('category.show', $category->slug),
-                'image' => null,
-            ];
-        }
+            foreach ($results['posts'] as $post) {
+                $formatted[] = [
+                    'type' => 'post',
+                    'title' => $post->title,
+                    'subtitle' => $post->categories->first()?->name ?? 'Article',
+                    'url' => $post->url,
+                    'image' => $post->featured_image_thumb,
+                ];
+            }
 
-        foreach ($results['tags'] as $tag) {
-            $formatted[] = [
-                'type' => 'tag',
-                'title' => $tag->name,
-                'subtitle' => $tag->posts_count.' posts',
-                'url' => route('tag.show', $tag->slug),
-                'image' => null,
-            ];
-        }
+            foreach ($results['categories'] as $category) {
+                $formatted[] = [
+                    'type' => 'category',
+                    'title' => $category->name,
+                    'subtitle' => $category->posts_count.' posts',
+                    'url' => route('category.show', $category->slug),
+                    'image' => null,
+                ];
+            }
 
-        foreach ($results['authors'] as $author) {
-            $formatted[] = [
-                'type' => 'author',
-                'title' => $author->name,
-                'subtitle' => 'Author',
-                'url' => route('author.show', $author->username ?? $author->id),
-                'image' => $author->avatar_url ?? null,
-            ];
-        }
+            foreach ($results['tags'] as $tag) {
+                $formatted[] = [
+                    'type' => 'tag',
+                    'title' => $tag->name,
+                    'subtitle' => $tag->posts_count.' posts',
+                    'url' => route('tag.show', $tag->slug),
+                    'image' => null,
+                ];
+            }
+
+            foreach ($results['authors'] as $author) {
+                $formatted[] = [
+                    'type' => 'author',
+                    'title' => $author->name,
+                    'subtitle' => 'Author',
+                    'url' => route('author.show', $author->username ?? $author->id),
+                    'image' => $author->avatar_url ?? null,
+                ];
+            }
+
+            return $formatted;
+        });
 
         return response()->json([
             'results' => $formatted,

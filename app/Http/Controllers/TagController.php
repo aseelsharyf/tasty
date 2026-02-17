@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Tag;
 use App\Services\Layouts\SectionDataResolver;
+use App\Services\PublicCacheService;
 use App\Services\SeoService;
-use Illuminate\Contracts\View\View;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 
 class TagController extends Controller
 {
@@ -17,35 +19,42 @@ class TagController extends Controller
     /**
      * Display posts for a specific tag.
      */
-    public function show(Tag $tag): View
+    public function show(Tag $tag): Response
     {
-        // Set SEO
-        $this->seoService->setTag($tag);
+        $page = request()->integer('page', 1);
+        $cacheKey = "public:tag:{$tag->slug}:page:{$page}";
 
-        // Check for custom layout
-        $tag->load('pageLayout');
+        $html = Cache::remember($cacheKey, PublicCacheService::listingTtl(), function () use ($tag) {
+            // Set SEO
+            $this->seoService->setTag($tag);
 
-        if ($tag->hasCustomLayout()) {
-            return $this->renderCustomLayout($tag);
-        }
+            // Check for custom layout
+            $tag->load('pageLayout');
 
-        // Fallback to default view
-        $posts = $tag->posts()
-            ->published()
-            ->with(['author', 'categories', 'tags', 'featuredMedia'])
-            ->latest('published_at')
-            ->paginate(12);
+            if ($tag->hasCustomLayout()) {
+                return $this->renderCustomLayout($tag);
+            }
 
-        return view('tags.show', [
-            'tag' => $tag,
-            'posts' => $posts,
-        ]);
+            // Fallback to default view
+            $posts = $tag->posts()
+                ->published()
+                ->with(['author', 'categories', 'tags', 'featuredMedia'])
+                ->latest('published_at')
+                ->paginate(12);
+
+            return view('tags.show', [
+                'tag' => $tag,
+                'posts' => $posts,
+            ])->render();
+        });
+
+        return new Response($html);
     }
 
     /**
      * Render tag page with custom layout.
      */
-    protected function renderCustomLayout(Tag $tag): View
+    protected function renderCustomLayout(Tag $tag): string
     {
         $configuration = $tag->getLayoutConfiguration();
 
@@ -66,6 +75,6 @@ class TagController extends Controller
             'sections' => $sections,
             'entity' => $tag,
             'entityType' => 'tag',
-        ]);
+        ])->render();
     }
 }

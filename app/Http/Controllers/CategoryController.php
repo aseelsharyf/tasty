@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Post;
 use App\Services\Layouts\SectionDataResolver;
+use App\Services\PublicCacheService;
 use App\Services\SeoService;
-use Illuminate\Contracts\View\View;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 
 class CategoryController extends Controller
 {
@@ -18,38 +20,45 @@ class CategoryController extends Controller
     /**
      * Display posts for a specific category.
      */
-    public function show(Category $category): View
+    public function show(Category $category): Response
     {
-        // Set SEO
-        $this->seoService->setCategory($category);
+        $page = request()->integer('page', 1);
+        $cacheKey = "public:category:{$category->slug}:page:{$page}";
 
-        // Check for custom layout and load featured image
-        $category->load(['pageLayout', 'featuredImage']);
+        $html = Cache::remember($cacheKey, PublicCacheService::listingTtl(), function () use ($category) {
+            // Set SEO
+            $this->seoService->setCategory($category);
 
-        if ($category->hasCustomLayout()) {
-            return $this->renderCustomLayout($category);
-        }
+            // Check for custom layout and load featured image
+            $category->load(['pageLayout', 'featuredImage']);
 
-        // Fallback to default view — include posts from sub-categories
-        $categoryIds = collect([$category->id])->merge($category->descendantIds());
+            if ($category->hasCustomLayout()) {
+                return $this->renderCustomLayout($category);
+            }
 
-        $posts = Post::query()
-            ->published()
-            ->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $categoryIds))
-            ->with(['author', 'categories', 'tags', 'featuredMedia'])
-            ->latest('published_at')
-            ->paginate(12);
+            // Fallback to default view — include posts from sub-categories
+            $categoryIds = collect([$category->id])->merge($category->descendantIds());
 
-        return view('categories.show', [
-            'category' => $category,
-            'posts' => $posts,
-        ]);
+            $posts = Post::query()
+                ->published()
+                ->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $categoryIds))
+                ->with(['author', 'categories', 'tags', 'featuredMedia'])
+                ->latest('published_at')
+                ->paginate(12);
+
+            return view('categories.show', [
+                'category' => $category,
+                'posts' => $posts,
+            ])->render();
+        });
+
+        return new Response($html);
     }
 
     /**
      * Render category page with custom layout.
      */
-    protected function renderCustomLayout(Category $category): View
+    protected function renderCustomLayout(Category $category): string
     {
         $configuration = $category->getLayoutConfiguration();
 
@@ -73,6 +82,6 @@ class CategoryController extends Controller
             'sections' => $sections,
             'entity' => $category,
             'entityType' => 'category',
-        ]);
+        ])->render();
     }
 }
