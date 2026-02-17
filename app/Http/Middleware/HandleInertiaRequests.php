@@ -52,6 +52,7 @@ class HandleInertiaRequests extends Middleware
                     'avatar_url' => $user->avatar_url,
                     'roles' => $user->roles->pluck('name'),
                     'permissions' => $user->getAllPermissions()->pluck('name'),
+                    'editor_block_order' => $user->getEditorBlockOrder(),
                 ] : null,
             ],
             'flash' => [

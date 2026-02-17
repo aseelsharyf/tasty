@@ -1,24 +1,6 @@
-<script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, shallowRef, computed } from 'vue';
-import EditorJS, { type OutputData } from '@editorjs/editorjs';
-import Header from '@editorjs/header';
-import List from '@editorjs/list';
-import Delimiter from '@editorjs/delimiter';
-import Table from '@editorjs/table';
-import Code from '@editorjs/code';
-import LinkTool from '@editorjs/link';
-import MediaBlock, { type MediaBlockItem, type FocalPoint } from '../editor-tools/MediaBlock';
-import QuoteBlock from '../editor-tools/QuoteBlock';
-import CollapsibleBlock from '../editor-tools/CollapsibleBlock';
-import PostsBlock, { type PostBlockItem } from '../editor-tools/PostsBlock';
-import HtmlBlock from '../editor-tools/HtmlBlock';
-import '../editor-tools/media-block.css';
-import '../editor-tools/quote-block.css';
-import '../editor-tools/collapsible-block.css';
-import '../editor-tools/posts-block.css';
-import '../editor-tools/html-block.css';
-import type { DhivehiLayout } from '../composables/useDhivehiKeyboard';
-import { useCmsPath } from '../composables/useCmsPath';
+<script lang="ts">
+import type { MediaBlockItem, FocalPoint } from '../editor-tools/MediaBlock';
+import type { PostBlockItem } from '../editor-tools/PostsBlock';
 
 // Media selection callback type
 export type MediaSelectCallback = (options: { multiple: boolean }) => Promise<MediaBlockItem[] | null>;
@@ -28,6 +10,57 @@ export type PostSelectCallback = () => Promise<PostBlockItem[] | null>;
 
 // Focal point callback type
 export type FocalPointCallback = (imageUrl: string, currentFocalPoint: FocalPoint | null) => Promise<FocalPoint | null>;
+
+// Default block order when no user preference is set
+// "paragraph" is the built-in Text block in EditorJS — included here so users can reorder it
+export const DEFAULT_BLOCK_ORDER = [
+    'paragraph', 'media', 'header', 'quote', 'collapsible', 'list', 'posts', 'htmlEmbed', 'code', 'linkTool', 'table', 'delimiter',
+];
+
+// Block metadata for the settings UI
+export interface BlockRegistryEntry {
+    key: string;
+    label: string;
+    icon: string;
+}
+
+export const BLOCK_REGISTRY_META: BlockRegistryEntry[] = [
+    { key: 'paragraph', label: 'Text', icon: 'i-lucide-text' },
+    { key: 'media', label: 'Media', icon: 'i-lucide-image' },
+    { key: 'header', label: 'Heading', icon: 'i-lucide-heading' },
+    { key: 'quote', label: 'Quote', icon: 'i-lucide-quote' },
+    { key: 'collapsible', label: 'Collapsible', icon: 'i-lucide-chevrons-down-up' },
+    { key: 'list', label: 'Bullet List / Numbered List', icon: 'i-lucide-list' },
+    { key: 'posts', label: 'Posts', icon: 'i-lucide-newspaper' },
+    { key: 'htmlEmbed', label: 'Social Embed / HTML', icon: 'i-lucide-code-xml' },
+    { key: 'code', label: 'Code', icon: 'i-lucide-braces' },
+    { key: 'linkTool', label: 'Link Tool', icon: 'i-lucide-link' },
+    { key: 'table', label: 'Table', icon: 'i-lucide-table' },
+    { key: 'delimiter', label: 'Delimiter', icon: 'i-lucide-minus' },
+];
+</script>
+
+<script setup lang="ts">
+import { ref, watch, onMounted, onBeforeUnmount, shallowRef, computed } from 'vue';
+import EditorJS, { type OutputData } from '@editorjs/editorjs';
+import Header from '@editorjs/header';
+import List from '@editorjs/list';
+import Delimiter from '@editorjs/delimiter';
+import Table from '@editorjs/table';
+import Code from '@editorjs/code';
+import LinkTool from '@editorjs/link';
+import MediaBlock from '../editor-tools/MediaBlock';
+import QuoteBlock from '../editor-tools/QuoteBlock';
+import CollapsibleBlock from '../editor-tools/CollapsibleBlock';
+import PostsBlock from '../editor-tools/PostsBlock';
+import HtmlBlock from '../editor-tools/HtmlBlock';
+import '../editor-tools/media-block.css';
+import '../editor-tools/quote-block.css';
+import '../editor-tools/collapsible-block.css';
+import '../editor-tools/posts-block.css';
+import '../editor-tools/html-block.css';
+import type { DhivehiLayout } from '../composables/useDhivehiKeyboard';
+import { useCmsPath } from '../composables/useCmsPath';
 
 // Character mappings from JTK library (duplicated here for editor use)
 const TRANS_FROM = "qwertyuiop[]\\asdfghjkl;'zxcvbnm,./QWERTYUIOP{}|ASDFGHJKL:\"ZXCVBNM<>?()";
@@ -47,10 +80,12 @@ const props = defineProps<{
     onSelectMedia?: MediaSelectCallback;
     onSelectPosts?: PostSelectCallback;
     onSetFocalPoint?: FocalPointCallback;
+    blockOrder?: string[] | null;
 }>();
 
 const emit = defineEmits<{
     (e: 'update:modelValue', value: OutputData): void;
+    (e: 'openSettings'): void;
 }>();
 
 const { cmsPath } = useCmsPath();
@@ -220,6 +255,178 @@ function normalizeListItems(items: any[]): any[] {
     });
 }
 
+// Build the full registry of all available tool configs
+function buildToolRegistry(isRtlMode: boolean, headerPlaceholder: string, quotePlaceholder: string, quoteCaptionPlaceholder: string, codePlaceholder: string): Record<string, any> {
+    return {
+        media: {
+            class: MediaBlock,
+            config: {
+                placeholder: isRtlMode ? 'މީޑީއާ އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add media',
+                onSelectMedia: props.onSelectMedia,
+                onSetFocalPoint: props.onSetFocalPoint,
+            },
+        },
+        header: {
+            class: Header,
+            config: {
+                placeholder: headerPlaceholder,
+                levels: [2, 3, 4],
+                defaultLevel: 2,
+            },
+        },
+        quote: {
+            class: QuoteBlock,
+            inlineToolbar: ['bold', 'italic'],
+            config: {
+                quotePlaceholder: quotePlaceholder,
+                captionPlaceholder: quoteCaptionPlaceholder,
+                authorTitlePlaceholder: isRtlMode ? 'މަގާމު ނުވަތަ ޓައިޓަލް' : 'Title or role',
+                onSelectMedia: props.onSelectMedia,
+            },
+        },
+        collapsible: {
+            class: CollapsibleBlock,
+            config: {
+                placeholder: isRtlMode ? 'ސެކްޝަން ޓައިޓަލް...' : 'Enter section title...',
+                onSelectMedia: props.onSelectMedia,
+                getToolsConfig: () => ({
+                    media: {
+                        class: MediaBlock,
+                        config: {
+                            placeholder: isRtlMode ? 'މީޑީއާ އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add media',
+                            onSelectMedia: props.onSelectMedia,
+                            onSetFocalPoint: props.onSetFocalPoint,
+                        },
+                    },
+                    header: {
+                        class: Header,
+                        config: {
+                            placeholder: headerPlaceholder,
+                            levels: [2, 3, 4],
+                            defaultLevel: 3,
+                        },
+                    },
+                    quote: {
+                        class: QuoteBlock,
+                        inlineToolbar: ['bold', 'italic'],
+                        config: {
+                            quotePlaceholder: quotePlaceholder,
+                            captionPlaceholder: quoteCaptionPlaceholder,
+                            authorTitlePlaceholder: isRtlMode ? 'މަގާމު ނުވަތަ ޓައިޓަލް' : 'Title or role',
+                            onSelectMedia: props.onSelectMedia,
+                        },
+                    },
+                    list: {
+                        class: List,
+                        inlineToolbar: true,
+                        config: {
+                            defaultStyle: 'unordered',
+                        },
+                    },
+                    posts: {
+                        class: PostsBlock,
+                        config: {
+                            placeholder: isRtlMode ? 'ޕੋسްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
+                            onSelectPosts: props.onSelectPosts,
+                        },
+                    },
+                    htmlEmbed: {
+                        class: HtmlBlock,
+                        config: {
+                            placeholder: isRtlMode ? 'HTML ނުވަތަ އެމްބެޑް ކޯޑު ޕޭސްޓް ކުރައްވާ...' : 'Paste your HTML or embed code here...',
+                        },
+                    },
+                    code: {
+                        class: Code,
+                        config: {
+                            placeholder: codePlaceholder,
+                        },
+                    },
+                    linkTool: {
+                        class: LinkTool,
+                        config: {
+                            endpoint: cmsPath('/api/fetch-url'),
+                        },
+                    },
+                    table: {
+                        class: Table,
+                        inlineToolbar: true,
+                        config: {
+                            rows: 2,
+                            cols: 3,
+                        },
+                    },
+                    delimiter: Delimiter,
+                }),
+            },
+        },
+        list: {
+            class: List,
+            inlineToolbar: true,
+            toolbox: [
+                {
+                    title: 'Bullet List',
+                    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><line x1="9" x2="19" y1="7" y2="7" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="9" x2="19" y1="12" y2="12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="9" x2="19" y1="17" y2="17" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 17H4.99002"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 12H4.99002"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 7H4.99002"/></svg>',
+                    data: { style: 'unordered' },
+                },
+                {
+                    title: 'Numbered List',
+                    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><line x1="12" x2="19" y1="7" y2="7" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="12" x2="19" y1="12" y2="12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="12" x2="19" y1="17" y2="17" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M7.79999 14L7.79999 7.2135C7.79999 7.12872 7.7011 7.0824 7.63597 7.13668L4.79999 9.5"/></svg>',
+                    data: { style: 'ordered' },
+                },
+            ],
+            config: {
+                defaultStyle: 'unordered',
+            },
+        },
+        posts: {
+            class: PostsBlock,
+            config: {
+                placeholder: isRtlMode ? 'ޕੋسްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
+                onSelectPosts: props.onSelectPosts,
+            },
+        },
+        htmlEmbed: {
+            class: HtmlBlock,
+            config: {
+                placeholder: isRtlMode ? 'HTML ނުވަތަ އެމްބެޑް ކޯޑު ޕޭސްޓް ކުރައްވާ...' : 'Paste your HTML or embed code here...',
+            },
+        },
+        code: {
+            class: Code,
+            config: {
+                placeholder: codePlaceholder,
+            },
+        },
+        linkTool: {
+            class: LinkTool,
+            config: {
+                endpoint: cmsPath('/api/fetch-url'),
+            },
+        },
+        table: {
+            class: Table,
+            inlineToolbar: true,
+            config: {
+                rows: 2,
+                cols: 3,
+            },
+        },
+        delimiter: Delimiter,
+    };
+}
+
+// Build ordered tools object from registry based on block order
+function buildOrderedTools(registry: Record<string, any>, order: string[]): Record<string, any> {
+    const tools: Record<string, any> = {};
+    for (const key of order) {
+        if (registry[key]) {
+            tools[key] = registry[key];
+        }
+    }
+    return tools;
+}
+
 const initEditor = async () => {
     if (!editorRef.value || editor.value) return;
 
@@ -230,6 +437,11 @@ const initEditor = async () => {
     const quotePlaceholder = isRtlMode ? dhivehiPlaceholders.quote : 'Enter a quote';
     const quoteCaptionPlaceholder = isRtlMode ? dhivehiPlaceholders.quoteCaption : 'Quote author';
     const codePlaceholder = isRtlMode ? dhivehiPlaceholders.code : 'Enter code or recipe tips...';
+
+    // Build registry and ordered tools based on user preference
+    const registry = buildToolRegistry(isRtlMode, headerPlaceholder, quotePlaceholder, quoteCaptionPlaceholder, codePlaceholder);
+    const order = props.blockOrder ?? DEFAULT_BLOCK_ORDER;
+    const tools = buildOrderedTools(registry, order);
 
     // Normalize data to handle version differences (e.g., List tool v2.x format)
     const normalizedData = props.modelValue ? normalizeEditorData(props.modelValue) : undefined;
@@ -242,164 +454,7 @@ const initEditor = async () => {
         data: normalizedData,
         // Define which inline tools are available globally
         inlineToolbar: ['bold', 'italic', 'link'],
-        tools: {
-            // Order: Text (built-in), Media, Heading, Quote, Collapsible, Bullet List, Numbered List, Posts, Social Embed / HTML, Code, Link Tool, Table, Delimiter
-            media: {
-                class: MediaBlock,
-                config: {
-                    placeholder: isRtlMode ? 'މީޑީއާ އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add media',
-                    onSelectMedia: props.onSelectMedia,
-                    onSetFocalPoint: props.onSetFocalPoint,
-                },
-            },
-            header: {
-                class: Header,
-                config: {
-                    placeholder: headerPlaceholder,
-                    levels: [2, 3, 4],
-                    defaultLevel: 2,
-                },
-            },
-            quote: {
-                class: QuoteBlock,
-                inlineToolbar: ['bold', 'italic'],
-                config: {
-                    quotePlaceholder: quotePlaceholder,
-                    captionPlaceholder: quoteCaptionPlaceholder,
-                    authorTitlePlaceholder: isRtlMode ? 'މަގާމު ނުވަތަ ޓައިޓަލް' : 'Title or role',
-                    onSelectMedia: props.onSelectMedia,
-                },
-            },
-            collapsible: {
-                class: CollapsibleBlock,
-                config: {
-                    placeholder: isRtlMode ? 'ސެކްޝަން ޓައިޓަލް...' : 'Enter section title...',
-                    onSelectMedia: props.onSelectMedia,
-                    getToolsConfig: () => ({
-                        media: {
-                            class: MediaBlock,
-                            config: {
-                                placeholder: isRtlMode ? 'މީޑީއާ އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add media',
-                                onSelectMedia: props.onSelectMedia,
-                                onSetFocalPoint: props.onSetFocalPoint,
-                            },
-                        },
-                        header: {
-                            class: Header,
-                            config: {
-                                placeholder: headerPlaceholder,
-                                levels: [2, 3, 4],
-                                defaultLevel: 3,
-                            },
-                        },
-                        quote: {
-                            class: QuoteBlock,
-                            inlineToolbar: ['bold', 'italic'],
-                            config: {
-                                quotePlaceholder: quotePlaceholder,
-                                captionPlaceholder: quoteCaptionPlaceholder,
-                                authorTitlePlaceholder: isRtlMode ? 'މަގާމު ނުވަތަ ޓައިޓަލް' : 'Title or role',
-                                onSelectMedia: props.onSelectMedia,
-                            },
-                        },
-                        list: {
-                            class: List,
-                            inlineToolbar: true,
-                            config: {
-                                defaultStyle: 'unordered',
-                            },
-                        },
-                        posts: {
-                            class: PostsBlock,
-                            config: {
-                                placeholder: isRtlMode ? 'ޕੋسްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
-                                onSelectPosts: props.onSelectPosts,
-                            },
-                        },
-                        htmlEmbed: {
-                            class: HtmlBlock,
-                            config: {
-                                placeholder: isRtlMode ? 'HTML ނުވަތަ އެމްބެޑް ކޯޑު ޕޭސްޓް ކުރައްވާ...' : 'Paste your HTML or embed code here...',
-                            },
-                        },
-                        code: {
-                            class: Code,
-                            config: {
-                                placeholder: codePlaceholder,
-                            },
-                        },
-                        linkTool: {
-                            class: LinkTool,
-                            config: {
-                                endpoint: cmsPath('/api/fetch-url'),
-                            },
-                        },
-                        table: {
-                            class: Table,
-                            inlineToolbar: true,
-                            config: {
-                                rows: 2,
-                                cols: 3,
-                            },
-                        },
-                        delimiter: Delimiter,
-                    }),
-                },
-            },
-            list: {
-                class: List,
-                inlineToolbar: true,
-                toolbox: [
-                    {
-                        title: 'Bullet List',
-                        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><line x1="9" x2="19" y1="7" y2="7" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="9" x2="19" y1="12" y2="12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="9" x2="19" y1="17" y2="17" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 17H4.99002"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 12H4.99002"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 7H4.99002"/></svg>',
-                        data: { style: 'unordered' },
-                    },
-                    {
-                        title: 'Numbered List',
-                        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><line x1="12" x2="19" y1="7" y2="7" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="12" x2="19" y1="12" y2="12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="12" x2="19" y1="17" y2="17" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M7.79999 14L7.79999 7.2135C7.79999 7.12872 7.7011 7.0824 7.63597 7.13668L4.79999 9.5"/></svg>',
-                        data: { style: 'ordered' },
-                    },
-                ],
-                config: {
-                    defaultStyle: 'unordered',
-                },
-            },
-            posts: {
-                class: PostsBlock,
-                config: {
-                    placeholder: isRtlMode ? 'ޕੋسްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
-                    onSelectPosts: props.onSelectPosts,
-                },
-            },
-            htmlEmbed: {
-                class: HtmlBlock,
-                config: {
-                    placeholder: isRtlMode ? 'HTML ނުވަތަ އެމްބެޑް ކޯޑު ޕޭސްޓް ކުރައްވާ...' : 'Paste your HTML or embed code here...',
-                },
-            },
-            code: {
-                class: Code,
-                config: {
-                    placeholder: codePlaceholder,
-                },
-            },
-            linkTool: {
-                class: LinkTool,
-                config: {
-                    endpoint: cmsPath('/api/fetch-url'),
-                },
-            },
-            table: {
-                class: Table,
-                inlineToolbar: true,
-                config: {
-                    rows: 2,
-                    cols: 3,
-                },
-            },
-            delimiter: Delimiter,
-        },
+        tools,
         onChange: async () => {
             if (editor.value && isReady.value) {
                 isInternalChange.value = true;
@@ -413,9 +468,57 @@ const initEditor = async () => {
         },
         onReady: () => {
             isReady.value = true;
+            // Reorder popover items after editor is ready
+            setupPopoverReordering(order);
         },
     });
 };
+
+// Reorder the Editor.js block picker popover items to match the user's preferred order.
+// Editor.js doesn't guarantee tool order in the popover, so we use a MutationObserver
+// to intercept when the popover opens and reorder the DOM elements.
+let popoverObserver: MutationObserver | null = null;
+
+function setupPopoverReordering(order: string[]): void {
+    if (!editorRef.value) return;
+
+    // Build a name-to-position map from the user's preferred order
+    const nameOrder = new Map<string, number>();
+    order.forEach((name, i) => nameOrder.set(name, i));
+
+    popoverObserver = new MutationObserver(() => {
+        // editorRef is the holder div; .codex-editor is a child created by EditorJS
+        const wrapper = editorRef.value?.querySelector('.codex-editor') ?? editorRef.value;
+        if (!wrapper) return;
+
+        // Find the popover items container (block picker)
+        const popover = wrapper.querySelector('.ce-popover__items');
+        if (!popover) return;
+
+        const items = Array.from(popover.querySelectorAll<HTMLElement>(':scope > [data-item-name]'));
+        if (items.length < 2) return;
+
+        // Check if already sorted (avoid infinite loop)
+        const currentOrder = items.map(el => el.dataset.itemName || '');
+        const sorted = [...items].sort((a, b) => {
+            const aName = a.dataset.itemName || '';
+            const bName = b.dataset.itemName || '';
+            const aPos = nameOrder.has(aName) ? nameOrder.get(aName)! : 999;
+            const bPos = nameOrder.has(bName) ? nameOrder.get(bName)! : 999;
+            return aPos - bPos;
+        });
+        const sortedOrder = sorted.map(el => el.dataset.itemName || '');
+        if (JSON.stringify(currentOrder) === JSON.stringify(sortedOrder)) return;
+
+        sorted.forEach(el => popover.appendChild(el));
+    });
+
+    // editorRef is the holder; .codex-editor wrapper is created inside it by EditorJS
+    const editorWrapper = editorRef.value.querySelector('.codex-editor') ?? editorRef.value;
+    if (editorWrapper) {
+        popoverObserver.observe(editorWrapper, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+    }
+}
 
 // Only re-render if change came from outside (e.g., loading saved data)
 // We use a simple flag approach - once the editor is ready and has content,
@@ -460,6 +563,10 @@ onBeforeUnmount(() => {
         editorRef.value.removeEventListener('keydown', handleEditorKeyDown);
         editorRef.value.removeEventListener('paste', handlePaste, true);
     }
+    if (popoverObserver) {
+        popoverObserver.disconnect();
+        popoverObserver = null;
+    }
     if (editor.value) {
         editor.value.destroy();
         editor.value = null;
@@ -485,6 +592,16 @@ defineExpose({
 
 <template>
     <div class="block-editor" :class="{ 'block-editor--rtl': rtl }">
+        <div class="flex items-center justify-end mb-2">
+            <button
+                type="button"
+                class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[var(--ui-text-muted)] hover:text-[var(--ui-text-highlighted)] bg-[var(--ui-bg)] hover:bg-[var(--ui-bg-elevated)] border border-[var(--ui-border)] rounded-[var(--ui-radius)] transition-colors"
+                @click="emit('openSettings')"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                Block Settings
+            </button>
+        </div>
         <div
             ref="editorRef"
             class="block-editor__content"

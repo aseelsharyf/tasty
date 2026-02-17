@@ -38,6 +38,7 @@ class User extends Authenticatable implements HasMedia
         'google_id',
         'avatar',
         'type',
+        'preferences',
     ];
 
     /**
@@ -79,6 +80,7 @@ class User extends Authenticatable implements HasMedia
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'preferences' => 'array',
         ];
     }
 
@@ -155,6 +157,25 @@ class User extends Authenticatable implements HasMedia
     public function isStaff(): bool
     {
         return $this->type === self::TYPE_STAFF;
+    }
+
+    /**
+     * @return string[]|null
+     */
+    public function getEditorBlockOrder(): ?array
+    {
+        return $this->preferences['editor_block_order'] ?? null;
+    }
+
+    /**
+     * @param  string[]  $order
+     */
+    public function setEditorBlockOrder(array $order): void
+    {
+        $preferences = $this->preferences ?? [];
+        $preferences['editor_block_order'] = $order;
+        $this->preferences = $preferences;
+        $this->save();
     }
 
     // Relationships

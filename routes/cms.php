@@ -61,6 +61,7 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::put('/password', [ProfileController::class, 'updatePassword'])->name('cms.profile.password');
         Route::post('/avatar', [ProfileController::class, 'updateAvatar'])->name('cms.profile.avatar');
         Route::delete('/avatar', [ProfileController::class, 'destroyAvatar'])->name('cms.profile.avatar.destroy');
+        Route::put('/editor-preferences', [ProfileController::class, 'updateEditorPreferences'])->name('cms.profile.editor-preferences');
     });
 
     // Notifications

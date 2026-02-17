@@ -92,6 +92,21 @@ class ProfileController extends Controller
     }
 
     /**
+     * Update the user's editor preferences.
+     */
+    public function updateEditorPreferences(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'editor_block_order' => ['required', 'array', 'min:1'],
+            'editor_block_order.*' => ['required', 'string'],
+        ]);
+
+        Auth::user()->setEditorBlockOrder($validated['editor_block_order']);
+
+        return redirect()->back()->with('success', 'Editor preferences updated.');
+    }
+
+    /**
      * Remove the user's avatar.
      */
     public function destroyAvatar(): RedirectResponse

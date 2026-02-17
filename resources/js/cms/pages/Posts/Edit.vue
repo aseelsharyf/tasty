@@ -4,6 +4,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import axios from 'axios';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import BlockEditor, { type MediaSelectCallback, type PostSelectCallback, type FocalPointCallback } from '../../components/BlockEditor.vue';
+import BlockEditorSettings from '../../components/BlockEditorSettings.vue';
 import MediaPickerModal from '../../components/MediaPickerModal.vue';
 import EditorPostPickerModal from '../../components/EditorPostPickerModal.vue';
 import type { PostBlockItem } from '../../editor-tools/PostsBlock';
@@ -1022,6 +1023,14 @@ function handleFocalPointCancel() {
         editorFocalPointResolve = null;
     }
     focalPointPickerOpen.value = false;
+}
+
+// Block editor settings
+const blockEditorSettingsOpen = ref(false);
+const editorBlockOrder = ref<string[] | null>((page.props as any).auth?.user?.editor_block_order ?? null);
+
+function handleBlockOrderSaved(order: string[]) {
+    editorBlockOrder.value = order;
 }
 
 // Sidebar toggle for mobile
@@ -2584,6 +2593,7 @@ function openDiff() {
 
                             <!-- Content Editor -->
                             <BlockEditor
+                                :key="editorBlockOrder?.join(',') ?? 'default'"
                                 v-model="form.content"
                                 :placeholder="form.post_type === 'recipe' ? 'Write the preparation steps...' : 'Tell your story...'"
                                 :rtl="isRtl"
@@ -2593,6 +2603,8 @@ function openDiff() {
                                 :on-select-posts="handleEditorSelectPosts"
                                 :on-set-focal-point="handleEditorSetFocalPoint"
                                 :read-only="isReadOnly"
+                                :block-order="editorBlockOrder"
+                                @open-settings="blockEditorSettingsOpen = true"
                             />
 
                             <!-- Custom Fields Section (for post types with additional fields) -->
@@ -3379,6 +3391,13 @@ function openDiff() {
                 </UCard>
             </template>
         </UModal>
+
+        <!-- Block Editor Settings Modal -->
+        <BlockEditorSettings
+            v-model:open="blockEditorSettingsOpen"
+            :current-order="editorBlockOrder"
+            @saved="handleBlockOrderSaved"
+        />
     </DashboardLayout>
 </template>
 

@@ -36,6 +36,7 @@ export interface User {
     roles: string[];
     badges?: number[];
     permissions: string[];
+    editor_block_order?: string[] | null;
     created_at: string;
     updated_at: string;
 }
