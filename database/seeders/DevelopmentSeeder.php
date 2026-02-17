@@ -28,6 +28,7 @@ class DevelopmentSeeder extends Seeder
             CommentSeeder::class,
             ProductSeeder::class,
             HomepageLayoutSeeder::class,
+            AnalyticsSeeder::class,
         ]);
 
         $this->command->info('Development data seeded successfully!');

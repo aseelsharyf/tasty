@@ -121,6 +121,7 @@ if ($showWebsite) {
 
     // Product routes
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+    Route::post('/products/view/{product}', [ProductController::class, 'recordView'])->name('products.view');
     Route::get('/products/go/{product:slug}', [ProductController::class, 'redirect'])->name('products.redirect');
     Route::get('/products/category/{category:slug}', [ProductController::class, 'byCategory'])->name('products.category');
     Route::get('/products/tag/{tag:slug}', [ProductController::class, 'byTag'])->name('products.tag');

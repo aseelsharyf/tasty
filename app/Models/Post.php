@@ -231,6 +231,11 @@ class Post extends Model implements HasMedia
         return $this->belongsTo(Tag::class, 'featured_tag_id');
     }
 
+    public function views(): HasMany
+    {
+        return $this->hasMany(PostView::class);
+    }
+
     public function approvedComments(): HasMany
     {
         return $this->comments()->approved();

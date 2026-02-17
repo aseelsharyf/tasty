@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Cms\AdPlacementController;
+use App\Http\Controllers\Cms\AnalyticsController;
 use App\Http\Controllers\Cms\Api\FetchUrlController;
 use App\Http\Controllers\Cms\AuthController;
 use App\Http\Controllers\Cms\BadgeController;
@@ -110,6 +111,13 @@ Route::middleware(['auth', 'cms'])->group(function () {
             'update' => 'cms.roles.update',
             'destroy' => 'cms.roles.destroy',
         ]);
+    });
+
+    // Analytics
+    Route::middleware('permission:analytics.view')->prefix('analytics')->group(function () {
+        Route::get('/articles', [AnalyticsController::class, 'articles'])->name('cms.analytics.articles');
+        Route::get('/authors', [AnalyticsController::class, 'authors'])->name('cms.analytics.authors');
+        Route::get('/products', [AnalyticsController::class, 'products'])->name('cms.analytics.products');
     });
 
     // Settings

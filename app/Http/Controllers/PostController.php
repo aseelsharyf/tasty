@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\RecordViewJob;
 use App\Models\Category;
 use App\Models\Post;
 use App\Services\SeoService;
+use App\Support\BotDetector;
 use Illuminate\Contracts\View\View;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -30,6 +32,19 @@ class PostController extends Controller
 
         if (! $post) {
             throw new NotFoundHttpException("Post not found: {$postSlug}");
+        }
+
+        // Track view (non-blocking, bot-filtered)
+        if (! BotDetector::isBot(request()->userAgent())) {
+            RecordViewJob::dispatch([
+                'type' => 'post',
+                'model_id' => $post->id,
+                'user_id' => auth()->id(),
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'referrer' => request()->header('referer'),
+                'session_id' => session()->getId(),
+            ]);
         }
 
         // Set SEO

@@ -492,3 +492,106 @@ export interface ProductSearchResult {
     price?: string;
     availability?: string;
 }
+
+// Analytics Types
+
+export interface AnalyticsTimeSeries {
+    date: string;
+    count: number;
+}
+
+export interface ArticleSummaryStats {
+    today: number;
+    this_week: number;
+    this_month: number;
+    total: number;
+}
+
+export interface TopArticle {
+    id: number;
+    uuid?: string;
+    title: string;
+    slug?: string;
+    post_type?: string;
+    author?: {
+        id: number;
+        name: string;
+        avatar_url?: string | null;
+    } | null;
+    category?: string | null;
+    views: number;
+    language_code?: string;
+}
+
+export interface ViewsByType {
+    type: string;
+    views: number;
+}
+
+export interface ViewsByCategory {
+    category: string;
+    views: number;
+}
+
+export interface ArticleAnalytics {
+    summary: ArticleSummaryStats;
+    top_articles: TopArticle[];
+    views_over_time: AnalyticsTimeSeries[];
+    views_by_type: ViewsByType[];
+    views_by_category: ViewsByCategory[];
+}
+
+export interface AuthorLeaderboardEntry {
+    user: {
+        id: number;
+        uuid: string;
+        name: string;
+        avatar_url?: string | null;
+    };
+    published_count: number;
+    total_views: number;
+    avg_views: number;
+}
+
+export interface AuthorAnalytics {
+    leaderboard: AuthorLeaderboardEntry[];
+    publishing_trend: AnalyticsTimeSeries[];
+}
+
+export interface ProductSummaryStats {
+    views: number;
+    clicks: number;
+    ctr: number;
+}
+
+export interface TopProduct {
+    id: number;
+    uuid?: string;
+    title: string;
+    category?: string | null;
+    store?: string | null;
+    views: number;
+    clicks: number;
+    ctr: number;
+}
+
+export interface ProductTimeSeries {
+    date: string;
+    views: number;
+    clicks: number;
+}
+
+export interface ProductsByGroup {
+    store?: string;
+    category?: string;
+    views: number;
+}
+
+export interface ProductAnalytics {
+    summary: ProductSummaryStats;
+    top_by_views: TopProduct[];
+    top_by_clicks: TopProduct[];
+    over_time: ProductTimeSeries[];
+    by_store: ProductsByGroup[];
+    by_category: ProductsByGroup[];
+}

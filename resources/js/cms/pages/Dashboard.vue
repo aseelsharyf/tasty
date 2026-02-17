@@ -268,7 +268,7 @@ function formatDate(dateString: string): string {
                 </div>
 
                 <!-- Quick Actions & Recent Activity -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                     <UPageCard
                         title="Quick Actions"
                         description="Common tasks you can perform"
@@ -334,12 +334,12 @@ function formatDate(dateString: string): string {
                             <p class="text-muted text-sm">No posts yet</p>
                             <p class="text-dimmed text-xs mt-1">Create your first post to get started</p>
                         </div>
-                        <div v-else class="divide-y divide-default -mx-4">
+                        <div v-else class="divide-y divide-default -mx-6">
                             <Link
                                 v-for="post in recentPosts"
                                 :key="post.id"
                                 :href="cmsPath(`/posts/${post.uuid}/edit`)"
-                                class="flex items-center gap-3 px-4 py-3 hover:bg-elevated/50 transition-colors overflow-hidden"
+                                class="flex items-center gap-3 px-6 py-3 hover:bg-elevated/50 transition-colors overflow-hidden"
                             >
                                 <div class="flex items-center justify-center size-8 rounded bg-muted/50 shrink-0">
                                     <UIcon

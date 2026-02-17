@@ -1,4 +1,4 @@
-<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-6 w-[426px] max-lg:w-full">
+<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-6 w-[426px] max-lg:w-full" @if($productId) data-product-id="{{ $productId }}" @endif>
     {{-- Main card link (covers entire card) --}}
     <a href="{{ $url }}" class="absolute inset-0 z-0" aria-label="{{ $title }}"></a>
 
@@ -60,3 +60,45 @@
         @endif
     </div>
 </div>
+
+@once
+@push('scripts')
+<script>
+(function() {
+    if (window.__productViewObserver) return;
+    var tracked = {};
+    try { var s = sessionStorage.getItem('_pv'); if (s) tracked = JSON.parse(s); } catch(e) {}
+    var token = document.querySelector('meta[name="csrf-token"]');
+    var csrfToken = token ? token.getAttribute('content') : '';
+
+    window.__productViewObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (!entry.isIntersecting) return;
+            var id = entry.target.dataset.productId;
+            if (!id || tracked[id]) return;
+            tracked[id] = true;
+            try { sessionStorage.setItem('_pv', JSON.stringify(tracked)); } catch(e) {}
+            fetch('/products/view/' + id, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+            }).catch(function() {});
+            window.__productViewObserver.unobserve(entry.target);
+        });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('[data-product-id]').forEach(function(el) {
+        window.__productViewObserver.observe(el);
+    });
+
+    // Re-observe after dynamic content loads
+    new MutationObserver(function() {
+        document.querySelectorAll('[data-product-id]').forEach(function(el) {
+            if (!tracked[el.dataset.productId]) {
+                window.__productViewObserver.observe(el);
+            }
+        });
+    }).observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+@endpush
+@endonce

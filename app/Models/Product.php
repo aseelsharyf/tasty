@@ -164,6 +164,11 @@ class Product extends Model
         return $this->hasMany(ProductClick::class);
     }
 
+    public function views(): HasMany
+    {
+        return $this->hasMany(ProductView::class);
+    }
+
     /**
      * Scope to filter only featured products.
      */

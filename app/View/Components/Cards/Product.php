@@ -38,6 +38,8 @@ class Product extends Component
 
     public ?string $categoryUrl;
 
+    public ?int $productId;
+
     /**
      * Create a new component instance.
      *
@@ -62,7 +64,9 @@ class Product extends Component
         ?string $categoryUrl = null,
     ) {
         $this->showPrice = $showPrice;
+        $this->productId = null;
         if ($product instanceof ProductModel) {
+            $this->productId = $product->id;
             $this->image = $product->featured_image_url ?? '';
             $this->imageAlt = $product->featuredMedia?->alt_text ?? $product->title;
             // Build tags from category and featured tag with URLs

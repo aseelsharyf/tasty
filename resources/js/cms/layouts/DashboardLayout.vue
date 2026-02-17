@@ -494,9 +494,26 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
         items.push({
             label: 'Analytics',
             icon: 'i-lucide-bar-chart-3',
-            to: cms('/analytics'),
-            active: isActive('/analytics'),
-            onSelect: () => { sidebarOpen.value = false; },
+            to: cms('/analytics/articles'),
+            active: isActivePrefix('/analytics'),
+            open: isActivePrefix('/analytics'),
+            children: [
+                {
+                    label: 'Articles',
+                    to: cms('/analytics/articles'),
+                    icon: 'i-lucide-file-text',
+                },
+                {
+                    label: 'Authors',
+                    to: cms('/analytics/authors'),
+                    icon: 'i-lucide-users',
+                },
+                {
+                    label: 'Products',
+                    to: cms('/analytics/products'),
+                    icon: 'i-lucide-shopping-bag',
+                },
+            ],
         });
     }
 

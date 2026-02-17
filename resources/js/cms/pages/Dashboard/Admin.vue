@@ -178,10 +178,10 @@ const chartMax = computed(() => {
     return Math.max(...postsPerDay.value.map(d => d.count), 1);
 });
 
+const CHART_HEIGHT = 160; // matches h-40 (10rem)
 function getBarHeight(count: number): string {
-    const percentage = (count / chartMax.value) * 100;
-    // Minimum 4% height so bars are visible even when 0
-    return `${Math.max(percentage, 4)}%`;
+    const px = (count / chartMax.value) * CHART_HEIGHT;
+    return `${Math.max(px, 2)}px`;
 }
 </script>
 
@@ -231,42 +231,42 @@ function getBarHeight(count: number): string {
 
                     <!-- Overview Stats -->
                     <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
-                        <UPageCard variant="outline" :ui="{ body: 'p-4' }">
+                        <UPageCard variant="outline" :ui="{ container: 'p-3' }">
                             <div class="text-center">
                                 <p class="text-3xl font-bold text-highlighted">{{ stats.published_today }}</p>
                                 <p class="text-xs text-muted">Published Today</p>
                             </div>
                         </UPageCard>
 
-                        <UPageCard variant="outline" :ui="{ body: 'p-4' }">
+                        <UPageCard variant="outline" :ui="{ container: 'p-3' }">
                             <div class="text-center">
                                 <p class="text-3xl font-bold text-primary">{{ stats.published_this_week }}</p>
                                 <p class="text-xs text-muted">This Week</p>
                             </div>
                         </UPageCard>
 
-                        <UPageCard variant="outline" :ui="{ body: 'p-4' }">
+                        <UPageCard variant="outline" :ui="{ container: 'p-3' }">
                             <div class="text-center">
                                 <p class="text-3xl font-bold text-success">{{ stats.published_this_month }}</p>
                                 <p class="text-xs text-muted">This Month</p>
                             </div>
                         </UPageCard>
 
-                        <UPageCard variant="outline" :ui="{ body: 'p-4' }">
+                        <UPageCard variant="outline" :ui="{ container: 'p-3' }">
                             <div class="text-center">
                                 <p class="text-3xl font-bold text-warning">{{ stats.pending_review }}</p>
                                 <p class="text-xs text-muted">Pending Review</p>
                             </div>
                         </UPageCard>
 
-                        <UPageCard variant="outline" :ui="{ body: 'p-4' }">
+                        <UPageCard variant="outline" :ui="{ container: 'p-3' }">
                             <div class="text-center">
                                 <p class="text-3xl font-bold text-info">{{ stats.active_writers }}</p>
                                 <p class="text-xs text-muted">Active Writers</p>
                             </div>
                         </UPageCard>
 
-                        <UPageCard variant="outline" :ui="{ body: 'p-4' }">
+                        <UPageCard variant="outline" :ui="{ container: 'p-3' }">
                             <div class="text-center">
                                 <p class="text-3xl font-bold text-muted">{{ stats.total_posts }}</p>
                                 <p class="text-xs text-muted">Total Posts</p>
@@ -275,7 +275,7 @@ function getBarHeight(count: number): string {
                     </div>
 
                     <!-- Charts Row -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                         <!-- Posts Per Day Chart -->
                         <UPageCard
                             title="Publishing Trend"
@@ -286,16 +286,17 @@ function getBarHeight(count: number): string {
                                 <p class="text-muted text-sm">No data available</p>
                             </div>
                             <template v-else>
-                                <div class="h-40 flex items-end gap-1">
+                                <div class="relative h-40 flex items-end gap-[3px]">
+                                    <div class="absolute inset-x-0 bottom-0 border-b border-dashed border-default" />
                                     <div
                                         v-for="day in postsPerDay"
                                         :key="day.date"
-                                        class="flex-1 flex flex-col items-center gap-1 group cursor-pointer"
+                                        class="relative flex-1 flex flex-col items-center justify-end group cursor-pointer"
                                     >
-                                        <span class="text-xs text-muted opacity-0 group-hover:opacity-100 transition-opacity">{{ day.count }}</span>
+                                        <span class="text-[10px] text-muted opacity-0 group-hover:opacity-100 transition-opacity mb-1">{{ day.count }}</span>
                                         <div
-                                            class="w-full bg-primary/30 group-hover:bg-primary rounded-t transition-all"
-                                            :class="{ 'bg-primary': day.count > 0 }"
+                                            class="w-full max-w-[24px] mx-auto rounded-t transition-all"
+                                            :class="day.count > 0 ? 'bg-primary group-hover:bg-primary/80' : 'bg-muted/20'"
                                             :style="{ height: getBarHeight(day.count) }"
                                             :title="`${day.date}: ${day.count} posts`"
                                         />
@@ -314,27 +315,27 @@ function getBarHeight(count: number): string {
                             description="Posts by type"
                             variant="outline"
                         >
-                            <div class="space-y-3">
+                            <div class="space-y-4">
                                 <div
                                     v-for="item in stats.posts_by_type"
                                     :key="item.type"
                                     class="flex items-center gap-3"
                                 >
-                                    <div class="flex items-center justify-center size-8 rounded bg-muted/20">
+                                    <div class="flex items-center justify-center size-8 rounded bg-muted/20 shrink-0">
                                         <UIcon
                                             :name="item.type === 'recipe' ? 'i-lucide-chef-hat' : item.type === 'video' ? 'i-lucide-video' : 'i-lucide-file-text'"
                                             class="size-4 text-muted"
                                         />
                                     </div>
-                                    <div class="flex-1">
-                                        <div class="flex items-center justify-between mb-1">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between mb-1.5">
                                             <span class="text-sm font-medium text-highlighted capitalize">{{ item.type || 'Article' }}</span>
-                                            <span class="text-sm text-muted">{{ item.count }}</span>
+                                            <span class="text-sm font-medium text-muted tabular-nums">{{ item.count }}</span>
                                         </div>
                                         <div class="h-1.5 bg-muted/20 rounded-full overflow-hidden">
                                             <div
-                                                class="h-full bg-primary rounded-full"
-                                                :style="{ width: `${(item.count / stats.total_posts) * 100}%` }"
+                                                class="h-full bg-primary rounded-full transition-all"
+                                                :style="{ width: `${Math.max((item.count / stats.total_posts) * 100, 2)}%` }"
                                             />
                                         </div>
                                     </div>
@@ -344,7 +345,7 @@ function getBarHeight(count: number): string {
                     </div>
 
                     <!-- Pending Review & Top Writers Row -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                         <!-- Pending Review -->
                         <UPageCard
                             title="Pending Review"
@@ -356,11 +357,11 @@ function getBarHeight(count: number): string {
                                 <p class="text-muted">All caught up!</p>
                             </div>
 
-                            <div v-else class="divide-y divide-default -mx-4 overflow-hidden">
+                            <div v-else class="divide-y divide-default -mx-6 overflow-hidden">
                                 <div
                                     v-for="post in pendingReview"
                                     :key="post.id"
-                                    class="flex items-start gap-3 px-4 py-3 hover:bg-elevated/50 transition-colors cursor-pointer overflow-hidden"
+                                    class="flex items-start gap-3 px-6 py-3 hover:bg-elevated/50 transition-colors cursor-pointer overflow-hidden"
                                     @click="editPost(post)"
                                 >
                                     <div class="flex-1 min-w-0">
@@ -406,11 +407,11 @@ function getBarHeight(count: number): string {
                                 <p class="text-muted">No published posts this month</p>
                             </div>
 
-                            <div v-else class="space-y-3">
+                            <div v-else class="divide-y divide-default -mx-6">
                                 <div
                                     v-for="(writer, index) in stats.top_writers"
                                     :key="writer.user.id"
-                                    class="flex items-center gap-3"
+                                    class="flex items-center gap-3 px-6 py-3"
                                 >
                                     <div class="flex items-center justify-center size-8 rounded-full" :class="{
                                         'bg-warning/20 text-warning': index === 0,
@@ -479,14 +480,14 @@ function getBarHeight(count: number): string {
                             <p class="text-muted">No recent activity</p>
                         </div>
 
-                        <div v-else class="divide-y divide-default -mx-4">
+                        <div v-else class="divide-y divide-default -mx-6">
                             <div
-                                v-for="post in recentActivity"
+                                v-for="post in recentActivity.slice(0, 5)"
                                 :key="post.id"
-                                class="flex items-center gap-4 px-4 py-3 hover:bg-elevated/50 transition-colors cursor-pointer overflow-hidden"
+                                class="flex items-center gap-4 px-6 py-3 hover:bg-elevated/50 transition-colors cursor-pointer overflow-hidden"
                                 @click="editPost(post)"
                             >
-                                <div class="flex items-center justify-center size-8 rounded" :class="{
+                                <div class="flex items-center justify-center size-8 rounded shrink-0" :class="{
                                     'bg-success/10': post.status === 'published',
                                     'bg-muted/20': post.status !== 'published',
                                 }">
@@ -509,10 +510,25 @@ function getBarHeight(count: number): string {
                                     :color="getStatusColor(post.workflow_status || post.status || '')"
                                     variant="subtle"
                                     size="sm"
+                                    class="shrink-0"
                                 >
                                     {{ post.workflow_status || post.status }}
                                 </UBadge>
                             </div>
+                        </div>
+
+                        <div v-if="recentActivity.length > 5" class="pt-4 mt-2 border-t border-default">
+                            <Link :href="cmsPath('/posts/en')">
+                                <UButton
+                                    color="neutral"
+                                    variant="ghost"
+                                    size="sm"
+                                    trailing-icon="i-lucide-arrow-right"
+                                    block
+                                >
+                                    View all activity
+                                </UButton>
+                            </Link>
                         </div>
                     </UPageCard>
                 </div>

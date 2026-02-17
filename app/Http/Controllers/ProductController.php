@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\RecordViewJob;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductClick;
 use App\Models\ProductStore;
 use App\Services\SeoService;
+use App\Support\BotDetector;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -153,6 +155,28 @@ class ProductController extends Controller
             'currentCategory' => null,
             'currentTag' => $tag,
         ]);
+    }
+
+    /**
+     * Record a product view (called via IntersectionObserver from product cards).
+     */
+    public function recordView(Request $request, Product $product): JsonResponse
+    {
+        if (BotDetector::isBot($request->userAgent())) {
+            return response()->json(['status' => 'skipped']);
+        }
+
+        RecordViewJob::dispatch([
+            'type' => 'product',
+            'model_id' => $product->id,
+            'user_id' => auth()->id(),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'referrer' => $request->header('referer'),
+            'session_id' => session()->getId(),
+        ]);
+
+        return response()->json(['status' => 'ok']);
     }
 
     /**
