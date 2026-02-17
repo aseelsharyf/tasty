@@ -7,6 +7,8 @@
         <img
             src="{{ $image }}"
             alt="{{ $imageAlt }}"
+            loading="lazy"
+            decoding="async"
             class="absolute inset-0 w-full h-full object-contain p-5"
         >
         @if(count($tags) > 0)
@@ -34,6 +36,8 @@
                     <img
                         src="{{ $storeLogo }}"
                         alt="{{ $storeName ?? 'Store' }}"
+                        loading="lazy"
+                        decoding="async"
                         class="max-w-[80px] max-h-[32px] object-contain grayscale hover:grayscale-0 transition-all duration-300"
                     >
                 </a>
@@ -41,6 +45,8 @@
                 <img
                     src="{{ $storeLogo }}"
                     alt="{{ $storeName ?? 'Store' }}"
+                    loading="lazy"
+                    decoding="async"
                     class="max-w-[80px] max-h-[32px] object-contain grayscale group-hover:grayscale-0 transition-all duration-300"
                 >
             @endif

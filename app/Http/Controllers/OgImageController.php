@@ -51,18 +51,8 @@ class OgImageController extends Controller
      */
     public function renderHtml(Post $post): View
     {
-        // Calculate title size based on length
-        $titleLength = mb_strlen($post->title);
-        $titleSize = match (true) {
-            $titleLength > 100 => 32,
-            $titleLength > 70 => 38,
-            $titleLength > 50 => 44,
-            default => 48,
-        };
-
         return view('og-image.template', [
             'post' => $post,
-            'titleSize' => $titleSize,
         ]);
     }
 }

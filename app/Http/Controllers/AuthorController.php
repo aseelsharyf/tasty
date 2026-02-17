@@ -4,13 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\PublicCacheService;
+use App\Services\SeoService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 
 class AuthorController extends Controller
 {
+    public function __construct(
+        protected SeoService $seoService,
+    ) {}
+
     public function show(User $author): Response
     {
+        $this->seoService->setAuthor($author);
+
         $page = request()->integer('page', 1);
         $cacheKey = "public:author:{$author->username}:page:{$page}";
 

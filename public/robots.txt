@@ -1,2 +1,10 @@
 User-agent: *
-Disallow:
+Disallow: /cms
+Disallow: /cms/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /og-preview/
+Disallow: /og-html/
+Disallow: /og-test
+
+Sitemap: /sitemap.xml

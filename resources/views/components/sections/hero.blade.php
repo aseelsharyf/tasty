@@ -39,6 +39,8 @@
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"
+                    fetchpriority="high"
+                    decoding="async"
                     class="absolute inset-0 w-full h-full object-cover"
                     style="object-position: {{ $imagePosition }};"
                 >
@@ -48,6 +50,8 @@
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"
+                    fetchpriority="high"
+                    decoding="async"
                     class="absolute inset-0 w-full h-full object-cover"
                     style="object-position: {{ $imagePosition }};"
                 >

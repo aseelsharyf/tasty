@@ -84,39 +84,60 @@ class OgImageService
     }
 
     /**
-     * Generate OG image with unified style.
-     * Yellow background with rounded-corner image on left, kicker + title on right, logo at bottom right.
+     * Generate OG image with full-bleed featured image, yellow gradient at bottom, and logo bottom-right.
      */
     protected function generateOgImage(string $imageContents, Post $post): ImageInterface
     {
         $image = Image::read($imageContents);
 
-        // Layout: 40px padding, 550x550 image, 50px gap, text area, logo
-        $padding = 40;
-        $imageSize = 550;
-        $gap = 50;
-        $textX = $padding + $imageSize + $gap;
-        $textAreaWidth = $this->width - $textX - $padding;
+        // Full-bleed: cover the entire canvas
+        $this->coverWithFocalPoint($image, $post->featured_image_anchor);
 
-        // Resize image to square with focal point
-        $this->coverWithFocalPoint($image, $post->featured_image_anchor, $imageSize, $imageSize);
-
-        // Apply rounded corners to the image
-        $image = $this->applyRoundedCorners($image, 24);
-
-        // Create canvas with yellow background
-        $canvas = $this->createYellowCanvas();
-
-        // Place the rounded image on left with padding
-        $canvas->place($image, 'top-left', $padding, $padding);
-
-        // Add kicker and title text
-        $this->addText($canvas, $post, $textX, $textAreaWidth);
+        // Apply yellow gradient fade at the bottom
+        $this->addBottomGradient($image);
 
         // Add logo at bottom right
-        $this->addLogo($canvas);
+        $this->addLogo($image);
 
-        return $canvas;
+        return $image;
+    }
+
+    /**
+     * Apply a yellow gradient fade at the bottom of the image using GD.
+     */
+    protected function addBottomGradient(ImageInterface $image): void
+    {
+        $tempPath = sys_get_temp_dir().'/gradient_'.uniqid().'.png';
+        $image->toPng()->save($tempPath);
+
+        $gdImage = imagecreatefrompng($tempPath);
+        imagealphablending($gdImage, true);
+
+        // Gradient covers the bottom ~20% of the image
+        $gradientHeight = (int) ($this->height * 0.2);
+        $gradientStart = $this->height - $gradientHeight;
+
+        for ($y = $gradientStart; $y < $this->height; $y++) {
+            $progress = ($y - $gradientStart) / $gradientHeight;
+            // Ease-in curve for a more natural fade
+            $alpha = (int) (127 * (1 - ($progress * $progress)));
+
+            $color = imagecolorallocatealpha(
+                $gdImage,
+                $this->yellow['r'],
+                $this->yellow['g'],
+                $this->yellow['b'],
+                $alpha
+            );
+            imagefilledrectangle($gdImage, 0, $y, $this->width, $y, $color);
+        }
+
+        imagepng($gdImage, $tempPath);
+        imagedestroy($gdImage);
+
+        $newImage = Image::read($tempPath);
+        $image->place($newImage, 'top-left', 0, 0);
+        unlink($tempPath);
     }
 
     /**
@@ -345,7 +366,7 @@ class OgImageService
     }
 
     /**
-     * Add the Tasty logo to the image.
+     * Add the Tasty logo to the bottom-right of the image.
      */
     protected function addLogo(ImageInterface $image): void
     {
@@ -359,9 +380,9 @@ class OgImageService
             $logo = Image::read($logoPath);
             $logo->scale(height: 56);
 
-            // Position logo aligned with text start (40px padding + 550px image + 50px gap = 640px)
-            $logoX = 640;
-            $logoY = $this->height - 40 - 56; // 40px from bottom, 56px logo height
+            $padding = 40;
+            $logoX = $this->width - $logo->width() - $padding;
+            $logoY = $this->height - $logo->height() - $padding;
 
             $image->place($logo, 'top-left', $logoX, $logoY);
         } catch (\Exception $e) {

@@ -9,7 +9,7 @@
 {{-- Curved Hero Image Section --}}
 @if($image)
 <section class="feature-1-image-wrapper">
-    <a href="{{ $buttonUrl }}" class="feature-1-image-container" style="--feature-1-image: url('{{ $image }}'); --feature-1-position: {{ $imagePosition }};"></a>
+    <a href="{{ $buttonUrl }}" class="feature-1-image-container" role="img" aria-label="{{ $kicker ?? $title ?? 'Featured content' }}" style="--feature-1-image: url('{{ $image }}'); --feature-1-position: {{ $imagePosition }};"></a>
 </section>
 @endif
 

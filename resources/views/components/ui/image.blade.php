@@ -8,6 +8,7 @@
     'class' => '',
     'imgClass' => '',
     'lazy' => true,
+    'fetchpriority' => null,
     'objectFit' => 'cover',
     'objectPosition' => 'center',
 ])
@@ -15,6 +16,8 @@
 @php
     $uniqueId = 'blurhash-' . uniqid();
     $aspectRatio = ($width && $height) ? ($height / $width * 100) : null;
+    // Never lazy-load high-priority (LCP) images
+    $shouldLazy = $lazy && $fetchpriority !== 'high';
 @endphp
 
 <div
@@ -40,7 +43,9 @@
     <img
         src="{{ $src }}"
         alt="{{ $alt }}"
-        @if($lazy) loading="lazy" @endif
+        @if($shouldLazy) loading="lazy" @endif
+        @if($fetchpriority) fetchpriority="{{ $fetchpriority }}" @endif
+        decoding="async"
         @if($width) width="{{ $width }}" @endif
         @if($height) height="{{ $height }}" @endif
         class="w-full h-full transition-opacity duration-300 opacity-0 {{ $imgClass }}"

@@ -9,6 +9,7 @@ use App\Models\ProductCategory;
 use App\Models\ProductStore;
 use App\Models\SeoSetting;
 use App\Models\Tag;
+use App\Models\User;
 use Artesaos\SEOTools\Facades\JsonLd;
 use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\SEOMeta;
@@ -143,6 +144,45 @@ class SeoService
         }
 
         JsonLd::addValues($jsonLdValues);
+
+        // BreadcrumbList JSON-LD
+        $category = $post->categories->first();
+        $breadcrumbItems = [
+            [
+                '@type' => 'ListItem',
+                'position' => 1,
+                'name' => 'Home',
+                'item' => url('/'),
+            ],
+        ];
+
+        if ($category) {
+            $breadcrumbItems[] = [
+                '@type' => 'ListItem',
+                'position' => 2,
+                'name' => $category->name,
+                'item' => route('category.show', $category),
+            ];
+            $breadcrumbItems[] = [
+                '@type' => 'ListItem',
+                'position' => 3,
+                'name' => $post->title,
+                'item' => $url,
+            ];
+        } else {
+            $breadcrumbItems[] = [
+                '@type' => 'ListItem',
+                'position' => 2,
+                'name' => $post->title,
+                'item' => $url,
+            ];
+        }
+
+        view()->share('breadcrumbJsonLd', [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => $breadcrumbItems,
+        ]);
     }
 
     /**
@@ -197,6 +237,57 @@ class SeoService
         JsonLd::setDescription($description);
         JsonLd::setType('CollectionPage');
         JsonLd::setUrl($url);
+    }
+
+    /**
+     * Set SEO for an author page.
+     */
+    public function setAuthor(User $author): void
+    {
+        $title = $author->name;
+        $description = "Articles and content by {$author->name}.";
+        $url = route('author.show', $author->username);
+        $image = $author->avatar_url;
+
+        SEOMeta::setTitle($title);
+        SEOMeta::setDescription($description);
+        SEOMeta::setCanonical($url);
+
+        OpenGraph::setTitle($title);
+        OpenGraph::setDescription($description);
+        OpenGraph::setType('profile');
+        OpenGraph::setUrl($url);
+
+        if ($image) {
+            OpenGraph::addImage($image);
+        }
+
+        OpenGraph::addProperty('profile:username', $author->username);
+
+        TwitterCard::setTitle($title);
+        TwitterCard::setDescription($description);
+
+        if ($image) {
+            TwitterCard::setImage($image);
+        }
+
+        JsonLd::setTitle($title);
+        JsonLd::setDescription($description);
+        JsonLd::setType('ProfilePage');
+        JsonLd::setUrl($url);
+
+        $jsonLdValues = [
+            'mainEntity' => [
+                '@type' => 'Person',
+                'name' => $author->name,
+            ],
+        ];
+
+        if ($image) {
+            $jsonLdValues['mainEntity']['image'] = $image;
+        }
+
+        JsonLd::addValues($jsonLdValues);
     }
 
     /**

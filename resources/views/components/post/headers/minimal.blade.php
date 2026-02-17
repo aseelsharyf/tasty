@@ -10,6 +10,10 @@
     $url = request()->url();
     $anchor = $post->featured_image_anchor ?? ['x' => 50, 'y' => 0];
     $objectPosition = ($anchor['x'] ?? 50) . '% ' . ($anchor['y'] ?? 50) . '%';
+    $blurhashDataUri = null;
+    if ($post->featured_image_blurhash) {
+        $blurhashDataUri = app(\App\Services\BlurHashService::class)->toDataUri($post->featured_image_blurhash);
+    }
 
     // Safe route helper for CMS_ONLY mode
     $safeRoute = function($name, $params = []) {
@@ -56,6 +60,7 @@
                 <div
                     x-data="heroVideoPlayer()"
                     class="w-full lg:w-[660px] lg:shrink-0 aspect-[660/784] relative rounded-xl overflow-hidden"
+                    @if($blurhashDataUri) style="background-image: url('{{ $blurhashDataUri }}'); background-size: cover; background-position: center;" @endif
                 >
                     {{-- Featured Image (shown when video not playing) --}}
                     <div x-show="!isPlaying" class="absolute inset-0">
@@ -63,6 +68,8 @@
                             <img
                                 src="{{ $post->featured_image_url }}"
                                 alt="{{ $post->title }}"
+                                fetchpriority="high"
+                                decoding="async"
                                 class="absolute inset-0 w-full h-full object-cover rounded-xl"
                                 style="object-position: {{ $objectPosition }}"
                             />
@@ -122,11 +129,16 @@
                     </div>
                 </div>
             @else
-                <div class="w-full lg:w-[660px] lg:shrink-0 aspect-[660/784] relative rounded-xl overflow-hidden">
+                <div
+                    class="w-full lg:w-[660px] lg:shrink-0 aspect-[660/784] relative rounded-xl overflow-hidden"
+                    @if($blurhashDataUri) style="background-image: url('{{ $blurhashDataUri }}'); background-size: cover; background-position: center;" @endif
+                >
                     @if($post->featured_image_url)
                         <img
                             src="{{ $post->featured_image_url }}"
                             alt="{{ $post->title }}"
+                            fetchpriority="high"
+                            decoding="async"
                             class="absolute inset-0 w-full h-full object-cover rounded-xl"
                             style="object-position: {{ $objectPosition }}"
                         />
