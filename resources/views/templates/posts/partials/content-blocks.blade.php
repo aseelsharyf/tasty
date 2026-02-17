@@ -248,6 +248,13 @@
                 </div>
                 @break
 
+            {{-- HTML Embed --}}
+            @case('htmlEmbed')
+                <div class="{{ $contentWidth }} w-full px-4 lg:px-0">
+                    {!! $data['html'] ?? '' !!}
+                </div>
+                @break
+
             {{-- Embed --}}
             @case('embed')
                 <div class="{{ $contentWidth }} w-full px-4 lg:px-0 py-10">

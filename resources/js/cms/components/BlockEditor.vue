@@ -11,10 +11,12 @@ import MediaBlock, { type MediaBlockItem, type FocalPoint } from '../editor-tool
 import QuoteBlock from '../editor-tools/QuoteBlock';
 import CollapsibleBlock from '../editor-tools/CollapsibleBlock';
 import PostsBlock, { type PostBlockItem } from '../editor-tools/PostsBlock';
+import HtmlBlock from '../editor-tools/HtmlBlock';
 import '../editor-tools/media-block.css';
 import '../editor-tools/quote-block.css';
 import '../editor-tools/collapsible-block.css';
 import '../editor-tools/posts-block.css';
+import '../editor-tools/html-block.css';
 import type { DhivehiLayout } from '../composables/useDhivehiKeyboard';
 import { useCmsPath } from '../composables/useCmsPath';
 
@@ -241,14 +243,7 @@ const initEditor = async () => {
         // Define which inline tools are available globally
         inlineToolbar: ['bold', 'italic', 'link'],
         tools: {
-            // Order: List, Heading, Media, Collapsible, Quote, Code, Posts, then rest
-            list: {
-                class: List,
-                inlineToolbar: true,
-                config: {
-                    defaultStyle: 'unordered',
-                },
-            },
+            // Order: Header, Media, Collapsible, Quote, HTML Embed, Code, Posts, List, Link Tool, Delimiter, Table
             header: {
                 class: Header,
                 config: {
@@ -271,13 +266,6 @@ const initEditor = async () => {
                     placeholder: isRtlMode ? 'ސެކްޝަން ޓައިޓަލް...' : 'Enter section title...',
                     onSelectMedia: props.onSelectMedia,
                     getToolsConfig: () => ({
-                        list: {
-                            class: List,
-                            inlineToolbar: true,
-                            config: {
-                                defaultStyle: 'unordered',
-                            },
-                        },
                         header: {
                             class: Header,
                             config: {
@@ -304,6 +292,12 @@ const initEditor = async () => {
                                 onSelectMedia: props.onSelectMedia,
                             },
                         },
+                        htmlEmbed: {
+                            class: HtmlBlock,
+                            config: {
+                                placeholder: isRtlMode ? 'HTML ނުވަތަ އެމްބެޑް ކޯޑު ޕޭސްޓް ކުރައްވާ...' : 'Paste your HTML or embed code here...',
+                            },
+                        },
                         code: {
                             class: Code,
                             config: {
@@ -313,8 +307,15 @@ const initEditor = async () => {
                         posts: {
                             class: PostsBlock,
                             config: {
-                                placeholder: isRtlMode ? 'ޕੋސްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
+                                placeholder: isRtlMode ? 'ޕੋسްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
                                 onSelectPosts: props.onSelectPosts,
+                            },
+                        },
+                        list: {
+                            class: List,
+                            inlineToolbar: true,
+                            config: {
+                                defaultStyle: 'unordered',
                             },
                         },
                         linkTool: {
@@ -345,6 +346,12 @@ const initEditor = async () => {
                     onSelectMedia: props.onSelectMedia,
                 },
             },
+            htmlEmbed: {
+                class: HtmlBlock,
+                config: {
+                    placeholder: isRtlMode ? 'HTML ނުވަތަ އެމްބެޑް ކޯޑު ޕޭސްޓް ކުރައްވާ...' : 'Paste your HTML or embed code here...',
+                },
+            },
             code: {
                 class: Code,
                 config: {
@@ -354,8 +361,15 @@ const initEditor = async () => {
             posts: {
                 class: PostsBlock,
                 config: {
-                    placeholder: isRtlMode ? 'ޕੋސްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
+                    placeholder: isRtlMode ? 'ޕੋسްޓް އެޑް ކުރެއްވުމަށް ކްލިކް ކުރައްވާ' : 'Click to add posts',
                     onSelectPosts: props.onSelectPosts,
+                },
+            },
+            list: {
+                class: List,
+                inlineToolbar: true,
+                config: {
+                    defaultStyle: 'unordered',
                 },
             },
             linkTool: {
