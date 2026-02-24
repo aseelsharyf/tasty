@@ -771,7 +771,7 @@ function closeModal() {
                 </div>
 
                 <!-- Content -->
-                <div class="flex-1 min-h-0 overflow-y-auto p-4">
+                <div class="flex-1 min-h-0 p-4">
                     <!-- Browse Tab -->
                     <div v-show="activeTab === 'browse'" class="h-full flex flex-col">
                         <!-- Filters -->
@@ -908,7 +908,7 @@ function closeModal() {
                     </div>
 
                     <!-- Upload Tab -->
-                    <div v-show="activeTab === 'upload'" class="h-full flex flex-col">
+                    <div v-show="activeTab === 'upload'" class="h-full flex flex-col overflow-hidden">
                         <!-- Hidden file input - key forces new input when file changes -->
                         <input
                             :key="'file-input-' + uploadFileKey"
@@ -945,7 +945,9 @@ function closeModal() {
                         </div>
 
                         <!-- File selected - show preview and form (single file only) -->
-                        <div v-else-if="uploadFiles.length > 0" :key="uploadFileKey" class="flex-1 flex flex-col min-h-0">
+                        <div v-else-if="uploadFiles.length > 0" :key="uploadFileKey" class="flex-1 flex flex-col min-h-0 overflow-hidden">
+                          <!-- Scrollable area: preview + form -->
+                          <div class="flex-1 overflow-y-auto min-h-0">
                             <!-- Large Preview - clickable to change -->
                             <div
                                 class="relative rounded-xl bg-muted/10 border-2 border-dashed border-default overflow-hidden mb-4 cursor-pointer group hover:border-primary/50 transition-colors"
@@ -984,8 +986,8 @@ function closeModal() {
                                 </div>
                             </div>
 
-                            <!-- Scrollable Form Fields -->
-                            <div class="flex-1 overflow-y-auto min-h-0 space-y-4">
+                            <!-- Form Fields -->
+                            <div class="space-y-4">
                                 <!-- Category Field -->
                                 <UFormField label="Category">
                                     <select
@@ -1090,6 +1092,7 @@ function closeModal() {
                                     </div>
                                 </UFormField>
                             </div>
+                          </div>
 
                             <!-- Fixed Bottom Section -->
                             <div class="shrink-0">
