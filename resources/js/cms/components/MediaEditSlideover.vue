@@ -104,6 +104,9 @@ const isOpen = computed({
     set: (value) => emit('update:open', value),
 });
 
+// Image preview modal
+const previewOpen = ref(false);
+
 // Form state
 const activeTab = ref<string | number>('details');
 const selectedLanguage = ref('en');
@@ -343,14 +346,33 @@ function setCreditType(type: 'user' | 'external') {
                 <div class="flex-1 overflow-y-auto px-6 py-4">
                     <!-- Preview -->
                     <div class="mb-6">
-                        <div class="rounded-lg overflow-hidden bg-muted/30 border border-default">
+                        <div class="rounded-lg overflow-hidden bg-muted/30 border border-default relative group/preview">
                             <!-- Image Preview -->
                             <img
                                 v-if="media.is_image && media.url"
                                 :src="media.url"
                                 :alt="media.title || 'Media'"
-                                class="w-full max-h-64 object-contain"
+                                class="w-full max-h-64 object-contain cursor-pointer"
+                                @click="previewOpen = true"
                             />
+
+                            <!-- View Full Size Button -->
+                            <div
+                                v-if="media.is_image && media.url"
+                                class="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/preview:bg-black/30 transition-colors cursor-pointer"
+                                @click="previewOpen = true"
+                            >
+                                <UButton
+                                    icon="i-lucide-maximize"
+                                    color="white"
+                                    variant="solid"
+                                    size="sm"
+                                    class="opacity-0 group-hover/preview:opacity-100 transition-opacity"
+                                    @click.stop="previewOpen = true"
+                                >
+                                    View Full Size
+                                </UButton>
+                            </div>
 
                             <!-- Video Embed Preview -->
                             <div
@@ -617,4 +639,45 @@ function setCreditType(type: 'user' | 'external') {
             </div>
         </template>
     </USlideover>
+
+    <!-- Fullscreen Image Preview Modal -->
+    <UModal v-model:open="previewOpen" fullscreen :ui="{ content: 'bg-black/90' }">
+        <template #content>
+            <div class="relative flex flex-col h-full" @click="previewOpen = false">
+                <!-- Header -->
+                <div class="flex items-center justify-between px-4 py-3 shrink-0" @click.stop>
+                    <div class="text-white">
+                        <p class="text-sm font-medium">{{ media?.title || 'Untitled' }}</p>
+                        <p v-if="media?.width && media?.height" class="text-xs text-white/60">
+                            {{ media.width }} x {{ media.height }}
+                            <span v-if="media?.file_size"> &middot; {{ formatFileSize(media.file_size) }}</span>
+                        </p>
+                    </div>
+                    <UButton
+                        icon="i-lucide-x"
+                        color="neutral"
+                        variant="ghost"
+                        size="sm"
+                        class="text-white hover:text-white"
+                        @click="previewOpen = false"
+                    />
+                </div>
+
+                <!-- Image -->
+                <div class="flex-1 flex items-center justify-center overflow-auto p-4">
+                    <img
+                        v-if="media?.url"
+                        :src="media.url"
+                        :alt="media.title || 'Preview'"
+                        class="max-w-none"
+                        :style="{
+                            width: media.width ? `${media.width}px` : 'auto',
+                            height: media.height ? `${media.height}px` : 'auto',
+                        }"
+                        @click.stop
+                    />
+                </div>
+            </div>
+        </template>
+    </UModal>
 </template>

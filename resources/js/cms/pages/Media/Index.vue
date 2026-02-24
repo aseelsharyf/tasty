@@ -162,6 +162,15 @@ const deleteModalOpen = ref(false);
 const mediaToDelete = ref<MediaItem | null>(null);
 const bulkDeletePending = ref(false);
 
+// Image preview modal
+const previewModalOpen = ref(false);
+const previewMedia = ref<MediaItem | null>(null);
+
+function openPreview(item: MediaItem) {
+    previewMedia.value = item;
+    previewModalOpen.value = true;
+}
+
 // Selection
 const selectedItems = ref<Set<string>>(new Set());
 
@@ -444,13 +453,28 @@ function formatFileSize(bytes: number | null): string {
 function getRowActions(item: MediaItem) {
     const actions: any[][] = [];
 
-    actions.push([
-        {
-            label: 'View / Edit',
-            icon: 'i-lucide-eye',
-            onSelect: () => openMedia(item),
-        },
-    ]);
+    if (item.is_image && item.url) {
+        actions.push([
+            {
+                label: 'Preview Full Size',
+                icon: 'i-lucide-maximize',
+                onSelect: () => openPreview(item),
+            },
+            {
+                label: 'View / Edit',
+                icon: 'i-lucide-pencil',
+                onSelect: () => openMedia(item),
+            },
+        ]);
+    } else {
+        actions.push([
+            {
+                label: 'View / Edit',
+                icon: 'i-lucide-pencil',
+                onSelect: () => openMedia(item),
+            },
+        ]);
+    }
 
     if (can('media.delete')) {
         actions.push([
@@ -676,7 +700,15 @@ function getRowActions(item: MediaItem) {
                             </div>
 
                             <!-- Actions Overlay -->
-                            <div class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                <UButton
+                                    v-if="item.is_image && item.url"
+                                    icon="i-lucide-maximize"
+                                    color="neutral"
+                                    variant="solid"
+                                    size="xs"
+                                    @click.stop="openPreview(item)"
+                                />
                                 <UDropdownMenu
                                     :items="getRowActions(item)"
                                     :content="{ align: 'end' }"
@@ -792,6 +824,57 @@ function getRowActions(item: MediaItem) {
             :selected-items="selectedMediaItems"
             @updated="onBulkEditComplete"
         />
+
+        <!-- Image Preview Modal -->
+        <UModal v-model:open="previewModalOpen" fullscreen :ui="{ content: 'bg-black/90' }">
+            <template #content>
+                <div class="relative flex flex-col h-full" @click="previewModalOpen = false">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between px-4 py-3 shrink-0" @click.stop>
+                        <div class="text-white">
+                            <p class="text-sm font-medium">{{ previewMedia?.title || 'Untitled' }}</p>
+                            <p v-if="previewMedia?.width && previewMedia?.height" class="text-xs text-white/60">
+                                {{ previewMedia.width }} x {{ previewMedia.height }}
+                                <span v-if="previewMedia?.file_size"> &middot; {{ formatFileSize(previewMedia.file_size) }}</span>
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <UButton
+                                icon="i-lucide-pencil"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
+                                class="text-white hover:text-white"
+                                @click="previewModalOpen = false; openMedia(previewMedia!)"
+                            />
+                            <UButton
+                                icon="i-lucide-x"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
+                                class="text-white hover:text-white"
+                                @click="previewModalOpen = false"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Image -->
+                    <div class="flex-1 flex items-center justify-center overflow-auto p-4">
+                        <img
+                            v-if="previewMedia?.url"
+                            :src="previewMedia.url"
+                            :alt="previewMedia.title || 'Preview'"
+                            class="max-w-none"
+                            :style="{
+                                width: previewMedia.width ? `${previewMedia.width}px` : 'auto',
+                                height: previewMedia.height ? `${previewMedia.height}px` : 'auto',
+                            }"
+                            @click.stop
+                        />
+                    </div>
+                </div>
+            </template>
+        </UModal>
 
         <!-- Delete Confirmation Modal -->
         <UModal v-model:open="deleteModalOpen">
