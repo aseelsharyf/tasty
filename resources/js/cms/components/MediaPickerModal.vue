@@ -771,7 +771,7 @@ function closeModal() {
                 </div>
 
                 <!-- Content -->
-                <div class="flex-1 overflow-hidden p-4">
+                <div class="flex-1 min-h-0 overflow-y-auto p-4">
                     <!-- Browse Tab -->
                     <div v-show="activeTab === 'browse'" class="h-full flex flex-col">
                         <!-- Filters -->
@@ -1119,8 +1119,8 @@ function closeModal() {
                     </div>
                 </div>
 
-                <!-- Footer -->
-                <div class="flex items-center justify-between gap-2 p-4 border-t border-default">
+                <!-- Footer (only show on browse tab) -->
+                <div v-if="activeTab === 'browse'" class="flex items-center justify-between gap-2 p-4 border-t border-default">
                     <span v-if="selectedCount > 0" class="text-sm text-muted">
                         {{ selectedCount }} item{{ selectedCount !== 1 ? 's' : '' }} selected
                     </span>
