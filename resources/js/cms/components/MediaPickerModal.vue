@@ -1053,10 +1053,10 @@ function closeModal() {
                                             </div>
                                         </div>
 
-                                        <!-- Tag suggestions dropdown -->
+                                        <!-- Tag suggestions dropdown (opens upward to avoid clipping) -->
                                         <div
                                             v-if="showTagSuggestions && activeTagFileIndex === 0 && (tagSuggestions.length > 0 || tagSearchQuery.trim())"
-                                            class="absolute z-50 w-full mt-1 bg-default border border-default rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                                            class="absolute z-50 w-full bottom-full mb-1 bg-default border border-default rounded-lg shadow-lg max-h-48 overflow-y-auto"
                                         >
                                             <!-- Loading -->
                                             <div v-if="isSearchingTags" class="px-3 py-2 text-sm text-muted flex items-center gap-2">

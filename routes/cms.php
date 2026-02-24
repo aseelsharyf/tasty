@@ -88,6 +88,10 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::delete('/{target}', [UserTargetController::class, 'destroy'])->name('cms.targets.destroy');
     });
 
+    // Search published posts (for editor post picker - any authenticated CMS user)
+    Route::get('posts/search', [PostController::class, 'searchPosts'])
+        ->name('cms.posts.search');
+
     // Users Management
     Route::middleware('permission:users.view')->group(function () {
         Route::resource('users', UserController::class)->names([

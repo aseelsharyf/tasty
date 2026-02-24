@@ -99,7 +99,7 @@ async function searchPosts() {
         }
         params.set('limit', '20');
 
-        const response = await fetch(cmsPath(`/layouts/homepage/search-posts?${params.toString()}`));
+        const response = await fetch(cmsPath(`/posts/search?${params.toString()}`));
 
         if (!response.ok) {
             throw new Error('Failed to fetch posts');

@@ -742,6 +742,47 @@ class PostController extends Controller
             ->with('success', 'Post permanently deleted.');
     }
 
+    /**
+     * Search published posts (for editor post picker).
+     */
+    public function searchPosts(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'query' => ['nullable', 'string', 'max:255'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
+        ]);
+
+        $query = Post::query()
+            ->with(['featuredMedia', 'categories'])
+            ->published()
+            ->latest('published_at');
+
+        if (! empty($validated['query'])) {
+            $searchTerm = $validated['query'];
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('title', 'like', "%{$searchTerm}%")
+                    ->orWhere('kicker', 'like', "%{$searchTerm}%")
+                    ->orWhere('excerpt', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        $posts = $query->limit($validated['limit'] ?? 20)->get();
+
+        return response()->json([
+            'posts' => $posts->map(fn (Post $post) => [
+                'id' => $post->id,
+                'uuid' => $post->uuid,
+                'title' => $post->title,
+                'slug' => $post->slug,
+                'excerpt' => $post->excerpt,
+                'image' => $post->featured_image_thumb,
+                'category' => $post->categories->first()?->name,
+                'postType' => $post->post_type,
+                'publishedAt' => $post->published_at?->format('M j, Y'),
+            ]),
+        ]);
+    }
+
     private function formatCategoryForSelect(Category $category, int $depth = 0): array
     {
         $prefix = str_repeat('— ', $depth);
