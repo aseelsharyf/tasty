@@ -1,6 +1,6 @@
 <div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-6 w-[426px] max-lg:w-full" @if($productId) data-product-id="{{ $productId }}" @endif>
-    {{-- Main card link (covers entire card) --}}
-    <a href="{{ $url }}" class="absolute inset-0 z-0" aria-label="{{ $title }}"></a>
+    {{-- Main card link (covers entire card including image area) --}}
+    <a href="{{ $url }}" class="absolute inset-0 z-[1]" aria-label="{{ $title }}"></a>
 
     {{-- Image container --}}
     <div class="relative aspect-[4/4] max-lg:aspect-[4/4] bg-white rounded-lg flex items-end justify-center p-6 mb-4">
@@ -12,7 +12,7 @@
             class="absolute inset-0 w-full h-full object-contain p-5"
         >
         @if(count($tags) > 0)
-            <span class="tag relative z-10 inline-flex items-center gap-1 whitespace-nowrap">
+            <span class="tag relative z-[2] inline-flex items-center gap-1 whitespace-nowrap">
                 @foreach($tags as $index => $tag)
                     @if($index > 0)
                         <span>•</span>
