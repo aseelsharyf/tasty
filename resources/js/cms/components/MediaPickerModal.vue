@@ -979,7 +979,7 @@ function closeModal() {
                                     </div>
                                 </div>
                                 <!-- File info badge -->
-                                <div class="absolute bottom-2 left-2 px-2 py-1 rounded-md bg-black/60 text-white text-xs flex items-center gap-1.5">
+                                <div class="absolute top-2 left-2 px-2 py-1 rounded-md bg-black/60 text-white text-xs flex items-center gap-1.5">
                                     <UIcon name="i-lucide-file" class="size-3" />
                                     <span class="truncate max-w-[200px]">{{ uploadFiles[0].file.name }}</span>
                                     <span class="text-white/70">{{ formatFileSize(uploadFiles[0].file.size) }}</span>
@@ -1095,7 +1095,7 @@ function closeModal() {
                           </div>
 
                             <!-- Fixed Bottom Section -->
-                            <div class="shrink-0">
+                            <div class="shrink-0 relative z-10">
                                 <!-- Upload Errors -->
                                 <div v-if="uploadErrors.length > 0" class="mt-4 p-3 rounded-lg bg-error/10 border border-error/20">
                                     <div v-for="(error, errIndex) in uploadErrors" :key="errIndex" class="text-sm text-error">
