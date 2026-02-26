@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 
 class PublicCacheService
 {
@@ -50,11 +52,12 @@ class PublicCacheService
     }
 
     /**
-     * Flush all product-related caches.
+     * Flush all product-related caches including the homepage add-to-cart section.
      */
     public static function flushProductCaches(): void
     {
-        Cache::forget('public:products:index');
+        static::flushByPrefix('public:products:');
+        Cache::forget('public:homepage:sections');
     }
 
     /**
@@ -95,5 +98,53 @@ class PublicCacheService
     public static function searchTtl(): int
     {
         return self::SEARCH_TTL;
+    }
+
+    /**
+     * Flush all cache entries matching a key prefix.
+     */
+    protected static function flushByPrefix(string $prefix): void
+    {
+        $driver = config('cache.stores.'.config('cache.default').'.driver');
+        $cachePrefix = config('cache.prefix');
+
+        match ($driver) {
+            'redis' => static::flushRedisByPrefix($cachePrefix.$prefix),
+            'database' => static::flushDatabaseByPrefix($cachePrefix.$prefix),
+            default => null,
+        };
+    }
+
+    /**
+     * Flush cache entries by prefix using Redis SCAN.
+     */
+    protected static function flushRedisByPrefix(string $prefix): void
+    {
+        $connection = config('cache.stores.redis.connection', 'cache');
+        $redis = Redis::connection($connection);
+
+        $cursor = '0';
+
+        do {
+            [$cursor, $keys] = $redis->scan($cursor, ['match' => $prefix.'*', 'count' => 100]);
+
+            if (! empty($keys)) {
+                $redis->del(...$keys);
+            }
+        } while ($cursor !== '0');
+    }
+
+    /**
+     * Flush cache entries by prefix using a database query.
+     */
+    protected static function flushDatabaseByPrefix(string $prefix): void
+    {
+        $table = config('cache.stores.database.table', 'cache');
+        $connection = config('cache.stores.database.connection');
+
+        DB::connection($connection)
+            ->table($table)
+            ->where('key', 'like', $prefix.'%')
+            ->delete();
     }
 }
