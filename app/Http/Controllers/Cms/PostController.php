@@ -831,6 +831,57 @@ class PostController extends Controller
         ]);
     }
 
+    /**
+     * Publish a post and assign it to a layout slot in one action.
+     */
+    public function publishWithSlot(
+        Request $request,
+        Post $post,
+        LayoutSlotService $slotService,
+        WorkflowService $workflowService
+    ): JsonResponse {
+        /** @var User $user */
+        $user = Auth::user();
+        $isEditorOrAdmin = $user->hasAnyRole(['Admin', 'Editor', 'Developer']);
+
+        if (! $isEditorOrAdmin) {
+            abort(403, 'You are not authorized to publish and assign to a slot.');
+        }
+
+        $validated = $request->validate([
+            'versionUuid' => ['required', 'string'],
+            'sectionId' => ['required', 'string'],
+            'slotIndex' => ['required', 'integer'],
+            'layoutType' => ['required', 'string', 'in:homepage,category,tag'],
+            'pageLayoutId' => ['nullable', 'integer'],
+        ]);
+
+        // Find the version
+        $version = $post->versions()->where('uuid', $validated['versionUuid'])->firstOrFail();
+
+        // Publish via workflow transition
+        $allowedFromStatuses = ['copydesk', 'parked'];
+        if (in_array($version->workflow_status, $allowedFromStatuses)) {
+            $workflowService->transition($version, 'published', null, $user);
+        } elseif ($version->workflow_status !== 'published') {
+            abort(422, 'Post cannot be published from its current status.');
+        }
+
+        // Assign to the chosen slot
+        $slotService->assignPostToSlot(
+            $post->id,
+            $validated['layoutType'],
+            $validated['sectionId'],
+            $validated['slotIndex'],
+            $validated['pageLayoutId'] ?? null
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Post published and assigned to layout slot.',
+        ]);
+    }
+
     private function formatCategoryForSelect(Category $category, int $depth = 0): array
     {
         $prefix = str_repeat('— ', $depth);

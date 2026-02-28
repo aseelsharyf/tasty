@@ -10,6 +10,7 @@ use App\Models\Post;
 use App\Models\Product;
 use App\Models\Tag;
 use App\Services\Layouts\HomepageConfigurationService;
+use App\Services\Layouts\LayoutSlotService;
 use App\Services\Layouts\SectionCategoryMappingService;
 use App\Services\Layouts\SectionRegistry;
 use Illuminate\Http\JsonResponse;
@@ -87,6 +88,16 @@ class LayoutController extends Controller
             'tagsWithLayouts' => $tagsWithLayouts,
             'allCategories' => $allCategories,
             'allTags' => $allTags,
+        ]);
+    }
+
+    /**
+     * Get all manual-mode layout slots.
+     */
+    public function manualSlots(LayoutSlotService $slotService): JsonResponse
+    {
+        return response()->json([
+            'slots' => $slotService->getManualSlots(),
         ]);
     }
 

@@ -11,6 +11,7 @@ import type { PostBlockItem } from '../../editor-tools/PostsBlock';
 import EditorialSlideover from '../../components/EditorialSlideover.vue';
 import ImageAnchorPicker from '../../components/ImageAnchorPicker.vue';
 import UnpublishReplacementModal from '../../components/UnpublishReplacementModal.vue';
+import PublishSlotPickerModal from '../../components/PublishSlotPickerModal.vue';
 import type { MediaBlockItem, FocalPoint } from '../../editor-tools/MediaBlock';
 import { useSidebar } from '../../composables/useSidebar';
 import { useDhivehiKeyboard } from '../../composables/useDhivehiKeyboard';
@@ -1650,6 +1651,9 @@ const replacementModalOpen = ref(false);
 const layoutUsages = ref<any[]>([]);
 const isCheckingUsages = ref(false);
 
+// Publish & assign to slot modal
+const slotPickerOpen = ref(false);
+
 async function openUnpublishModal() {
     isCheckingUsages.value = true;
     try {
@@ -1667,6 +1671,12 @@ async function openUnpublishModal() {
     } finally {
         isCheckingUsages.value = false;
     }
+}
+
+function onSlotPublished() {
+    toast.add({ title: 'Published', description: 'Post has been published and assigned to the layout slot.', color: 'success' });
+    workflowStatus.value = 'published';
+    router.visit(window.location.href, { preserveState: false });
 }
 
 function onReplacementUnpublished() {
@@ -1890,16 +1900,33 @@ function openDiff() {
                             </UButton>
 
                             <!-- Publish Button for Parked Versions -->
-                            <UButton
-                                v-if="workflowStatus === 'parked'"
-                                color="success"
-                                size="sm"
-                                :loading="transitionLoading"
-                                icon="i-lucide-rocket"
-                                @click="publishApprovedVersion"
-                            >
-                                Publish
-                            </UButton>
+                            <template v-if="workflowStatus === 'parked'">
+                                <UButton
+                                    color="success"
+                                    size="sm"
+                                    :loading="transitionLoading"
+                                    icon="i-lucide-rocket"
+                                    @click="publishApprovedVersion"
+                                >
+                                    Publish
+                                </UButton>
+                                <UDropdownMenu
+                                    :items="[
+                                        [{
+                                            label: 'Publish & Assign to Slot',
+                                            icon: 'i-lucide-layout-grid',
+                                            onSelect: () => { slotPickerOpen = true },
+                                        }],
+                                    ]"
+                                >
+                                    <UButton
+                                        color="success"
+                                        variant="soft"
+                                        size="sm"
+                                        icon="i-lucide-chevron-down"
+                                    />
+                                </UDropdownMenu>
+                            </template>
 
                             <!-- Edit/Preview Toggle -->
                             <div class="flex items-center rounded-lg bg-elevated p-0.5">
@@ -1977,19 +2004,36 @@ function openDiff() {
                         <!-- Right: Action buttons -->
                         <div class="flex items-center gap-2">
                             <template v-for="transition in availableTransitions" :key="`bar-${transition.from}-${transition.to}-${transition.label}`">
-                                <UButton
-                                    v-if="transition.to === 'published'"
-                                    size="md"
-                                    color="success"
-                                    variant="soft"
-                                    :loading="transitionLoading"
-                                    @click="performQuickTransition(transition)"
-                                >
-                                    <template #leading>
-                                        <UIcon name="i-lucide-rocket" class="size-4" />
-                                    </template>
-                                    {{ transition.label }}
-                                </UButton>
+                                <template v-if="transition.to === 'published'">
+                                    <UButton
+                                        size="md"
+                                        color="success"
+                                        variant="soft"
+                                        :loading="transitionLoading"
+                                        @click="performQuickTransition(transition)"
+                                    >
+                                        <template #leading>
+                                            <UIcon name="i-lucide-rocket" class="size-4" />
+                                        </template>
+                                        {{ transition.label }}
+                                    </UButton>
+                                    <UDropdownMenu
+                                        :items="[
+                                            [{
+                                                label: 'Publish & Assign to Slot',
+                                                icon: 'i-lucide-layout-grid',
+                                                onSelect: () => { slotPickerOpen = true },
+                                            }],
+                                        ]"
+                                    >
+                                        <UButton
+                                            size="md"
+                                            color="success"
+                                            variant="subtle"
+                                            icon="i-lucide-chevron-down"
+                                        />
+                                    </UDropdownMenu>
+                                </template>
                                 <UButton
                                     v-else-if="transition.to === 'parked'"
                                     size="md"
@@ -3334,6 +3378,15 @@ function openDiff() {
             :post-title="post.title"
             :usages="layoutUsages"
             @unpublished="onReplacementUnpublished"
+        />
+
+        <!-- Publish & Assign to Slot Modal -->
+        <PublishSlotPickerModal
+            v-model:open="slotPickerOpen"
+            :post-id="post.id"
+            :post-uuid="post.uuid"
+            :version-uuid="currentVersionUuid || ''"
+            @published="onSlotPublished"
         />
 
         <!-- Reject Modal -->

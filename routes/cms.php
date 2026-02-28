@@ -228,6 +228,8 @@ Route::middleware(['auth', 'cms'])->group(function () {
             ->name('cms.posts.layout-usages');
         Route::post('posts/{post}/unpublish-with-replacements', [PostController::class, 'unpublishWithReplacements'])
             ->name('cms.posts.unpublish-with-replacements');
+        Route::post('posts/{post}/publish-with-slot', [PostController::class, 'publishWithSlot'])
+            ->name('cms.posts.publish-with-slot');
 
         // Post Edit Locks
         Route::prefix('posts/{post}/lock')->group(function () {
@@ -456,6 +458,7 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::get('homepage/tags', [LayoutController::class, 'getTags'])->name('cms.layouts.homepage.tags');
         Route::get('homepage/categories', [LayoutController::class, 'getCategories'])->name('cms.layouts.homepage.categories');
         Route::get('section-types', [LayoutController::class, 'getSectionTypes'])->name('cms.layouts.section-types');
+        Route::get('manual-slots', [LayoutController::class, 'manualSlots'])->name('cms.layouts.manual-slots');
 
         // Category layouts
         Route::get('categories/{category}', [LayoutController::class, 'categoryLayout'])->name('cms.layouts.category');

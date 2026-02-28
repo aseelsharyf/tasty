@@ -3,6 +3,7 @@
 namespace App\Services\Layouts;
 
 use App\Models\PageLayout;
+use App\Models\Post;
 use App\Models\Setting;
 use App\Services\PublicCacheService;
 
@@ -82,6 +83,135 @@ class LayoutSlotService
         }
 
         PublicCacheService::flushPostCaches();
+    }
+
+    /**
+     * Get all manual-mode slots across all layouts.
+     *
+     * @return array<int, array{layoutType: string, layoutName: string, sectionId: string, sectionType: string, sectionLabel: string, slotIndex: int, slotLabel: string, currentPostId: int|null, pageLayoutId: int|null}>
+     */
+    public function getManualSlots(): array
+    {
+        $slots = [];
+
+        // Scan homepage layout
+        $homepageConfig = Setting::get('layouts.homepage');
+        if ($homepageConfig && isset($homepageConfig['sections'])) {
+            $slots = array_merge(
+                $slots,
+                $this->scanManualSlots($homepageConfig['sections'], 'homepage', 'Homepage')
+            );
+        }
+
+        // Scan category and tag page layouts
+        $pageLayouts = PageLayout::with('layoutable')->get();
+        foreach ($pageLayouts as $pageLayout) {
+            $configuration = $pageLayout->configuration;
+            $sections = $configuration['sections'] ?? [];
+
+            $layoutType = match ($pageLayout->layoutable_type) {
+                'App\\Models\\Category' => 'category',
+                'App\\Models\\Tag' => 'tag',
+                default => 'other',
+            };
+
+            $layoutName = $pageLayout->layoutable?->name ?? 'Unknown';
+
+            $slots = array_merge(
+                $slots,
+                $this->scanManualSlots($sections, $layoutType, $layoutName, $pageLayout->id)
+            );
+        }
+
+        // Eager-load current post titles and images
+        $postIds = array_filter(array_column($slots, 'currentPostId'));
+        $posts = [];
+        if (! empty($postIds)) {
+            $posts = Post::whereIn('id', $postIds)
+                ->with('featuredMedia')
+                ->get(['id', 'title', 'status', 'featured_media_id'])
+                ->keyBy('id');
+        }
+
+        foreach ($slots as &$slot) {
+            $post = $posts[$slot['currentPostId']] ?? null;
+            $slot['currentPostTitle'] = $post?->title;
+            $slot['currentPostStatus'] = $post?->status;
+            $slot['currentPostImage'] = $post?->featured_image_thumb;
+        }
+        unset($slot);
+
+        return $slots;
+    }
+
+    /**
+     * Assign a post to a specific layout slot.
+     */
+    public function assignPostToSlot(
+        int $postId,
+        string $layoutType,
+        string $sectionId,
+        int $slotIndex,
+        ?int $pageLayoutId = null
+    ): void {
+        $replacement = [
+            'layoutType' => $layoutType,
+            'sectionId' => $sectionId,
+            'slotIndex' => $slotIndex,
+            'newPostId' => $postId,
+        ];
+
+        if ($layoutType === 'homepage') {
+            $this->applyHomepageReplacements([$replacement]);
+        } elseif ($pageLayoutId) {
+            $this->applyPageLayoutReplacements($pageLayoutId, [$replacement]);
+        }
+
+        PublicCacheService::flushPostCaches();
+    }
+
+    /**
+     * Scan sections for manual-mode slots (regardless of post assignment).
+     *
+     * @param  array<int, array<string, mixed>>  $sections
+     * @return array<int, array{layoutType: string, layoutName: string, sectionId: string, sectionType: string, sectionLabel: string, slotIndex: int, slotLabel: string, currentPostId: int|null, pageLayoutId: int|null}>
+     */
+    protected function scanManualSlots(array $sections, string $layoutType, string $layoutName, ?int $pageLayoutId = null): array
+    {
+        $slots = [];
+        $registry = app(SectionRegistry::class);
+
+        foreach ($sections as $section) {
+            $sectionSlots = $section['slots'] ?? [];
+            $sectionId = $section['id'] ?? '';
+            $sectionType = $section['type'] ?? '';
+
+            $definition = $registry->get($sectionType);
+            $sectionLabel = $definition?->name() ?? ucfirst(str_replace('-', ' ', $sectionType));
+            $slotLabels = $definition?->slotLabels() ?? [];
+
+            foreach ($sectionSlots as $slot) {
+                if (($slot['mode'] ?? '') !== 'manual') {
+                    continue;
+                }
+
+                $index = $slot['index'] ?? 0;
+
+                $slots[] = [
+                    'layoutType' => $layoutType,
+                    'layoutName' => $layoutName,
+                    'sectionId' => $sectionId,
+                    'sectionType' => $sectionType,
+                    'sectionLabel' => $sectionLabel,
+                    'slotIndex' => $index,
+                    'slotLabel' => $slotLabels[$index] ?? 'Slot '.($index + 1),
+                    'currentPostId' => $slot['postId'] ?? null,
+                    'pageLayoutId' => $pageLayoutId,
+                ];
+            }
+        }
+
+        return $slots;
     }
 
     /**
