@@ -10,6 +10,7 @@ import EditorPostPickerModal from '../../components/EditorPostPickerModal.vue';
 import type { PostBlockItem } from '../../editor-tools/PostsBlock';
 import EditorialSlideover from '../../components/EditorialSlideover.vue';
 import ImageAnchorPicker from '../../components/ImageAnchorPicker.vue';
+import UnpublishReplacementModal from '../../components/UnpublishReplacementModal.vue';
 import type { MediaBlockItem, FocalPoint } from '../../editor-tools/MediaBlock';
 import { useSidebar } from '../../composables/useSidebar';
 import { useDhivehiKeyboard } from '../../composables/useDhivehiKeyboard';
@@ -1645,9 +1646,33 @@ function deletePost() {
 
 // Unpublish confirmation modal
 const unpublishModalOpen = ref(false);
+const replacementModalOpen = ref(false);
+const layoutUsages = ref<any[]>([]);
+const isCheckingUsages = ref(false);
 
-function openUnpublishModal() {
-    unpublishModalOpen.value = true;
+async function openUnpublishModal() {
+    isCheckingUsages.value = true;
+    try {
+        const response = await axios.get(cmsPath(`/posts/${props.post.uuid}/layout-usages`));
+        const usages = response.data.usages || [];
+        if (usages.length > 0) {
+            layoutUsages.value = usages;
+            replacementModalOpen.value = true;
+        } else {
+            unpublishModalOpen.value = true;
+        }
+    } catch {
+        // If check fails, fall back to normal unpublish modal
+        unpublishModalOpen.value = true;
+    } finally {
+        isCheckingUsages.value = false;
+    }
+}
+
+function onReplacementUnpublished() {
+    toast.add({ title: 'Unpublished', description: 'Post has been unpublished and layout slots updated.', color: 'success' });
+    workflowStatus.value = 'copydesk';
+    router.visit(window.location.href, { preserveState: false });
 }
 
 // Quick unpublish - uses dedicated unpublish endpoint (goes to copydesk, not draft)
@@ -3265,7 +3290,7 @@ function openDiff() {
             </template>
         </UModal>
 
-        <!-- Unpublish Confirmation Modal -->
+        <!-- Unpublish Confirmation Modal (no layout usages) -->
         <UModal v-model:open="unpublishModalOpen">
             <template #content>
                 <UCard>
@@ -3300,6 +3325,16 @@ function openDiff() {
                 </UCard>
             </template>
         </UModal>
+
+        <!-- Unpublish Replacement Modal (has layout usages) -->
+        <UnpublishReplacementModal
+            v-model:open="replacementModalOpen"
+            :post-id="post.id"
+            :post-uuid="post.uuid"
+            :post-title="post.title"
+            :usages="layoutUsages"
+            @unpublished="onReplacementUnpublished"
+        />
 
         <!-- Reject Modal -->
         <UModal v-model:open="rejectModalOpen">

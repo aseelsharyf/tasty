@@ -164,6 +164,7 @@ class Spread extends Component
             }
         } elseif (count($postIds) > 0) {
             $dynamicPosts = Post::with(['author', 'categories', 'tags'])
+                ->published()
                 ->whereIn('id', $postIds)
                 ->get()
                 ->sortBy(fn ($post) => array_search($post->id, $postIds))
@@ -200,6 +201,7 @@ class Spread extends Component
 
         if (count($validManualIds) > 0) {
             $manualPosts = Post::with(['author', 'categories', 'tags'])
+                ->published()
                 ->whereIn('id', $validManualIds)
                 ->get();
 

@@ -3,7 +3,9 @@ import { Head, router } from '@inertiajs/vue3';
 import { ref, watch, computed } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 import { formatDistanceToNow } from 'date-fns';
+import axios from 'axios';
 import DashboardLayout from '../../layouts/DashboardLayout.vue';
+import UnpublishReplacementModal from '../../components/UnpublishReplacementModal.vue';
 import { usePermission } from '../../composables/usePermission';
 import { useCmsPath } from '../../composables/useCmsPath';
 import type { Post, PostCounts, PostFilters, Author, Category, PaginatedResponse } from '../../types';
@@ -311,9 +313,35 @@ function publishPost(post: Post) {
     router.post(cmsPath(`/posts/${langCode}/${post.uuid}/publish`));
 }
 
-function unpublishPost(post: Post) {
+// Unpublish with layout slot replacement
+const replacementModalOpen = ref(false);
+const replacementPostId = ref(0);
+const replacementPostUuid = ref('');
+const replacementPostTitle = ref('');
+const layoutUsages = ref<any[]>([]);
+
+async function unpublishPost(post: Post) {
+    try {
+        const response = await axios.get(cmsPath(`/posts/${post.uuid}/layout-usages`));
+        const usages = response.data.usages || [];
+        if (usages.length > 0) {
+            replacementPostId.value = post.id;
+            replacementPostUuid.value = post.uuid;
+            replacementPostTitle.value = post.title;
+            layoutUsages.value = usages;
+            replacementModalOpen.value = true;
+            return;
+        }
+    } catch {
+        // If check fails, proceed with normal unpublish
+    }
+
     const langCode = post.language_code || currentLanguageCode.value;
     router.post(cmsPath(`/posts/${langCode}/${post.uuid}/unpublish`));
+}
+
+function onReplacementUnpublished() {
+    router.visit(window.location.href, { preserveState: false });
 }
 
 function editPost(post: Post) {
@@ -914,5 +942,14 @@ function formatDate(dateStr: string) {
             </template>
         </UModal>
 
+        <!-- Unpublish Replacement Modal -->
+        <UnpublishReplacementModal
+            v-model:open="replacementModalOpen"
+            :post-id="replacementPostId"
+            :post-uuid="replacementPostUuid"
+            :post-title="replacementPostTitle"
+            :usages="layoutUsages"
+            @unpublished="onReplacementUnpublished"
+        />
     </DashboardLayout>
 </template>

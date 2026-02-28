@@ -163,7 +163,7 @@ class FeaturedVideo extends Component
         // Fetch post by ID or via action
         $post = null;
         if ($postId !== null) {
-            $post = Post::with(['author', 'categories', 'tags', 'coverVideo'])->find($postId);
+            $post = Post::with(['author', 'categories', 'tags', 'coverVideo'])->published()->find($postId);
         } else {
             $post = $this->fetchPostViaAction($action, $params);
         }

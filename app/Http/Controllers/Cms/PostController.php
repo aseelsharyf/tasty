@@ -14,7 +14,9 @@ use App\Models\Setting;
 use App\Models\Sponsor;
 use App\Models\Tag;
 use App\Models\User;
+use App\Services\Layouts\LayoutSlotService;
 use App\Services\PostTemplateRegistry;
+use App\Services\WorkflowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -780,6 +782,52 @@ class PostController extends Controller
                 'postType' => $post->post_type,
                 'publishedAt' => $post->published_at?->format('M j, Y'),
             ]),
+        ]);
+    }
+
+    /**
+     * Get layout slot usages for a post.
+     */
+    public function layoutUsages(Post $post, LayoutSlotService $slotService): JsonResponse
+    {
+        return response()->json([
+            'usages' => $slotService->getSlotUsages($post->id),
+        ]);
+    }
+
+    /**
+     * Unpublish a post after replacing it in any layout slots.
+     */
+    public function unpublishWithReplacements(
+        Request $request,
+        Post $post,
+        LayoutSlotService $slotService,
+        WorkflowService $workflowService
+    ): JsonResponse {
+        /** @var User $user */
+        $user = Auth::user();
+        $isEditorOrAdmin = $user->hasAnyRole(['Admin', 'Editor', 'Developer']);
+
+        if (! $isEditorOrAdmin && $post->author_id !== $user->id) {
+            abort(403, 'You are not authorized to unpublish this post.');
+        }
+
+        $validated = $request->validate([
+            'replacements' => ['required', 'array', 'min:1'],
+            'replacements.*.layoutType' => ['required', 'string'],
+            'replacements.*.sectionId' => ['required', 'string'],
+            'replacements.*.slotIndex' => ['required', 'integer'],
+            'replacements.*.newPostId' => ['required', 'integer', 'exists:posts,id'],
+            'replacements.*.pageLayoutId' => ['nullable', 'integer'],
+        ]);
+
+        $slotService->replacePostInSlots($post->id, $validated['replacements']);
+
+        $workflowService->unpublish($post);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Post unpublished and layout slots updated.',
         ]);
     }
 

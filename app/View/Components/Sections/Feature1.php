@@ -88,7 +88,7 @@ class Feature1 extends Component
             $this->populateFromArray($staticContent);
         } elseif ($postId !== null) {
             // Fetch by specific ID (manual mode)
-            $this->post = Post::with(['author', 'categories', 'tags'])->find($postId);
+            $this->post = Post::with(['author', 'categories', 'tags'])->published()->find($postId);
             if ($this->post) {
                 $this->populateFromPost($this->post);
                 $this->markPostUsed($this->post);

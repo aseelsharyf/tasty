@@ -169,7 +169,7 @@ class FeaturedLocation extends Component
             $this->populateFromArray($post);
         } elseif ($postId !== null) {
             // Fetch by specific ID
-            $this->post = Post::with(['author', 'categories', 'tags'])->find($postId);
+            $this->post = Post::with(['author', 'categories', 'tags'])->published()->find($postId);
             if ($this->post) {
                 $this->populateFromPost($this->post);
                 $this->markPostUsed($this->post);
@@ -255,6 +255,7 @@ class FeaturedLocation extends Component
 
         if (count($validManualIds) > 0) {
             $manualPosts = Post::with(['author', 'categories', 'tags'])
+                ->published()
                 ->whereIn('id', $validManualIds)
                 ->get();
 

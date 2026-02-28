@@ -119,7 +119,7 @@ class FeaturedPerson extends Component
 
         // Fetch post by ID or via action
         if ($postId !== null) {
-            $this->post = Post::with(['author', 'categories', 'tags'])->find($postId);
+            $this->post = Post::with(['author', 'categories', 'tags'])->published()->find($postId);
         } else {
             $this->post = $this->fetchPostViaAction($action, $params);
         }

@@ -223,6 +223,12 @@ Route::middleware(['auth', 'cms'])->group(function () {
             ->name('cms.posts.forceDelete')
             ->where('language', '[a-zA-Z]{2,5}');
 
+        // Layout slot usages for unpublish replacement flow
+        Route::get('posts/{post}/layout-usages', [PostController::class, 'layoutUsages'])
+            ->name('cms.posts.layout-usages');
+        Route::post('posts/{post}/unpublish-with-replacements', [PostController::class, 'unpublishWithReplacements'])
+            ->name('cms.posts.unpublish-with-replacements');
+
         // Post Edit Locks
         Route::prefix('posts/{post}/lock')->group(function () {
             Route::get('status', [PostEditLockController::class, 'status'])->name('cms.posts.lock.status');

@@ -156,7 +156,7 @@ class Hero extends Component
         // Fetch post only if not in manual mode
         if (! $manual) {
             if ($postId !== null) {
-                $this->post = Post::with(['author', 'categories', 'tags'])->find($postId);
+                $this->post = Post::with(['author', 'categories', 'tags'])->published()->find($postId);
             } else {
                 $this->post = $this->fetchPostViaAction($action, $params);
             }
@@ -166,7 +166,7 @@ class Hero extends Component
         if ($this->post) {
             $anchor = $this->post->featured_image_anchor;
             $this->imagePosition = $anchor
-                ? ($anchor['x'] ?? 50) . '% ' . ($anchor['y'] ?? 50) . '%'
+                ? ($anchor['x'] ?? 50).'% '.($anchor['y'] ?? 50).'%'
                 : '50% 50%';
         }
 

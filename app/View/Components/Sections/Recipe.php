@@ -167,7 +167,7 @@ class Recipe extends Component
         if ($staticFeatured !== null) {
             $this->featuredPost = $staticFeatured;
         } elseif ($featuredPostId !== null) {
-            $this->featuredPost = Post::with(['author', 'categories', 'tags'])->find($featuredPostId);
+            $this->featuredPost = Post::with(['author', 'categories', 'tags'])->published()->find($featuredPostId);
         } else {
             $this->featuredPost = null;
         }
@@ -183,6 +183,7 @@ class Recipe extends Component
 
         if (count($postIds) > 0) {
             $dynamicPosts = Post::with(['author', 'categories', 'tags'])
+                ->published()
                 ->whereIn('id', $postIds)
                 ->get()
                 ->sortBy(fn ($post) => array_search($post->id, $postIds))
@@ -226,6 +227,7 @@ class Recipe extends Component
 
         if (count($validManualIds) > 0) {
             $manualPosts = Post::with(['author', 'categories', 'tags'])
+                ->published()
                 ->whereIn('id', $validManualIds)
                 ->get();
 

@@ -127,6 +127,7 @@ class Carousel extends Component
 
         if (count($validManualIds) > 0) {
             $manualPosts = Post::with(['author', 'categories', 'tags'])
+                ->published()
                 ->whereIn('id', $validManualIds)
                 ->get();
 

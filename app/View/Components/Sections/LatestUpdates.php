@@ -151,11 +151,12 @@ class LatestUpdates extends Component
         } else {
             // Legacy: Fetch specific posts by ID
             $this->featuredPost = $featuredPostId
-                ? Post::with(['author', 'categories', 'tags'])->find($featuredPostId)
+                ? Post::with(['author', 'categories', 'tags'])->published()->find($featuredPostId)
                 : null;
 
             $this->posts = count($postIds) > 0
                 ? Post::with(['author', 'categories', 'tags'])
+                    ->published()
                     ->whereIn('id', $postIds)
                     ->get()
                     ->sortBy(fn ($post) => array_search($post->id, $postIds))
@@ -197,6 +198,7 @@ class LatestUpdates extends Component
 
         if (count($validManualIds) > 0) {
             $manualPosts = Post::with(['author', 'categories', 'tags'])
+                ->published()
                 ->whereIn('id', $validManualIds)
                 ->get();
 

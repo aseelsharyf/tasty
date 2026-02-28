@@ -161,6 +161,7 @@ class Review extends Component
         // Legacy: Fetch by post IDs
         if (count($postIds) > 0) {
             $this->posts = Post::with(['author', 'categories', 'tags'])
+                ->published()
                 ->whereIn('id', $postIds)
                 ->get()
                 ->sortBy(fn ($post) => array_search($post->id, $postIds))
@@ -200,6 +201,7 @@ class Review extends Component
 
         if (count($validManualIds) > 0) {
             $manualPosts = Post::with(['author', 'categories', 'tags'])
+                ->published()
                 ->whereIn('id', $validManualIds)
                 ->get();
 
