@@ -24,8 +24,10 @@ class OgImageController extends Controller
 
         // Read the generated image from the configured disk
         $disk = config('media-library.disk_name', 'public');
+        $prefix = config('media-library.prefix', '');
         $filename = 'og-images/posts/'.$post->slug.'.png';
-        $contents = Storage::disk($disk)->get($filename);
+        $fullPath = $prefix ? $prefix.'/'.$filename : $filename;
+        $contents = Storage::disk($disk)->get($fullPath);
 
         return response($contents, 200, [
             'Content-Type' => 'image/png',

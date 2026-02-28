@@ -84,7 +84,7 @@ class OgImageService
     }
 
     /**
-     * Generate OG image with full-bleed featured image, yellow gradient at bottom, and logo bottom-right.
+     * Generate OG image with grayscale featured image, diagonal yellow gradient from bottom-right, and logo.
      */
     protected function generateOgImage(string $imageContents, Post $post): ImageInterface
     {
@@ -93,8 +93,11 @@ class OgImageService
         // Full-bleed: cover the entire canvas
         $this->coverWithFocalPoint($image, $post->featured_image_anchor);
 
-        // Apply yellow gradient fade at the bottom
-        $this->addBottomGradient($image);
+        // Convert to grayscale
+        $image->greyscale();
+
+        // Apply diagonal yellow gradient from bottom-right
+        $this->addDiagonalGradient($image);
 
         // Add logo at bottom right
         $this->addLogo($image);
@@ -103,9 +106,12 @@ class OgImageService
     }
 
     /**
-     * Apply a yellow gradient fade at the bottom of the image using GD.
+     * Apply a diagonal yellow gradient in the bottom-right corner using GD.
+     *
+     * Matches the HTML template: a 1030x901 rectangle rotated 146.67deg with
+     * CSS linear-gradient(175deg). Uses proper CSS gradient line calculation.
      */
-    protected function addBottomGradient(ImageInterface $image): void
+    protected function addDiagonalGradient(ImageInterface $image): void
     {
         $tempPath = sys_get_temp_dir().'/gradient_'.uniqid().'.png';
         $image->toPng()->save($tempPath);
@@ -113,23 +119,88 @@ class OgImageService
         $gdImage = imagecreatefrompng($tempPath);
         imagealphablending($gdImage, true);
 
-        // Gradient covers the bottom ~20% of the image
-        $gradientHeight = (int) ($this->height * 0.2);
-        $gradientStart = $this->height - $gradientHeight;
+        // Figma/CSS: 1029.70 x 900.70 rectangle, rotated 146.67deg,
+        // container positioned at left=556.67, top=73.79 relative to OG canvas.
+        $rectW = 1029.70;
+        $rectH = 900.70;
+        $centerX = 556.67 + $rectW / 2;
+        $centerY = 73.79 + $rectH / 2;
 
-        for ($y = $gradientStart; $y < $this->height; $y++) {
-            $progress = ($y - $gradientStart) / $gradientHeight;
-            // Ease-in curve for a more natural fade
-            $alpha = (int) (127 * (1 - ($progress * $progress)));
+        // Inverse rotation to transform canvas pixels into element-local space
+        $rotationRad = deg2rad(146.67);
+        $cosR = cos(-$rotationRad);
+        $sinR = sin(-$rotationRad);
+        $halfW = $rectW / 2;
+        $halfH = $rectH / 2;
 
-            $color = imagecolorallocatealpha(
-                $gdImage,
-                $this->yellow['r'],
-                $this->yellow['g'],
-                $this->yellow['b'],
-                $alpha
-            );
-            imagefilledrectangle($gdImage, 0, $y, $this->width, $y, $color);
+        // CSS linear-gradient(175deg) direction vector in element-local space (y-down).
+        // CSS convention: 0deg = bottom-to-top, angles go clockwise.
+        // Direction vector = (sin(angle), -cos(angle)) in screen coords.
+        $cssGradRad = deg2rad(175.0);
+        $gradDx = sin($cssGradRad);   // ~0.087
+        $gradDy = -cos($cssGradRad);  // ~0.996
+
+        // CSS gradient line length (per spec):
+        // abs(width * sin(angle)) + abs(height * cos(angle))
+        $gradLineLength = abs($rectW * sin($cssGradRad)) + abs($rectH * cos($cssGradRad));
+
+        // Gradient stops from Figma
+        $stops = [
+            ['pos' => 0.19, 'alpha' => 0.881],
+            ['pos' => 0.54, 'alpha' => 0.792],
+            ['pos' => 0.58, 'alpha' => 0.725],
+            ['pos' => 0.80, 'alpha' => 0.0],
+        ];
+
+        for ($y = 0; $y < $this->height; $y++) {
+            for ($x = 0; $x < $this->width; $x++) {
+                // Transform canvas pixel to element-local coordinate space
+                $dx = $x - $centerX;
+                $dy = $y - $centerY;
+                $localX = $dx * $cosR - $dy * $sinR;
+                $localY = $dx * $sinR + $dy * $cosR;
+
+                // Check if pixel is inside the rectangle bounds
+                if ($localX < -$halfW || $localX > $halfW || $localY < -$halfH || $localY > $halfH) {
+                    continue;
+                }
+
+                // Project onto gradient direction in local space.
+                // Gradient line centered at origin, runs from -length/2 to +length/2.
+                $proj = $localX * $gradDx + $localY * $gradDy;
+                $t = ($proj + $gradLineLength / 2) / $gradLineLength;
+
+                // Interpolate opacity from gradient stops
+                $opacity = 0.0;
+                if ($t <= $stops[0]['pos']) {
+                    $opacity = $stops[0]['alpha'];
+                } elseif ($t >= $stops[count($stops) - 1]['pos']) {
+                    $opacity = $stops[count($stops) - 1]['alpha'];
+                } else {
+                    for ($i = 0; $i < count($stops) - 1; $i++) {
+                        if ($t >= $stops[$i]['pos'] && $t <= $stops[$i + 1]['pos']) {
+                            $segProgress = ($t - $stops[$i]['pos']) / ($stops[$i + 1]['pos'] - $stops[$i]['pos']);
+                            $opacity = $stops[$i]['alpha'] + $segProgress * ($stops[$i + 1]['alpha'] - $stops[$i]['alpha']);
+                            break;
+                        }
+                    }
+                }
+
+                if ($opacity <= 0.01) {
+                    continue;
+                }
+
+                // GD alpha: 0 = opaque, 127 = transparent
+                $gdAlpha = (int) (127 * (1 - $opacity));
+                $color = imagecolorallocatealpha(
+                    $gdImage,
+                    $this->yellow['r'],
+                    $this->yellow['g'],
+                    $this->yellow['b'],
+                    $gdAlpha
+                );
+                imagesetpixel($gdImage, $x, $y, $color);
+            }
         }
 
         imagepng($gdImage, $tempPath);
