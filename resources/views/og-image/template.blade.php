@@ -14,7 +14,7 @@
             <img
                 src="{{ $post->featured_image_url }}"
                 alt=""
-                class="w-full h-full object-cover grayscale"
+                class="w-full h-full object-cover"
                 style="object-position: {{ ($post->featured_image_anchor['x'] ?? 50) }}% {{ ($post->featured_image_anchor['y'] ?? 0) }}%;"
             >
         @endif

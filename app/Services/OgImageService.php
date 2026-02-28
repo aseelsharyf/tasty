@@ -93,9 +93,6 @@ class OgImageService
         // Full-bleed: cover the entire canvas
         $this->coverWithFocalPoint($image, $post->featured_image_anchor);
 
-        // Convert to grayscale
-        $image->greyscale();
-
         // Apply diagonal yellow gradient from bottom-right
         $this->addDiagonalGradient($image);
 
