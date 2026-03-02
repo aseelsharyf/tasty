@@ -1101,6 +1101,44 @@
     }
 }
 
+/* Content Block Links - Style anchor tags inside EditorJS rendered blocks */
+.text-body-lg a,
+.text-body-large a,
+.text-body-md a,
+.text-body-medium a {
+    color: var(--color-tasty-blue-black);
+    text-decoration: underline;
+    text-decoration-color: var(--color-tasty-yellow);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 2px;
+    transition: all 0.2s ease;
+}
+
+.text-body-lg a:hover,
+.text-body-large a:hover,
+.text-body-md a:hover,
+.text-body-medium a:hover {
+    background-color: var(--color-tasty-yellow);
+}
+
+/* Also style links in block headings and table cells */
+.text-block-h2 a,
+.text-block-h3 a,
+.text-block-h4 a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--color-tasty-yellow);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 2px;
+    transition: all 0.2s ease;
+}
+
+.text-block-h2 a:hover,
+.text-block-h3 a:hover,
+.text-block-h4 a:hover {
+    background-color: var(--color-tasty-yellow);
+}
+
 /* Ad Slot Styling */
 .ad-slot {
     overflow: hidden;
