@@ -311,10 +311,16 @@ class Review extends Component
         $actionInstance = new $actionClass;
 
         // Check for one more post beyond what we've loaded
+        // Exclude both this section's posts and posts used by other sections
+        $allExcludeIds = array_unique(array_merge(
+            $this->excludeIds,
+            $this->postTracker->getUsedIds()
+        ));
+
         $result = $actionInstance->execute([
             'page' => 1,
             'perPage' => 1,
-            'excludeIds' => $this->excludeIds,
+            'excludeIds' => $allExcludeIds,
             'sectionType' => $this->sectionType(),
             ...$params,
         ]);
