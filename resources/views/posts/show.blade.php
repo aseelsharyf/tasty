@@ -7,5 +7,6 @@
         'isRtl' => false,
         'isPreview' => false,
         'relatedPosts' => $relatedPosts,
+        'featuredProducts' => $featuredProducts ?? collect(),
     ])
 @endsection

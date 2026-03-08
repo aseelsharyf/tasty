@@ -8,6 +8,7 @@
     'showAuthor' => true,
     'isPreview' => false,
     'relatedPosts' => null,
+    'featuredProducts' => null,
 ])
 
 @php
@@ -177,6 +178,11 @@
             @endif
         </div>
     </section>
+@endif
+
+{{-- Featured Products Carousel (only for public view, not preview) --}}
+@if(!$isPreview && $featuredProducts?->isNotEmpty())
+    <x-sections.product-carousel :products="$featuredProducts" title="What you'll need" />
 @endif
 
 {{-- Newsletter Section (only for public view, not preview) --}}

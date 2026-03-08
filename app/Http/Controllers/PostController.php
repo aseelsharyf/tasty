@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\RecordViewJob;
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\Product;
 use App\Services\PublicCacheService;
 use App\Services\SeoService;
 use App\Support\BotDetector;
@@ -54,10 +55,18 @@ class PostController extends Controller
                 ->limit(3)
                 ->get();
 
+            // Get random active products for the carousel
+            $featuredProducts = Product::active()
+                ->with(['featuredMedia', 'store'])
+                ->inRandomOrder()
+                ->limit(12)
+                ->get();
+
             return view('posts.show', [
                 'post' => $post,
                 'category' => $category,
                 'relatedPosts' => $relatedPosts,
+                'featuredProducts' => $featuredProducts,
             ])->render();
         });
 
