@@ -162,7 +162,7 @@ function confirmDelete(adPlacement: AdPlacement) {
 
 function deleteAdPlacement() {
     if (adPlacementToDelete.value) {
-        router.delete(cmsPath(`/ad-placements/${adPlacementToDelete.value.id}`), {
+        router.delete(cmsPath(`/settings/ad-placements/${adPlacementToDelete.value.uuid}`), {
             onSuccess: () => {
                 deleteModalOpen.value = false;
                 adPlacementToDelete.value = null;
@@ -187,7 +187,7 @@ function openCreateModal() {
 
 async function openEditModal(adPlacement: AdPlacement) {
     try {
-        const response = await fetch(cmsPath(`/ad-placements/${adPlacement.id}/edit`), {
+        const response = await fetch(cmsPath(`/settings/ad-placements/${adPlacement.uuid}/edit`), {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -237,7 +237,7 @@ function updateAdPlacement() {
     saving.value = true;
     formErrors.value = {};
 
-    router.put(cmsPath(`/ad-placements/${adPlacementToEdit.value.id}`), form.value, {
+    router.put(cmsPath(`/settings/ad-placements/${adPlacementToEdit.value.uuid}`), form.value, {
         onSuccess: () => {
             editModalOpen.value = false;
             adPlacementToEdit.value = null;

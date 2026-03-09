@@ -246,6 +246,70 @@ test('ad placement store validates category exists when provided', function () {
     $response->assertSessionHasErrors(['category_id']);
 });
 
+test('getAdForArticleSlot falls back to parent category when subcategory has no ad', function () {
+    $parent = Category::factory()->create();
+    $child = Category::factory()->create(['parent_id' => $parent->id]);
+
+    AdPlacement::factory()->forSlot(AdPlacement::SLOT_AFTER_HEADER)->forCategory($parent)->create([
+        'ad_code' => '<div>Parent Ad</div>',
+    ]);
+
+    $result = AdPlacement::getAdForArticleSlot(AdPlacement::SLOT_AFTER_HEADER, $child->id);
+
+    expect($result)->toBe('<div>Parent Ad</div>');
+});
+
+test('getAdForArticleSlot prefers subcategory ad over parent ad', function () {
+    $parent = Category::factory()->create();
+    $child = Category::factory()->create(['parent_id' => $parent->id]);
+
+    AdPlacement::factory()->forSlot(AdPlacement::SLOT_AFTER_HEADER)->forCategory($parent)->create([
+        'ad_code' => '<div>Parent Ad</div>',
+        'priority' => 10,
+    ]);
+
+    AdPlacement::factory()->forSlot(AdPlacement::SLOT_AFTER_HEADER)->forCategory($child)->create([
+        'ad_code' => '<div>Child Ad</div>',
+        'priority' => 1,
+    ]);
+
+    $result = AdPlacement::getAdForArticleSlot(AdPlacement::SLOT_AFTER_HEADER, $child->id);
+
+    expect($result)->toBe('<div>Child Ad</div>');
+});
+
+test('getAdForArticleSlot walks full hierarchy: grandchild → child → parent → global', function () {
+    $grandparent = Category::factory()->create();
+    $parent = Category::factory()->create(['parent_id' => $grandparent->id]);
+    $child = Category::factory()->create(['parent_id' => $parent->id]);
+
+    AdPlacement::factory()->forSlot(AdPlacement::SLOT_AFTER_HEADER)->global()->create([
+        'ad_code' => '<div>Global Ad</div>',
+    ]);
+
+    AdPlacement::factory()->forSlot(AdPlacement::SLOT_AFTER_HEADER)->forCategory($grandparent)->create([
+        'ad_code' => '<div>Grandparent Ad</div>',
+    ]);
+
+    // No ad for parent or child — should fall back to grandparent
+    $result = AdPlacement::getAdForArticleSlot(AdPlacement::SLOT_AFTER_HEADER, $child->id);
+
+    expect($result)->toBe('<div>Grandparent Ad</div>');
+});
+
+test('getAdForArticleSlot falls back to global when no ancestor has an ad', function () {
+    $parent = Category::factory()->create();
+    $child = Category::factory()->create(['parent_id' => $parent->id]);
+
+    AdPlacement::factory()->forSlot(AdPlacement::SLOT_AFTER_HEADER)->global()->create([
+        'ad_code' => '<div>Global Ad</div>',
+    ]);
+
+    $result = AdPlacement::getAdForArticleSlot(AdPlacement::SLOT_AFTER_HEADER, $child->id);
+
+    expect($result)->toBe('<div>Global Ad</div>');
+});
+
 test('ad placement is deleted when associated category is deleted', function () {
     $category = Category::factory()->create();
     $adPlacement = AdPlacement::factory()->forCategory($category)->create();

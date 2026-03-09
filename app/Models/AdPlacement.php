@@ -91,19 +91,46 @@ class AdPlacement extends Model
 
     /**
      * Get the ad code for a specific article slot.
-     * Returns category-specific ad if available, otherwise falls back to global ad.
+     * Walks up the category hierarchy: subcategory → parent → ... → global.
      */
     public static function getAdForArticleSlot(string $slot, ?int $categoryId = null): ?string
     {
-        return static::query()
+        $categoryIds = [];
+
+        if ($categoryId) {
+            $category = Category::find($categoryId);
+
+            if ($category) {
+                // Build chain: subcategory → parent → grandparent → ...
+                $categoryIds[] = $category->id;
+
+                foreach ($category->ancestors() as $ancestor) {
+                    $categoryIds[] = $ancestor->id;
+                }
+            }
+        }
+
+        // Add null for global fallback
+        $categoryIds[] = null;
+
+        $baseQuery = static::query()
             ->active()
             ->forPageType(self::PAGE_TYPE_ARTICLE_DETAIL)
-            ->forSlot($slot)
-            ->forCategory($categoryId)
-            ->orderByRaw('category_id IS NULL ASC')
-            ->orderByDesc('priority')
-            ->first()
-            ?->ad_code;
+            ->forSlot($slot);
+
+        // Try each category in hierarchy order, then global
+        foreach ($categoryIds as $id) {
+            $ad = (clone $baseQuery)
+                ->where(fn ($q) => $id ? $q->where('category_id', $id) : $q->whereNull('category_id'))
+                ->orderByDesc('priority')
+                ->first();
+
+            if ($ad) {
+                return $ad->ad_code;
+            }
+        }
+
+        return null;
     }
 
     /**
