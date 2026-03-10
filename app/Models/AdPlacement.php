@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class AdPlacement extends Model
@@ -53,6 +54,9 @@ class AdPlacement extends Model
                 $adPlacement->uuid = (string) Str::uuid();
             }
         });
+
+        static::saved(fn (AdPlacement $adPlacement) => static::clearSlotCache($adPlacement->slot));
+        static::deleted(fn (AdPlacement $adPlacement) => static::clearSlotCache($adPlacement->slot));
     }
 
     // Relationships
@@ -92,45 +96,59 @@ class AdPlacement extends Model
     /**
      * Get the ad code for a specific article slot.
      * Walks up the category hierarchy: subcategory → parent → ... → global.
+     * Results are cached per slot + category combination.
      */
     public static function getAdForArticleSlot(string $slot, ?int $categoryId = null): ?string
     {
-        $categoryIds = [];
+        $cacheKey = "ad_slot:{$slot}:category:{$categoryId}";
 
-        if ($categoryId) {
-            $category = Category::find($categoryId);
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($slot, $categoryId) {
+            $categoryIds = [];
 
-            if ($category) {
-                // Build chain: subcategory → parent → grandparent → ...
-                $categoryIds[] = $category->id;
+            if ($categoryId) {
+                $category = Category::find($categoryId);
 
-                foreach ($category->ancestors() as $ancestor) {
-                    $categoryIds[] = $ancestor->id;
+                if ($category) {
+                    $categoryIds[] = $category->id;
+
+                    foreach ($category->ancestors() as $ancestor) {
+                        $categoryIds[] = $ancestor->id;
+                    }
                 }
             }
-        }
 
-        // Add null for global fallback
-        $categoryIds[] = null;
+            $categoryIds[] = null;
 
-        $baseQuery = static::query()
-            ->active()
-            ->forPageType(self::PAGE_TYPE_ARTICLE_DETAIL)
-            ->forSlot($slot);
+            $baseQuery = static::query()
+                ->active()
+                ->forPageType(self::PAGE_TYPE_ARTICLE_DETAIL)
+                ->forSlot($slot);
 
-        // Try each category in hierarchy order, then global
-        foreach ($categoryIds as $id) {
-            $ad = (clone $baseQuery)
-                ->where(fn ($q) => $id ? $q->where('category_id', $id) : $q->whereNull('category_id'))
-                ->orderByDesc('priority')
-                ->first();
+            foreach ($categoryIds as $id) {
+                $ad = (clone $baseQuery)
+                    ->where(fn ($q) => $id ? $q->where('category_id', $id) : $q->whereNull('category_id'))
+                    ->orderByDesc('priority')
+                    ->first();
 
-            if ($ad) {
-                return $ad->ad_code;
+                if ($ad) {
+                    return $ad->ad_code;
+                }
             }
-        }
 
-        return null;
+            return null;
+        });
+    }
+
+    /**
+     * Clear all cached ad results for a given slot.
+     */
+    public static function clearSlotCache(string $slot): void
+    {
+        Cache::forget("ad_slot:{$slot}:category:");
+
+        Category::query()->pluck('id')->each(function (int $categoryId) use ($slot) {
+            Cache::forget("ad_slot:{$slot}:category:{$categoryId}");
+        });
     }
 
     /**
