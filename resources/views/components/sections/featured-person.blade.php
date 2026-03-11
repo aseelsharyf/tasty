@@ -16,7 +16,7 @@
 {{-- Curved Hero Image Section --}}
 @if($image)
 <section class="featured-person-image-wrapper">
-    <a href="{{ $url }}" class="featured-person-image-container" style="--featured-person-image: url('{{ $image }}'); --featured-person-position: {{ $imagePosition }};"></a>
+    <a href="{{ $url }}" class="featured-person-image-container" aria-label="{{ $kicker ?: $title }}" style="--featured-person-image: url('{{ $image }}'); --featured-person-position: {{ $imagePosition }};"></a>
 </section>
 @endif
 
@@ -61,7 +61,7 @@
             @endif
 
             {{-- Button --}}
-            <a href="{{ $url }}" class="btn btn-white">
+            <a href="{{ $url }}" class="btn btn-white" aria-label="{{ $buttonText }}: {{ $kicker ?: $title }}">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>

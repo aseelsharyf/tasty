@@ -59,7 +59,7 @@
 
             {{-- Button --}}
             @if($buttonText && $buttonUrl && $buttonUrl !== '#')
-                <a href="{{ $buttonUrl }}" class="btn btn-{{ $buttonVariant }}">
+                <a href="{{ $buttonUrl }}" class="btn btn-{{ $buttonVariant }}" aria-label="{{ $buttonText }}: {{ $kicker ?: $title }}">
                     <x-ui.icons.arrow-right />
                     <span>{{ $buttonText }}</span>
                 </a>
