@@ -29,11 +29,11 @@
                 <span>{{ $date }}</span>
             </div>
         </div>
-        <a href="{{ $buttonUrl }}" class="btn btn-{{ $buttonVariant }} shrink-0">
+        <a href="{{ $buttonUrl }}" class="btn btn-{{ $buttonVariant }} shrink-0" aria-label="{{ $buttonText }}: {{ $title }}">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <polygon points="5,3 19,12 5,21" fill="currentColor"/>
             </svg>
-            <span>{{ $buttonText }}</span>
+            <span>{{ $buttonText }}<span class="sr-only">: {{ $title }}</span></span>
         </a>
     </div>
 </div>

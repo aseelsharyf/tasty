@@ -48,7 +48,7 @@
                 @if($buttonText && $buttonUrl && $buttonUrl !== '#')
                     <a href="{{ $buttonUrl }}" class="btn btn-{{ $buttonVariant }}" aria-label="{{ $buttonText }}: {{ $kicker ?: $title }}">
                         <x-ui.icons.arrow-right />
-                        <span>{{ $buttonText }}</span>
+                        <span>{{ $buttonText }}<span class="sr-only">: {{ $kicker ?: $title }}</span></span>
                     </a>
                 @endif
             </div>
@@ -123,7 +123,7 @@
                 @if($buttonText && $buttonUrl && $buttonUrl !== '#')
                     <a href="{{ $buttonUrl }}" class="btn btn-{{ $buttonVariant }}" aria-label="{{ $buttonText }}: {{ $kicker ?: $title }}">
                         <x-ui.icons.arrow-right />
-                        <span>{{ $buttonText }}</span>
+                        <span>{{ $buttonText }}<span class="sr-only">: {{ $kicker ?: $title }}</span></span>
                     </a>
                 @endif
             </div>
