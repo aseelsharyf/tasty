@@ -10,6 +10,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RecipeSubmissionController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\TagController;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,25 @@ Route::get('/test-500', fn () => abort(500));
 Route::get('/test-403', fn () => abort(403));
 Route::get('/test-408', fn () => abort(408));
 Route::get('/test-503', fn () => abort(503));
+
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+
+Route::get('/robots.txt', function () {
+    $sitemap = url('/sitemap.xml');
+
+    return response(implode("\n", [
+        'User-agent: *',
+        'Disallow: /cms',
+        'Disallow: /cms/',
+        'Disallow: /api/',
+        'Disallow: /auth/',
+        'Disallow: /og-preview/',
+        'Disallow: /og-html/',
+        'Disallow: /og-test',
+        '',
+        "Sitemap: {$sitemap}",
+    ]), 200, ['Content-Type' => 'text/plain']);
+})->name('robots');
 
 /*
 |--------------------------------------------------------------------------

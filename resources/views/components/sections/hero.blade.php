@@ -46,7 +46,7 @@
                 >
             </div>
         @else
-            <a href="{{ $heroUrl }}" class="hero-image-container block relative w-full lg:w-1/2 lg:flex-none overflow-hidden">
+            <a href="{{ $heroUrl }}" aria-label="{{ $heroKicker ?: $heroTitle }}" class="hero-image-container block relative w-full lg:w-1/2 lg:flex-none overflow-hidden">
                 <img
                     src="{{ $heroImage }}"
                     alt="{{ $heroImageAlt }}"

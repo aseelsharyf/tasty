@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Page;
+use App\Services\PublicCacheService;
 
 class PageObserver
 {
@@ -11,7 +12,7 @@ class PageObserver
      */
     public function created(Page $page): void
     {
-        // No cache to clear for new pages
+        PublicCacheService::flushSitemapCache();
     }
 
     /**
@@ -57,5 +58,6 @@ class PageObserver
     private function clearPageCache(Page $page): void
     {
         Page::clearCache($page->slug);
+        PublicCacheService::flushSitemapCache();
     }
 }

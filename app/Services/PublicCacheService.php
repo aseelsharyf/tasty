@@ -23,12 +23,16 @@ class PublicCacheService
     /** @var int Search suggestions cache TTL (2 minutes) */
     private const SEARCH_TTL = 120;
 
+    /** @var int Sitemap cache TTL (24 hours) */
+    private const SITEMAP_TTL = 86400;
+
     /**
      * Flush all post-related caches (homepage, listings, post detail pages).
      */
     public static function flushPostCaches(): void
     {
         Cache::forget('public:homepage:sections');
+        Cache::forget('public:sitemap');
         static::flushListingCaches();
     }
 
@@ -58,6 +62,7 @@ class PublicCacheService
     {
         static::flushByPrefix('public:products:');
         Cache::forget('public:homepage:sections');
+        Cache::forget('public:sitemap');
     }
 
     /**
@@ -98,6 +103,22 @@ class PublicCacheService
     public static function searchTtl(): int
     {
         return self::SEARCH_TTL;
+    }
+
+    /**
+     * Get sitemap TTL.
+     */
+    public static function sitemapTtl(): int
+    {
+        return self::SITEMAP_TTL;
+    }
+
+    /**
+     * Flush sitemap cache.
+     */
+    public static function flushSitemapCache(): void
+    {
+        Cache::forget('public:sitemap');
     }
 
     /**
