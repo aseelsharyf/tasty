@@ -93,8 +93,6 @@
     <div class="bg-white rounded-xl p-6 {{ $isReply ? 'border border-tasty-blue-black/10' : '' }}">
         @if($isReply)
             <p class="text-sm text-tasty-blue-black/60 mb-4">Replying to comment</p>
-        @else
-            <h3 class="text-lg font-medium text-tasty-blue-black mb-4">Leave a Comment</h3>
         @endif
 
         {{-- Guest fields (only show if not logged in) --}}

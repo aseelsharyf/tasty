@@ -17,10 +17,7 @@
         {{-- Section Header --}}
         <div class="flex items-center justify-between mb-10">
             <h2 class="text-h4 text-tasty-blue-black">
-                Comments
-                @if($totalCount > 0)
-                    <span class="text-tasty-blue-black/50">({{ $totalCount }})</span>
-                @endif
+                Leave a comment
             </h2>
         </div>
 
