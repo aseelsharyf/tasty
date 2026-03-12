@@ -243,14 +243,14 @@
 
             {{-- Raw HTML --}}
             @case('raw')
-                <div class="{{ $contentWidth }} w-full px-4 lg:px-0">
+                <div class="{{ $contentWidth }} w-full px-4 lg:px-0 flex justify-center">
                     {!! $data['html'] ?? '' !!}
                 </div>
                 @break
 
             {{-- HTML Embed --}}
             @case('htmlEmbed')
-                <div class="{{ $contentWidth }} w-full px-4 lg:px-0">
+                <div class="{{ $contentWidth }} w-full px-4 lg:px-0 flex justify-center">
                     {!! $data['html'] ?? '' !!}
                 </div>
                 @break

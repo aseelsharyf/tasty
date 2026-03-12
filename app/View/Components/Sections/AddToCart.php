@@ -59,16 +59,20 @@ class AddToCart extends Component
                 ->sortBy(fn ($product) => array_search($product->id, $productIds))
                 ->values();
         } else {
-            // Load recent active products
-            $query = Product::with(['featuredMedia', 'category', 'featuredTag', 'store.logo'])
-                ->active()
-                ->ordered();
+            // Load dynamic products: featured first, then recently added, shuffled
+            $baseQuery = Product::with(['featuredMedia', 'category', 'featuredTag', 'store.logo'])
+                ->active();
 
             if ($categoryId) {
-                $query->where('product_category_id', $categoryId);
+                $baseQuery->where('product_category_id', $categoryId);
             }
 
-            $this->products = $query->limit($count)->get();
+            $this->products = (clone $baseQuery)
+                ->orderByDesc('is_featured')
+                ->orderByDesc('created_at')
+                ->limit($count)
+                ->get()
+                ->shuffle();
         }
     }
 
