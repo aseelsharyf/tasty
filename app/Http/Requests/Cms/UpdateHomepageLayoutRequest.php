@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Cms;
 
+use App\Models\Post;
 use App\Services\Layouts\SectionRegistry;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
@@ -72,6 +73,7 @@ class UpdateHomepageLayoutRequest extends FormRequest
     {
         $sections = $this->input('sections', []);
         $assignedPosts = [];
+        $duplicatePostIds = [];
 
         foreach ($sections as $sectionIndex => $section) {
             $slots = $section['slots'] ?? [];
@@ -81,17 +83,37 @@ class UpdateHomepageLayoutRequest extends FormRequest
                     $postId = $slot['postId'];
 
                     if (isset($assignedPosts[$postId])) {
-                        $validator->errors()->add(
-                            "sections.{$sectionIndex}.slots.{$slotIndex}.postId",
-                            'This post is already assigned to another slot.'
-                        );
+                        $duplicatePostIds[] = $postId;
+                        $assignedPosts[$postId]['duplicates'][] = [
+                            'section' => $sectionIndex,
+                            'slot' => $slotIndex,
+                        ];
                     } else {
                         $assignedPosts[$postId] = [
                             'section' => $sectionIndex,
                             'slot' => $slotIndex,
+                            'duplicates' => [],
                         ];
                     }
                 }
+            }
+        }
+
+        if (empty($duplicatePostIds)) {
+            return;
+        }
+
+        $postTitles = Post::whereIn('id', array_unique($duplicatePostIds))
+            ->pluck('title', 'id');
+
+        foreach ($duplicatePostIds as $postId) {
+            $title = $postTitles[$postId] ?? "#{$postId}";
+
+            foreach ($assignedPosts[$postId]['duplicates'] as $duplicate) {
+                $validator->errors()->add(
+                    "sections.{$duplicate['section']}.slots.{$duplicate['slot']}.postId",
+                    "\"{$title}\" is already assigned to another slot."
+                );
             }
         }
     }
