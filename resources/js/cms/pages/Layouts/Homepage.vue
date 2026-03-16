@@ -119,7 +119,11 @@ function saveChanges() {
             isSaving.value = false;
         },
         onError: (errors) => {
-            toast.add({ title: 'Error', description: 'Failed to save homepage layout.', color: 'error' });
+            const messages = Object.values(errors);
+            const description = messages.length > 0
+                ? messages.join('\n')
+                : 'Failed to save homepage layout.';
+            toast.add({ title: 'Error', description, color: 'error' });
             console.error('Homepage layout save error:', errors);
             isSaving.value = false;
         },
