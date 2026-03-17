@@ -26,6 +26,7 @@ class UpdateProductRequest extends FormRequest
                 'max:255',
                 Rule::unique('products', 'slug')->ignore($this->route('product')),
             ],
+            'product_type' => ['required', 'string', 'in:referral,in_house,affiliate'],
             'description' => ['nullable'],
             'description.*' => ['nullable', 'string', 'max:2000'],
             'short_description' => ['nullable'],
@@ -38,7 +39,7 @@ class UpdateProductRequest extends FormRequest
             'currency' => ['nullable', 'string', 'size:3'],
             'compare_at_price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
             'availability' => ['nullable', 'string', 'in:in_stock,out_of_stock,pre_order,discontinued'],
-            'affiliate_url' => ['nullable', 'string', 'url', 'max:2048'],
+            'affiliate_url' => ['required_if:product_type,referral', 'nullable', 'string', 'url', 'max:2048'],
             'product_store_id' => ['nullable', 'integer', 'exists:product_stores,id'],
             'is_active' => ['nullable', 'boolean'],
             'is_featured' => ['nullable', 'boolean'],
@@ -52,6 +53,13 @@ class UpdateProductRequest extends FormRequest
             'tag_ids.*' => ['integer', 'exists:tags,id'],
             'image_ids' => ['nullable', 'array'],
             'image_ids.*' => ['integer', 'exists:media_items,id'],
+            'variants' => ['nullable', 'array'],
+            'variants.*.id' => ['nullable', 'integer', 'exists:product_variants,id'],
+            'variants.*.name' => ['required_with:variants', 'string', 'max:255'],
+            'variants.*.price' => ['required_with:variants', 'numeric', 'min:0', 'max:999999.99'],
+            'variants.*.sku' => ['nullable', 'string', 'max:255'],
+            'variants.*.stock_quantity' => ['nullable', 'integer', 'min:0'],
+            'variants.*.is_active' => ['nullable', 'boolean'],
         ];
     }
 

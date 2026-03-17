@@ -40,6 +40,15 @@ class Product extends Component
 
     public ?int $productId;
 
+    public bool $isPurchasable;
+
+    public bool $hasVariants;
+
+    public ?string $productSlug;
+
+    /** @var array<int, array{id: int, name: string, price: string, in_stock: bool}> */
+    public array $variants;
+
     /**
      * Create a new component instance.
      *
@@ -65,8 +74,25 @@ class Product extends Component
     ) {
         $this->showPrice = $showPrice;
         $this->productId = null;
+        $this->isPurchasable = false;
+        $this->hasVariants = false;
+        $this->productSlug = null;
+        $this->variants = [];
         if ($product instanceof ProductModel) {
             $this->productId = $product->id;
+            $this->isPurchasable = $product->isPurchasable();
+            $this->hasVariants = $product->variants()->exists();
+            $this->productSlug = $product->slug;
+            if ($this->hasVariants) {
+                $this->variants = $product->variants
+                    ->map(fn ($v) => [
+                        'id' => $v->id,
+                        'name' => $v->name,
+                        'price' => number_format((float) $v->price, 2).' '.$product->currency,
+                        'in_stock' => $v->isInStock(),
+                    ])
+                    ->all();
+            }
             $this->image = $product->featured_image_url ?? '';
             $this->imageAlt = $product->featuredMedia?->alt_text ?? $product->title;
             // Build tags from category and featured tag with URLs
@@ -86,7 +112,9 @@ class Product extends Component
             $this->tags = $badgeTags;
             $this->title = $product->title;
             $this->description = $product->description ?? '';
-            $this->url = $this->safeRoute('products.redirect', ['product' => $product->slug]);
+            $this->url = $this->isPurchasable
+                ? $this->safeRoute('products.show', ['product' => $product->slug])
+                : $this->safeRoute('products.redirect', ['product' => $product->slug]);
             $this->price = $product->formatted_price;
             $this->compareAtPrice = $product->compare_at_price
                 ? number_format((float) $product->compare_at_price, 2).' '.$product->currency

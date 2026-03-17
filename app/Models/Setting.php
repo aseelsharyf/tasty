@@ -331,6 +331,61 @@ class Setting extends Model
     }
 
     /**
+     * Get bank accounts configuration.
+     *
+     * @return array<int, array{bank_name: string, account_name: string, account_number: string, currency: string}>
+     */
+    public static function getBankAccounts(): array
+    {
+        return static::get('shop.bank_accounts', []);
+    }
+
+    /**
+     * Set bank accounts configuration.
+     *
+     * @param  array<int, array{bank_name: string, account_name: string, account_number: string, currency: string}>  $accounts
+     */
+    public static function setBankAccounts(array $accounts): void
+    {
+        static::set('shop.bank_accounts', $accounts, 'shop');
+    }
+
+    /**
+     * Get payment methods configuration.
+     *
+     * @return array<int, array{key: string, name: string, type: string, is_active: bool}>
+     */
+    public static function getPaymentMethods(): array
+    {
+        return static::get('shop.payment_methods', static::getDefaultPaymentMethods());
+    }
+
+    /**
+     * Set payment methods configuration.
+     *
+     * @param  array<int, array{key: string, name: string, type: string, is_active: bool}>  $methods
+     */
+    public static function setPaymentMethods(array $methods): void
+    {
+        static::set('shop.payment_methods', $methods, 'shop');
+    }
+
+    /**
+     * Get default payment methods.
+     *
+     * @return array<int, array{key: string, name: string, type: string, is_active: bool}>
+     */
+    public static function getDefaultPaymentMethods(): array
+    {
+        return [
+            ['key' => 'bml_gateway', 'name' => 'BML Gateway', 'type' => 'gateway', 'is_active' => false],
+            ['key' => 'bank_transfer', 'name' => 'Bank Transfer', 'type' => 'bank_transfer', 'is_active' => true],
+            ['key' => 'ooredoo_mfaisaa', 'name' => 'Ooredoo m-Faisaa', 'type' => 'online', 'is_active' => false],
+            ['key' => 'dhiraagu_pay', 'name' => 'Dhiraagu Pay', 'type' => 'online', 'is_active' => false],
+        ];
+    }
+
+    /**
      * Delete a workflow configuration for a specific post type.
      * (Will fall back to default workflow)
      */

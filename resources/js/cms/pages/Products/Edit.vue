@@ -35,12 +35,24 @@ interface ProductStore {
     name: string;
 }
 
+interface ProductVariantData {
+    id?: number;
+    uuid?: string;
+    name: string;
+    price: number | null;
+    sku: string | null;
+    stock_quantity: number;
+    is_active: boolean;
+    order?: number;
+}
+
 interface ProductData {
     id: number;
     uuid: string;
     title: string;
     title_translations: Record<string, string>;
     slug: string;
+    product_type?: string;
     description: string | null;
     description_translations: Record<string, string>;
     short_description: string | null;
@@ -63,6 +75,7 @@ interface ProductData {
     tags: Tag[];
     image_ids: number[];
     images: MediaItem[];
+    variants?: ProductVariantData[];
 }
 
 const props = defineProps<{
@@ -86,11 +99,21 @@ function initTranslationsFromProduct(translations: Record<string, string>): Reco
     return result;
 }
 
+interface ProductVariantForm {
+    id?: number;
+    name: string;
+    price: number | null;
+    sku: string;
+    stock_quantity: number;
+    is_active: boolean;
+}
+
 const form = useForm({
     title: initTranslationsFromProduct(props.product.title_translations || {}),
     description: initTranslationsFromProduct(props.product.description_translations || {}),
     short_description: initTranslationsFromProduct(props.product.short_description_translations || {}),
     slug: props.product.slug || '',
+    product_type: props.product.product_type || 'referral',
     brand: props.product.brand || '',
     product_category_id: props.product.product_category_id,
     featured_tag_id: props.product.featured_tag_id,
@@ -106,6 +129,14 @@ const form = useForm({
     sku: props.product.sku || '',
     tag_ids: [...props.product.tag_ids],
     image_ids: [...props.product.image_ids],
+    variants: (props.product.variants || []).map(v => ({
+        id: v.id,
+        name: v.name,
+        price: v.price,
+        sku: v.sku || '',
+        stock_quantity: v.stock_quantity,
+        is_active: v.is_active,
+    })) as ProductVariantForm[],
 });
 
 // Media picker
@@ -121,6 +152,12 @@ const currencyOptions = [
     { value: 'EUR', label: 'EUR (€)' },
     { value: 'GBP', label: 'GBP (£)' },
     { value: 'MVR', label: 'MVR' },
+];
+
+const productTypeOptions = [
+    { value: 'referral', label: 'Referral' },
+    { value: 'in_house', label: 'In-house' },
+    { value: 'affiliate', label: 'Affiliate' },
 ];
 
 const availabilityOptions = [
@@ -392,6 +429,20 @@ function removeImage(index: number) {
     form.image_ids = selectedImages.value.map(m => m.id);
 }
 
+function addVariant() {
+    form.variants.push({
+        name: '',
+        price: null,
+        sku: '',
+        stock_quantity: 0,
+        is_active: true,
+    });
+}
+
+function removeVariant(index: number) {
+    form.variants.splice(index, 1);
+}
+
 function hasTranslation(langCode: string): boolean {
     return !!(form.title[langCode]?.trim());
 }
@@ -412,6 +463,7 @@ function submit() {
         description: descriptionData,
         short_description: shortDescriptionData,
         slug: form.slug,
+        product_type: form.product_type,
         brand: form.brand || null,
         product_category_id: form.product_category_id,
         featured_tag_id: form.featured_tag_id,
@@ -420,13 +472,14 @@ function submit() {
         currency: form.currency,
         compare_at_price: form.compare_at_price,
         availability: form.availability,
-        affiliate_url: form.affiliate_url,
+        affiliate_url: form.affiliate_url || null,
         product_store_id: form.product_store_id,
         is_active: form.is_active,
         is_featured: form.is_featured,
         sku: form.sku || null,
         tag_ids: form.tag_ids,
         image_ids: form.image_ids,
+        variants: form.variants.filter(v => v.name),
     })).put(cmsPath(`/products/${props.product.uuid}`), {
         preserveScroll: true,
         onSuccess: () => {
@@ -669,6 +722,24 @@ function goBack() {
                                 <h3 class="text-sm font-semibold text-highlighted mb-4">Product Details</h3>
 
                                 <div class="space-y-4">
+                                    <!-- Product Type -->
+                                    <div>
+                                        <label class="text-sm font-medium mb-2 block">Product Type <span class="text-error">*</span></label>
+                                        <USelectMenu
+                                            v-model="form.product_type"
+                                            :items="productTypeOptions"
+                                            value-key="value"
+                                            class="w-full"
+                                            :disabled="form.processing"
+                                        />
+                                        <p class="text-xs text-muted mt-1">
+                                            <template v-if="form.product_type === 'referral'">Links to an external seller website</template>
+                                            <template v-else-if="form.product_type === 'in_house'">Sold directly through this site</template>
+                                            <template v-else>Sold through affiliate partner</template>
+                                        </p>
+                                        <p v-if="form.errors.product_type" class="text-error text-xs mt-1">{{ form.errors.product_type }}</p>
+                                    </div>
+
                                     <!-- Slug -->
                                     <div>
                                         <label class="text-sm font-medium mb-2 block">URL Slug</label>
@@ -776,7 +847,8 @@ function goBack() {
                                 </div>
                             </div>
 
-                            <div class="border-t border-default pt-6">
+                            <!-- Affiliate & Availability (referral only) -->
+                            <div v-if="form.product_type === 'referral'" class="border-t border-default pt-6">
                                 <h3 class="text-sm font-semibold text-highlighted mb-4">Affiliate & Availability</h3>
 
                                 <div class="space-y-4">
@@ -914,6 +986,95 @@ function goBack() {
                                                     <UIcon name="i-lucide-plus" class="size-3.5" />
                                                     <span>Create "{{ tagSearchQuery.trim() }}"</span>
                                                 </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Variants (only for in-house and affiliate types) -->
+                            <div v-if="form.product_type !== 'referral'" class="border-t border-default pt-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-sm font-semibold text-highlighted">Variants</h3>
+                                    <UButton
+                                        color="neutral"
+                                        variant="ghost"
+                                        size="sm"
+                                        icon="i-lucide-plus"
+                                        :disabled="form.processing"
+                                        @click="addVariant"
+                                    >
+                                        Add Variant
+                                    </UButton>
+                                </div>
+
+                                <div v-if="form.variants.length === 0" class="text-sm text-muted text-center py-4 border border-dashed border-default rounded-lg">
+                                    No variants added. The product will use its own price and stock.
+                                </div>
+
+                                <div v-else class="space-y-3">
+                                    <div
+                                        v-for="(variant, index) in form.variants"
+                                        :key="index"
+                                        class="p-4 rounded-lg border border-default bg-elevated/30"
+                                    >
+                                        <div class="flex items-center justify-between mb-3">
+                                            <span class="text-xs font-medium text-muted">Variant {{ index + 1 }}</span>
+                                            <UButton
+                                                color="error"
+                                                variant="ghost"
+                                                size="xs"
+                                                icon="i-lucide-trash-2"
+                                                @click="removeVariant(index)"
+                                            />
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div class="col-span-2">
+                                                <label class="text-xs font-medium mb-1 block">Name <span class="text-error">*</span></label>
+                                                <UInput
+                                                    v-model="variant.name"
+                                                    placeholder="e.g., Small, Large, 500ml"
+                                                    size="sm"
+                                                    :disabled="form.processing"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="text-xs font-medium mb-1 block">Price <span class="text-error">*</span></label>
+                                                <UInput
+                                                    v-model.number="variant.price"
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    placeholder="0.00"
+                                                    size="sm"
+                                                    :disabled="form.processing"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="text-xs font-medium mb-1 block">SKU</label>
+                                                <UInput
+                                                    v-model="variant.sku"
+                                                    placeholder="VAR-001"
+                                                    size="sm"
+                                                    :disabled="form.processing"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="text-xs font-medium mb-1 block">Stock</label>
+                                                <UInput
+                                                    v-model.number="variant.stock_quantity"
+                                                    type="number"
+                                                    min="0"
+                                                    placeholder="0"
+                                                    size="sm"
+                                                    :disabled="form.processing"
+                                                />
+                                            </div>
+                                            <div class="flex items-end pb-1">
+                                                <label class="flex items-center gap-2 text-xs font-medium cursor-pointer">
+                                                    <USwitch v-model="variant.is_active" size="sm" />
+                                                    Active
+                                                </label>
                                             </div>
                                         </div>
                                     </div>

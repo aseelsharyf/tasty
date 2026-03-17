@@ -41,7 +41,7 @@ class ProductController extends Controller
             $products = Product::query()
                 ->active()
                 ->ordered()
-                ->with(['featuredMedia', 'tags', 'category', 'store'])
+                ->with(['featuredMedia', 'tags', 'category', 'store', 'variants'])
                 ->paginate(12);
 
             return view('products.index', [
@@ -70,7 +70,7 @@ class ProductController extends Controller
             $products = $store->products()
                 ->active()
                 ->ordered()
-                ->with(['featuredMedia', 'tags', 'category', 'store'])
+                ->with(['featuredMedia', 'tags', 'category', 'store', 'variants'])
                 ->paginate(12);
 
             return view('products.store', [
@@ -93,7 +93,7 @@ class ProductController extends Controller
         $products = $store->products()
             ->active()
             ->ordered()
-            ->with(['featuredMedia', 'tags', 'category', 'store'])
+            ->with(['featuredMedia', 'tags', 'category', 'store', 'variants'])
             ->skip(($page - 1) * $perPage)
             ->take($perPage)
             ->get();
@@ -137,7 +137,7 @@ class ProductController extends Controller
             $products = $category->products()
                 ->active()
                 ->ordered()
-                ->with(['featuredMedia', 'tags', 'category', 'store'])
+                ->with(['featuredMedia', 'tags', 'category', 'store', 'variants'])
                 ->paginate(12);
 
             return view('products.category', [
@@ -173,7 +173,7 @@ class ProductController extends Controller
                     $query->where('featured_tag_id', $tag->id)
                         ->orWhereHas('tags', fn ($q) => $q->where('tags.id', $tag->id));
                 })
-                ->with(['featuredMedia', 'tags', 'category', 'store'])
+                ->with(['featuredMedia', 'tags', 'category', 'store', 'variants'])
                 ->paginate(12);
 
             return view('products.index', [
@@ -181,6 +181,31 @@ class ProductController extends Controller
                 'products' => $products,
                 'currentCategory' => null,
                 'currentTag' => $tag,
+            ])->render();
+        });
+
+        return new Response($html);
+    }
+
+    /**
+     * Display a single product.
+     */
+    public function show(Product $product): Response
+    {
+        abort_unless($product->is_active, 404);
+
+        $cacheKey = "public:products:show:{$product->slug}";
+
+        $html = Cache::remember($cacheKey, PublicCacheService::productTtl(), function () use ($product) {
+            $this->seo->setBasic(
+                $product->title,
+                $product->short_description ?? $product->description
+            );
+
+            $product->load(['featuredMedia', 'tags', 'category', 'store', 'images', 'variants' => fn ($q) => $q->active()->ordered()]);
+
+            return view('products.show', [
+                'product' => $product,
             ])->render();
         });
 

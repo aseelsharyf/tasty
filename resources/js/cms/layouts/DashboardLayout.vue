@@ -240,12 +240,22 @@ const taxonomyNavItems = computed<NavigationMenuItem[]>(() => {
 
 const shopNavItems = computed<NavigationMenuItem[]>(() => {
     const items: NavigationMenuItem[] = [];
-    const hasShopAccess = can('products.view') || can('product-categories.view');
+    const hasShopAccess = can('products.view') || can('product-categories.view') || can('orders.view');
 
     if (hasShopAccess) {
         items.push({
             label: 'Shop',
             type: 'label',
+        });
+    }
+
+    if (can('orders.view')) {
+        items.push({
+            label: 'Orders',
+            icon: 'i-lucide-shopping-cart',
+            to: cms('/orders'),
+            active: isActivePrefix('/orders'),
+            onSelect: () => { sidebarOpen.value = false; },
         });
     }
 
@@ -275,6 +285,16 @@ const shopNavItems = computed<NavigationMenuItem[]>(() => {
             icon: 'i-lucide-building-2',
             to: cms('/product-stores'),
             active: isActivePrefix('/product-stores'),
+            onSelect: () => { sidebarOpen.value = false; },
+        });
+    }
+
+    if (can('settings.view')) {
+        items.push({
+            label: 'Discount Codes',
+            icon: 'i-lucide-ticket',
+            to: cms('/settings/discount-codes'),
+            active: isActivePrefix('/settings/discount-codes'),
             onSelect: () => { sidebarOpen.value = false; },
         });
     }
@@ -570,6 +590,16 @@ const adminNavItems = computed<NavigationMenuItem[]>(() => {
                     label: 'Badges',
                     to: cms('/settings/badges'),
                     icon: 'i-lucide-award',
+                },
+                {
+                    label: 'Delivery Locations',
+                    to: cms('/settings/delivery-locations'),
+                    icon: 'i-lucide-map-pin',
+                },
+                {
+                    label: 'Shop Settings',
+                    to: cms('/settings/shop'),
+                    icon: 'i-lucide-store',
                 },
             ],
         });

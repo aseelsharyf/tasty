@@ -45,6 +45,7 @@ class ProductFactory extends Factory
             'uuid' => fake()->uuid(),
             'title' => ['en' => $title],
             'slug' => Str::slug($title).'-'.fake()->unique()->randomNumber(4),
+            'product_type' => 'referral',
             'description' => ['en' => fake()->paragraph()],
             'short_description' => ['en' => fake()->sentence()],
             'brand' => fake()->optional(0.7)->randomElement($brands),
@@ -58,6 +59,30 @@ class ProductFactory extends Factory
             'is_featured' => fake()->boolean(20),
             'order' => fake()->numberBetween(0, 10),
         ];
+    }
+
+    public function referral(): static
+    {
+        return $this->state(fn () => [
+            'product_type' => 'referral',
+            'affiliate_url' => fake()->url(),
+        ]);
+    }
+
+    public function inHouse(): static
+    {
+        return $this->state(fn () => [
+            'product_type' => 'in_house',
+            'affiliate_url' => null,
+        ]);
+    }
+
+    public function affiliate(): static
+    {
+        return $this->state(fn () => [
+            'product_type' => 'affiliate',
+            'affiliate_url' => null,
+        ]);
     }
 
     public function inactive(): static

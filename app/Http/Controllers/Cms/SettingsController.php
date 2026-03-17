@@ -397,6 +397,36 @@ class SettingsController extends Controller
             ->with('success', 'Workflow deleted successfully.');
     }
 
+    public function shop(): Response
+    {
+        return Inertia::render('Settings/Shop', [
+            'bankAccounts' => Setting::getBankAccounts(),
+            'paymentMethods' => Setting::getPaymentMethods(),
+        ]);
+    }
+
+    public function updateShop(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'bank_accounts' => ['nullable', 'array'],
+            'bank_accounts.*.bank_name' => ['required', 'string', 'max:255'],
+            'bank_accounts.*.account_name' => ['required', 'string', 'max:255'],
+            'bank_accounts.*.account_number' => ['required', 'string', 'max:255'],
+            'bank_accounts.*.currency' => ['required', 'string', 'max:10'],
+            'payment_methods' => ['nullable', 'array'],
+            'payment_methods.*.key' => ['required', 'string', 'max:50'],
+            'payment_methods.*.name' => ['required', 'string', 'max:100'],
+            'payment_methods.*.type' => ['required', 'string', 'in:gateway,bank_transfer,online'],
+            'payment_methods.*.is_active' => ['required', 'boolean'],
+        ]);
+
+        Setting::setBankAccounts($validated['bank_accounts'] ?? []);
+        Setting::setPaymentMethods($validated['payment_methods'] ?? []);
+
+        return redirect()->route('cms.settings.shop')
+            ->with('success', 'Shop settings updated successfully.');
+    }
+
     public function sectionCategories(
         SectionRegistry $registry,
         SectionCategoryMappingService $mappingService
