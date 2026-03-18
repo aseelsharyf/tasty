@@ -15,38 +15,19 @@ class FixSequences extends Command
     {
         $sequences = DB::select("
             SELECT
-                seq.relname AS sequence_name,
-                tab.relname AS table_name,
-                attr.attname AS column_name
-            FROM pg_class seq
-            JOIN pg_depend dep ON dep.objid = seq.oid
-            JOIN pg_class tab ON dep.refobjid = tab.oid
-            JOIN pg_attribute attr ON attr.attrelid = tab.oid AND attr.attnum = dep.refobjsubid
-            WHERE seq.relkind = 'S'
-              AND dep.deptype = 'a'
+                pg_get_serial_sequence(quote_ident(t.table_name), quote_ident(c.column_name)) AS sequence_name,
+                t.table_name,
+                c.column_name
+            FROM information_schema.tables t
+            JOIN information_schema.columns c ON c.table_name = t.table_name AND c.table_schema = t.table_schema
+            WHERE t.table_schema = 'public'
+              AND t.table_type = 'BASE TABLE'
+              AND c.column_default LIKE 'nextval%'
         ");
 
-        $this->line('Found '.count($sequences).' sequences via pg_depend.');
+        $sequences = array_filter($sequences, fn ($s) => $s->sequence_name !== null);
 
-        if (empty($sequences)) {
-            $this->warn('No sequences found via pg_depend, falling back to information_schema...');
-            $sequences = DB::select("
-                SELECT
-                    column_default,
-                    table_name,
-                    column_name
-                FROM information_schema.columns
-                WHERE column_default LIKE 'nextval%'
-                  AND table_schema = 'public'
-            ");
-
-            foreach ($sequences as $seq) {
-                preg_match("/nextval\('([^']+)'/", $seq->column_default, $matches);
-                $seq->sequence_name = $matches[1] ?? null;
-            }
-
-            $sequences = array_filter($sequences, fn ($s) => $s->sequence_name !== null);
-        }
+        $this->line('Found '.count($sequences).' sequences.');
 
         $fixed = 0;
 
