@@ -56,13 +56,16 @@ class FixSequences extends Command
                     continue;
                 }
 
-                $currentVal = DB::selectOne(
-                    "SELECT last_value FROM " . DB::getQueryGrammar()->wrap($seq->sequence_name)
-                )->last_value;
+                $seqState = DB::selectOne(
+                    'SELECT last_value, is_called FROM '.DB::getQueryGrammar()->wrap($seq->sequence_name)
+                );
 
-                if ($currentVal < $maxId) {
-                    DB::statement("SELECT setval(?, ?)", [$seq->sequence_name, $maxId]);
-                    $this->line("<info>Fixed</info> {$seq->table_name}.{$seq->column_name}: {$currentVal} → {$maxId}");
+                $currentVal = $seqState->last_value;
+                $isCalled = $seqState->is_called;
+
+                if ($currentVal < $maxId || ($currentVal == $maxId && ! $isCalled)) {
+                    DB::statement('SELECT setval(?, ?)', [$seq->sequence_name, $maxId]);
+                    $this->line("<info>Fixed</info> {$seq->table_name}.{$seq->column_name}: {$currentVal} (is_called: ".($isCalled ? 'true' : 'false').") → {$maxId}");
                     $fixed++;
                 }
             } catch (\Exception $e) {
