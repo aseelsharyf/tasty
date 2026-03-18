@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Cms;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProductStoreRequest extends FormRequest
 {
@@ -16,11 +17,9 @@ class UpdateProductStoreRequest extends FormRequest
      */
     public function rules(): array
     {
-        $storeId = $this->route('productStore')?->id;
-
         return [
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255', 'unique:product_stores,slug,'.$storeId],
+            'slug' => ['nullable', 'string', 'max:255', Rule::unique('product_stores', 'slug')->ignore($this->route('productStore'))],
             'business_type' => ['nullable', 'string', 'in:retail,distributor,restaurant'],
             'address' => ['nullable', 'string', 'max:1000'],
             'location_label' => ['nullable', 'string', 'max:255'],
