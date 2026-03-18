@@ -26,6 +26,8 @@ class FixSequences extends Command
               AND dep.deptype = 'a'
         ");
 
+        $this->line('Found '.count($sequences).' sequences via pg_depend.');
+
         if (empty($sequences)) {
             $this->warn('No sequences found via pg_depend, falling back to information_schema...');
             $sequences = DB::select("
