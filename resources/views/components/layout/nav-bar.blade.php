@@ -443,14 +443,13 @@ function miniCart() {
         },
 
         async removeItem(cartItemId) {
-            const token = document.querySelector('meta[name="csrf-token"]');
             try {
                 const r = await fetch('{{ route("cart.remove") }}', {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
-                        'X-CSRF-TOKEN': token ? token.content : ''
+                        'X-XSRF-TOKEN': window.getCsrfToken()
                     },
                     body: JSON.stringify({ cart_item_id: cartItemId })
                 });
@@ -463,6 +462,14 @@ function miniCart() {
         }
     };
 }
+
+// CSRF token helper — reads from XSRF-TOKEN cookie (always fresh, even on cached pages)
+window.getCsrfToken = function() {
+    var match = document.cookie.match(new RegExp('(^| )XSRF-TOKEN=([^;]+)'));
+    if (match) return decodeURIComponent(match[2]);
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.content : '';
+};
 
 // Cart badge updater
 (function() {

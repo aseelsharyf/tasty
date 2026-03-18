@@ -93,7 +93,7 @@
                                     loading = true; error = ''; selectedId = {{ $variant['id'] }};
                                     fetch('{{ route('cart.add') }}', {
                                         method: 'POST',
-                                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': window.getCsrfToken() },
                                         body: JSON.stringify({ product_id: {{ $productId }}, variant_id: {{ $variant['id'] }} })
                                     })
                                     .then(r => r.json())
@@ -130,7 +130,7 @@
                     loading = true; error = '';
                     fetch('{{ route('cart.add') }}', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': window.getCsrfToken() },
                         body: JSON.stringify({ product_id: {{ $productId }} })
                     })
                     .then(r => r.json())
@@ -167,8 +167,7 @@
     if (window.__productViewObserver) return;
     var tracked = {};
     try { var s = sessionStorage.getItem('_pv'); if (s) tracked = JSON.parse(s); } catch(e) {}
-    var token = document.querySelector('meta[name="csrf-token"]');
-    var csrfToken = token ? token.getAttribute('content') : '';
+    var csrfToken = window.getCsrfToken ? window.getCsrfToken() : '';
 
     window.__productViewObserver = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {
@@ -179,7 +178,7 @@
             try { sessionStorage.setItem('_pv', JSON.stringify(tracked)); } catch(e) {}
             fetch('/products/view/' + id, {
                 method: 'POST',
-                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                headers: { 'X-XSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
             }).catch(function() {});
             window.__productViewObserver.unobserve(entry.target);
         });

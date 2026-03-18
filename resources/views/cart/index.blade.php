@@ -209,9 +209,7 @@
 @push('scripts')
 <script>
 function cartPage(initialItems, initialTotal, initialCount, initialDiscount) {
-    var csrfToken = document.querySelector('meta[name="csrf-token"]');
-    var token = csrfToken ? csrfToken.content : '';
-    var headers = { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': token };
+    var headers = { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': window.getCsrfToken() };
 
     return {
         items: initialItems,

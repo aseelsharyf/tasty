@@ -78,7 +78,7 @@
                             if (selectedVariant) body.variant_id = selectedVariant;
                             fetch('{{ route('cart.add') }}', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': window.getCsrfToken() },
                                 body: JSON.stringify(body)
                             })
                             .then(r => r.json())
