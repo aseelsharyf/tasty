@@ -13,9 +13,9 @@ class FixSequences extends Command
 
     public function handle(): int
     {
-        $sequences = DB::select("
+        $columns = DB::select("
             SELECT
-                pg_get_serial_sequence(quote_ident(t.table_name), quote_ident(c.column_name)) AS sequence_name,
+                c.column_default,
                 t.table_name,
                 c.column_name
             FROM information_schema.tables t
@@ -25,7 +25,13 @@ class FixSequences extends Command
               AND c.column_default LIKE 'nextval%'
         ");
 
-        $sequences = array_filter($sequences, fn ($s) => $s->sequence_name !== null);
+        $sequences = [];
+        foreach ($columns as $col) {
+            if (preg_match("/nextval\('([^']+)'/", $col->column_default, $matches)) {
+                $col->sequence_name = $matches[1];
+                $sequences[] = $col;
+            }
+        }
 
         $this->line('Found '.count($sequences).' sequences.');
 
