@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="h-[96px] md:h-[112px]"></div>
-<main class="flex-1 bg-white">
+<main class="flex-1">
     <div class="max-w-2xl mx-auto px-6 py-12 text-center">
         @if($status === \App\Enums\PaymentStatus::Failed)
             <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">

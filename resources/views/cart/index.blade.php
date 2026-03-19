@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="h-[96px] md:h-[112px]"></div>
-<main class="flex-1 bg-gray-50/50">
+<main class="flex-1">
     <div class="max-w-[1200px] mx-auto px-6 py-10"
         x-data="cartPage({{ Js::from($items) }}, {{ $total }}, {{ $itemCount }}, {{ Js::from($discount) }})"
     >
@@ -32,7 +32,7 @@
                 <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
                 </div>
-                <h2 class="text-xl font-semibold text-blue-black mb-2">Your cart is empty</h2>
+                <h2 class="font-display text-[24px] leading-[1.1] tracking-[-0.02em] text-blue-black mb-2">Your cart is empty</h2>
                 <p class="text-gray-500 mb-6">Looks like you haven't added anything yet.</p>
                 <a href="{{ route('products.index') }}" class="inline-flex items-center px-6 py-3 bg-blue-black text-white rounded-full font-medium hover:bg-opacity-90 transition">
                     Browse Products
@@ -46,7 +46,7 @@
                 {{-- LEFT: Cart Items --}}
                 <div class="lg:col-span-8">
                     <div class="flex items-center justify-between mb-6">
-                        <h1 class="text-2xl font-semibold text-blue-black">Cart <span class="text-gray-400 font-normal text-lg" x-text="'(' + itemCount + ')'"></span></h1>
+                        <h1 class="font-display text-[28px] leading-[1.1] tracking-[-0.02em] text-blue-black">Cart <span class="text-gray-400 text-[20px]" x-text="'(' + itemCount + ')'"></span></h1>
                         <a href="{{ route('products.index') }}" class="text-sm text-gray-500 hover:text-blue-black transition flex items-center gap-1">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                             Continue Shopping
@@ -73,10 +73,10 @@
                                                 <svg x-show="!item.product.featured_image_url" class="w-8 h-8 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                                             </div>
                                             <div class="min-w-0">
-                                                <h3 class="font-medium text-blue-black text-sm leading-snug" x-text="item.product.title"></h3>
+                                                <h3 class="font-medium text-blue-black text-base leading-snug" x-text="item.product.title"></h3>
                                                 <p x-show="item.variant" class="text-xs text-gray-400 mt-0.5" x-text="item.variant ? item.variant.name : ''"></p>
                                                 {{-- Mobile price --}}
-                                                <p class="text-sm font-semibold text-blue-black mt-1 md:hidden" x-text="parseFloat(item.price).toFixed(2) + ' ' + (item.product.currency || 'MVR')"></p>
+                                                <p class="text-sm text-blue-black mt-1 md:hidden" x-text="parseFloat(item.price).toFixed(2) + ' ' + (item.product.currency || 'MVR')"></p>
                                             </div>
                                         </div>
                                     </div>
@@ -104,7 +104,7 @@
                                     {{-- Total + Remove --}}
                                     <div class="col-span-6 md:col-span-2 flex items-center justify-end">
                                         <div class="text-right">
-                                            <p class="text-sm font-semibold text-blue-black" x-text="parseFloat(item.total).toFixed(2)"></p>
+                                            <p class="text-sm text-blue-black" x-text="parseFloat(item.total).toFixed(2)"></p>
                                             <button @click="removeItem(item.id)" class="mt-1 text-xs text-gray-400 hover:text-red-500 transition flex items-center gap-1 ml-auto">
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                                 Remove
@@ -129,7 +129,7 @@
                 <div class="lg:col-span-4">
                     <div class="lg:sticky lg:top-32">
                         <div class="bg-white rounded-xl border border-gray-200 p-6">
-                            <h2 class="text-lg font-semibold text-blue-black mb-5">Order Summary</h2>
+                            <h2 class="font-display text-[22px] leading-[1.1] tracking-[-0.02em] text-blue-black mb-5">Order Summary</h2>
 
                             {{-- Discount Code --}}
                             <div class="mb-5">
@@ -162,7 +162,7 @@
                             <div class="space-y-3 text-sm">
                                 <div class="flex justify-between text-gray-500">
                                     <span x-text="'Subtotal (' + itemCount + ' ' + (itemCount === 1 ? 'item' : 'items') + ')'"></span>
-                                    <span class="text-blue-black font-medium" x-text="parseFloat(subtotal).toFixed(2)"></span>
+                                    <span class="text-blue-black" x-text="parseFloat(subtotal).toFixed(2)"></span>
                                 </div>
                                 <div x-show="discount" x-cloak class="flex justify-between text-green-600">
                                     <span>Discount</span>
@@ -176,9 +176,9 @@
 
                             <div class="border-t border-gray-100 mt-5 pt-5">
                                 <div class="flex justify-between items-baseline">
-                                    <span class="text-base font-semibold text-blue-black">Total</span>
+                                    <span class="text-base text-blue-black">Total</span>
                                     <div class="text-right">
-                                        <span class="text-xl font-bold text-blue-black" x-text="parseFloat(total).toFixed(2)"></span>
+                                        <span class="font-display text-[24px] tracking-[-0.02em] text-blue-black" x-text="parseFloat(total).toFixed(2)"></span>
                                         <span class="text-sm text-gray-400 ml-1">MVR</span>
                                     </div>
                                 </div>

@@ -36,8 +36,8 @@
 
                     {{-- Contact Information --}}
                     <div class="bg-white rounded-xl border border-gray-200 p-6">
-                        <h2 class="text-lg font-semibold text-blue-black mb-5 flex items-center gap-2">
-                            <span class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-black text-white text-xs font-bold">1</span>
+                        <h2 class="font-display text-[22px] leading-[1.1] tracking-[-0.02em] text-blue-black mb-5 flex items-center gap-2">
+
                             Contact Information
                         </h2>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -67,8 +67,8 @@
 
                     {{-- Delivery --}}
                     <div class="bg-white rounded-xl border border-gray-200 p-6">
-                        <h2 class="text-lg font-semibold text-blue-black mb-5 flex items-center gap-2">
-                            <span class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-black text-white text-xs font-bold">2</span>
+                        <h2 class="font-display text-[22px] leading-[1.1] tracking-[-0.02em] text-blue-black mb-5 flex items-center gap-2">
+
                             Delivery
                         </h2>
 
@@ -77,9 +77,10 @@
                                 <label class="block text-sm font-medium text-gray-600 mb-2">Delivery Location <span class="text-red-400">*</span></label>
                                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                     @foreach($deliveryLocations as $location)
-                                        <label class="relative flex items-center justify-center p-3 border rounded-lg cursor-pointer hover:border-blue-black/30 transition text-sm text-center has-[:checked]:border-blue-black has-[:checked]:bg-blue-black/5 has-[:checked]:ring-1 has-[:checked]:ring-blue-black {{ $errors->has('delivery_location_id') ? 'border-red-300' : 'border-gray-200' }}">
+                                        <label class="group/dl relative flex items-center justify-center gap-1.5 p-3 border rounded-xl cursor-pointer hover:bg-gray-50/50 transition text-sm text-center has-[:checked]:bg-gray-50 has-[:checked]:border-gray-200 {{ $errors->has('delivery_location_id') ? 'border-red-200' : 'border-gray-100' }}">
                                             <input type="radio" name="delivery_location_id" value="{{ $location->id }}" class="sr-only" required
                                                 {{ old('delivery_location_id') == $location->id ? 'checked' : '' }}>
+                                            <svg class="w-3.5 h-3.5 text-blue-black shrink-0 hidden group-has-[:checked]/dl:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                             <span>{{ $location->name }}</span>
                                         </label>
                                     @endforeach
@@ -109,22 +110,22 @@
                     {{-- Payment Method (only when we have in-house items to collect payment for) --}}
                     @if($collectPaymentNow && $paymentMethods->isNotEmpty())
                     <div class="bg-white rounded-xl border border-gray-200 p-6" x-data="{ selectedMethod: '{{ old('payment_method', $paymentMethods->first()['key'] ?? '') }}' }">
-                        <h2 class="text-lg font-semibold text-blue-black mb-5 flex items-center gap-2">
-                            <span class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-black text-white text-xs font-bold">3</span>
+                        <h2 class="font-display text-[22px] leading-[1.1] tracking-[-0.02em] text-blue-black mb-5 flex items-center gap-2">
+
                             Payment Method
                         </h2>
                         <div class="space-y-2">
                             @foreach($paymentMethods as $method)
-                                <label @click="selectedMethod = '{{ $method['key'] }}'" class="flex items-center gap-4 p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-black/30 transition has-[:checked]:border-blue-black has-[:checked]:bg-blue-black/5 has-[:checked]:ring-1 has-[:checked]:ring-blue-black">
-                                    <input type="radio" name="payment_method" value="{{ $method['key'] }}" class="sr-only peer"
+                                <label @click="selectedMethod = '{{ $method['key'] }}'" class="group/pm flex items-center gap-4 p-4 border border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50/50 transition has-[:checked]:bg-gray-50 has-[:checked]:border-gray-200">
+                                    <input type="radio" name="payment_method" value="{{ $method['key'] }}" class="sr-only"
                                         {{ old('payment_method', $loop->first ? $method['key'] : '') === $method['key'] ? 'checked' : '' }}>
-                                    <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 shrink-0">
+                                    <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-50 shrink-0">
                                         @if($method['type'] === 'bank_transfer')
-                                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/></svg>
+                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/></svg>
                                         @elseif($method['type'] === 'gateway')
-                                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
+                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
                                         @else
-                                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/></svg>
+                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/></svg>
                                         @endif
                                     </div>
                                     <div class="flex-1">
@@ -139,7 +140,11 @@
                                             @endif
                                         </p>
                                     </div>
-                                    <div class="w-4 h-4 rounded-full border-2 border-gray-300 shrink-0 peer-checked:border-blue-black peer-checked:border-[5px]">
+                                    {{-- Unchecked: empty circle --}}
+                                    <div class="w-5 h-5 rounded-full border border-gray-200 shrink-0 group-has-[:checked]/pm:hidden"></div>
+                                    {{-- Checked: filled circle with check --}}
+                                    <div class="w-5 h-5 rounded-full bg-blue-black shrink-0 items-center justify-center hidden group-has-[:checked]/pm:flex">
+                                        <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                     </div>
                                 </label>
                             @endforeach
@@ -154,15 +159,15 @@
                                 x-transition:leave="transition ease-in duration-150"
                                 x-transition:leave-start="opacity-100 translate-y-0"
                                 x-transition:leave-end="opacity-0 -translate-y-1"
-                                class="mt-4 p-4 bg-amber-50/50 border border-amber-100 rounded-lg text-sm">
-                                <p class="font-medium text-amber-800 mb-2">Bank Transfer Details</p>
+                                class="mt-4 p-4 bg-gray-50 border border-gray-100 rounded-xl text-sm">
+                                <p class="font-medium text-blue-black mb-2">Bank Transfer Details</p>
                                 @foreach($bankAccounts as $account)
-                                    <div class="text-amber-700 {{ !$loop->first ? 'mt-3 pt-3 border-t border-amber-100' : '' }}">
-                                        <p class="font-medium">{{ $account['bank_name'] }}</p>
+                                    <div class="text-gray-500 {{ !$loop->first ? 'mt-3 pt-3 border-t border-gray-100' : '' }}">
+                                        <p class="font-medium text-gray-700">{{ $account['bank_name'] }}</p>
                                         <p>{{ $account['account_name'] }} &mdash; {{ $account['account_number'] }} ({{ $account['currency'] }})</p>
                                     </div>
                                 @endforeach
-                                <p class="text-xs text-amber-600 mt-3">You can upload your transfer receipt after placing the order.</p>
+                                <p class="text-xs text-gray-400 mt-3">You can upload your transfer receipt after placing the order.</p>
                             </div>
                         @endif
                     </div>
@@ -197,7 +202,7 @@
                 <div class="lg:col-span-5">
                     <div class="lg:sticky lg:top-32">
                         <div class="bg-white rounded-xl border border-gray-200 p-6">
-                            <h2 class="text-lg font-semibold text-blue-black mb-5">Order Summary</h2>
+                            <h2 class="font-display text-[22px] leading-[1.1] tracking-[-0.02em] text-blue-black mb-5">Order Summary</h2>
 
                             {{-- Items --}}
                             <div class="space-y-4 mb-6">

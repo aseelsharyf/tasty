@@ -118,7 +118,7 @@
                                 <a href="{{ route('products.index') }}" class="flex-1 py-2 text-center text-sm font-medium text-blue-black border border-gray-200 rounded-full hover:bg-gray-100 transition">
                                     Continue Shopping
                                 </a>
-                                <a href="{{ route('checkout.index') }}" class="flex-1 py-2 text-center text-sm font-medium text-white bg-blue-black rounded-full hover:bg-opacity-90 transition">
+                                <a href="{{ route('cart.index') }}" class="flex-1 py-2 text-center text-sm font-medium text-white bg-blue-black rounded-full hover:bg-opacity-90 transition">
                                     Checkout
                                 </a>
                             </div>

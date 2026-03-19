@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="h-[96px] md:h-[112px]"></div>
-<main class="flex-1 bg-white">
+<main class="flex-1">
     <div class="max-w-5xl mx-auto px-6 py-12">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <!-- Product Images -->

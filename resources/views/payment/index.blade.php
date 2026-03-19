@@ -2,10 +2,10 @@
 
 @section('content')
 <div class="h-[96px] md:h-[112px]"></div>
-<main class="flex-1 bg-white">
+<main class="flex-1">
     <div class="max-w-lg mx-auto px-6 py-12">
-        <h1 class="text-h2 text-blue-black mb-2 text-center">Payment</h1>
-        <p class="text-gray-500 text-center mb-8">Order {{ $order->order_number }} &mdash; {{ number_format($order->total, 2) }} {{ $order->currency }}</p>
+        <h1 class="font-display text-[36px] leading-[1.1] tracking-[-0.02em] text-blue-black mb-2 text-center">Payment</h1>
+        <p class="text-gray-400 text-center mb-8">Order {{ $order->order_number }} &mdash; {{ number_format($order->total, 2) }} {{ $order->currency }}</p>
 
         @if(session('error'))
             <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm">
@@ -13,35 +13,35 @@
             </div>
         @endif
 
-        <div class="space-y-4">
+        <div class="space-y-3">
             @foreach($paymentMethods as $method)
                 @if($method['key'] === 'bank_transfer')
                     <a href="#bank-transfer-form"
                         onclick="document.getElementById('bank-transfer-form').classList.toggle('hidden')"
-                        class="flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:border-blue-400 transition cursor-pointer">
-                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                        class="flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-gray-50/50 transition cursor-pointer">
+                        <div class="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/></svg>
                         </div>
                         <div>
-                            <p class="font-medium text-blue-black">{{ $method['name'] }}</p>
-                            <p class="text-xs text-gray-500">Transfer and upload receipt</p>
+                            <p class="text-sm font-medium text-blue-black">{{ $method['name'] }}</p>
+                            <p class="text-xs text-gray-400">Transfer and upload receipt</p>
                         </div>
                     </a>
 
-                    <div id="bank-transfer-form" class="hidden border border-gray-200 rounded-xl p-6">
+                    <div id="bank-transfer-form" class="hidden border border-gray-100 rounded-xl p-6">
                         <form method="POST" action="{{ route('payment.bank-transfer', $order) }}" enctype="multipart/form-data" class="space-y-4">
                             @csrf
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Upload Receipt *</label>
+                                <label class="block text-sm font-medium text-gray-600 mb-1.5">Upload Receipt <span class="text-red-400">*</span></label>
                                 <input type="file" name="receipt" accept=".jpg,.jpeg,.png,.pdf" required
-                                    class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2">
+                                    class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-black/10 focus:border-blue-black transition">
                                 <p class="text-xs text-gray-400 mt-1">JPG, PNG or PDF, max 5MB</p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
-                                <textarea name="notes" rows="2" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm" placeholder="Reference number, etc."></textarea>
+                                <label class="block text-sm font-medium text-gray-600 mb-1.5">Notes <span class="text-gray-400 font-normal">(optional)</span></label>
+                                <textarea name="notes" rows="2" class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-black/10 focus:border-blue-black transition resize-none" placeholder="Reference number, etc."></textarea>
                             </div>
-                            <button type="submit" class="w-full py-2.5 bg-blue-black text-white rounded-full font-medium text-sm hover:bg-opacity-90 transition">
+                            <button type="submit" class="w-full py-3 bg-blue-black text-white rounded-full font-medium text-sm hover:bg-opacity-90 transition">
                                 Submit Receipt
                             </button>
                         </form>
@@ -50,13 +50,13 @@
                     <form method="POST" action="{{ route('payment.gateway', $order) }}">
                         @csrf
                         <input type="hidden" name="method" value="{{ $method['key'] }}">
-                        <button type="submit" class="w-full flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:border-blue-400 transition text-left">
-                            <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                        <button type="submit" class="w-full flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-gray-50/50 transition text-left">
+                            <div class="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
                             </div>
                             <div>
-                                <p class="font-medium text-blue-black">{{ $method['name'] }}</p>
-                                <p class="text-xs text-gray-500">Pay securely with Visa or Mastercard</p>
+                                <p class="text-sm font-medium text-blue-black">{{ $method['name'] }}</p>
+                                <p class="text-xs text-gray-400">Pay securely with Visa or Mastercard</p>
                             </div>
                             <div class="flex items-center gap-2 ml-auto">
                                 {{-- Visa --}}
@@ -70,13 +70,13 @@
                     <form method="POST" action="{{ route('payment.gateway', $order) }}">
                         @csrf
                         <input type="hidden" name="method" value="{{ $method['key'] }}">
-                        <button type="submit" class="w-full flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:border-blue-400 transition text-left">
+                        <button type="submit" class="w-full flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-gray-50/50 transition text-left">
                             <div class="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/></svg>
                             </div>
                             <div>
-                                <p class="font-medium text-blue-black">{{ $method['name'] }}</p>
-                                <p class="text-xs text-gray-500">Pay online</p>
+                                <p class="text-sm font-medium text-blue-black">{{ $method['name'] }}</p>
+                                <p class="text-xs text-gray-400">Pay online</p>
                             </div>
                         </button>
                     </form>
