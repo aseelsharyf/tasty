@@ -6,24 +6,25 @@
     <div class="relative aspect-square bg-white rounded-lg flex items-end justify-center p-6 mb-4">
         @if($image)
             @if($blurhash)
-                <x-ui.image
-                    :src="$image"
-                    :alt="$imageAlt"
-                    :blurhash="$blurhash"
-                    class="absolute inset-0 w-full h-full p-5"
-                    imgClass="object-contain"
-                    objectFit="contain"
-                />
-            @else
-                <img
-                    src="{{ $image }}"
-                    alt="{{ $imageAlt }}"
-                    loading="lazy"
-                    decoding="async"
-                    class="absolute inset-0 w-full h-full object-contain p-5"
-                    onerror="this.onerror=null; this.src='/images/product-placeholder.svg'; this.classList.remove('p-5'); this.classList.add('rounded-lg');"
-                >
+                @php $bhId = 'bh-' . uniqid(); @endphp
+                <div class="absolute inset-0" data-blurhash="{{ $blurhash }}" data-blurhash-id="{{ $bhId }}">
+                    <canvas
+                        id="{{ $bhId }}"
+                        width="32"
+                        height="32"
+                        class="w-full h-full rounded-lg"
+                    ></canvas>
+                </div>
             @endif
+            <img
+                src="{{ $image }}"
+                alt="{{ $imageAlt }}"
+                loading="lazy"
+                decoding="async"
+                class="absolute inset-0 w-full h-full object-contain p-5 {{ $blurhash ? 'opacity-0 transition-opacity duration-300' : '' }}"
+                @if($blurhash) onload="this.classList.remove('opacity-0'); this.classList.add('opacity-100'); var p=this.previousElementSibling; if(p) p.style.display='none';" @endif
+                onerror="this.onerror=null; this.src='/images/product-placeholder.svg'; this.classList.remove('p-5','opacity-0'); this.classList.add('rounded-lg','opacity-100'); var p=this.previousElementSibling; if(p) p.style.display='none';"
+            >
         @else
             <img src="/images/product-placeholder.svg" alt="{{ $imageAlt }}" class="absolute inset-0 w-full h-full rounded-lg">
         @endif
