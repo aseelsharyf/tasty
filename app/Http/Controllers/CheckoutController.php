@@ -38,7 +38,23 @@ class CheckoutController extends Controller
         $subtotal = $this->cart->getTotal();
         $discount = session('discount');
         $discountAmount = $discount['amount'] ?? 0;
-        $total = max(0, $subtotal - $discountAmount);
+        $afterDiscount = max(0, $subtotal - $discountAmount);
+
+        $taxConfig = Setting::getTaxConfig();
+        $taxAmount = 0;
+        $taxLabel = $taxConfig['label'] ?? 'Tax';
+
+        if ($taxConfig['enabled'] && $taxConfig['rate'] > 0) {
+            $rate = (float) $taxConfig['rate'];
+
+            if ($taxConfig['inclusive'] ?? false) {
+                $taxAmount = round($afterDiscount - ($afterDiscount / (1 + $rate / 100)), 2);
+            } else {
+                $taxAmount = round($afterDiscount * $rate / 100, 2);
+            }
+        }
+
+        $total = ($taxConfig['inclusive'] ?? false) ? $afterDiscount : $afterDiscount + $taxAmount;
 
         return view('checkout.index', [
             'items' => $items,
@@ -50,6 +66,9 @@ class CheckoutController extends Controller
             'bankAccounts' => $bankAccounts,
             'collectPaymentNow' => $collectPaymentNow,
             'discount' => $discount,
+            'taxAmount' => $taxAmount,
+            'taxLabel' => $taxLabel,
+            'taxInclusive' => $taxConfig['inclusive'] ?? false,
         ]);
     }
 

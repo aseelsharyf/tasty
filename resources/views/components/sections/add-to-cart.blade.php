@@ -9,9 +9,9 @@
 
         {{-- Products Grid --}}
         @if($products->count() > 0)
-            <div class="flex flex-wrap justify-center gap-10 max-lg:flex-col max-lg:items-center max-lg:gap-6">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
                 @foreach($products as $product)
-                    <x-cards.product :product="$product" :show-price="false" />
+                    <x-cards.product :product="$product" :show-price="true" />
                 @endforeach
             </div>
             {{-- More Products Button --}}

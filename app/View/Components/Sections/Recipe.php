@@ -152,9 +152,12 @@ class Recipe extends Component
                 params: $params,
             );
 
-            // First slot is featured, rest are posts
-            $this->featuredPost = $slots->shift();
-            $this->posts = $slots;
+            // Filter to only Post models (skip static content slots)
+            $postSlots = $slots->filter(fn ($slot) => $slot instanceof \App\Models\Post)->values();
+
+            // First post slot is featured, rest are regular posts
+            $this->featuredPost = $postSlots->shift();
+            $this->posts = $postSlots;
 
             // Mark all posts as used
             $this->markPostUsed($this->featuredPost);

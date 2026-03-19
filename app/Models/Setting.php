@@ -331,6 +331,31 @@ class Setting extends Model
     }
 
     /**
+     * Get tax configuration.
+     *
+     * @return array{enabled: bool, rate: float, label: string, inclusive: bool}
+     */
+    public static function getTaxConfig(): array
+    {
+        return static::get('shop.tax', [
+            'enabled' => false,
+            'rate' => 0,
+            'label' => 'GST',
+            'inclusive' => false,
+        ]);
+    }
+
+    /**
+     * Set tax configuration.
+     *
+     * @param  array{enabled: bool, rate: float, label: string, inclusive: bool}  $config
+     */
+    public static function setTaxConfig(array $config): void
+    {
+        static::set('shop.tax', $config, 'shop');
+    }
+
+    /**
      * Get bank accounts configuration.
      *
      * @return array<int, array{bank_name: string, account_name: string, account_number: string, currency: string}>

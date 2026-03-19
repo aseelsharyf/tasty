@@ -402,6 +402,7 @@ class SettingsController extends Controller
         return Inertia::render('Settings/Shop', [
             'bankAccounts' => Setting::getBankAccounts(),
             'paymentMethods' => Setting::getPaymentMethods(),
+            'taxConfig' => Setting::getTaxConfig(),
         ]);
     }
 
@@ -418,10 +419,16 @@ class SettingsController extends Controller
             'payment_methods.*.name' => ['required', 'string', 'max:100'],
             'payment_methods.*.type' => ['required', 'string', 'in:gateway,bank_transfer,online'],
             'payment_methods.*.is_active' => ['required', 'boolean'],
+            'tax' => ['nullable', 'array'],
+            'tax.enabled' => ['required', 'boolean'],
+            'tax.rate' => ['required', 'numeric', 'min:0', 'max:100'],
+            'tax.label' => ['required', 'string', 'max:50'],
+            'tax.inclusive' => ['required', 'boolean'],
         ]);
 
         Setting::setBankAccounts($validated['bank_accounts'] ?? []);
         Setting::setPaymentMethods($validated['payment_methods'] ?? []);
+        Setting::setTaxConfig($validated['tax'] ?? ['enabled' => false, 'rate' => 0, 'label' => 'GST', 'inclusive' => false]);
 
         return redirect()->route('cms.settings.shop')
             ->with('success', 'Shop settings updated successfully.');

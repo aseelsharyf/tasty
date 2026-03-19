@@ -19,6 +19,7 @@ class Order extends Model
     protected $fillable = [
         'uuid', 'order_number', 'status', 'payment_status', 'payment_method',
         'discount_code_id', 'discount_code', 'discount_amount',
+        'tax_amount', 'tax_rate',
         'subtotal', 'total', 'currency', 'contact_person', 'contact_number',
         'email', 'delivery_location_id', 'address', 'additional_info',
         'has_affiliate_products', 'accepted_at', 'paid_at', 'shipped_at',
@@ -34,6 +35,8 @@ class Order extends Model
             'subtotal' => 'decimal:2',
             'total' => 'decimal:2',
             'discount_amount' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
+            'tax_rate' => 'decimal:2',
             'has_affiliate_products' => 'boolean',
             'accepted_at' => 'datetime',
             'paid_at' => 'datetime',

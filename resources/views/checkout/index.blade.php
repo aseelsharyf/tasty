@@ -74,16 +74,20 @@
 
                         @if($deliveryLocations->isNotEmpty())
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-600 mb-2">Delivery Location</label>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Delivery Location <span class="text-red-400">*</span></label>
                                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                     @foreach($deliveryLocations as $location)
-                                        <label class="relative flex items-center justify-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-black/30 transition text-sm text-center has-[:checked]:border-blue-black has-[:checked]:bg-blue-black/5 has-[:checked]:ring-1 has-[:checked]:ring-blue-black">
-                                            <input type="radio" name="delivery_location_id" value="{{ $location->id }}" class="sr-only"
+                                        <label class="relative flex items-center justify-center p-3 border rounded-lg cursor-pointer hover:border-blue-black/30 transition text-sm text-center has-[:checked]:border-blue-black has-[:checked]:bg-blue-black/5 has-[:checked]:ring-1 has-[:checked]:ring-blue-black {{ $errors->has('delivery_location_id') ? 'border-red-300' : 'border-gray-200' }}">
+                                            <input type="radio" name="delivery_location_id" value="{{ $location->id }}" class="sr-only" required
                                                 {{ old('delivery_location_id') == $location->id ? 'checked' : '' }}>
                                             <span>{{ $location->name }}</span>
                                         </label>
                                     @endforeach
                                 </div>
+                                @error('delivery_location_id')
+                                    <p class="text-xs text-red-500 mt-1.5">{{ $message }}</p>
+                                @enderror
+                                <p class="text-xs text-gray-400 mt-1.5">We currently only deliver to the locations listed above.</p>
                             </div>
                         @endif
 
@@ -104,15 +108,15 @@
 
                     {{-- Payment Method (only when we have in-house items to collect payment for) --}}
                     @if($collectPaymentNow && $paymentMethods->isNotEmpty())
-                    <div class="bg-white rounded-xl border border-gray-200 p-6">
+                    <div class="bg-white rounded-xl border border-gray-200 p-6" x-data="{ selectedMethod: '{{ old('payment_method', $paymentMethods->first()['key'] ?? '') }}' }">
                         <h2 class="text-lg font-semibold text-blue-black mb-5 flex items-center gap-2">
                             <span class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-black text-white text-xs font-bold">3</span>
                             Payment Method
                         </h2>
                         <div class="space-y-2">
                             @foreach($paymentMethods as $method)
-                                <label class="flex items-center gap-4 p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-black/30 transition has-[:checked]:border-blue-black has-[:checked]:bg-blue-black/5 has-[:checked]:ring-1 has-[:checked]:ring-blue-black">
-                                    <input type="radio" name="payment_method" value="{{ $method['key'] }}" class="sr-only"
+                                <label @click="selectedMethod = '{{ $method['key'] }}'" class="flex items-center gap-4 p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-black/30 transition has-[:checked]:border-blue-black has-[:checked]:bg-blue-black/5 has-[:checked]:ring-1 has-[:checked]:ring-blue-black">
+                                    <input type="radio" name="payment_method" value="{{ $method['key'] }}" class="sr-only peer"
                                         {{ old('payment_method', $loop->first ? $method['key'] : '') === $method['key'] ? 'checked' : '' }}>
                                     <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 shrink-0">
                                         @if($method['type'] === 'bank_transfer')
@@ -135,15 +139,22 @@
                                             @endif
                                         </p>
                                     </div>
-                                    <div class="w-4 h-4 rounded-full border-2 border-gray-300 shrink-0 flex items-center justify-center peer-checked:border-blue-black">
+                                    <div class="w-4 h-4 rounded-full border-2 border-gray-300 shrink-0 peer-checked:border-blue-black peer-checked:border-[5px]">
                                     </div>
                                 </label>
                             @endforeach
                         </div>
 
-                        {{-- Bank Account Details (shown when bank transfer is selected) --}}
+                        {{-- Bank Account Details (shown only when bank transfer is selected) --}}
                         @if($bankAccounts && count($bankAccounts) > 0)
-                            <div class="mt-4 p-4 bg-amber-50/50 border border-amber-100 rounded-lg text-sm" id="bank-details">
+                            <div x-show="selectedMethod === 'bank_transfer'" x-cloak
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 -translate-y-1"
+                                x-transition:enter-end="opacity-100 translate-y-0"
+                                x-transition:leave="transition ease-in duration-150"
+                                x-transition:leave-start="opacity-100 translate-y-0"
+                                x-transition:leave-end="opacity-0 -translate-y-1"
+                                class="mt-4 p-4 bg-amber-50/50 border border-amber-100 rounded-lg text-sm">
                                 <p class="font-medium text-amber-800 mb-2">Bank Transfer Details</p>
                                 @foreach($bankAccounts as $account)
                                     <div class="text-amber-700 {{ !$loop->first ? 'mt-3 pt-3 border-t border-amber-100' : '' }}">
@@ -156,6 +167,22 @@
                         @endif
                     </div>
                     @endif
+
+                    {{-- Terms & Conditions --}}
+                    <div class="bg-white rounded-xl border border-gray-200 p-6">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" name="terms_accepted" value="1" required
+                                class="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-black focus:ring-blue-black/20"
+                                {{ old('terms_accepted') ? 'checked' : '' }}>
+                            <span class="text-sm text-gray-600">
+                                I agree to the
+                                <a href="{{ route('page.show', 'terms-and-conditions') }}" target="_blank" class="text-blue-black underline hover:no-underline">Terms &amp; Conditions</a>,
+                                <a href="{{ route('page.show', 'privacy-policy') }}" target="_blank" class="text-blue-black underline hover:no-underline">Privacy Policy</a>, and
+                                <a href="{{ route('page.show', 'refund-policy') }}" target="_blank" class="text-blue-black underline hover:no-underline">Refund Policy</a>.
+                                <span class="text-red-400">*</span>
+                            </span>
+                        </label>
+                    </div>
 
                     {{-- Place Order Button (mobile) --}}
                     <div class="lg:hidden">
@@ -212,9 +239,15 @@
                                         <span>-{{ number_format($discount['amount'], 2) }}</span>
                                     </div>
                                 @endif
+                                @if($taxAmount > 0)
+                                    <div class="flex justify-between text-sm text-gray-500">
+                                        <span>{{ $taxLabel }}{{ $taxInclusive ? ' (incl.)' : '' }}</span>
+                                        <span>{{ number_format($taxAmount, 2) }}</span>
+                                    </div>
+                                @endif
                                 <div class="flex justify-between text-sm text-gray-500">
                                     <span>Shipping</span>
-                                    <span class="text-green-600 font-medium">Calculated after</span>
+                                    <span class="text-green-600 font-medium">Calculated later</span>
                                 </div>
                             </div>
 
@@ -237,7 +270,7 @@
                             </div>
 
                             <p class="text-xs text-center text-gray-400 mt-4">
-                                By placing your order, you agree to our terms and conditions.
+                                By placing your order you agree to our <a href="{{ route('page.show', 'delivery-policy') }}" target="_blank" class="underline hover:text-blue-black">delivery policy</a> and <a href="{{ route('page.show', 'refund-policy') }}" target="_blank" class="underline hover:text-blue-black">refund policy</a>.
                             </p>
                         </div>
 

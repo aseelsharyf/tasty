@@ -8,6 +8,7 @@ use App\Enums\ProductType;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Setting;
 use App\Models\User;
 
 class OrderService
@@ -47,7 +48,28 @@ class OrderService
             }
         }
 
-        $total = max(0, $subtotal - $discountAmount);
+        $afterDiscount = max(0, $subtotal - $discountAmount);
+
+        // Calculate tax
+        $taxConfig = Setting::getTaxConfig();
+        $taxRate = 0;
+        $taxAmount = 0;
+
+        if ($taxConfig['enabled'] && $taxConfig['rate'] > 0) {
+            $taxRate = (float) $taxConfig['rate'];
+
+            if ($taxConfig['inclusive'] ?? false) {
+                // Tax is already included in the price
+                $taxAmount = round($afterDiscount - ($afterDiscount / (1 + $taxRate / 100)), 2);
+            } else {
+                // Tax is added on top
+                $taxAmount = round($afterDiscount * $taxRate / 100, 2);
+            }
+        }
+
+        $total = $taxConfig['inclusive'] ?? false
+            ? $afterDiscount
+            : $afterDiscount + $taxAmount;
 
         $order = Order::create([
             'status' => $hasAffiliate ? OrderStatus::Pending : OrderStatus::Accepted,
@@ -56,6 +78,8 @@ class OrderService
             'discount_code_id' => $discountCodeId,
             'discount_code' => $discountCode,
             'discount_amount' => $discountAmount,
+            'tax_amount' => $taxAmount,
+            'tax_rate' => $taxRate,
             'total' => $total,
             'currency' => $cartItems[0]['product']['currency'] ?? 'MVR',
             'contact_person' => $deliveryInfo['contact_person'],

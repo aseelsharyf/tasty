@@ -49,7 +49,7 @@
                     x-data="miniCart()" @click.away="open = false">
                     <button @click="toggle()" class="h-full px-4 flex items-center justify-center hover:opacity-70 transition relative">
                         <svg class="w-5 h-5 text-blue-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
-                        <span id="cart-badge-desktop" class="absolute top-4 right-2 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full items-center justify-center hidden">0</span>
+                        <span id="cart-badge-desktop" class="absolute top-3.5 right-1 min-w-[18px] h-[18px] px-1 bg-blue-black text-white text-[10px] font-semibold rounded-full items-center justify-center hidden">0</span>
                     </button>
 
                     {{-- Mini Cart Dropdown --}}
@@ -115,8 +115,8 @@
                                 <span class="text-base font-bold text-blue-black" x-text="parseFloat(total).toFixed(2) + ' MVR'"></span>
                             </div>
                             <div class="flex gap-2">
-                                <a href="{{ route('cart.index') }}" class="flex-1 py-2 text-center text-sm font-medium text-blue-black border border-gray-200 rounded-full hover:bg-gray-100 transition">
-                                    View Cart
+                                <a href="{{ route('products.index') }}" class="flex-1 py-2 text-center text-sm font-medium text-blue-black border border-gray-200 rounded-full hover:bg-gray-100 transition">
+                                    Continue Shopping
                                 </a>
                                 <a href="{{ route('checkout.index') }}" class="flex-1 py-2 text-center text-sm font-medium text-white bg-blue-black rounded-full hover:bg-opacity-90 transition">
                                     Checkout
@@ -141,7 +141,7 @@
                     </button>
                     <a href="{{ route('cart.index') }}" class="relative text-blue-black focus:outline-none" aria-label="Cart">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
-                        <span id="cart-badge-mobile" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full items-center justify-center hidden">0</span>
+                        <span id="cart-badge-mobile" class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-blue-black text-white text-[10px] font-semibold rounded-full items-center justify-center hidden">0</span>
                     </a>
                     <button @click="menuOpen = !menuOpen" class="flex items-center gap-3 text-blue-black focus:outline-none">
                         <span class="font-mono text-base tracking-widest uppercase">Menu</span>
@@ -326,6 +326,7 @@ function searchNav() {
 
         init() {
             window.addEventListener('scroll', () => this.handleScroll());
+            window._searchNavInstance = this;
         },
 
         handleScroll() {
@@ -422,6 +423,11 @@ function miniCart() {
         total: 0,
         itemCount: 0,
 
+        init() {
+            // Store reference so openMiniCart can access this instance
+            window._miniCartInstance = this;
+        },
+
         toggle() {
             this.open = !this.open;
             if (this.open) this.fetchCart();
@@ -502,8 +508,57 @@ window.getCsrfToken = function() {
     };
     // Expose mini cart refresh so add-to-cart can trigger it
     window.refreshMiniCart = function() {
-        var el = document.querySelector('#cart-icon-desktop');
-        if (el && el.__x) el.__x.$data.fetchCart();
+        if (window._miniCartInstance) {
+            window._miniCartInstance.fetchCart();
+        }
+    };
+    // Show navbar and display add-to-cart toast
+    window.openMiniCart = function(productName, productImage) {
+        // Show the navbar
+        var navRoot = document.querySelector('[x-data="searchNav()"]');
+        if (navRoot && navRoot._x_dataStack) {
+            var navData = navRoot._x_dataStack[0];
+            navData.navVisible = true;
+            navData.lastScrollY = window.scrollY;
+        }
+        // Show toast notification
+        window.showCartToast(productName, productImage);
+    };
+
+    // Cart toast notification
+    window.showCartToast = function(productName, productImage) {
+        // Remove existing toast if any
+        var existing = document.getElementById('cart-toast');
+        if (existing) existing.remove();
+
+        var name = productName || 'Item';
+        var imgSrc = productImage || '/images/product-placeholder.svg';
+        var imgHtml = '<img src="' + imgSrc + '" alt="" class="w-10 h-10 rounded-lg object-contain bg-gray-50 shrink-0 border border-gray-100 p-0.5" onerror="this.onerror=null; this.src=\'/images/product-placeholder.svg\';">';
+
+        var toast = document.createElement('div');
+        toast.id = 'cart-toast';
+        toast.innerHTML = '<div class="flex items-center gap-3">'
+            + imgHtml
+            + '<div class="min-w-0"><p class="text-sm font-medium text-blue-black truncate max-w-[180px]">' + name + '</p><p class="text-xs text-gray-400">Added to cart</p></div>'
+            + '<a href="{{ route('checkout.index') }}" class="ml-2 text-sm font-semibold text-white bg-blue-black px-4 py-1.5 rounded-full hover:bg-opacity-90 transition whitespace-nowrap">Checkout</a>'
+            + '</div>';
+        toast.className = 'fixed bottom-6 right-6 max-sm:right-0 max-sm:left-0 max-sm:bottom-0 max-sm:rounded-none max-sm:border-x-0 max-sm:border-b-0 z-[60] bg-white rounded-xl shadow-2xl border border-gray-100 px-5 py-3 max-sm:py-4 transition-all duration-300 opacity-0 translate-y-2';
+        document.body.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+                toast.classList.add('opacity-100', 'translate-y-0');
+            });
+        });
+
+        // Auto dismiss after 3s
+        setTimeout(function() {
+            toast.classList.remove('opacity-100', 'translate-y-0');
+            toast.classList.add('opacity-0', 'translate-y-2');
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 3000);
     };
 })();
 </script>

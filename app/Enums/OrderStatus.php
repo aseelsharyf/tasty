@@ -7,6 +7,7 @@ enum OrderStatus: string
     case Pending = 'pending';
     case Accepted = 'accepted';
     case PaymentPending = 'payment_pending';
+    case PaymentPendingApproval = 'payment_pending_approval';
     case PaymentReceived = 'payment_received';
     case Processing = 'processing';
     case Shipped = 'shipped';
@@ -19,6 +20,7 @@ enum OrderStatus: string
             self::Pending => 'Pending',
             self::Accepted => 'Accepted',
             self::PaymentPending => 'Payment Pending',
+            self::PaymentPendingApproval => 'Payment Pending Approval',
             self::PaymentReceived => 'Payment Received',
             self::Processing => 'Processing',
             self::Shipped => 'Shipped',
@@ -33,6 +35,7 @@ enum OrderStatus: string
             self::Pending => 'warning',
             self::Accepted => 'info',
             self::PaymentPending => 'warning',
+            self::PaymentPendingApproval => 'warning',
             self::PaymentReceived => 'success',
             self::Processing => 'info',
             self::Shipped => 'info',

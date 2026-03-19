@@ -1,16 +1,32 @@
-<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-6 w-[426px] max-lg:w-full" @if($productId) data-product-id="{{ $productId }}" @endif>
+<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-6 w-full" @if($productId) data-product-id="{{ $productId }}" @endif>
     {{-- Main card link (covers entire card including image area) --}}
     <a href="{{ $url }}" class="absolute inset-0 z-[1]" aria-label="{{ $title }}"></a>
 
     {{-- Image container --}}
-    <div class="relative aspect-[4/4] max-lg:aspect-[4/4] bg-white rounded-lg flex items-end justify-center p-6 mb-4">
-        <img
-            src="{{ $image }}"
-            alt="{{ $imageAlt }}"
-            loading="lazy"
-            decoding="async"
-            class="absolute inset-0 w-full h-full object-contain p-5"
-        >
+    <div class="relative aspect-square bg-white rounded-lg flex items-end justify-center p-6 mb-4">
+        @if($image)
+            @if($blurhash)
+                <x-ui.image
+                    :src="$image"
+                    :alt="$imageAlt"
+                    :blurhash="$blurhash"
+                    class="absolute inset-0 w-full h-full p-5"
+                    imgClass="object-contain"
+                    objectFit="contain"
+                />
+            @else
+                <img
+                    src="{{ $image }}"
+                    alt="{{ $imageAlt }}"
+                    loading="lazy"
+                    decoding="async"
+                    class="absolute inset-0 w-full h-full object-contain p-5"
+                    onerror="this.onerror=null; this.src='/images/product-placeholder.svg'; this.classList.remove('p-5'); this.classList.add('rounded-lg');"
+                >
+            @endif
+        @else
+            <img src="/images/product-placeholder.svg" alt="{{ $imageAlt }}" class="absolute inset-0 w-full h-full rounded-lg">
+        @endif
         @if(count($tags) > 0)
             <span class="tag relative z-[2] inline-flex items-center gap-1 whitespace-nowrap">
                 @foreach($tags as $index => $tag)
@@ -99,7 +115,7 @@
                                     .then(r => r.json())
                                     .then(data => {
                                         loading = false; selectedId = null;
-                                        if (data.success) { added = true; open = false; if (window.updateCartBadge) window.updateCartBadge(data.cartCount); setTimeout(() => added = false, 2000); }
+                                        if (data.success) { added = true; open = false; if (window.updateCartBadge) window.updateCartBadge(data.cartCount); if (window.openMiniCart) window.openMiniCart({{ json_encode($title) }}, {{ json_encode($image) }}); setTimeout(() => added = false, 2000); }
                                         else { error = data.message || 'Could not add'; setTimeout(() => error = '', 3000); }
                                     })
                                     .catch(() => { loading = false; selectedId = null; error = 'Something went wrong'; setTimeout(() => error = '', 3000); })
@@ -136,7 +152,7 @@
                     .then(r => r.json())
                     .then(data => {
                         loading = false;
-                        if (data.success) { added = true; if (window.updateCartBadge) window.updateCartBadge(data.cartCount); setTimeout(() => added = false, 2000); }
+                        if (data.success) { added = true; if (window.updateCartBadge) window.updateCartBadge(data.cartCount); if (window.openMiniCart) window.openMiniCart({{ json_encode($title) }}, {{ json_encode($image) }}); setTimeout(() => added = false, 2000); }
                         else { error = data.message || 'Could not add to cart'; setTimeout(() => error = '', 3000); }
                     })
                     .catch(() => { loading = false; error = 'Something went wrong'; setTimeout(() => error = '', 3000); })

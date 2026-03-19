@@ -175,9 +175,13 @@ if ($showWebsite) {
         Route::get('/{order:uuid}', [PaymentController::class, 'index'])->name('payment.index');
         Route::post('/{order:uuid}/bank-transfer', [PaymentController::class, 'processBankTransfer'])->name('payment.bank-transfer');
         Route::post('/{order:uuid}/gateway', [PaymentController::class, 'processGateway'])->name('payment.gateway');
+        Route::get('/bml/redirect/{order:uuid}', [PaymentController::class, 'bmlRedirect'])->name('payment.bml.redirect');
         Route::get('/callback', [PaymentController::class, 'gatewayCallback'])->name('payment.callback');
         Route::get('/{order:uuid}/confirmation', [PaymentController::class, 'confirmation'])->name('payment.confirmation');
     });
+
+    // BML webhook (outside CSRF protection)
+    Route::post('/payment/bml/webhook', [PaymentController::class, 'bmlWebhook'])->name('payment.bml.webhook');
 
     // Product routes
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d62fa315000c38f3e958ac43ea03caf7",
+    "content-hash": "81ef14414941b9a4b338dcb3407772af",
     "packages": [
         {
             "name": "artesaos/seotools",
@@ -227,6 +227,71 @@
                 "source": "https://github.com/aws/aws-sdk-php/tree/3.369.11"
             },
             "time": "2026-01-12T19:14:19+00:00"
+        },
+        {
+            "name": "bml-connect/laravel",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Syndrom7/bml-connect-laravel.git",
+                "reference": "6dac16e7632ac0f14c42b72b0b912866d40c1c92"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Syndrom7/bml-connect-laravel/zipball/6dac16e7632ac0f14c42b72b0b912866d40c1c92",
+                "reference": "6dac16e7632ac0f14c42b72b0b912866d40c1c92",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.0",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^8.0|^9.0|^10.0",
+                "phpunit/phpunit": "^10.0|^11.0"
+            },
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "BmlConnect": "BmlConnect\\Facades\\BmlConnect"
+                    },
+                    "providers": [
+                        "BmlConnect\\BmlConnectServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "BmlConnect\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Syndrom7",
+                    "homepage": "https://github.com/Syndrom7"
+                }
+            ],
+            "description": "BML Connect PHP/Laravel SDK for Bank of Maldives payment gateway",
+            "homepage": "https://github.com/Syndrom7/bml-connect-laravel",
+            "keywords": [
+                "bank-of-maldives",
+                "bml",
+                "connect",
+                "laravel",
+                "mpos",
+                "payment"
+            ],
+            "support": {
+                "issues": "https://github.com/Syndrom7/bml-connect-laravel/issues",
+                "source": "https://github.com/Syndrom7/bml-connect-laravel"
+            },
+            "time": "2026-03-02T22:56:17+00:00"
         },
         {
             "name": "brick/math",
@@ -11416,7 +11481,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "bml-connect/laravel": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

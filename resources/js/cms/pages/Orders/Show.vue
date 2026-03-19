@@ -53,9 +53,14 @@ interface OrderDetail {
     payment_status_color: string;
     payment_method?: string;
     payment_method_label?: string;
+    metadata?: { bml_transaction_id?: string; bml_transaction_url?: string };
     subtotal: number;
     total: number;
     currency: string;
+    discount_code?: string;
+    discount_amount?: number;
+    tax_amount?: number;
+    tax_rate?: number;
     contact_person: string;
     contact_number: string;
     email?: string;
@@ -230,23 +235,78 @@ function downloadReceipt(receipt: Receipt) {
                                 </div>
                             </div>
                         </div>
-                        <div class="flex justify-between font-semibold text-sm pt-3 mt-2 border-t border-default">
-                            <span>Total</span>
-                            <span>{{ Number(order.total).toFixed(2) }} {{ order.currency }}</span>
+                        <div class="pt-3 mt-2 border-t border-default space-y-1 text-sm">
+                            <div v-if="order.discount_code || (order.tax_amount && Number(order.tax_amount) > 0)" class="flex justify-between text-muted">
+                                <span>Subtotal</span>
+                                <span>{{ Number(order.subtotal).toFixed(2) }} {{ order.currency }}</span>
+                            </div>
+                            <div v-if="order.discount_code" class="flex justify-between text-green-600 dark:text-green-400">
+                                <span>Discount ({{ order.discount_code }})</span>
+                                <span>-{{ Number(order.discount_amount).toFixed(2) }}</span>
+                            </div>
+                            <div v-if="order.tax_amount && Number(order.tax_amount) > 0" class="flex justify-between text-muted">
+                                <span>Tax ({{ Number(order.tax_rate).toFixed(0) }}%)</span>
+                                <span>{{ Number(order.tax_amount).toFixed(2) }}</span>
+                            </div>
+                            <div class="flex justify-between font-semibold">
+                                <span>Total</span>
+                                <span>{{ Number(order.total).toFixed(2) }} {{ order.currency }}</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Payment Receipts -->
-                    <div v-if="order.receipts.length > 0" class="border border-default rounded-lg p-4">
-                        <h3 class="text-sm font-semibold text-highlighted mb-3">Payment Receipts</h3>
-                        <div class="space-y-2">
-                            <div v-for="receipt in order.receipts" :key="receipt.id" class="flex items-center justify-between text-sm py-2">
+                    <!-- Payment Info -->
+                    <div class="border border-default rounded-lg p-4">
+                        <h3 class="text-sm font-semibold text-highlighted mb-3">Payment</h3>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <p class="text-muted text-xs">Method</p>
+                                <p class="font-medium">{{ order.payment_method_label || '—' }}</p>
+                            </div>
+                            <div>
+                                <p class="text-muted text-xs">Status</p>
+                                <UBadge :color="(order.payment_status_color as any)" variant="subtle" size="sm">{{ order.payment_status_label }}</UBadge>
+                            </div>
+                            <div v-if="order.paid_at">
+                                <p class="text-muted text-xs">Paid At</p>
+                                <p>{{ formatDate(order.paid_at) }}</p>
+                            </div>
+                            <div v-if="order.discount_code">
+                                <p class="text-muted text-xs">Discount</p>
+                                <p>
+                                    <span class="font-mono text-xs bg-elevated px-1.5 py-0.5 rounded">{{ order.discount_code }}</span>
+                                    <span class="text-muted ml-1">-{{ Number(order.discount_amount).toFixed(2) }} {{ order.currency }}</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Gateway Transaction Details -->
+                        <div v-if="order.payment_method === 'bml_gateway' && order.metadata?.bml_transaction_id" class="mt-4 pt-3 border-t border-default">
+                            <p class="text-xs text-muted mb-2">Transaction Details</p>
+                            <div class="grid grid-cols-2 gap-3 text-sm">
                                 <div>
-                                    <span class="font-medium">{{ receipt.original_filename }}</span>
-                                    <span class="text-xs text-muted ml-2">{{ formatDate(receipt.created_at) }}</span>
-                                    <UBadge v-if="receipt.verified_at" color="success" variant="subtle" size="xs" class="ml-2">Verified</UBadge>
+                                    <p class="text-muted text-xs">Transaction ID</p>
+                                    <p class="font-mono text-xs">{{ order.metadata.bml_transaction_id }}</p>
                                 </div>
-                                <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-download" @click="downloadReceipt(receipt)" />
+                                <div>
+                                    <p class="text-muted text-xs">Provider</p>
+                                    <p>BML Connect</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Receipts -->
+                        <div v-if="order.receipts.length > 0" class="mt-4 pt-3 border-t border-default">
+                            <p class="text-xs text-muted mb-2">Receipts</p>
+                            <div class="space-y-2">
+                                <div v-for="receipt in order.receipts" :key="receipt.id" class="flex items-center justify-between text-sm py-1">
+                                    <div>
+                                        <span class="font-medium">{{ receipt.original_filename }}</span>
+                                        <span class="text-xs text-muted ml-2">{{ formatDate(receipt.created_at) }}</span>
+                                        <UBadge v-if="receipt.verified_at" color="success" variant="subtle" size="xs" class="ml-2">Verified</UBadge>
+                                    </div>
+                                    <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-download" @click="downloadReceipt(receipt)" />
+                                </div>
                             </div>
                         </div>
                     </div>

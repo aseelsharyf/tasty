@@ -13,6 +13,8 @@ class Product extends Component
 
     public string $imageAlt;
 
+    public ?string $blurhash;
+
     /** @var array<int, array{name: string, url: string|null}> */
     public array $tags;
 
@@ -95,6 +97,7 @@ class Product extends Component
             }
             $this->image = $product->featured_image_url ?? '';
             $this->imageAlt = $product->featuredMedia?->alt_text ?? $product->title;
+            $this->blurhash = $product->featuredMedia?->blurhash;
             // Build tags from category and featured tag with URLs
             $badgeTags = [];
             if ($product->category) {
@@ -129,6 +132,7 @@ class Product extends Component
         } elseif (is_array($product)) {
             $this->image = $product['image'] ?? '';
             $this->imageAlt = $product['imageAlt'] ?? $product['title'] ?? '';
+            $this->blurhash = $product['blurhash'] ?? null;
             $dataTags = $product['tags'] ?? [];
             // Convert simple string tags to array format
             if (is_string($dataTags)) {
@@ -152,6 +156,7 @@ class Product extends Component
         } else {
             $this->image = '';
             $this->imageAlt = '';
+            $this->blurhash = null;
             $this->tags = [];
             $this->title = '';
             $this->description = '';
