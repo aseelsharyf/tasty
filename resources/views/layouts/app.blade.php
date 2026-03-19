@@ -39,6 +39,16 @@
 
         <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
 
+        <!-- Global image fallback (must be before any images load) -->
+        <script>
+        document.addEventListener('error', function(e) {
+            if (e.target.tagName === 'IMG' && !e.target.dataset.fallback) {
+                e.target.dataset.fallback = '1';
+                e.target.src = '/images/product-placeholder.svg';
+            }
+        }, true);
+        </script>
+
         <!-- Styles / Scripts -->
         <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.13.3/dist/cdn.min.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
@@ -75,14 +85,5 @@
         </div>
 
         @stack('scripts')
-        <script>
-        // Global image fallback — replace any broken image with the Tasty placeholder
-        document.addEventListener('error', function(e) {
-            if (e.target.tagName === 'IMG' && !e.target.dataset.fallback) {
-                e.target.dataset.fallback = '1';
-                e.target.src = '/images/product-placeholder.svg';
-            }
-        }, true);
-        </script>
     </body>
 </html>
