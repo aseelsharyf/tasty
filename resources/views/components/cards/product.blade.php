@@ -29,15 +29,15 @@
             <img src="/images/product-placeholder.svg" alt="{{ $imageAlt }}" class="absolute inset-0 w-full h-full rounded-lg">
         @endif
         @if(count($tags) > 0)
-            <span class="tag relative z-[2] inline-flex items-center gap-1 whitespace-nowrap">
+            <span class="tag relative z-[2] inline-flex items-center gap-1 whitespace-nowrap max-w-[calc(100%-1rem)] overflow-hidden">
                 @foreach($tags as $index => $tag)
                     @if($index > 0)
-                        <span>•</span>
+                        <span class="hidden lg:inline">•</span>
                     @endif
                     @if($tag['url'] ?? null)
-                        <a href="{{ $tag['url'] }}" class="hover:underline relative z-10">{{ $tag['name'] }}</a>
+                        <a href="{{ $tag['url'] }}" class="hover:underline relative z-10 {{ $index > 0 ? 'hidden lg:inline' : '' }} truncate">{{ $tag['name'] }}</a>
                     @else
-                        <span>{{ $tag['name'] }}</span>
+                        <span class="{{ $index > 0 ? 'hidden lg:inline' : '' }} truncate">{{ $tag['name'] }}</span>
                     @endif
                 @endforeach
             </span>
