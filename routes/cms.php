@@ -344,6 +344,8 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::put('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('cms.orders.update-status');
         Route::post('orders/{order}/accept', [OrderController::class, 'acceptOrder'])->name('cms.orders.accept');
         Route::post('orders/{order}/verify-payment', [OrderController::class, 'verifyPayment'])->name('cms.orders.verify-payment');
+        Route::put('orders/{order}/items/{orderItem}', [OrderController::class, 'updateItem'])->name('cms.orders.update-item');
+        Route::delete('orders/{order}/items/{orderItem}', [OrderController::class, 'removeItem'])->name('cms.orders.remove-item');
         Route::get('receipts/{receipt}', [OrderController::class, 'viewReceipt'])->name('cms.orders.view-receipt');
     });
 

@@ -181,9 +181,9 @@
                                 {{ old('terms_accepted') ? 'checked' : '' }}>
                             <span class="text-sm text-gray-600">
                                 I agree to the
-                                <a href="{{ route('page.show', 'terms-and-conditions') }}" target="_blank" class="text-blue-black underline hover:no-underline">Terms &amp; Conditions</a>,
-                                <a href="{{ route('page.show', 'privacy-policy') }}" target="_blank" class="text-blue-black underline hover:no-underline">Privacy Policy</a>, and
-                                <a href="{{ route('page.show', 'refund-policy') }}" target="_blank" class="text-blue-black underline hover:no-underline">Refund Policy</a>.
+                                <a href="/terms-of-use" target="_blank" class="text-blue-black underline hover:no-underline">Terms &amp; Conditions</a>,
+                                <a href="/privacy-policy" target="_blank" class="text-blue-black underline hover:no-underline">Privacy Policy</a>, and
+                                <a href="/refund-policy" target="_blank" class="text-blue-black underline hover:no-underline">Refund Policy</a>.
                                 <span class="text-red-400">*</span>
                             </span>
                         </label>
@@ -275,7 +275,7 @@
                             </div>
 
                             <p class="text-xs text-center text-gray-400 mt-4">
-                                By placing your order you agree to our <a href="{{ route('page.show', 'delivery-policy') }}" target="_blank" class="underline hover:text-blue-black">delivery policy</a> and <a href="{{ route('page.show', 'refund-policy') }}" target="_blank" class="underline hover:text-blue-black">refund policy</a>.
+                                By placing your order you agree to our <a href="/delivery-policy" target="_blank" class="underline hover:text-blue-black">delivery policy</a> and <a href="/refund-policy" target="_blank" class="underline hover:text-blue-black">refund policy</a>.
                             </p>
                         </div>
 

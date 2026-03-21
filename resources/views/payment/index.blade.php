@@ -95,9 +95,9 @@
         <div class="mt-4 flex items-center justify-center gap-4 text-xs text-gray-400">
             <span>MVR &middot; Maldives</span>
             <span class="text-gray-200">|</span>
-            <a href="{{ route('page.show', 'terms-and-conditions') }}" class="hover:text-blue-black transition">Terms</a>
-            <a href="{{ route('page.show', 'privacy-policy') }}" class="hover:text-blue-black transition">Privacy</a>
-            <a href="{{ route('page.show', 'refund-policy') }}" class="hover:text-blue-black transition">Refunds</a>
+            <a href="/terms-of-use" class="hover:text-blue-black transition">Terms</a>
+            <a href="/privacy-policy" class="hover:text-blue-black transition">Privacy</a>
+            <a href="/refund-policy" class="hover:text-blue-black transition">Refunds</a>
         </div>
     </div>
 </main>

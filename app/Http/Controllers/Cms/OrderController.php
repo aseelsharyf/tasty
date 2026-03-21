@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\PaymentReceipt;
 use App\Services\OrderService;
 use Illuminate\Http\RedirectResponse;
@@ -101,7 +102,7 @@ class OrderController extends Controller
     public function show(Order $order): Response
     {
         $order->load([
-            'items',
+            'items.product.featuredMedia',
             'deliveryLocation',
             'receipts.verifier',
             'statusHistory' => fn ($q) => $q->with('changedBy')->latest(),
@@ -147,6 +148,7 @@ class OrderController extends Controller
                 'created_at' => $order->created_at?->toISOString(),
                 'items' => $order->items->map(fn ($item) => [
                     'id' => $item->id,
+                    'uuid' => $item->uuid,
                     'product_title' => $item->product_title,
                     'variant_name' => $item->variant_name,
                     'product_type' => $item->product_type,
@@ -154,6 +156,8 @@ class OrderController extends Controller
                     'price' => $item->price,
                     'quantity' => $item->quantity,
                     'total' => $item->total,
+                    'product_image' => $item->product?->featured_image_url,
+                    'product_slug' => $item->product?->slug,
                 ])->toArray(),
                 'receipts' => $order->receipts->map(fn ($r) => [
                     'id' => $r->id,
@@ -172,6 +176,7 @@ class OrderController extends Controller
                     'created_at' => $h->created_at?->toISOString(),
                 ])->toArray(),
             ],
+            'isEditable' => $this->isOrderEditable($order),
             'statusOptions' => collect(OrderStatus::cases())->map(fn ($s) => [
                 'value' => $s->value,
                 'label' => $s->label(),
@@ -209,6 +214,76 @@ class OrderController extends Controller
         $this->orderService->verifyPayment($order, auth()->user());
 
         return redirect()->back()->with('success', 'Payment verified.');
+    }
+
+    public function updateItem(Request $request, Order $order, OrderItem $orderItem): RedirectResponse
+    {
+        if (! $this->isOrderEditable($order)) {
+            return redirect()->back()->with('error', 'This order cannot be modified.');
+        }
+
+        $validated = $request->validate([
+            'quantity' => ['required', 'integer', 'min:1', 'max:99'],
+        ]);
+
+        $orderItem->update([
+            'quantity' => $validated['quantity'],
+            'total' => $orderItem->price * $validated['quantity'],
+        ]);
+
+        $this->recalculateOrderTotals($order);
+
+        return redirect()->back()->with('success', 'Item quantity updated.');
+    }
+
+    public function removeItem(Order $order, OrderItem $orderItem): RedirectResponse
+    {
+        if (! $this->isOrderEditable($order)) {
+            return redirect()->back()->with('error', 'This order cannot be modified.');
+        }
+
+        $title = $orderItem->product_title;
+        $orderItem->delete();
+
+        // If no items left, cancel the order
+        if ($order->items()->count() === 0) {
+            $this->orderService->updateStatus($order, OrderStatus::Cancelled, auth()->user(), 'All items removed.');
+
+            return redirect()->back()->with('success', "'{$title}' removed. Order cancelled as no items remain.");
+        }
+
+        $this->recalculateOrderTotals($order);
+
+        return redirect()->back()->with('success', "'{$title}' removed from order.");
+    }
+
+    private function isOrderEditable(Order $order): bool
+    {
+        return in_array($order->payment_status, [PaymentStatus::Unpaid, PaymentStatus::Failed]);
+    }
+
+    private function recalculateOrderTotals(Order $order): void
+    {
+        $order->load('items');
+
+        $subtotal = $order->items->sum('total');
+        $discountAmount = (float) $order->discount_amount;
+        $afterDiscount = max(0, $subtotal - $discountAmount);
+
+        $taxRate = (float) $order->tax_rate;
+        $taxAmount = 0;
+
+        if ($taxRate > 0) {
+            $taxAmount = round($afterDiscount * $taxRate / 100, 2);
+        }
+
+        $total = $afterDiscount + $taxAmount;
+
+        $order->update([
+            'subtotal' => $subtotal,
+            'tax_amount' => $taxAmount,
+            'total' => $total,
+        ]);
     }
 
     public function viewReceipt(PaymentReceipt $receipt): StreamedResponse

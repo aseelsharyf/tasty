@@ -9,6 +9,7 @@ const toast = useToast();
 
 interface OrderItem {
     id: number;
+    uuid: string;
     product_title: string;
     variant_name?: string;
     product_type: string;
@@ -16,6 +17,8 @@ interface OrderItem {
     price: number;
     quantity: number;
     total: number;
+    product_image?: string;
+    product_slug?: string;
 }
 
 interface Receipt {
@@ -82,6 +85,7 @@ interface OrderDetail {
 
 const props = defineProps<{
     order: OrderDetail;
+    isEditable: boolean;
     statusOptions: StatusOption[];
 }>();
 
@@ -91,6 +95,13 @@ const { cmsPath } = useCmsPath();
 const statusUpdateModalOpen = ref(false);
 const selectedStatus = ref('');
 const statusNotes = ref('');
+
+const editItemModalOpen = ref(false);
+const editingItem = ref<OrderItem | null>(null);
+const editItemQty = ref(1);
+
+const removeItemModalOpen = ref(false);
+const removingItem = ref<OrderItem | null>(null);
 
 function goBack() {
     router.visit(cmsPath('/orders'));
@@ -135,6 +146,39 @@ function submitStatusUpdate() {
 
 function downloadReceipt(receipt: Receipt) {
     window.open(cmsPath(`/receipts/${receipt.uuid}`), '_blank');
+}
+
+function openEditItem(item: OrderItem) {
+    editingItem.value = item;
+    editItemQty.value = item.quantity;
+    editItemModalOpen.value = true;
+}
+
+function submitEditItem() {
+    if (!editingItem.value) return;
+    router.put(cmsPath(`/orders/${props.order.uuid}/items/${editingItem.value.uuid}`), {
+        quantity: editItemQty.value,
+    }, {
+        onSuccess: () => {
+            editItemModalOpen.value = false;
+            toast.add({ title: 'Item quantity updated', color: 'success' });
+        },
+    });
+}
+
+function openRemoveItem(item: OrderItem) {
+    removingItem.value = item;
+    removeItemModalOpen.value = true;
+}
+
+function confirmRemoveItem() {
+    if (!removingItem.value) return;
+    router.delete(cmsPath(`/orders/${props.order.uuid}/items/${removingItem.value.uuid}`), {
+        onSuccess: () => {
+            removeItemModalOpen.value = false;
+            toast.add({ title: 'Item removed', color: 'success' });
+        },
+    });
 }
 </script>
 
@@ -222,16 +266,35 @@ function downloadReceipt(receipt: Receipt) {
                     <div class="border border-default rounded-lg p-4">
                         <h3 class="text-sm font-semibold text-highlighted mb-3">Items</h3>
                         <div class="space-y-2">
-                            <div v-for="item in order.items" :key="item.id" class="flex items-center justify-between text-sm py-2 border-b border-default last:border-0">
-                                <div>
-                                    <span class="font-medium">{{ item.product_title }}</span>
+                            <div v-for="item in order.items" :key="item.id" class="flex items-center gap-3 text-sm py-2 border-b border-default last:border-0">
+                                <a v-if="item.product_slug" :href="`/products/show/${item.product_slug}`" target="_blank" class="shrink-0">
+                                    <div class="w-10 h-10 rounded-lg bg-elevated border border-default overflow-hidden flex items-center justify-center">
+                                        <img v-if="item.product_image" :src="item.product_image" :alt="item.product_title" class="w-full h-full object-contain p-0.5">
+                                        <UIcon v-else name="i-lucide-package" class="w-4 h-4 text-muted" />
+                                    </div>
+                                </a>
+                                <div v-else class="shrink-0">
+                                    <div class="w-10 h-10 rounded-lg bg-elevated border border-default overflow-hidden flex items-center justify-center">
+                                        <img v-if="item.product_image" :src="item.product_image" :alt="item.product_title" class="w-full h-full object-contain p-0.5">
+                                        <UIcon v-else name="i-lucide-package" class="w-4 h-4 text-muted" />
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <a v-if="item.product_slug" :href="`/products/show/${item.product_slug}`" target="_blank" class="font-medium hover:underline">{{ item.product_title }}</a>
+                                    <span v-else class="font-medium">{{ item.product_title }}</span>
                                     <span v-if="item.variant_name" class="text-muted"> ({{ item.variant_name }})</span>
                                     <span v-if="item.sku" class="text-xs text-muted ml-2">{{ item.sku }}</span>
                                     <UBadge v-if="item.product_type === 'affiliate'" color="info" variant="subtle" size="xs" class="ml-2">Affiliate</UBadge>
                                 </div>
-                                <div class="text-right shrink-0 ml-4">
-                                    <span class="text-muted">{{ Number(item.price).toFixed(2) }} x {{ item.quantity }}</span>
-                                    <span class="font-medium ml-3">{{ Number(item.total).toFixed(2) }}</span>
+                                <div class="flex items-center gap-2 shrink-0 ml-4">
+                                    <div class="text-right">
+                                        <span class="text-muted">{{ Number(item.price).toFixed(2) }} x {{ item.quantity }}</span>
+                                        <span class="font-medium ml-3">{{ Number(item.total).toFixed(2) }}</span>
+                                    </div>
+                                    <div v-if="isEditable && can('orders.edit')" class="flex items-center gap-0.5 ml-2">
+                                        <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-pencil" @click="openEditItem(item)" />
+                                        <UButton color="error" variant="ghost" size="xs" icon="i-lucide-trash-2" @click="openRemoveItem(item)" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -356,6 +419,38 @@ function downloadReceipt(receipt: Receipt) {
                     <div class="flex justify-end gap-3 mt-6">
                         <UButton color="neutral" variant="outline" @click="statusUpdateModalOpen = false">Cancel</UButton>
                         <UButton :disabled="!selectedStatus" @click="submitStatusUpdate">Update Status</UButton>
+                    </div>
+                </UCard>
+            </template>
+        </UModal>
+
+        <!-- Remove Item Confirmation Modal -->
+        <UModal v-model:open="removeItemModalOpen">
+            <template #content>
+                <UCard :ui="{ body: 'p-6' }">
+                    <h3 class="text-lg font-semibold text-highlighted mb-2">Remove Item</h3>
+                    <p class="text-sm text-muted mb-6" v-if="removingItem">Are you sure you want to remove <strong>{{ removingItem.product_title }}</strong><span v-if="removingItem.variant_name"> ({{ removingItem.variant_name }})</span> from this order?</p>
+                    <div class="flex justify-end gap-3">
+                        <UButton color="neutral" variant="outline" @click="removeItemModalOpen = false">Cancel</UButton>
+                        <UButton color="error" @click="confirmRemoveItem">Remove</UButton>
+                    </div>
+                </UCard>
+            </template>
+        </UModal>
+
+        <!-- Edit Item Quantity Modal -->
+        <UModal v-model:open="editItemModalOpen">
+            <template #content>
+                <UCard :ui="{ body: 'p-6' }">
+                    <h3 class="text-lg font-semibold text-highlighted mb-4">Edit Quantity</h3>
+                    <p class="text-sm text-muted mb-4" v-if="editingItem">{{ editingItem.product_title }}<span v-if="editingItem.variant_name"> ({{ editingItem.variant_name }})</span></p>
+                    <div>
+                        <label class="text-sm font-medium mb-2 block">Quantity</label>
+                        <UInput v-model.number="editItemQty" type="number" :min="1" :max="99" class="w-full" />
+                    </div>
+                    <div class="flex justify-end gap-3 mt-6">
+                        <UButton color="neutral" variant="outline" @click="editItemModalOpen = false">Cancel</UButton>
+                        <UButton :disabled="editItemQty < 1" @click="submitEditItem">Save</UButton>
                     </div>
                 </UCard>
             </template>
