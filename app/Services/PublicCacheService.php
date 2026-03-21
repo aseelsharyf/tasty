@@ -66,11 +66,19 @@ class PublicCacheService
     }
 
     /**
+     * Check if caching is disabled (local/dev environment).
+     */
+    private static function isDisabled(): bool
+    {
+        return app()->environment('local', 'testing');
+    }
+
+    /**
      * Get homepage sections TTL.
      */
     public static function homepageTtl(): int
     {
-        return self::HOMEPAGE_TTL;
+        return static::isDisabled() ? 0 : self::HOMEPAGE_TTL;
     }
 
     /**
@@ -78,7 +86,7 @@ class PublicCacheService
      */
     public static function postTtl(): int
     {
-        return self::POST_TTL;
+        return static::isDisabled() ? 0 : self::POST_TTL;
     }
 
     /**
@@ -86,7 +94,7 @@ class PublicCacheService
      */
     public static function listingTtl(): int
     {
-        return self::LISTING_TTL;
+        return static::isDisabled() ? 0 : self::LISTING_TTL;
     }
 
     /**
@@ -94,7 +102,7 @@ class PublicCacheService
      */
     public static function productTtl(): int
     {
-        return self::PRODUCT_TTL;
+        return static::isDisabled() ? 0 : self::PRODUCT_TTL;
     }
 
     /**
@@ -102,7 +110,7 @@ class PublicCacheService
      */
     public static function searchTtl(): int
     {
-        return self::SEARCH_TTL;
+        return static::isDisabled() ? 0 : self::SEARCH_TTL;
     }
 
     /**
@@ -110,7 +118,7 @@ class PublicCacheService
      */
     public static function sitemapTtl(): int
     {
-        return self::SITEMAP_TTL;
+        return static::isDisabled() ? 0 : self::SITEMAP_TTL;
     }
 
     /**

@@ -7,7 +7,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <!-- Product Images -->
             <div>
-                <div class="aspect-square bg-gray-50 rounded-xl flex items-center justify-center p-8 mb-4 overflow-hidden">
+                <div class="aspect-square bg-white rounded-xl flex items-center justify-center p-8 mb-4 overflow-hidden border border-gray-100">
                     @if($product->featured_image_url)
                         <img src="{{ $product->featured_image_url }}" alt="{{ $product->title }}" class="max-w-full max-h-full object-contain">
                     @else
