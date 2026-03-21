@@ -88,7 +88,7 @@
                             .then(r => r.json())
                             .then(data => {
                                 loading = false;
-                                if (data.success) { added = true; if (window.updateCartBadge) window.updateCartBadge(data.cartCount); if (window.openMiniCart) window.openMiniCart({{ json_encode($product->title) }}, {{ json_encode($product->featured_image_url) }}); setTimeout(() => added = false, 2000); }
+                                if (data.success) { added = true; if (window.updateCartBadge) window.updateCartBadge(data.cartCount); if (window.showCartToast) window.showCartToast({{ json_encode($product->title) }}, {{ json_encode($product->featured_image_url) }}); if (window.refreshCartMap) window.refreshCartMap(); setTimeout(() => added = false, 2000); }
                                 else { error = data.message || 'Could not add to cart'; setTimeout(() => error = '', 3000); }
                             })
                             .catch(() => { loading = false; error = 'Something went wrong'; setTimeout(() => error = '', 3000); })

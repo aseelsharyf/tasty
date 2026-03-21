@@ -463,6 +463,7 @@ function miniCart() {
                 if (data.success) {
                     window.updateCartBadge(data.cartCount);
                     this.fetchCart();
+                    if (window.refreshCartMap) window.refreshCartMap();
                 }
             } catch (e) {}
         }
@@ -492,11 +493,26 @@ window.getCsrfToken = function() {
         });
     }
 
+    // Cart map: productId => quantity (for "In Cart" state on product cards)
+    window._cartMap = {};
+
+    function updateCartMap(cartMap) {
+        window._cartMap = cartMap || {};
+        window.dispatchEvent(new CustomEvent('cart-updated'));
+    }
+
+    window.refreshCartMap = function() {
+        fetch('/cart/count', { headers: { 'Accept': 'application/json' } })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                updateCartBadge(data.count);
+                updateCartMap(data.cartMap);
+            })
+            .catch(function() {});
+    };
+
     // Fetch count on page load
-    fetch('/cart/count', { headers: { 'Accept': 'application/json' } })
-        .then(function(r) { return r.json(); })
-        .then(function(data) { updateCartBadge(data.count); })
-        .catch(function() {});
+    window.refreshCartMap();
 
     // Expose globally so add-to-cart forms can call it
     window.updateCartBadge = updateCartBadge;
@@ -533,16 +549,16 @@ window.getCsrfToken = function() {
 
         var name = productName || 'Item';
         var imgSrc = productImage || '/images/product-placeholder.svg';
-        var imgHtml = '<img src="' + imgSrc + '" alt="" class="w-10 h-10 rounded-lg object-contain bg-gray-50 shrink-0 border border-gray-100 p-0.5" onerror="this.onerror=null; this.src=\'/images/product-placeholder.svg\';">';
+        var imgHtml = '<img src="' + imgSrc + '" alt="" class="w-14 h-14 rounded-xl object-contain bg-gray-50 shrink-0 border border-gray-100 p-1" onerror="this.onerror=null; this.src=\'/images/product-placeholder.svg\';">';
 
         var toast = document.createElement('div');
         toast.id = 'cart-toast';
-        toast.innerHTML = '<div class="flex items-center gap-3">'
+        toast.innerHTML = '<div class="flex items-center gap-4">'
             + imgHtml
-            + '<div class="min-w-0"><p class="text-sm font-medium text-blue-black truncate max-w-[180px]">' + name + '</p><p class="text-xs text-gray-400">Added to cart</p></div>'
-            + '<a href="{{ route('checkout.index') }}" class="ml-2 text-sm font-semibold text-white bg-blue-black px-4 py-1.5 rounded-full hover:bg-opacity-90 transition whitespace-nowrap">Checkout</a>'
+            + '<div class="min-w-0"><p class="text-base font-medium text-blue-black truncate max-w-[220px]">' + name + '</p><p class="text-sm text-gray-400">Added to cart</p></div>'
+            + '<a href="{{ route('cart.index') }}" class="ml-3 text-sm text-white bg-blue-black px-5 py-2 rounded-full hover:bg-opacity-90 transition whitespace-nowrap">View Cart</a>'
             + '</div>';
-        toast.className = 'fixed bottom-6 right-6 max-sm:right-0 max-sm:left-0 max-sm:bottom-0 max-sm:rounded-none max-sm:border-x-0 max-sm:border-b-0 z-[60] bg-white rounded-xl shadow-2xl border border-gray-100 px-5 py-3 max-sm:py-4 transition-all duration-300 opacity-0 translate-y-2';
+        toast.className = 'fixed bottom-6 right-6 max-sm:right-3 max-sm:left-3 max-sm:bottom-3 z-[60] bg-white rounded-2xl shadow-2xl border border-gray-100 px-6 py-4 transition-all duration-300 opacity-0 translate-y-2';
         document.body.appendChild(toast);
 
         // Animate in

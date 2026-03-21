@@ -11,14 +11,13 @@ use App\Models\Tag;
 use App\Models\User;
 use App\Services\PublicCacheService;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 use SimpleXMLElement;
 
 class SitemapController extends Controller
 {
     public function __invoke(): Response
     {
-        $content = Cache::remember('public:sitemap', PublicCacheService::sitemapTtl(), function () {
+        $content = PublicCacheService::remember('public:sitemap', PublicCacheService::sitemapTtl(), function () {
             return $this->generateSitemap();
         });
 

@@ -27,7 +27,7 @@ class PostController extends Controller
         // Track view outside cache (non-blocking, bot-filtered)
         $this->trackView($postSlug);
 
-        $html = Cache::remember("public:post:{$postSlug}", PublicCacheService::postTtl(), function () use ($categorySlug, $postSlug) {
+        $html = PublicCacheService::remember("public:post:{$postSlug}", PublicCacheService::postTtl(), function () use ($categorySlug, $postSlug) {
             // Find the category (optional - for URL validation)
             $category = Category::where('slug', $categorySlug)->first();
 

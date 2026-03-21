@@ -111,7 +111,21 @@ class CartController extends Controller
 
     public function count(): JsonResponse
     {
-        return response()->json(['count' => $this->cart->getItemCount()]);
+        $items = $this->cart->getItems();
+        $cartMap = [];
+        foreach ($items as $item) {
+            $pid = $item['product_id'];
+            if (! isset($cartMap[$pid])) {
+                $cartMap[$pid] = ['qty' => 0, 'ids' => []];
+            }
+            $cartMap[$pid]['qty'] += $item['quantity'];
+            $cartMap[$pid]['ids'][] = $item['id'];
+        }
+
+        return response()->json([
+            'count' => $this->cart->getItemCount(),
+            'cartMap' => $cartMap,
+        ]);
     }
 
     public function preview(): JsonResponse

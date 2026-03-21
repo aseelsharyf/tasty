@@ -68,9 +68,26 @@ class PublicCacheService
     /**
      * Check if caching is disabled (local/dev environment).
      */
-    private static function isDisabled(): bool
+    public static function isDisabled(): bool
     {
         return app()->environment('local', 'testing');
+    }
+
+    /**
+     * Cache helper that skips caching in local/testing environments.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $callback
+     * @return T
+     */
+    public static function remember(string $key, int $ttl, callable $callback): mixed
+    {
+        if (static::isDisabled()) {
+            return $callback();
+        }
+
+        return Cache::remember($key, $ttl, $callback);
     }
 
     /**

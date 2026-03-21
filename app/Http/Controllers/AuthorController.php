@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Services\PublicCacheService;
 use App\Services\SeoService;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 
 class AuthorController extends Controller
 {
@@ -21,7 +20,7 @@ class AuthorController extends Controller
         $page = request()->integer('page', 1);
         $cacheKey = "public:author:{$author->username}:page:{$page}";
 
-        $html = Cache::remember($cacheKey, PublicCacheService::listingTtl(), function () use ($author) {
+        $html = PublicCacheService::remember($cacheKey, PublicCacheService::listingTtl(), function () use ($author) {
             $posts = $author->posts()
                 ->published()
                 ->with(['categories', 'tags'])
