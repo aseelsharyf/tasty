@@ -24,9 +24,12 @@ class PaymentController extends Controller
             ->where('is_active', true)
             ->values();
 
+        $bankAccounts = Setting::getBankAccounts();
+
         return view('payment.index', [
             'order' => $order,
             'paymentMethods' => $paymentMethods,
+            'bankAccounts' => $bankAccounts,
         ]);
     }
 

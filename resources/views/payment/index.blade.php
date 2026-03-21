@@ -29,6 +29,22 @@
                     </a>
 
                     <div id="bank-transfer-form" class="hidden border border-gray-100 rounded-xl p-6">
+                        @if(!empty($bankAccounts))
+                            <div class="mb-5">
+                                <p class="text-sm font-medium text-blue-black mb-3">Transfer Details</p>
+                                <div class="space-y-3">
+                                    @foreach($bankAccounts as $account)
+                                        <div class="bg-gray-50/50 rounded-lg p-3 text-sm {{ !$loop->last ? '' : '' }}">
+                                            <p class="font-medium text-blue-black">{{ $account['bank_name'] }}</p>
+                                            <p class="text-gray-500 mt-0.5">{{ $account['account_name'] }}</p>
+                                            <p class="text-gray-500 font-mono text-xs mt-1">{{ $account['account_number'] }} &middot; {{ $account['currency'] }}</p>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <p class="text-xs text-gray-400 mt-2">Please transfer <span class="font-medium text-blue-black">{{ number_format($order->total, 2) }} {{ $order->currency }}</span> to one of the accounts above, then upload your receipt below.</p>
+                            </div>
+                        @endif
+
                         <form method="POST" action="{{ route('payment.bank-transfer', $order) }}" enctype="multipart/form-data" class="space-y-4">
                             @csrf
                             <div>
