@@ -51,7 +51,6 @@
         class="w-full h-full transition-opacity duration-300 opacity-0 {{ $imgClass }}"
         style="object-fit: {{ $objectFit }}; object-position: {{ $objectPosition }};"
         onload="this.classList.remove('opacity-0'); this.classList.add('opacity-100'); if(this.previousElementSibling) this.previousElementSibling.style.display='none';"
-        onerror="this.onerror=null; this.src='/images/product-placeholder.svg'; this.style.objectFit='cover'; this.classList.remove('opacity-0'); this.classList.add('opacity-100'); if(this.previousElementSibling) this.previousElementSibling.style.display='none';"
         {{ $attributes }}
     >
 </div>

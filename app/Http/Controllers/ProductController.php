@@ -204,8 +204,17 @@ class ProductController extends Controller
 
             $product->load(['featuredMedia', 'tags', 'category', 'store', 'images', 'variants' => fn ($q) => $q->active()->ordered()]);
 
+            $relatedProducts = Product::active()
+                ->where('id', '!=', $product->id)
+                ->when($product->product_category_id, fn ($q) => $q->where('product_category_id', $product->product_category_id))
+                ->with(['featuredMedia', 'category', 'store', 'variants'])
+                ->inRandomOrder()
+                ->limit(8)
+                ->get();
+
             return view('products.show', [
                 'product' => $product,
+                'relatedProducts' => $relatedProducts,
             ])->render();
         });
 
