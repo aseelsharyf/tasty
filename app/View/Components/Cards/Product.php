@@ -98,18 +98,12 @@ class Product extends Component
             $this->image = $product->featured_image_url ?? '';
             $this->imageAlt = $product->featuredMedia?->alt_text ?? $product->title;
             $this->blurhash = $product->featuredMedia?->blurhash;
-            // Build tags from category and featured tag with URLs
+            // Build tags from category only
             $badgeTags = [];
             if ($product->category) {
                 $badgeTags[] = [
                     'name' => strtoupper($product->category->name),
                     'url' => $this->safeRoute('products.category', $product->category->slug),
-                ];
-            }
-            if ($product->featuredTag) {
-                $badgeTags[] = [
-                    'name' => strtoupper($product->featuredTag->name),
-                    'url' => $this->safeRoute('products.tag', $product->featuredTag->slug),
                 ];
             }
             $this->tags = $badgeTags;

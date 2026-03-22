@@ -1,9 +1,9 @@
-<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-6 w-full" @if($productId) data-product-id="{{ $productId }}" @endif>
+<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-4 lg:pb-6 w-full" @if($productId) data-product-id="{{ $productId }}" @endif>
     {{-- Main card link (covers entire card including image area) --}}
     <a href="{{ $url }}" class="absolute inset-0 z-[1]" aria-label="{{ $title }}"></a>
 
     {{-- Image container --}}
-    <div class="relative aspect-square bg-white rounded-lg flex items-end justify-center p-6 mb-4">
+    <div class="relative aspect-square bg-white rounded-lg flex items-end justify-center p-6 mb-2 lg:mb-4">
         @if($image)
             @if($blurhash)
                 @php $bhId = 'bh-' . uniqid(); @endphp
@@ -45,7 +45,7 @@
     </div>
 
     {{-- Content --}}
-    <div class="flex flex-col items-center gap-3 px-8 max-lg:px-6 text-center flex-1">
+    <div class="flex flex-col items-center gap-2 lg:gap-3 px-3 lg:px-8 text-center flex-1">
         {{-- Store Logo --}}
         @if($storeLogo)
             @if($storeUrl)
@@ -69,16 +69,16 @@
             @endif
         @endif
 
-        <h3 class="text-h4 text-blue-black line-clamp-2">{{ $title }}</h3>
+        <h3 class="text-h5 lg:text-h4 text-blue-black line-clamp-2">{{ $title }}</h3>
         @if($description)
-            <p class="text-body-md text-blue-black line-clamp-3">{{ $description }}</p>
+            <p class="text-body-sm lg:text-body-md text-blue-black line-clamp-2 lg:line-clamp-3">{{ $description }}</p>
         @endif
         @if($showPrice && $price)
             <div class="flex items-center gap-2">
                 @if($compareAtPrice)
                     <span class="text-body-sm text-gray-500 line-through">{{ $compareAtPrice }}</span>
                 @endif
-                <span class="text-body-md font-semibold text-blue-black">{{ $price }}</span>
+                <span class="text-body-sm lg:text-body-md font-semibold text-blue-black">{{ $price }}</span>
             </div>
         @endif
 
@@ -87,7 +87,7 @@
             <div x-data="productCartBtn({{ $productId }}, true)" @click.away="open = false" class="relative z-10 mt-auto pt-2 w-full">
                 {{-- Add to Cart button --}}
                 <button x-show="!inCart" @click="open = !open" type="button"
-                    class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-black text-white text-sm rounded-full hover:bg-opacity-90 transition">
+                    class="w-full inline-flex items-center justify-center gap-1.5 lg:gap-2 px-3 lg:px-5 py-2 lg:py-2.5 bg-blue-black text-white text-xs lg:text-sm rounded-full hover:bg-opacity-90 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
                     <span>Add to Cart</span>
                     <svg class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
