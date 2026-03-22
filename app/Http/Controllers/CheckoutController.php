@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Setting;
 use App\Services\CartService;
 use App\Services\OrderService;
+use App\Services\Payment\BmlGatewayService;
 
 class CheckoutController extends Controller
 {
@@ -80,6 +81,25 @@ class CheckoutController extends Controller
 
         $order = $this->orderService->createFromCart($this->cart, $request->validated());
 
+        // Auto-accepted orders: skip thank-you page and go directly to payment
+        if (! $order->has_affiliate_products && $order->payment_method) {
+            if ($order->payment_method === 'bml_gateway') {
+                $service = new BmlGatewayService;
+                $result = $service->initiate($order);
+
+                if ($result->success && $result->redirectUrl) {
+                    return redirect()->away($result->redirectUrl);
+                }
+
+                return redirect()->route('payment.index', $order)
+                    ->with('error', $result->errorMessage ?? 'Payment initiation failed.');
+            }
+
+            // Bank transfer or other methods → payment page directly
+            return redirect()->route('payment.index', $order);
+        }
+
+        // Affiliate orders → thank-you page (waiting for seller confirmation)
         return redirect()->route('checkout.thank-you', $order);
     }
 
