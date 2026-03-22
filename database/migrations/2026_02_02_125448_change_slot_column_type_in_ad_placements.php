@@ -9,6 +9,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Check if slot column needs type change (only needed if it's not already varchar)
         $columnType = DB::selectOne("
             SELECT data_type
@@ -24,6 +28,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Note: This down migration may fail if there are non-numeric values in the slot column
         DB::statement('ALTER TABLE ad_placements ALTER COLUMN slot TYPE smallint USING slot::smallint');
     }
