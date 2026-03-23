@@ -5,7 +5,7 @@
     {{-- Image wrapper --}}
     <div class="relative mb-2 lg:mb-4 min-w-0">
         {{-- White background container --}}
-        <div class="relative bg-white rounded-lg aspect-square overflow-hidden">
+        <div class="relative bg-white rounded-lg aspect-[4/5] lg:aspect-square overflow-hidden">
             @if($image)
                 @if($blurhash)
                     @php $bhId = 'bh-' . uniqid(); @endphp
