@@ -1,9 +1,9 @@
-<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-4 lg:pb-6 w-full" @if($productId) data-product-id="{{ $productId }}" @endif>
+<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-6 lg:pb-6 w-full" @if($productId) data-product-id="{{ $productId }}" @endif>
     {{-- Main card link (covers entire card including image area) --}}
     <a href="{{ $url }}" class="absolute inset-0 z-[1]" aria-label="{{ $title }}"></a>
 
     {{-- Image container --}}
-    <div class="relative aspect-square bg-white rounded-lg flex items-end justify-center p-6 pb-10 lg:pb-6 mb-2 lg:mb-4">
+    <div class="relative aspect-square bg-white rounded-lg flex items-end justify-center p-6 mb-4 lg:mb-4">
         @if($image)
             @if($blurhash)
                 @php $bhId = 'bh-' . uniqid(); @endphp
@@ -96,11 +96,11 @@
                 </button>
                 {{-- Quantity control (shown when in cart) --}}
                 <div x-show="inCart" x-cloak class="w-full flex items-center rounded-full border border-blue-black/15 bg-blue-black/[0.03] overflow-hidden">
-                    <button @click="adjustQty(-1)" :disabled="updating" class="flex-none w-10 h-10 flex items-center justify-center text-blue-black/40 hover:text-blue-black hover:bg-blue-black/5 transition active:scale-90 disabled:opacity-50">
+                    <button @click="adjustQty(-1)" :disabled="updating" class="flex-none w-7 h-7 lg:w-10 lg:h-10 flex items-center justify-center text-blue-black/40 hover:text-blue-black hover:bg-blue-black/5 transition active:scale-90 disabled:opacity-50">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
                     </button>
-                    <a href="{{ route('cart.index') }}" class="flex-1 text-center text-sm text-blue-black py-2 tabular-nums" :class="updating ? 'opacity-50' : ''" x-text="qty + ' in cart'"></a>
-                    <button @click="adjustQty(1)" :disabled="updating" class="flex-none w-10 h-10 flex items-center justify-center text-blue-black/40 hover:text-blue-black hover:bg-blue-black/5 transition active:scale-90 disabled:opacity-50">
+                    <a href="{{ route('cart.index') }}" class="flex-1 text-center text-[10px] lg:text-sm text-blue-black py-1 lg:py-2 tabular-nums" :class="updating ? 'opacity-50' : ''" x-text="qty + ' in cart'"></a>
+                    <button @click="adjustQty(1)" :disabled="updating" class="flex-none w-7 h-7 lg:w-10 lg:h-10 flex items-center justify-center text-blue-black/40 hover:text-blue-black hover:bg-blue-black/5 transition active:scale-90 disabled:opacity-50">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     </button>
                 </div>
@@ -148,11 +148,11 @@
                 </button>
                 {{-- Quantity control (shown when in cart) --}}
                 <div x-show="inCart" x-cloak class="w-full flex items-center rounded-full border border-blue-black/15 bg-blue-black/[0.03] overflow-hidden">
-                    <button @click="adjustQty(-1)" :disabled="updating" class="flex-none w-10 h-10 flex items-center justify-center text-blue-black/40 hover:text-blue-black hover:bg-blue-black/5 transition active:scale-90 disabled:opacity-50">
+                    <button @click="adjustQty(-1)" :disabled="updating" class="flex-none w-7 h-7 lg:w-10 lg:h-10 flex items-center justify-center text-blue-black/40 hover:text-blue-black hover:bg-blue-black/5 transition active:scale-90 disabled:opacity-50">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
                     </button>
-                    <a href="{{ route('cart.index') }}" class="flex-1 text-center text-sm text-blue-black py-2 tabular-nums" :class="updating ? 'opacity-50' : ''" x-text="qty + ' in cart'"></a>
-                    <button @click="adjustQty(1)" :disabled="updating" class="flex-none w-10 h-10 flex items-center justify-center text-blue-black/40 hover:text-blue-black hover:bg-blue-black/5 transition active:scale-90 disabled:opacity-50">
+                    <a href="{{ route('cart.index') }}" class="flex-1 text-center text-[10px] lg:text-sm text-blue-black py-1 lg:py-2 tabular-nums" :class="updating ? 'opacity-50' : ''" x-text="qty + ' in cart'"></a>
+                    <button @click="adjustQty(1)" :disabled="updating" class="flex-none w-7 h-7 lg:w-10 lg:h-10 flex items-center justify-center text-blue-black/40 hover:text-blue-black hover:bg-blue-black/5 transition active:scale-90 disabled:opacity-50">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     </button>
                 </div>
