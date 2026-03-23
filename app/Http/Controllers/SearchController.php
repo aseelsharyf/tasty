@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\Product;
 use App\Models\Tag;
 use App\Models\User;
 use App\Services\PublicCacheService;
@@ -23,6 +24,7 @@ class SearchController extends Controller
 
         $results = [
             'posts' => collect(),
+            'products' => collect(),
             'categories' => collect(),
             'tags' => collect(),
             'authors' => collect(),
@@ -37,6 +39,7 @@ class SearchController extends Controller
             'type' => $type,
             'results' => $results,
             'totalCount' => $results['posts']->count()
+                + $results['products']->count()
                 + $results['categories']->count()
                 + $results['tags']->count()
                 + $results['authors']->count(),
@@ -68,6 +71,16 @@ class SearchController extends Controller
                     'subtitle' => $post->categories->first()?->name ?? 'Article',
                     'url' => $post->url,
                     'image' => $post->featured_image_thumb,
+                ];
+            }
+
+            foreach ($results['products'] as $product) {
+                $formatted[] = [
+                    'type' => 'product',
+                    'title' => $product->title,
+                    'subtitle' => $product->formatted_price ?? 'Product',
+                    'url' => route('products.show', $product->slug),
+                    'image' => $product->featured_image_url,
                 ];
             }
 
@@ -117,24 +130,73 @@ class SearchController extends Controller
     {
         $results = [
             'posts' => collect(),
+            'products' => collect(),
             'categories' => collect(),
             'tags' => collect(),
             'authors' => collect(),
         ];
 
-        // Search Posts
-        if ($type === 'all' || $type === 'posts') {
-            $results['posts'] = Post::query()
-                ->published()
+        // Search Products
+        if ($type === 'all' || $type === 'products') {
+            $results['products'] = Product::query()
+                ->active()
                 ->where(function ($q) use ($query) {
                     $q->where('title', 'LIKE', "%{$query}%")
-                        ->orWhere('subtitle', 'LIKE', "%{$query}%")
-                        ->orWhere('excerpt', 'LIKE', "%{$query}%");
+                        ->orWhere('description', 'LIKE', "%{$query}%")
+                        ->orWhere('short_description', 'LIKE', "%{$query}%")
+                        ->orWhere('brand', 'LIKE', "%{$query}%");
                 })
-                ->with(['categories', 'author', 'featuredMedia'])
-                ->orderBy('published_at', 'desc')
+                ->with(['featuredMedia', 'tags', 'category', 'store', 'variants'])
+                ->ordered()
                 ->limit($limit)
                 ->get();
+        }
+
+        // Search Posts (full-text + fuzzy via pg_trgm on PostgreSQL, LIKE fallback otherwise)
+        if ($type === 'all' || $type === 'posts') {
+            $isPostgres = Post::query()->getConnection()->getDriverName() === 'pgsql';
+
+            if ($isPostgres) {
+                $tsQuery = collect(explode(' ', $query))
+                    ->filter(fn ($word) => strlen($word) >= 2)
+                    ->map(fn ($word) => $word.':*')
+                    ->implode(' | ');
+
+                // Lower word similarity threshold for better typo tolerance
+                Post::query()->getConnection()->statement('SET pg_trgm.word_similarity_threshold = 0.3');
+
+                $results['posts'] = Post::query()
+                    ->published()
+                    ->where(function ($q) use ($query, $tsQuery) {
+                        if ($tsQuery) {
+                            $q->whereRaw(
+                                "to_tsvector('english', COALESCE(searchable_text, '')) @@ to_tsquery('english', ?)",
+                                [$tsQuery]
+                            );
+                        }
+
+                        $q->orWhereRaw('? <% searchable_text', [$query]);
+                    })
+                    ->with(['categories', 'author', 'featuredMedia'])
+                    ->orderByRaw(
+                        "ts_rank(to_tsvector('english', COALESCE(searchable_text, '')), to_tsquery('english', ?)) DESC, word_similarity(?, searchable_text) DESC",
+                        [$tsQuery ?: $query, $query]
+                    )
+                    ->limit($limit)
+                    ->get();
+            } else {
+                $results['posts'] = Post::query()
+                    ->published()
+                    ->where(function ($q) use ($query) {
+                        $q->where('title', 'LIKE', "%{$query}%")
+                            ->orWhere('subtitle', 'LIKE', "%{$query}%")
+                            ->orWhere('excerpt', 'LIKE', "%{$query}%");
+                    })
+                    ->with(['categories', 'author', 'featuredMedia'])
+                    ->orderBy('published_at', 'desc')
+                    ->limit($limit)
+                    ->get();
+            }
         }
 
         // Search Categories

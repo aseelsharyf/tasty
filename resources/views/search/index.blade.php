@@ -21,23 +21,36 @@
 
         {{-- Results --}}
         @if($query)
-            @php
-                $posts = $results['posts'] ?? collect();
-                $count = $posts->count();
-            @endphp
-
             <p class="text-body-sm text-blue-black/50 text-center mb-10">
-                {{ $count }} result{{ $count !== 1 ? 's' : '' }} for "{{ $query }}"
+                {{ $totalCount }} result{{ $totalCount !== 1 ? 's' : '' }} for "{{ $query }}"
             </p>
 
-            @if($count > 0)
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
-                    @foreach($posts as $post)
-                        <x-cards.horizontal :post="$post" />
-                    @endforeach
-                </div>
+            @if($totalCount > 0)
+                {{-- Products --}}
+                @if($results['products']->isNotEmpty())
+                    <div class="mb-16">
+                        <h2 class="text-h3 text-blue-black mb-6">Products</h2>
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
+                            @foreach($results['products'] as $product)
+                                <x-cards.product :product="$product" />
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Articles --}}
+                @if($results['posts']->isNotEmpty())
+                    <div class="mb-16">
+                        <h2 class="text-h3 text-blue-black mb-6">Articles</h2>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
+                            @foreach($results['posts'] as $post)
+                                <x-cards.horizontal :post="$post" />
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             @else
-                <p class="text-body-md text-blue-black/50 text-center">No articles found. Try a different search term.</p>
+                <p class="text-body-md text-blue-black/50 text-center">No results found. Try a different search term.</p>
             @endif
         @endif
     </div>
