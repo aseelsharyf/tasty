@@ -18,7 +18,7 @@
                 @if($method['key'] === 'bank_transfer')
                     <a href="#bank-transfer-form"
                         onclick="document.getElementById('bank-transfer-form').classList.toggle('hidden')"
-                        class="flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-gray-50/50 transition cursor-pointer">
+                        class="flex items-center gap-4 p-4 border rounded-xl hover:bg-gray-50/50 transition cursor-pointer {{ $order->payment_method?->value === 'bank_transfer' ? 'border-blue-black bg-gray-50/50' : 'border-gray-100' }}">
                         <div class="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
                             <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/></svg>
                         </div>
@@ -28,7 +28,7 @@
                         </div>
                     </a>
 
-                    <div id="bank-transfer-form" class="hidden border border-gray-100 rounded-xl p-6">
+                    <div id="bank-transfer-form" class="{{ $order->payment_method?->value === 'bank_transfer' ? '' : 'hidden' }} border border-gray-100 rounded-xl p-6">
                         @if(!empty($bankAccounts))
                             <div class="mb-5">
                                 <p class="text-sm font-medium text-blue-black mb-3">Transfer Details</p>
@@ -66,7 +66,7 @@
                     <form method="POST" action="{{ route('payment.gateway', $order) }}">
                         @csrf
                         <input type="hidden" name="method" value="{{ $method['key'] }}">
-                        <button type="submit" class="w-full flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-gray-50/50 transition text-left">
+                        <button type="submit" class="w-full flex items-center gap-4 p-4 border rounded-xl hover:bg-gray-50/50 transition text-left {{ $order->payment_method?->value === 'bml_gateway' ? 'border-blue-black bg-gray-50/50' : 'border-gray-100' }}">
                             <div class="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
                                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
                             </div>
@@ -86,7 +86,7 @@
                     <form method="POST" action="{{ route('payment.gateway', $order) }}">
                         @csrf
                         <input type="hidden" name="method" value="{{ $method['key'] }}">
-                        <button type="submit" class="w-full flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-gray-50/50 transition text-left">
+                        <button type="submit" class="w-full flex items-center gap-4 p-4 border rounded-xl hover:bg-gray-50/50 transition text-left {{ $order->payment_method?->value === $method['key'] ? 'border-blue-black bg-gray-50/50' : 'border-gray-100' }}">
                             <div class="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
                                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/></svg>
                             </div>

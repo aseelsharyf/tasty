@@ -3,13 +3,13 @@
     <div class="w-full max-w-[1440px] mx-auto px-10 pt-16 pb-16 max-lg:px-5 max-lg:pt-10 max-lg:pb-10 flex flex-col gap-16 max-lg:gap-10">
         {{-- Header --}}
         <div class="flex flex-col gap-5 items-center text-center text-blue-black w-full max-w-[660px] mx-auto">
-            <h2 class="font-display text-[82px] leading-[1] tracking-[-0.04em] uppercase max-lg:text-[48px]">{{ $title }}</h2>
-            <p class="text-[22px] leading-[1.4]">{{ $description }}</p>
+            <a href="{{ route('products.index') }}" class="font-display text-[82px] leading-[1] tracking-[-0.04em] uppercase max-lg:text-[48px] hover:opacity-70 transition-opacity">{{ $title }}</a>
+            <p class="text-body-md text-blue-black">{{ $description }}</p>
         </div>
 
         {{-- Products Grid --}}
         @if($products->count() > 0)
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
                 @foreach($products as $product)
                     <x-cards.product :product="$product" :show-price="true" />
                 @endforeach

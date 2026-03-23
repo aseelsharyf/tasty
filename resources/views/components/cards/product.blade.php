@@ -29,7 +29,7 @@
             <img src="/images/product-placeholder.svg" alt="{{ $imageAlt }}" class="absolute inset-0 w-full h-full rounded-lg">
         @endif
         @if(count($tags) > 0)
-            <span class="tag relative z-[2] inline-flex items-center gap-1 whitespace-nowrap max-w-[calc(100%-1rem)] overflow-hidden">
+            <span class="tag relative z-[2] inline-block truncate max-w-[calc(100%-1rem)]">
                 @foreach($tags as $index => $tag)
                     @if($index > 0)
                         <span class="hidden lg:inline">•</span>
@@ -69,16 +69,18 @@
             @endif
         @endif
 
-        <h3 class="text-h5 lg:text-h4 text-blue-black line-clamp-2">{{ $title }}</h3>
+        <h3 class="font-display text-[24px] leading-[1.1] tracking-[-0.96px] lg:text-[30px] lg:leading-[1.1] lg:tracking-[-0.04em] text-blue-black line-clamp-2">{{ $title }}</h3>
         @if($description)
-            <p class="text-body-sm lg:text-body-md text-blue-black line-clamp-2 lg:line-clamp-3">{{ $description }}</p>
+            <div class="hidden lg:block">
+                <p class="text-[16px] leading-[1.4] text-blue-black line-clamp-3">{{ $description }}</p>
+            </div>
         @endif
         @if($showPrice && $price)
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap justify-center">
                 @if($compareAtPrice)
-                    <span class="text-body-sm text-gray-500 line-through">{{ $compareAtPrice }}</span>
+                    <span class="text-[16px] lg:text-[18px] text-gray-500 line-through">{{ $compareAtPrice }}</span>
                 @endif
-                <span class="text-body-sm lg:text-body-md font-semibold text-blue-black">{{ $price }}</span>
+                <span class="text-[16px] lg:text-[18px] font-semibold text-blue-black">{{ $price }}</span>
             </div>
         @endif
 

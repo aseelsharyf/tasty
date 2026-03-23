@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Setting;
@@ -13,11 +14,25 @@ use Illuminate\Http\Response;
 
 class PaymentController extends Controller
 {
-    public function index(Order $order): \Illuminate\Contracts\View\View|RedirectResponse
+    public function index(Request $request, Order $order): \Illuminate\Contracts\View\View|RedirectResponse
     {
         if (! in_array($order->status, [OrderStatus::Accepted, OrderStatus::PaymentPending])) {
             return redirect()->route('order.track')
                 ->with('error', 'This order is not ready for payment.');
+        }
+
+        // Auto-redirect to BML gateway if already selected at checkout
+        if ($order->payment_method === PaymentMethod::BmlGateway && ! $request->has('choose')) {
+            $service = new BmlGatewayService;
+            $result = $service->initiate($order);
+
+            if ($result->success && $result->redirectUrl) {
+                return redirect()->away($result->redirectUrl);
+            }
+
+            // If gateway initiation fails, show payment page with error
+            return redirect()->route('payment.index', ['order' => $order, 'choose' => 1])
+                ->with('error', $result->errorMessage ?? 'Payment initiation failed. Please select a payment method.');
         }
 
         $paymentMethods = collect(Setting::getPaymentMethods())
