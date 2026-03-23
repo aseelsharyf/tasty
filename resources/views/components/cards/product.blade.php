@@ -3,7 +3,7 @@
     <a href="{{ $url }}" class="absolute inset-0 z-[1]" aria-label="{{ $title }}"></a>
 
     {{-- Image container --}}
-    <div class="relative min-h-[230px] lg:min-h-0 aspect-square bg-white rounded-lg flex items-end justify-center p-6 mb-0 lg:mb-0 overflow-hidden">
+    <div class="relative aspect-square bg-white rounded-lg flex items-end justify-center p-6 mb-2 lg:mb-4">
         @if($image)
             @if($blurhash)
                 @php $bhId = 'bh-' . uniqid(); @endphp
@@ -28,10 +28,8 @@
         @else
             <img src="/images/product-placeholder.svg" alt="{{ $imageAlt }}" class="absolute inset-0 w-full h-full rounded-lg">
         @endif
-    </div>
-    @if(count($tags) > 0)
-        <div class="flex justify-center -mt-4 mb-2 lg:mb-3 relative z-[2]">
-            <span class="tag inline-block truncate max-w-[calc(100%-2rem)]">
+        @if(count($tags) > 0)
+            <span class="tag relative z-[2] inline-block truncate max-w-[calc(100%-1rem)]">
                 @foreach($tags as $index => $tag)
                     @if($index > 0)
                         <span class="hidden lg:inline">•</span>
@@ -43,8 +41,8 @@
                     @endif
                 @endforeach
             </span>
-        </div>
-    @endif
+        @endif
+    </div>
 
     {{-- Content --}}
     <div class="flex flex-col items-center gap-2 lg:gap-3 px-3 lg:px-8 text-center flex-1">
