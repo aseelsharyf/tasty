@@ -55,6 +55,9 @@ const typeOptions = [
     { label: 'Mentions', value: 'mention' },
     { label: 'Assignments', value: 'assignment' },
     { label: 'System', value: 'system' },
+    { label: 'Order Created', value: 'order_created' },
+    { label: 'Order Status Changed', value: 'order_status_changed' },
+    { label: 'Order Payment Verified', value: 'order_payment_verified' },
 ];
 
 const filterOptions = [

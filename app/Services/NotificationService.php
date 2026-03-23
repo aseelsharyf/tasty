@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\OrderStatus;
 use App\Models\CmsNotification;
 use App\Models\ContentVersion;
 use App\Models\EditorialComment;
+use App\Models\Order;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -51,6 +53,74 @@ class NotificationService
             ->get();
 
         $this->notifyMany($users, $data);
+    }
+
+    /**
+     * Send a notification to all users with a specific permission.
+     */
+    public function notifyPermission(string $permission, array $data, ?int $excludeUserId = null): void
+    {
+        $users = User::permission($permission)
+            ->when($excludeUserId, fn ($q) => $q->where('id', '!=', $excludeUserId))
+            ->get();
+
+        $this->notifyMany($users, $data);
+    }
+
+    /**
+     * Notify when a new order is created.
+     */
+    public function orderCreated(Order $order): void
+    {
+        $actionUrl = "/cms/orders/{$order->uuid}";
+
+        $this->notifyPermission('orders.view', [
+            'type' => CmsNotification::TYPE_ORDER_CREATED,
+            'title' => 'New order received',
+            'body' => "Order {$order->order_number} — {$order->currency} ".number_format($order->total, 2),
+            'notifiable_type' => Order::class,
+            'notifiable_id' => $order->id,
+            'action_url' => $actionUrl,
+            'action_label' => 'View Order',
+        ]);
+    }
+
+    /**
+     * Notify when an order status changes.
+     */
+    public function orderStatusChanged(Order $order, string $fromStatus, OrderStatus $toStatus, ?User $changedBy = null): void
+    {
+        $actionUrl = "/cms/orders/{$order->uuid}";
+
+        $this->notifyPermission('orders.view', [
+            'type' => CmsNotification::TYPE_ORDER_STATUS_CHANGED,
+            'title' => "Order {$order->order_number} status updated",
+            'body' => "Status changed from {$fromStatus} to {$toStatus->label()}",
+            'notifiable_type' => Order::class,
+            'notifiable_id' => $order->id,
+            'action_url' => $actionUrl,
+            'action_label' => 'View Order',
+            'triggered_by' => $changedBy?->id,
+        ], $changedBy?->id);
+    }
+
+    /**
+     * Notify when an order payment is verified.
+     */
+    public function orderPaymentVerified(Order $order, User $verifiedBy): void
+    {
+        $actionUrl = "/cms/orders/{$order->uuid}";
+
+        $this->notifyPermission('orders.view', [
+            'type' => CmsNotification::TYPE_ORDER_PAYMENT_VERIFIED,
+            'title' => "Payment verified for {$order->order_number}",
+            'body' => "{$verifiedBy->name} verified payment of {$order->currency} ".number_format($order->total, 2),
+            'notifiable_type' => Order::class,
+            'notifiable_id' => $order->id,
+            'action_url' => $actionUrl,
+            'action_label' => 'View Order',
+            'triggered_by' => $verifiedBy->id,
+        ], $verifiedBy->id);
     }
 
     /**

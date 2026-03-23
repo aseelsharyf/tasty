@@ -33,6 +33,12 @@ class CmsNotification extends Model
 
     public const TYPE_SYSTEM = 'system';
 
+    public const TYPE_ORDER_CREATED = 'order_created';
+
+    public const TYPE_ORDER_STATUS_CHANGED = 'order_status_changed';
+
+    public const TYPE_ORDER_PAYMENT_VERIFIED = 'order_payment_verified';
+
     // Color themes
     public const COLOR_INFO = 'info';
 
@@ -168,6 +174,9 @@ class CmsNotification extends Model
             self::TYPE_MENTION => 'i-lucide-at-sign',
             self::TYPE_ASSIGNMENT => 'i-lucide-user-plus',
             self::TYPE_SYSTEM => 'i-lucide-bell',
+            self::TYPE_ORDER_CREATED => 'i-lucide-shopping-cart',
+            self::TYPE_ORDER_STATUS_CHANGED => 'i-lucide-package',
+            self::TYPE_ORDER_PAYMENT_VERIFIED => 'i-lucide-badge-check',
             default => 'i-lucide-bell',
         };
     }
@@ -183,6 +192,9 @@ class CmsNotification extends Model
             self::TYPE_WORKFLOW_SUBMITTED, self::TYPE_ASSIGNMENT => self::COLOR_WARNING,
             self::TYPE_WORKFLOW_REJECTED => self::COLOR_ERROR,
             self::TYPE_SYSTEM => self::COLOR_NEUTRAL,
+            self::TYPE_ORDER_CREATED => self::COLOR_INFO,
+            self::TYPE_ORDER_STATUS_CHANGED => self::COLOR_WARNING,
+            self::TYPE_ORDER_PAYMENT_VERIFIED => self::COLOR_SUCCESS,
             default => self::COLOR_INFO,
         };
     }
