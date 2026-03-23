@@ -1,4 +1,4 @@
-<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-4 lg:pb-6 w-full min-w-0" @if($productId) data-product-id="{{ $productId }}" @endif>
+<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1.5 pb-4 lg:p-1.5 lg:pb-6 w-full min-w-0" @if($productId) data-product-id="{{ $productId }}" @endif>
     {{-- Main card link (covers entire card including image area) --}}
     <a href="{{ $url }}" class="absolute inset-0 z-[1]" aria-label="{{ $title }}"></a>
 
