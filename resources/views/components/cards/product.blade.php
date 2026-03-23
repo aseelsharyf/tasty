@@ -3,7 +3,7 @@
     <a href="{{ $url }}" class="absolute inset-0 z-[1]" aria-label="{{ $title }}"></a>
 
     {{-- Image container --}}
-    <div class="relative min-h-[230px] lg:min-h-0 aspect-square bg-white rounded-lg flex items-end justify-center p-6 mb-4 lg:mb-4">
+    <div class="relative min-h-[230px] lg:min-h-0 aspect-square bg-white rounded-lg flex items-end justify-center p-6 pb-8 lg:pb-6 mb-4 lg:mb-4 overflow-hidden">
         @if($image)
             @if($blurhash)
                 @php $bhId = 'bh-' . uniqid(); @endphp
