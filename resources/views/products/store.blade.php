@@ -27,7 +27,7 @@
         <div class="w-full max-w-[1440px] mx-auto px-10 pb-32 max-lg:px-5 max-lg:pb-16 flex flex-col gap-16 max-lg:gap-10">
             {{-- Products Grid --}}
             @if($products->isNotEmpty())
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
                     @foreach($products as $product)
                         <x-cards.product :product="$product" />
                     @endforeach
