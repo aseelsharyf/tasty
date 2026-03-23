@@ -1,11 +1,11 @@
-<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-4 lg:pb-6 w-full" @if($productId) data-product-id="{{ $productId }}" @endif>
+<div class="group relative flex flex-col bg-off-white rounded-xl overflow-hidden p-1 pb-4 lg:pb-6 w-full min-w-0" @if($productId) data-product-id="{{ $productId }}" @endif>
     {{-- Main card link (covers entire card including image area) --}}
     <a href="{{ $url }}" class="absolute inset-0 z-[1]" aria-label="{{ $title }}"></a>
 
     {{-- Image wrapper --}}
-    <div class="relative mb-2 lg:mb-4">
+    <div class="relative mb-2 lg:mb-4 min-w-0">
         {{-- White background container --}}
-        <div class="bg-white rounded-lg aspect-square flex items-center justify-center p-5">
+        <div class="relative bg-white rounded-lg aspect-square overflow-hidden">
             @if($image)
                 @if($blurhash)
                     @php $bhId = 'bh-' . uniqid(); @endphp
@@ -14,27 +14,31 @@
                             id="{{ $bhId }}"
                             width="32"
                             height="32"
-                            class="w-full h-full"
+                            class="block w-full h-full"
                         ></canvas>
                     </div>
                 @endif
-                <img
-                    src="{{ $image }}"
-                    alt="{{ $imageAlt }}"
-                    loading="lazy"
-                    decoding="async"
-                    class="relative z-[1] max-w-full max-h-full object-contain {{ $blurhash ? 'opacity-0 transition-opacity duration-300' : '' }}"
-                    @if($blurhash) onload="this.classList.remove('opacity-0'); this.classList.add('opacity-100'); var p=this.closest('.bg-white').querySelector('[data-blurhash]'); if(p) p.style.display='none';" @endif
-                    onerror="this.onerror=null; this.src='/images/product-placeholder.svg'; this.classList.remove('opacity-0'); this.classList.add('opacity-100'); var p=this.closest('.bg-white').querySelector('[data-blurhash]'); if(p) p.style.display='none';"
-                >
+                <div class="absolute inset-0 flex items-center justify-center p-5">
+                    <img
+                        src="{{ $image }}"
+                        alt="{{ $imageAlt }}"
+                        loading="lazy"
+                        decoding="async"
+                        class="block w-full h-full object-contain {{ $blurhash ? 'opacity-0 transition-opacity duration-300' : '' }}"
+                        @if($blurhash) onload="this.classList.remove('opacity-0'); this.classList.add('opacity-100'); var p=this.closest('.bg-white').querySelector('[data-blurhash]'); if(p) p.style.display='none';" @endif
+                        onerror="this.onerror=null; this.src='/images/product-placeholder.svg'; this.classList.remove('opacity-0'); this.classList.add('opacity-100'); var p=this.closest('.bg-white').querySelector('[data-blurhash]'); if(p) p.style.display='none';"
+                    >
+                </div>
             @else
-                <img src="/images/product-placeholder.svg" alt="{{ $imageAlt }}" class="max-w-full max-h-full object-contain">
+                <div class="absolute inset-0 flex items-center justify-center p-5">
+                    <img src="/images/product-placeholder.svg" alt="{{ $imageAlt }}" class="block w-full h-full object-contain">
+                </div>
             @endif
         </div>
         {{-- Tag overlapping bottom edge --}}
         @if(count($tags) > 0)
-            <div class="flex justify-center -mt-3 relative z-[2]">
-                <span class="tag inline-block truncate max-w-[calc(100%-1rem)]">
+            <div class="flex justify-center -mt-3 relative z-[2] px-2">
+                <span class="tag block max-w-full truncate whitespace-nowrap overflow-hidden">
                     @foreach($tags as $index => $tag)
                         @if($index > 0)
                             <span class="hidden lg:inline">•</span>
@@ -51,7 +55,7 @@
     </div>
 
     {{-- Content --}}
-    <div class="flex flex-col items-center gap-2 lg:gap-3 px-3 lg:px-8 text-center flex-1">
+    <div class="flex flex-col items-center gap-2 lg:gap-3 px-3 lg:px-8 text-center flex-1 min-w-0">
         {{-- Store Logo --}}
         @if($storeLogo)
             @if($storeUrl)
