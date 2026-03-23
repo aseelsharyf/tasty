@@ -9,6 +9,7 @@ use App\Models\Language;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductStore;
+use App\Models\ProductVariant;
 use App\Models\Tag;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -81,6 +82,9 @@ class CmsProductController extends Controller
                 'uuid' => $product->uuid,
                 'title' => $product->title,
                 'slug' => $product->slug,
+                'product_type' => $product->product_type?->value,
+                'product_type_label' => $product->product_type?->label(),
+                'product_type_color' => $product->product_type?->color(),
                 'description' => $product->description,
                 'price' => $product->price,
                 'formatted_price' => $product->formatted_price,
@@ -189,6 +193,7 @@ class CmsProductController extends Controller
         $product = Product::create([
             'title' => $title,
             'slug' => $validated['slug'] ?? null,
+            'product_type' => $validated['product_type'],
             'description' => $description,
             'short_description' => $shortDescription,
             'brand' => $validated['brand'] ?? null,
@@ -199,7 +204,7 @@ class CmsProductController extends Controller
             'price' => $validated['price'] ?? null,
             'currency' => $validated['currency'] ?? 'USD',
             'availability' => $validated['availability'] ?? 'in_stock',
-            'affiliate_url' => $validated['affiliate_url'],
+            'affiliate_url' => $validated['affiliate_url'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
             'is_featured' => $validated['is_featured'] ?? false,
             'order' => $maxOrder + 1,
@@ -221,13 +226,27 @@ class CmsProductController extends Controller
             $product->images()->sync($imageData);
         }
 
+        // Create variants
+        if (! empty($validated['variants'])) {
+            foreach ($validated['variants'] as $order => $variantData) {
+                $product->variants()->create([
+                    'name' => $variantData['name'],
+                    'price' => $variantData['price'],
+                    'sku' => $variantData['sku'] ?? null,
+                    'stock_quantity' => $variantData['stock_quantity'] ?? 0,
+                    'is_active' => $variantData['is_active'] ?? true,
+                    'order' => $order,
+                ]);
+            }
+        }
+
         return redirect()->route('cms.products.index')
             ->with('success', 'Product created successfully.');
     }
 
     public function edit(Request $request, Product $product): Response|JsonResponse
     {
-        $product->load(['featuredMedia', 'category', 'store', 'featuredTag', 'tags', 'images']);
+        $product->load(['featuredMedia', 'category', 'store', 'featuredTag', 'tags', 'images', 'variants' => fn ($q) => $q->ordered()]);
         $activeLanguages = Language::active()->ordered()->get();
         $categories = ProductCategory::active()->ordered()->get();
         $tags = Tag::orderByTranslatedName(app()->getLocale())->get();
@@ -239,6 +258,7 @@ class CmsProductController extends Controller
             'title' => $product->title,
             'title_translations' => $product->getTranslations('title'),
             'slug' => $product->slug,
+            'product_type' => $product->product_type?->value,
             'description' => $product->description,
             'description_translations' => $product->getTranslations('description'),
             'short_description' => $product->short_description,
@@ -288,6 +308,16 @@ class CmsProductController extends Controller
             ])->toArray(),
             'clicks_count' => $product->clicks()->count(),
             'created_at' => $product->created_at,
+            'variants' => $product->variants->map(fn ($variant) => [
+                'id' => $variant->id,
+                'uuid' => $variant->uuid,
+                'name' => $variant->name,
+                'price' => $variant->price,
+                'sku' => $variant->sku,
+                'stock_quantity' => $variant->stock_quantity,
+                'is_active' => $variant->is_active,
+                'order' => $variant->order,
+            ])->toArray(),
         ];
 
         $languageData = $activeLanguages->map(fn ($lang) => [
@@ -361,6 +391,7 @@ class CmsProductController extends Controller
         $product->update([
             'title' => $title,
             'slug' => $validated['slug'] ?? $product->slug,
+            'product_type' => $validated['product_type'] ?? $product->product_type,
             'description' => $description,
             'short_description' => $shortDescription,
             'brand' => array_key_exists('brand', $validated) ? $validated['brand'] : $product->brand,
@@ -390,6 +421,40 @@ class CmsProductController extends Controller
                 $imageData[$imageId] = ['order' => $order];
             }
             $product->images()->sync($imageData);
+        }
+
+        // Sync variants
+        if (array_key_exists('variants', $validated)) {
+            $submittedVariants = $validated['variants'] ?? [];
+            $submittedIds = collect($submittedVariants)->pluck('id')->filter()->all();
+
+            // Soft-delete variants not in the submitted list
+            $product->variants()->whereNotIn('id', $submittedIds)->delete();
+
+            // Create or update variants
+            foreach ($submittedVariants as $order => $variantData) {
+                if (! empty($variantData['id'])) {
+                    ProductVariant::where('id', $variantData['id'])
+                        ->where('product_id', $product->id)
+                        ->update([
+                            'name' => $variantData['name'],
+                            'price' => $variantData['price'],
+                            'sku' => $variantData['sku'] ?? null,
+                            'stock_quantity' => $variantData['stock_quantity'] ?? 0,
+                            'is_active' => $variantData['is_active'] ?? true,
+                            'order' => $order,
+                        ]);
+                } else {
+                    $product->variants()->create([
+                        'name' => $variantData['name'],
+                        'price' => $variantData['price'],
+                        'sku' => $variantData['sku'] ?? null,
+                        'stock_quantity' => $variantData['stock_quantity'] ?? 0,
+                        'is_active' => $variantData['is_active'] ?? true,
+                        'order' => $order,
+                    ]);
+                }
+            }
         }
 
         return redirect()->route('cms.products.index')

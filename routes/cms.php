@@ -10,6 +10,8 @@ use App\Http\Controllers\Cms\CmsProductController;
 use App\Http\Controllers\Cms\CommentBanController;
 use App\Http\Controllers\Cms\CommentController;
 use App\Http\Controllers\Cms\DashboardController;
+use App\Http\Controllers\Cms\DeliveryLocationController;
+use App\Http\Controllers\Cms\DiscountCodeController;
 use App\Http\Controllers\Cms\IngredientController;
 use App\Http\Controllers\Cms\LanguageController;
 use App\Http\Controllers\Cms\LayoutController;
@@ -18,6 +20,7 @@ use App\Http\Controllers\Cms\MediaFolderController;
 use App\Http\Controllers\Cms\MediaItemCropController;
 use App\Http\Controllers\Cms\MenuController;
 use App\Http\Controllers\Cms\NotificationController;
+use App\Http\Controllers\Cms\OrderController;
 use App\Http\Controllers\Cms\PageController;
 use App\Http\Controllers\Cms\PostController;
 use App\Http\Controllers\Cms\PostEditLockController;
@@ -152,6 +155,29 @@ Route::middleware(['auth', 'cms'])->group(function () {
         // Section Categories
         Route::get('settings/section-categories', [SettingsController::class, 'sectionCategories'])->name('cms.settings.section-categories');
         Route::put('settings/section-categories', [SettingsController::class, 'updateSectionCategories'])->name('cms.settings.section-categories.update');
+
+        // Shop Settings
+        Route::get('settings/shop', [SettingsController::class, 'shop'])->name('cms.settings.shop');
+        Route::put('settings/shop', [SettingsController::class, 'updateShop'])->name('cms.settings.shop.update');
+
+        // Delivery Locations
+        Route::delete('settings/delivery-locations/bulk', [DeliveryLocationController::class, 'bulkDestroy'])->name('cms.delivery-locations.bulk-destroy');
+        Route::post('settings/delivery-locations/reorder', [DeliveryLocationController::class, 'reorder'])->name('cms.delivery-locations.reorder');
+        Route::resource('settings/delivery-locations', DeliveryLocationController::class)->except(['show', 'create', 'edit'])->names([
+            'index' => 'cms.delivery-locations.index',
+            'store' => 'cms.delivery-locations.store',
+            'update' => 'cms.delivery-locations.update',
+            'destroy' => 'cms.delivery-locations.destroy',
+        ]);
+
+        // Discount Codes
+        Route::delete('settings/discount-codes/bulk', [DiscountCodeController::class, 'bulkDestroy'])->name('cms.discount-codes.bulk-destroy');
+        Route::resource('settings/discount-codes', DiscountCodeController::class)->except(['show', 'create', 'edit'])->names([
+            'index' => 'cms.discount-codes.index',
+            'store' => 'cms.discount-codes.store',
+            'update' => 'cms.discount-codes.update',
+            'destroy' => 'cms.discount-codes.destroy',
+        ]);
 
         // SEO Settings (Page-level SEO)
         Route::get('settings/seo', [SeoSettingController::class, 'index'])->name('cms.settings.seo');
@@ -309,6 +335,18 @@ Route::middleware(['auth', 'cms'])->group(function () {
         ]);
         Route::post('product-stores/reorder', [ProductStoreController::class, 'reorder'])->name('cms.product-stores.reorder');
         Route::delete('product-stores/bulk', [ProductStoreController::class, 'bulkDestroy'])->name('cms.product-stores.bulk-destroy');
+    });
+
+    // Orders Management
+    Route::middleware('permission:orders.view')->group(function () {
+        Route::get('orders', [OrderController::class, 'index'])->name('cms.orders.index');
+        Route::get('orders/{order}', [OrderController::class, 'show'])->name('cms.orders.show');
+        Route::put('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('cms.orders.update-status');
+        Route::post('orders/{order}/accept', [OrderController::class, 'acceptOrder'])->name('cms.orders.accept');
+        Route::post('orders/{order}/verify-payment', [OrderController::class, 'verifyPayment'])->name('cms.orders.verify-payment');
+        Route::put('orders/{order}/items/{orderItem}', [OrderController::class, 'updateItem'])->name('cms.orders.update-item');
+        Route::delete('orders/{order}/items/{orderItem}', [OrderController::class, 'removeItem'])->name('cms.orders.remove-item');
+        Route::get('receipts/{receipt}', [OrderController::class, 'viewReceipt'])->name('cms.orders.view-receipt');
     });
 
     // Products Management

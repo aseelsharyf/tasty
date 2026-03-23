@@ -493,6 +493,77 @@ export interface ProductSearchResult {
     availability?: string;
 }
 
+// Product Types
+export type ProductType = 'referral' | 'in_house' | 'affiliate';
+
+export interface ProductVariant {
+    id: number;
+    uuid: string;
+    name: string;
+    price: number;
+    sku?: string | null;
+    stock_quantity: number;
+    is_active: boolean;
+    order: number;
+}
+
+// Order Types
+export type OrderStatus = 'pending' | 'accepted' | 'payment_pending' | 'payment_received' | 'processing' | 'shipped' | 'completed' | 'cancelled';
+export type PaymentStatus = 'unpaid' | 'pending' | 'paid' | 'verified' | 'failed' | 'refunded';
+export type PaymentMethodType = 'bml_gateway' | 'bank_transfer' | 'ooredoo_mfaisaa' | 'dhiraagu_pay';
+
+export interface Order {
+    id: number;
+    uuid: string;
+    order_number: string;
+    status: OrderStatus;
+    status_label: string;
+    payment_status: PaymentStatus;
+    payment_status_label: string;
+    total: number;
+    currency: string;
+    contact_person: string;
+    contact_number: string;
+    items_count?: number;
+    created_at: string;
+}
+
+export interface OrderItem {
+    id: number;
+    product_title: string;
+    variant_name?: string;
+    product_type: string;
+    sku?: string;
+    price: number;
+    quantity: number;
+    total: number;
+}
+
+export interface PaymentReceipt {
+    id: number;
+    uuid: string;
+    original_filename: string;
+    notes?: string;
+    verified_at?: string;
+    created_at: string;
+}
+
+export interface OrderStatusHistory {
+    from_status: string;
+    to_status: string;
+    changed_by?: { name: string };
+    notes?: string;
+    created_at: string;
+}
+
+export interface DeliveryLocation {
+    id: number;
+    uuid: string;
+    name: string;
+    is_active: boolean;
+    order: number;
+}
+
 // Analytics Types
 
 export interface AnalyticsTimeSeries {

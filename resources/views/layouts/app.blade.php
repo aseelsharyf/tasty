@@ -52,7 +52,14 @@
         @endif
     </head>
     <body class="antialiased">
-        <div class="w-full {{ request()->routeIs('post.show', 'cms.posts.preview', 'cms.api.preview.post') ? 'bg-off-white' : 'bg-gray-100' }}">
+        @php
+            $bgClass = match(true) {
+                request()->routeIs('post.show', 'cms.posts.preview', 'cms.api.preview.post') => 'bg-off-white',
+                request()->routeIs('checkout.*', 'payment.*', 'products.show', 'order.*', 'cart.*') => 'bg-off-white',
+                default => 'bg-gray-100',
+            };
+        @endphp
+        <div class="w-full {{ $bgClass }}">
             <x-layout.nav-bar></x-layout.nav-bar>
 
             {{-- Add spacer for pages without hero sections (category/tag/author pages) --}}

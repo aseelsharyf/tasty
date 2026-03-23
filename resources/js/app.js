@@ -37,9 +37,25 @@ function initBlurHash() {
 // Make initBlurHash globally available for dynamic content
 window.initBlurHash = initBlurHash;
 
+// Reveal images that loaded before JS (cached by browser)
+function revealLoadedImages() {
+    document.querySelectorAll('img.opacity-0').forEach((img) => {
+        if (img.complete && img.naturalWidth > 0) {
+            img.classList.remove('opacity-0');
+            img.classList.add('opacity-100');
+            const prev = img.previousElementSibling;
+            if (prev) prev.style.display = 'none';
+        }
+    });
+}
+
 // Run on DOM ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initBlurHash);
+    document.addEventListener('DOMContentLoaded', () => {
+        initBlurHash();
+        revealLoadedImages();
+    });
 } else {
     initBlurHash();
+    revealLoadedImages();
 }

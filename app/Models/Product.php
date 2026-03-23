@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ProductType;
 use App\Models\Concerns\HasUuid;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,6 +26,7 @@ class Product extends Model
         'uuid',
         'title',
         'slug',
+        'product_type',
         'description',
         'short_description',
         'brand',
@@ -57,6 +59,7 @@ class Product extends Model
         return [
             'price' => 'decimal:2',
             'compare_at_price' => 'decimal:2',
+            'product_type' => ProductType::class,
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
             'track_inventory' => 'boolean',
@@ -169,6 +172,11 @@ class Product extends Model
         return $this->hasMany(ProductView::class);
     }
 
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
     /**
      * Scope to filter only featured products.
      */
@@ -219,8 +227,37 @@ class Product extends Model
             && $this->compare_at_price > $this->price;
     }
 
+    public function isReferral(): bool
+    {
+        return $this->product_type === ProductType::Referral;
+    }
+
+    public function isInHouse(): bool
+    {
+        return $this->product_type === ProductType::InHouse;
+    }
+
+    public function isAffiliate(): bool
+    {
+        return $this->product_type === ProductType::Affiliate;
+    }
+
+    public function isPurchasable(): bool
+    {
+        return $this->isInHouse() || $this->isAffiliate();
+    }
+
+    public function hasVariants(): bool
+    {
+        return $this->variants()->exists();
+    }
+
     public function isInStock(): bool
     {
+        if ($this->hasVariants()) {
+            return $this->variants()->active()->where('stock_quantity', '>', 0)->exists();
+        }
+
         if (! $this->track_inventory) {
             return true;
         }

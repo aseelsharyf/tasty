@@ -22,6 +22,9 @@ interface Product {
     uuid: string;
     title: string;
     slug: string;
+    product_type?: string;
+    product_type_label?: string;
+    product_type_color?: string;
     description?: string;
     featured_image_url?: string | null;
     category?: ProductCategory | null;
@@ -277,6 +280,20 @@ const columns: TableColumn<Product>[] = [
                     }, row.original.affiliate_source),
                 ]),
             ]);
+        },
+    },
+    {
+        accessorKey: 'product_type',
+        header: 'Type',
+        cell: ({ row }) => {
+            if (!row.original.product_type_label) {
+                return h('span', { class: 'text-muted' }, '—');
+            }
+            return h(
+                UBadge,
+                { color: (row.original.product_type_color || 'neutral') as any, variant: 'subtle' },
+                () => row.original.product_type_label
+            );
         },
     },
     {

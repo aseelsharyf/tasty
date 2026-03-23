@@ -15,7 +15,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 
 class ProductController extends Controller
 {
@@ -30,7 +29,7 @@ class ProductController extends Controller
     {
         $page = request()->integer('page', 1);
 
-        $html = Cache::remember("public:products:index:page:{$page}", PublicCacheService::productTtl(), function () {
+        $html = PublicCacheService::remember("public:products:index:page:{$page}", PublicCacheService::productTtl(), function () {
             $this->seo->setProductsIndex();
 
             $categories = ProductCategory::query()
@@ -40,8 +39,9 @@ class ProductController extends Controller
 
             $products = Product::query()
                 ->active()
+                ->orderByRaw("CASE WHEN product_type = 'in_house' THEN 0 ELSE 1 END")
                 ->ordered()
-                ->with(['featuredMedia', 'tags', 'category', 'store'])
+                ->with(['featuredMedia', 'tags', 'category', 'store', 'variants'])
                 ->paginate(12);
 
             return view('products.index', [
@@ -64,13 +64,14 @@ class ProductController extends Controller
         $page = request()->integer('page', 1);
         $cacheKey = "public:products:store:{$store->slug}:page:{$page}";
 
-        $html = Cache::remember($cacheKey, PublicCacheService::productTtl(), function () use ($store) {
+        $html = PublicCacheService::remember($cacheKey, PublicCacheService::productTtl(), function () use ($store) {
             $this->seo->setProductStore($store);
 
             $products = $store->products()
                 ->active()
+                ->orderByRaw("CASE WHEN product_type = 'in_house' THEN 0 ELSE 1 END")
                 ->ordered()
-                ->with(['featuredMedia', 'tags', 'category', 'store'])
+                ->with(['featuredMedia', 'tags', 'category', 'store', 'variants'])
                 ->paginate(12);
 
             return view('products.store', [
@@ -93,7 +94,7 @@ class ProductController extends Controller
         $products = $store->products()
             ->active()
             ->ordered()
-            ->with(['featuredMedia', 'tags', 'category', 'store'])
+            ->with(['featuredMedia', 'tags', 'category', 'store', 'variants'])
             ->skip(($page - 1) * $perPage)
             ->take($perPage)
             ->get();
@@ -126,7 +127,7 @@ class ProductController extends Controller
         $page = request()->integer('page', 1);
         $cacheKey = "public:products:category:{$category->slug}:page:{$page}";
 
-        $html = Cache::remember($cacheKey, PublicCacheService::productTtl(), function () use ($category) {
+        $html = PublicCacheService::remember($cacheKey, PublicCacheService::productTtl(), function () use ($category) {
             $this->seo->setProductCategory($category);
 
             $categories = ProductCategory::query()
@@ -136,8 +137,9 @@ class ProductController extends Controller
 
             $products = $category->products()
                 ->active()
+                ->orderByRaw("CASE WHEN product_type = 'in_house' THEN 0 ELSE 1 END")
                 ->ordered()
-                ->with(['featuredMedia', 'tags', 'category', 'store'])
+                ->with(['featuredMedia', 'tags', 'category', 'store', 'variants'])
                 ->paginate(12);
 
             return view('products.category', [
@@ -158,7 +160,7 @@ class ProductController extends Controller
         $page = request()->integer('page', 1);
         $cacheKey = "public:products:tag:{$tag->slug}:page:{$page}";
 
-        $html = Cache::remember($cacheKey, PublicCacheService::productTtl(), function () use ($tag) {
+        $html = PublicCacheService::remember($cacheKey, PublicCacheService::productTtl(), function () use ($tag) {
             $this->seo->setBasic($tag->name.' Products', "Browse products tagged with {$tag->name}");
 
             $categories = ProductCategory::query()
@@ -173,7 +175,7 @@ class ProductController extends Controller
                     $query->where('featured_tag_id', $tag->id)
                         ->orWhereHas('tags', fn ($q) => $q->where('tags.id', $tag->id));
                 })
-                ->with(['featuredMedia', 'tags', 'category', 'store'])
+                ->with(['featuredMedia', 'tags', 'category', 'store', 'variants'])
                 ->paginate(12);
 
             return view('products.index', [
@@ -181,6 +183,41 @@ class ProductController extends Controller
                 'products' => $products,
                 'currentCategory' => null,
                 'currentTag' => $tag,
+            ])->render();
+        });
+
+        return new Response($html);
+    }
+
+    /**
+     * Display a single product.
+     */
+    public function show(Product $product): Response
+    {
+        abort_unless($product->is_active, 404);
+
+        $cacheKey = "public:products:show:{$product->slug}";
+
+        $html = PublicCacheService::remember($cacheKey, PublicCacheService::productTtl(), function () use ($product) {
+            $this->seo->setBasic(
+                $product->title,
+                $product->short_description ?? $product->description
+            );
+
+            $product->load(['featuredMedia', 'tags', 'category', 'store', 'images', 'variants' => fn ($q) => $q->active()->ordered()]);
+
+            $relatedProducts = Product::active()
+                ->where('id', '!=', $product->id)
+                ->when($product->product_category_id, fn ($q) => $q->where('product_category_id', $product->product_category_id))
+                ->with(['featuredMedia', 'category', 'store', 'variants'])
+                ->orderByRaw("CASE WHEN product_type = 'in_house' THEN 0 ELSE 1 END")
+                ->inRandomOrder()
+                ->limit(8)
+                ->get();
+
+            return view('products.show', [
+                'product' => $product,
+                'relatedProducts' => $relatedProducts,
             ])->render();
         });
 

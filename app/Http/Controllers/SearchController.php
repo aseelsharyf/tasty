@@ -9,7 +9,6 @@ use App\Models\User;
 use App\Services\PublicCacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class SearchController extends Controller
@@ -57,7 +56,7 @@ class SearchController extends Controller
 
         $cacheKey = 'public:search:suggestions:'.md5($query);
 
-        $formatted = Cache::remember($cacheKey, PublicCacheService::searchTtl(), function () use ($query) {
+        $formatted = PublicCacheService::remember($cacheKey, PublicCacheService::searchTtl(), function () use ($query) {
             $results = $this->performSearch($query, 'all', 5);
 
             $formatted = [];

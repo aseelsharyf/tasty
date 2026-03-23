@@ -48,7 +48,7 @@
         decoding="async"
         @if($width) width="{{ $width }}" @endif
         @if($height) height="{{ $height }}" @endif
-        class="w-full h-full transition-opacity duration-300 opacity-0 {{ $imgClass }}"
+        class="absolute inset-0 w-full h-full transition-opacity duration-300 opacity-0 {{ $imgClass }}"
         style="object-fit: {{ $objectFit }}; object-position: {{ $objectPosition }};"
         onload="this.classList.remove('opacity-0'); this.classList.add('opacity-100'); if(this.previousElementSibling) this.previousElementSibling.style.display='none';"
         {{ $attributes }}

@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: [
+            'payment/bml/webhook',
+        ]);
+
         $middleware->web(append: [
             RedirectToCms::class,
             HandleInertiaRequests::class,

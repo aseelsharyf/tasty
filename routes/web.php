@@ -1,11 +1,16 @@
 <?php
 
 use App\Http\Controllers\AuthorController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\DiscountCodeController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OgImageController;
+use App\Http\Controllers\OrderTrackingController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RecipeSubmissionController;
@@ -139,12 +144,52 @@ if ($showWebsite) {
     Route::get('/og-html/{post:slug}', [OgImageController::class, 'renderHtml'])->name('og.html');
     Route::get('/og-test', [OgImageController::class, 'testPage'])->name('og.test');
 
+    // Cart routes
+    Route::prefix('cart')->group(function () {
+        Route::get('/', [CartController::class, 'index'])->name('cart.index');
+        Route::post('/add', [CartController::class, 'add'])->name('cart.add');
+        Route::put('/update', [CartController::class, 'update'])->name('cart.update');
+        Route::delete('/remove', [CartController::class, 'remove'])->name('cart.remove');
+        Route::delete('/clear', [CartController::class, 'clear'])->name('cart.clear');
+        Route::get('/count', [CartController::class, 'count'])->name('cart.count');
+        Route::get('/preview', [CartController::class, 'preview'])->name('cart.preview');
+        Route::post('/discount/apply', [DiscountCodeController::class, 'apply'])->name('cart.discount.apply');
+        Route::delete('/discount/remove', [DiscountCodeController::class, 'remove'])->name('cart.discount.remove');
+    });
+
+    // Checkout routes
+    Route::prefix('checkout')->group(function () {
+        Route::get('/', [CheckoutController::class, 'index'])->name('checkout.index');
+        Route::post('/', [CheckoutController::class, 'store'])->name('checkout.store');
+        Route::get('/thank-you/{order:uuid}', [CheckoutController::class, 'thankYou'])->name('checkout.thank-you');
+    });
+
+    // Order tracking routes
+    Route::prefix('order')->group(function () {
+        Route::get('/track', [OrderTrackingController::class, 'index'])->name('order.track');
+        Route::post('/track', [OrderTrackingController::class, 'track'])->name('order.track.submit');
+    });
+
+    // Payment routes
+    Route::prefix('payment')->group(function () {
+        Route::get('/{order:uuid}', [PaymentController::class, 'index'])->name('payment.index');
+        Route::post('/{order:uuid}/bank-transfer', [PaymentController::class, 'processBankTransfer'])->name('payment.bank-transfer');
+        Route::post('/{order:uuid}/gateway', [PaymentController::class, 'processGateway'])->name('payment.gateway');
+        Route::get('/bml/redirect/{order:uuid}', [PaymentController::class, 'bmlRedirect'])->name('payment.bml.redirect');
+        Route::get('/callback', [PaymentController::class, 'gatewayCallback'])->name('payment.callback');
+        Route::get('/{order:uuid}/confirmation', [PaymentController::class, 'confirmation'])->name('payment.confirmation');
+    });
+
+    // BML webhook (outside CSRF protection)
+    Route::post('/payment/bml/webhook', [PaymentController::class, 'bmlWebhook'])->name('payment.bml.webhook');
+
     // Product routes
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::post('/products/view/{product}', [ProductController::class, 'recordView'])->name('products.view');
     Route::get('/products/go/{product:slug}', [ProductController::class, 'redirect'])->name('products.redirect');
     Route::get('/products/category/{category:slug}', [ProductController::class, 'byCategory'])->name('products.category');
     Route::get('/products/tag/{tag:slug}', [ProductController::class, 'byTag'])->name('products.tag');
+    Route::get('/products/show/{product:slug}', [ProductController::class, 'show'])->name('products.show');
     Route::get('/products/{store:slug}', [ProductController::class, 'byStore'])->name('products.store');
     Route::get('/products/{store:slug}/load-more', [ProductController::class, 'loadMore'])->name('products.store.loadMore');
 

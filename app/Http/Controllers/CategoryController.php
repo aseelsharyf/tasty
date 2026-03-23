@@ -8,7 +8,6 @@ use App\Services\Layouts\SectionDataResolver;
 use App\Services\PublicCacheService;
 use App\Services\SeoService;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 
 class CategoryController extends Controller
 {
@@ -25,7 +24,7 @@ class CategoryController extends Controller
         $page = request()->integer('page', 1);
         $cacheKey = "public:category:{$category->slug}:page:{$page}";
 
-        $html = Cache::remember($cacheKey, PublicCacheService::listingTtl(), function () use ($category) {
+        $html = PublicCacheService::remember($cacheKey, PublicCacheService::listingTtl(), function () use ($category) {
             // Set SEO
             $this->seoService->setCategory($category);
 

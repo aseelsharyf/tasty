@@ -15,27 +15,43 @@
 
             {{-- Category Filters --}}
             @if($categories->isNotEmpty())
-                <div class="flex flex-wrap justify-center gap-3">
-                    <a
-                        href="{{ route('products.index') }}"
-                        class="px-4 py-2 rounded-full text-sm font-medium transition-colors bg-off-white text-blue-black hover:bg-gray-200"
-                    >
-                        All
-                    </a>
-                    @foreach($categories as $category)
-                        <a
-                            href="{{ route('products.category', $category) }}"
-                            class="px-4 py-2 rounded-full text-sm font-medium transition-colors {{ $currentCategory->id === $category->id ? 'bg-blue-black text-white' : 'bg-off-white text-blue-black hover:bg-gray-200' }}"
-                        >
-                            {{ $category->name }}
-                        </a>
-                    @endforeach
+                <div class="relative -mx-5 lg:mx-0" x-data="{
+                    atStart: true,
+                    atEnd: false,
+                    check() {
+                        const el = this.$refs.scroller;
+                        this.atStart = el.scrollLeft <= 4;
+                        this.atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+                    }
+                }">
+                    {{-- Left fade (mobile only) --}}
+                    <div class="pointer-events-none absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white to-transparent z-10 lg:hidden transition-opacity duration-150" :class="atStart ? 'opacity-0' : 'opacity-100'"></div>
+                    {{-- Right fade (mobile only) --}}
+                    <div class="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white to-transparent z-10 lg:hidden transition-opacity duration-150" :class="atEnd ? 'opacity-0' : 'opacity-100'"></div>
+                    <div class="px-5 lg:px-0 overflow-x-auto lg:overflow-visible scrollbar-hide" x-ref="scroller" @scroll="check()" x-init="check()">
+                        <div class="flex lg:flex-wrap lg:justify-center gap-2 lg:gap-3 w-max lg:w-auto px-3 lg:px-0">
+                            <a
+                                href="{{ route('products.index') }}"
+                                class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors bg-off-white text-blue-black hover:bg-gray-200"
+                            >
+                                All
+                            </a>
+                            @foreach($categories as $category)
+                                <a
+                                    href="{{ route('products.category', $category) }}"
+                                    class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {{ $currentCategory->id === $category->id ? 'bg-blue-black text-white' : 'bg-off-white text-blue-black hover:bg-gray-200' }}"
+                                >
+                                    {{ $category->name }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
             @endif
 
             {{-- Products Grid --}}
             @if($products->isNotEmpty())
-                <div class="flex flex-wrap justify-center gap-10 max-lg:flex-col max-lg:items-center max-lg:gap-6">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
                     @foreach($products as $product)
                         <x-cards.product :product="$product" />
                     @endforeach

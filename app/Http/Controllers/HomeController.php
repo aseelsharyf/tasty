@@ -7,7 +7,6 @@ use App\Services\Layouts\SectionDataResolver;
 use App\Services\PublicCacheService;
 use App\Services\SeoService;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
 {
@@ -22,7 +21,7 @@ class HomeController extends Controller
      */
     public function __invoke(): Response
     {
-        $html = Cache::remember('public:homepage:sections', PublicCacheService::homepageTtl(), function () {
+        $html = PublicCacheService::remember('public:homepage:sections', PublicCacheService::homepageTtl(), function () {
             // Set SEO
             $this->seoService->setHomepage();
 

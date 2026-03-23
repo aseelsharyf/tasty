@@ -7,7 +7,6 @@ use App\Services\Layouts\SectionDataResolver;
 use App\Services\PublicCacheService;
 use App\Services\SeoService;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 
 class TagController extends Controller
 {
@@ -24,7 +23,7 @@ class TagController extends Controller
         $page = request()->integer('page', 1);
         $cacheKey = "public:tag:{$tag->slug}:page:{$page}";
 
-        $html = Cache::remember($cacheKey, PublicCacheService::listingTtl(), function () use ($tag) {
+        $html = PublicCacheService::remember($cacheKey, PublicCacheService::listingTtl(), function () use ($tag) {
             // Set SEO
             $this->seoService->setTag($tag);
 

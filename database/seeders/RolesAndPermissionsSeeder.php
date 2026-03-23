@@ -128,6 +128,23 @@ class RolesAndPermissionsSeeder extends Seeder
             'badges.create',
             'badges.edit',
             'badges.delete',
+
+            // Orders
+            'orders.view',
+            'orders.edit',
+            'orders.delete',
+
+            // Delivery Locations
+            'delivery-locations.view',
+            'delivery-locations.create',
+            'delivery-locations.edit',
+            'delivery-locations.delete',
+
+            // Discount Codes
+            'discount-codes.view',
+            'discount-codes.create',
+            'discount-codes.edit',
+            'discount-codes.delete',
         ];
 
         // Create permissions
@@ -210,6 +227,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'badges.create',
             'badges.edit',
             'badges.delete',
+            'orders.view',
+            'orders.edit',
+            'orders.delete',
+            'delivery-locations.view',
+            'delivery-locations.create',
+            'delivery-locations.edit',
+            'delivery-locations.delete',
         ]);
 
         // Create Editor role
