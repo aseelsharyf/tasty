@@ -2,45 +2,51 @@
     {{-- Main card link (covers entire card including image area) --}}
     <a href="{{ $url }}" class="absolute inset-0 z-[1]" aria-label="{{ $title }}"></a>
 
-    {{-- Image container --}}
-    <div class="relative aspect-square bg-white rounded-lg flex items-end justify-center p-6 mb-2 lg:mb-4">
-        @if($image)
-            @if($blurhash)
-                @php $bhId = 'bh-' . uniqid(); @endphp
-                <div class="absolute inset-0" data-blurhash="{{ $blurhash }}" data-blurhash-id="{{ $bhId }}">
-                    <canvas
-                        id="{{ $bhId }}"
-                        width="32"
-                        height="32"
-                        class="w-full h-full rounded-lg"
-                    ></canvas>
-                </div>
+    {{-- Image wrapper --}}
+    <div class="relative mb-2 lg:mb-4">
+        {{-- White background container --}}
+        <div class="bg-white rounded-lg aspect-square flex items-center justify-center p-5">
+            @if($image)
+                @if($blurhash)
+                    @php $bhId = 'bh-' . uniqid(); @endphp
+                    <div class="absolute inset-0 rounded-lg overflow-hidden" data-blurhash="{{ $blurhash }}" data-blurhash-id="{{ $bhId }}">
+                        <canvas
+                            id="{{ $bhId }}"
+                            width="32"
+                            height="32"
+                            class="w-full h-full"
+                        ></canvas>
+                    </div>
+                @endif
+                <img
+                    src="{{ $image }}"
+                    alt="{{ $imageAlt }}"
+                    loading="lazy"
+                    decoding="async"
+                    class="relative z-[1] max-w-full max-h-full object-contain {{ $blurhash ? 'opacity-0 transition-opacity duration-300' : '' }}"
+                    @if($blurhash) onload="this.classList.remove('opacity-0'); this.classList.add('opacity-100'); var p=this.closest('.bg-white').querySelector('[data-blurhash]'); if(p) p.style.display='none';" @endif
+                    onerror="this.onerror=null; this.src='/images/product-placeholder.svg'; this.classList.remove('opacity-0'); this.classList.add('opacity-100'); var p=this.closest('.bg-white').querySelector('[data-blurhash]'); if(p) p.style.display='none';"
+                >
+            @else
+                <img src="/images/product-placeholder.svg" alt="{{ $imageAlt }}" class="max-w-full max-h-full object-contain">
             @endif
-            <img
-                src="{{ $image }}"
-                alt="{{ $imageAlt }}"
-                loading="lazy"
-                decoding="async"
-                class="absolute inset-0 w-full h-full object-contain p-5 {{ $blurhash ? 'opacity-0 transition-opacity duration-300' : '' }}"
-                @if($blurhash) onload="this.classList.remove('opacity-0'); this.classList.add('opacity-100'); var p=this.previousElementSibling; if(p) p.style.display='none';" @endif
-                onerror="this.onerror=null; this.src='/images/product-placeholder.svg'; this.classList.remove('p-5','opacity-0'); this.classList.add('rounded-lg','opacity-100'); var p=this.previousElementSibling; if(p) p.style.display='none';"
-            >
-        @else
-            <img src="/images/product-placeholder.svg" alt="{{ $imageAlt }}" class="absolute inset-0 w-full h-full rounded-lg">
-        @endif
+        </div>
+        {{-- Tag overlapping bottom edge --}}
         @if(count($tags) > 0)
-            <span class="tag relative z-[2] inline-block truncate max-w-[calc(100%-1rem)]">
-                @foreach($tags as $index => $tag)
-                    @if($index > 0)
-                        <span class="hidden lg:inline">•</span>
-                    @endif
-                    @if($tag['url'] ?? null)
-                        <a href="{{ $tag['url'] }}" class="hover:underline relative z-10 {{ $index > 0 ? 'hidden lg:inline' : '' }} truncate">{{ $tag['name'] }}</a>
-                    @else
-                        <span class="{{ $index > 0 ? 'hidden lg:inline' : '' }} truncate">{{ $tag['name'] }}</span>
-                    @endif
-                @endforeach
-            </span>
+            <div class="flex justify-center -mt-3 relative z-[2]">
+                <span class="tag inline-block truncate max-w-[calc(100%-1rem)]">
+                    @foreach($tags as $index => $tag)
+                        @if($index > 0)
+                            <span class="hidden lg:inline">•</span>
+                        @endif
+                        @if($tag['url'] ?? null)
+                            <a href="{{ $tag['url'] }}" class="hover:underline relative z-10 {{ $index > 0 ? 'hidden lg:inline' : '' }} truncate">{{ $tag['name'] }}</a>
+                        @else
+                            <span class="{{ $index > 0 ? 'hidden lg:inline' : '' }} truncate">{{ $tag['name'] }}</span>
+                        @endif
+                    @endforeach
+                </span>
+            </div>
         @endif
     </div>
 
