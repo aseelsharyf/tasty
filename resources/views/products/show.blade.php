@@ -6,23 +6,62 @@
     <div class="max-w-5xl mx-auto px-6 py-12">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <!-- Product Images -->
-            <div>
-                <div class="aspect-square bg-white rounded-xl flex items-center justify-center p-8 mb-4 overflow-hidden border border-gray-100">
-                    @if($product->featured_image_url)
-                        <img src="{{ $product->featured_image_url }}" alt="{{ $product->title }}" class="max-w-full max-h-full object-contain">
-                    @else
-                        <img src="/images/product-placeholder.svg" alt="{{ $product->title }}" class="w-full h-full object-cover rounded-xl">
+            <div x-data="{
+                activeIndex: 0,
+                items: [
+                    @if($product->featuredMedia)
+                        {
+                            type: '{{ $product->featuredMedia->is_video ? 'video' : 'image' }}',
+                            url: '{{ $product->featuredMedia->url }}',
+                            thumbnail: '{{ $product->featuredMedia->thumbnail_url ?? $product->featuredMedia->url }}',
+                            embedUrl: '{{ $product->featuredMedia->embed_url ?? '' }}',
+                            videoType: '{{ $product->featuredMedia->type ?? '' }}'
+                        },
                     @endif
+                    @foreach($product->images as $image)
+                        @if(!$product->featuredMedia || $image->id !== $product->featuredMedia->id)
+                            {
+                                type: '{{ $image->is_video ? 'video' : 'image' }}',
+                                url: '{{ $image->url }}',
+                                thumbnail: '{{ $image->thumbnail_url ?? $image->url }}',
+                                embedUrl: '{{ $image->embed_url ?? '' }}',
+                                videoType: '{{ $image->type ?? '' }}'
+                            },
+                        @endif
+                    @endforeach
+                ]
+            }">
+                <!-- Main Display -->
+                <div class="aspect-square bg-white rounded-xl flex items-center justify-center p-8 mb-4 overflow-hidden border border-gray-100 relative">
+                    <template x-if="items.length === 0">
+                        <img src="/images/product-placeholder.svg" alt="{{ $product->title }}" class="w-full h-full object-cover rounded-xl">
+                    </template>
+                    <template x-if="items.length > 0 && items[activeIndex].type === 'image'">
+                        <img :src="items[activeIndex].url" alt="{{ $product->title }}" class="max-w-full max-h-full object-contain">
+                    </template>
+                    <template x-if="items.length > 0 && items[activeIndex].type === 'video' && items[activeIndex].videoType === 'video_embed'">
+                        <iframe :src="items[activeIndex].embedUrl" class="w-full h-full rounded-lg" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </template>
+                    <template x-if="items.length > 0 && items[activeIndex].type === 'video' && items[activeIndex].videoType === 'video_local'">
+                        <video :src="items[activeIndex].url" class="max-w-full max-h-full object-contain" controls playsinline></video>
+                    </template>
                 </div>
-                @if($product->images->isNotEmpty())
+
+                <!-- Thumbnails -->
+                <template x-if="items.length > 1">
                     <div class="flex gap-3 overflow-x-auto">
-                        @foreach($product->images as $image)
-                            <div class="w-20 h-20 shrink-0 bg-gray-50 rounded-lg overflow-hidden">
-                                <img src="{{ $image->thumbnail_url ?? $image->url }}" alt="" class="w-full h-full object-contain p-1">
-                            </div>
-                        @endforeach
+                        <template x-for="(item, index) in items" :key="index">
+                            <button @click="activeIndex = index" class="w-20 h-20 shrink-0 bg-gray-50 rounded-lg overflow-hidden transition relative" :class="activeIndex === index ? 'border-2 border-gray-200' : 'border border-transparent hover:border-gray-100'">
+                                <img :src="item.thumbnail" alt="" class="w-full h-full object-contain p-1">
+                                <template x-if="item.type === 'video'">
+                                    <div class="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg">
+                                        <svg class="w-5 h-5 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                    </div>
+                                </template>
+                            </button>
+                        </template>
                     </div>
-                @endif
+                </template>
             </div>
 
             <!-- Product Info -->

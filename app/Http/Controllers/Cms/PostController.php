@@ -124,13 +124,26 @@ class PostController extends Controller
             });
         }
 
-        // Search
+        // Full text search
         if ($request->filled('search')) {
             $search = $request->get('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('excerpt', 'like', "%{$search}%");
-            });
+            $tsQuery = implode(' & ', array_filter(array_map(
+                fn ($term) => preg_replace('/[^\w]/', '', $term),
+                explode(' ', $search)
+            )));
+
+            if ($tsQuery) {
+                $query->where(function (Builder $q) use ($search, $tsQuery) {
+                    $q->whereRaw(
+                        "to_tsvector('english', coalesce(title, '') || ' ' || coalesce(kicker, '') || ' ' || coalesce(subtitle, '') || ' ' || coalesce(excerpt, '') || ' ' || coalesce(content, '')) @@ to_tsquery('english', ?)",
+                        [$tsQuery]
+                    )->orWhere('title', 'ilike', "%{$search}%")
+                        ->orWhere('kicker', 'ilike', "%{$search}%")
+                        ->orWhere('subtitle', 'ilike', "%{$search}%")
+                        ->orWhere('slug', 'ilike', "%{$search}%")
+                        ->orWhere('excerpt', 'ilike', "%{$search}%");
+                });
+            }
         }
 
         // Sort
