@@ -55,7 +55,7 @@
         @php
             $bgClass = match(true) {
                 request()->routeIs('post.show', 'cms.posts.preview', 'cms.api.preview.post') => 'bg-off-white',
-                request()->routeIs('checkout.*', 'payment.*', 'products.show', 'order.*', 'cart.*') => 'bg-off-white',
+                request()->routeIs('checkout.*', 'payment.*', 'products.*', 'order.*', 'cart.*') => 'bg-off-white',
                 default => 'bg-gray-100',
             };
         @endphp

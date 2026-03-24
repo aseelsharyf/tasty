@@ -28,8 +28,9 @@ class ProductController extends Controller
     public function index(): Response
     {
         $page = request()->integer('page', 1);
+        $search = trim(request()->string('search')->value());
 
-        $html = PublicCacheService::remember("public:products:index:page:{$page}", PublicCacheService::productTtl(), function () {
+        $render = function () use ($search) {
             $this->seo->setProductsIndex();
 
             $categories = ProductCategory::query()
@@ -37,19 +38,31 @@ class ProductController extends Controller
                 ->ordered()
                 ->get();
 
-            $products = Product::query()
+            $query = Product::query()
                 ->active()
                 ->orderByRaw("CASE WHEN product_type = 'in_house' THEN 0 ELSE 1 END")
                 ->ordered()
-                ->with(['featuredMedia', 'tags', 'category', 'store', 'variants'])
-                ->paginate(12);
+                ->with(['featuredMedia', 'tags', 'category', 'store', 'variants']);
+
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('title', 'ilike', "%{$search}%")
+                        ->orWhere('short_description', 'ilike', "%{$search}%")
+                        ->orWhere('brand', 'ilike', "%{$search}%");
+                });
+            }
 
             return view('products.index', [
                 'categories' => $categories,
-                'products' => $products,
+                'products' => $query->paginate(12)->withQueryString(),
                 'currentCategory' => null,
+                'search' => $search,
             ])->render();
-        });
+        };
+
+        $html = $search
+            ? $render()
+            : PublicCacheService::remember("public:products:index:page:{$page}", PublicCacheService::productTtl(), $render);
 
         return new Response($html);
     }
@@ -125,9 +138,9 @@ class ProductController extends Controller
         abort_unless($category->is_active, 404);
 
         $page = request()->integer('page', 1);
-        $cacheKey = "public:products:category:{$category->slug}:page:{$page}";
+        $search = trim(request()->string('search')->value());
 
-        $html = PublicCacheService::remember($cacheKey, PublicCacheService::productTtl(), function () use ($category) {
+        $render = function () use ($category, $search) {
             $this->seo->setProductCategory($category);
 
             $categories = ProductCategory::query()
@@ -135,19 +148,31 @@ class ProductController extends Controller
                 ->ordered()
                 ->get();
 
-            $products = $category->products()
+            $query = $category->products()
                 ->active()
                 ->orderByRaw("CASE WHEN product_type = 'in_house' THEN 0 ELSE 1 END")
                 ->ordered()
-                ->with(['featuredMedia', 'tags', 'category', 'store', 'variants'])
-                ->paginate(12);
+                ->with(['featuredMedia', 'tags', 'category', 'store', 'variants']);
+
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('title', 'ilike', "%{$search}%")
+                        ->orWhere('short_description', 'ilike', "%{$search}%")
+                        ->orWhere('brand', 'ilike', "%{$search}%");
+                });
+            }
 
             return view('products.category', [
                 'categories' => $categories,
-                'products' => $products,
+                'products' => $query->paginate(12)->withQueryString(),
                 'currentCategory' => $category,
+                'search' => $search,
             ])->render();
-        });
+        };
+
+        $html = $search
+            ? $render()
+            : PublicCacheService::remember("public:products:category:{$category->slug}:page:{$page}", PublicCacheService::productTtl(), $render);
 
         return new Response($html);
     }
