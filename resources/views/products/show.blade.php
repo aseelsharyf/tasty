@@ -86,7 +86,22 @@
                 @endif
 
                 @if($product->isPurchasable())
-                    <div x-data="{ selectedVariant: null, quantity: 1, loading: false, added: false, error: '' }" class="space-y-4 mb-8">
+                    <div x-data="{
+                        selectedVariant: null,
+                        quantity: 1,
+                        loading: false,
+                        added: false,
+                        error: '',
+                        inCart: !!(window._cartMap && window._cartMap[{{ $product->id }}]),
+                        cartQty: (window._cartMap && window._cartMap[{{ $product->id }}]) ? window._cartMap[{{ $product->id }}].qty : 0,
+                        init() {
+                            window.addEventListener('cart-updated', () => {
+                                const entry = window._cartMap && window._cartMap[{{ $product->id }}];
+                                this.inCart = !!entry;
+                                this.cartQty = entry ? entry.qty : 0;
+                            });
+                        }
+                    }" class="space-y-4 mb-8">
                         @if($product->variants->isNotEmpty())
                             <div>
                                 <label class="block text-sm font-medium text-gray-600 mb-2">Select Option</label>
@@ -115,6 +130,12 @@
                             </div>
                         @endif
 
+                        <div x-show="inCart && !added" x-cloak class="flex items-center gap-2 px-3 py-2 bg-green-50 text-green-700 rounded-xl text-sm">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Already in your cart (<span x-text="cartQty"></span> item<span x-show="cartQty > 1">s</span>)</span>
+                            <a href="{{ route('cart.index') }}" class="ml-auto text-green-800 underline underline-offset-2 hover:no-underline">View Cart</a>
+                        </div>
+
                         <form @submit.prevent="
                             loading = true; error = '';
                             let body = { product_id: {{ $product->id }}, quantity: quantity };
@@ -142,7 +163,7 @@
                                     <template x-if="added">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                     </template>
-                                    <span x-text="loading ? 'Adding...' : (added ? 'Added!' : 'Add to Cart')"></span>
+                                    <span x-text="loading ? 'Adding...' : (added ? 'Added!' : (inCart ? 'Add More' : 'Add to Cart'))"></span>
                                 </button>
                             </div>
                             <p x-show="error" x-text="error" x-cloak class="text-xs text-red-500 mt-2"></p>

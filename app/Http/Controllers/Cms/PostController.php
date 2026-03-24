@@ -133,9 +133,9 @@ class PostController extends Controller
             )));
 
             if ($tsQuery) {
-                $query->where(function (Builder $q) use ($search, $tsQuery) {
+                $query->where(function ($q) use ($search, $tsQuery) {
                     $q->whereRaw(
-                        "to_tsvector('english', coalesce(title, '') || ' ' || coalesce(kicker, '') || ' ' || coalesce(subtitle, '') || ' ' || coalesce(excerpt, '') || ' ' || coalesce(content, '')) @@ to_tsquery('english', ?)",
+                        "to_tsvector('english', coalesce(title, '') || ' ' || coalesce(kicker, '') || ' ' || coalesce(subtitle, '') || ' ' || coalesce(excerpt, '') || ' ' || coalesce(content::text, '')) @@ to_tsquery('english', ?)",
                         [$tsQuery]
                     )->orWhere('title', 'ilike', "%{$search}%")
                         ->orWhere('kicker', 'ilike', "%{$search}%")
