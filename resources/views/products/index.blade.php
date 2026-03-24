@@ -7,8 +7,8 @@
         <div class="w-full max-w-[1440px] mx-auto px-10 pt-16 pb-32 max-lg:px-5 max-lg:pt-10 max-lg:pb-16 flex flex-col gap-16 max-lg:gap-10">
             {{-- Header --}}
             <div class="flex flex-col gap-5 items-center text-center text-blue-black w-full max-w-[660px] mx-auto">
-                <h1 class="text-h1 uppercase">{{ $currentCategory?->name ?? 'Products' }}</h1>
-                <p class="text-body-md">{{ $currentCategory?->description ?? 'Ingredients, tools, and staples we actually use.' }}</p>
+                <h1 class="text-h1 uppercase">{{ $currentCategory?->name ?? 'Tasty Store' }}</h1>
+                <p class="text-body-md">{{ $currentCategory?->description ?? 'Shop trending products from trusted brands and stores nationwide.' }}</p>
 
                 {{-- Search --}}
                 <form action="{{ route('products.index') }}" method="GET" class="w-full max-w-sm mt-2">
