@@ -39,7 +39,7 @@ class AddToCart extends Component
         string $description = 'Ingredients, tools, and staples we actually use.',
         string $bgColor = 'white',
         array $productIds = [],
-        int $count = 6,
+        int $count = 8,
         ?int $categoryId = null,
     ) {
         $this->title = $title;

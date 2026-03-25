@@ -550,7 +550,7 @@ class SectionDataResolver
             'description' => $config['description'] ?? 'Ingredients, tools, and staples we actually use.',
             'bgColor' => $config['bgColor'] ?? 'white',
             'productIds' => $productIds,
-            'count' => $slotData['totalSlots'] ?: 6,
+            'count' => $slotData['totalSlots'] ?: 8,
         ];
     }
 

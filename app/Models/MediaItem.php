@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -114,7 +115,7 @@ class MediaItem extends Model implements HasMedia
             ->format('webp')
             ->quality(85)
             ->optimize()
-            ->fit('max', 1920, 1080) // Maintain aspect ratio, max dimensions
+            ->fit(Fit::Max, 1920, 1080) // Maintain aspect ratio, max dimensions
             ->performOnCollections('default');
 
         // Medium size for article content
@@ -124,7 +125,7 @@ class MediaItem extends Model implements HasMedia
             ->format('webp')
             ->quality(85)
             ->optimize()
-            ->fit('max', 800, 600)
+            ->fit(Fit::Max, 800, 600)
             ->performOnCollections('default');
 
         // Register crop preset conversions
