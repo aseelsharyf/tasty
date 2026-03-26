@@ -66,6 +66,24 @@ const UAvatar = resolveComponent('UAvatar');
 
 const search = ref(props.filters.search || '');
 const categoryFilter = ref(props.filters.category_id || 'all');
+
+const sortOptions = [
+    { value: 'updated_at:desc', label: 'Recently Updated' },
+    { value: 'created_at:desc', label: 'Recently Created' },
+    { value: 'order:asc', label: 'Order' },
+    { value: 'title:asc', label: 'Title A–Z' },
+    { value: 'title:desc', label: 'Title Z–A' },
+    { value: 'price:asc', label: 'Price: Low to High' },
+    { value: 'price:desc', label: 'Price: High to Low' },
+    { value: 'click_count:desc', label: 'Most Clicks' },
+    { value: 'click_count:asc', label: 'Least Clicks' },
+];
+
+const currentSort = ref(
+    props.filters.sort && props.filters.direction
+        ? `${props.filters.sort}:${props.filters.direction}`
+        : 'updated_at:desc'
+);
 const deleteModalOpen = ref(false);
 const productToDelete = ref<Product | null>(null);
 const rowSelection = ref<Record<string, boolean>>({});
@@ -160,11 +178,26 @@ function editProduct(product: Product) {
 
 function sortBy(field: string) {
     const newDirection = props.filters.sort === field && props.filters.direction === 'asc' ? 'desc' : 'asc';
+    currentSort.value = `${field}:${newDirection}`;
     router.get(cmsPath('/products'), {
         search: search.value || undefined,
-        category_id: categoryFilter.value || undefined,
+        category_id: categoryFilter.value === 'all' ? undefined : categoryFilter.value,
         sort: field,
         direction: newDirection,
+    }, {
+        preserveState: true,
+        replace: true,
+    });
+}
+
+function onSortChange(value: string) {
+    const [field, direction] = value.split(':');
+    currentSort.value = value;
+    router.get(cmsPath('/products'), {
+        search: search.value || undefined,
+        category_id: categoryFilter.value === 'all' ? undefined : categoryFilter.value,
+        sort: field,
+        direction: direction,
     }, {
         preserveState: true,
         replace: true,
@@ -451,6 +484,13 @@ const columns: TableColumn<Product>[] = [
                             value-key="value"
                             class="w-48"
                             @update:model-value="onCategoryChange"
+                        />
+                        <USelectMenu
+                            v-model="currentSort"
+                            :items="sortOptions"
+                            value-key="value"
+                            class="w-52"
+                            @update:model-value="onSortChange"
                         />
                     </div>
 

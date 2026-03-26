@@ -2,7 +2,7 @@
 {{-- Horizontal scrollable carousel of products --}}
 @props([
     'products',
-    'title' => "What you'll need",
+    'title' => "Start Shopping",
 ])
 
 @if($products->isNotEmpty())

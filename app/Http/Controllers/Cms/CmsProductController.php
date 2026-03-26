@@ -21,12 +21,12 @@ class CmsProductController extends Controller
 {
     public function index(Request $request): Response
     {
-        $sortField = $request->get('sort', 'order');
-        $sortDirection = $request->get('direction', 'asc');
+        $sortField = $request->get('sort', 'updated_at');
+        $sortDirection = $request->get('direction', 'desc');
 
-        $allowedSorts = ['title', 'slug', 'price', 'order', 'is_active', 'created_at', 'click_count'];
+        $allowedSorts = ['title', 'slug', 'price', 'order', 'is_active', 'created_at', 'updated_at', 'click_count'];
         if (! in_array($sortField, $allowedSorts)) {
-            $sortField = 'order';
+            $sortField = 'updated_at';
         }
 
         $query = Product::query()

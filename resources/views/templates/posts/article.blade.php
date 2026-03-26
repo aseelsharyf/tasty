@@ -182,7 +182,7 @@
 
 {{-- Featured Products Carousel (only for public view, not preview) --}}
 @if(!$isPreview && $featuredProducts?->isNotEmpty())
-    <x-sections.product-carousel :products="$featuredProducts" title="What you'll need" />
+    <x-sections.product-carousel :products="$featuredProducts" title="Start Shopping" />
 @endif
 
 {{-- Newsletter Section (only for public view, not preview) --}}
