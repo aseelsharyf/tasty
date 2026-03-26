@@ -110,7 +110,7 @@ class Product extends Component
             $this->title = $product->title;
             $this->description = $product->description ?? '';
             $this->url = $this->isPurchasable
-                ? $this->safeRoute('products.show', ['product' => $product->slug])
+                ? $this->safeRoute('products.show', ['store' => $product->store?->slug ?? 'store', 'product' => $product->slug])
                 : $this->safeRoute('products.redirect', ['product' => $product->slug]);
             $this->price = $product->formatted_price;
             $this->compareAtPrice = $product->compare_at_price

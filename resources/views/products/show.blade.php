@@ -202,9 +202,9 @@
     @if($relatedProducts->isNotEmpty())
         <div class="max-w-[1440px] mx-auto px-6 pb-16">
             <h2 class="font-display text-[24px] leading-[1.1] tracking-[-0.02em] text-blue-black mb-6">You may also like</h2>
-            <div class="flex gap-5 overflow-x-auto pb-4 -mx-6 px-6 snap-x snap-mandatory scrollbar-hide">
+            <div class="flex items-stretch gap-5 overflow-x-auto pb-4 -mx-6 px-6 snap-x snap-mandatory scrollbar-hide">
                 @foreach($relatedProducts as $related)
-                    <div class="w-[280px] shrink-0 snap-start">
+                    <div class="w-[280px] shrink-0 snap-start flex">
                         <x-cards.product :product="$related" />
                     </div>
                 @endforeach

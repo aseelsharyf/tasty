@@ -184,14 +184,14 @@ if ($showWebsite) {
     Route::post('/payment/bml/webhook', [PaymentController::class, 'bmlWebhook'])->name('payment.bml.webhook');
 
     // Product routes
-    Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-    Route::post('/products/view/{product}', [ProductController::class, 'recordView'])->name('products.view');
-    Route::get('/products/go/{product:slug}', [ProductController::class, 'redirect'])->name('products.redirect');
-    Route::get('/products/category/{category:slug}', [ProductController::class, 'byCategory'])->name('products.category');
-    Route::get('/products/tag/{tag:slug}', [ProductController::class, 'byTag'])->name('products.tag');
-    Route::get('/products/show/{product:slug}', [ProductController::class, 'show'])->name('products.show');
-    Route::get('/products/{store:slug}', [ProductController::class, 'byStore'])->name('products.store');
-    Route::get('/products/{store:slug}/load-more', [ProductController::class, 'loadMore'])->name('products.store.loadMore');
+    Route::get('/store', [ProductController::class, 'index'])->name('products.index');
+    Route::post('/store/view/{product}', [ProductController::class, 'recordView'])->name('products.view');
+    Route::get('/store/go/{product:slug}', [ProductController::class, 'redirect'])->name('products.redirect');
+    Route::get('/store/category/{category:slug}', [ProductController::class, 'byCategory'])->name('products.category');
+    Route::get('/store/tag/{tag:slug}', [ProductController::class, 'byTag'])->name('products.tag');
+    Route::get('/store/{store:slug}', [ProductController::class, 'byStore'])->name('products.store');
+    Route::get('/store/{store:slug}/load-more', [ProductController::class, 'loadMore'])->name('products.store.loadMore');
+    Route::get('/store/{store:slug}/{product:slug}', [ProductController::class, 'show'])->name('products.show');
 
     // Recipe submission routes
     Route::get('/submit-recipe', [RecipeSubmissionController::class, 'create'])->name('recipes.submit');

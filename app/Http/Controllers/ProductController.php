@@ -40,8 +40,7 @@ class ProductController extends Controller
 
             $query = Product::query()
                 ->active()
-                ->orderByRaw("CASE WHEN product_type = 'in_house' THEN 0 ELSE 1 END")
-                ->ordered()
+                ->latest('updated_at')
                 ->with(['featuredMedia', 'tags', 'category', 'store', 'variants']);
 
             if ($search) {
@@ -82,8 +81,7 @@ class ProductController extends Controller
 
             $products = $store->products()
                 ->active()
-                ->orderByRaw("CASE WHEN product_type = 'in_house' THEN 0 ELSE 1 END")
-                ->ordered()
+                ->latest('updated_at')
                 ->with(['featuredMedia', 'tags', 'category', 'store', 'variants'])
                 ->paginate(12);
 
@@ -150,8 +148,7 @@ class ProductController extends Controller
 
             $query = $category->products()
                 ->active()
-                ->orderByRaw("CASE WHEN product_type = 'in_house' THEN 0 ELSE 1 END")
-                ->ordered()
+                ->latest('updated_at')
                 ->with(['featuredMedia', 'tags', 'category', 'store', 'variants']);
 
             if ($search) {
@@ -217,9 +214,10 @@ class ProductController extends Controller
     /**
      * Display a single product.
      */
-    public function show(Product $product): Response
+    public function show(ProductStore $store, Product $product): Response
     {
         abort_unless($product->is_active, 404);
+        abort_unless($store->is_active, 404);
 
         $cacheKey = "public:products:show:{$product->slug}";
 
@@ -231,14 +229,36 @@ class ProductController extends Controller
 
             $product->load(['featuredMedia', 'tags', 'category', 'store', 'images', 'variants' => fn ($q) => $q->active()->ordered()]);
 
-            $relatedProducts = Product::active()
-                ->where('id', '!=', $product->id)
-                ->when($product->product_category_id, fn ($q) => $q->where('product_category_id', $product->product_category_id))
-                ->with(['featuredMedia', 'category', 'store', 'variants'])
-                ->orderByRaw("CASE WHEN product_type = 'in_house' THEN 0 ELSE 1 END")
-                ->inRandomOrder()
-                ->limit(8)
-                ->get();
+            // First, get products from the same store
+            $relatedProducts = collect();
+
+            if ($product->product_store_id) {
+                $relatedProducts = Product::active()
+                    ->where('id', '!=', $product->id)
+                    ->where('product_store_id', $product->product_store_id)
+                    ->with(['featuredMedia', 'category', 'store', 'variants'])
+                    ->ordered()
+                    ->inRandomOrder()
+                    ->limit(8)
+                    ->get();
+            }
+
+            // Fill remaining slots from same category
+            if ($relatedProducts->count() < 8 && $product->product_category_id) {
+                $remaining = 8 - $relatedProducts->count();
+                $excludeIds = $relatedProducts->pluck('id')->push($product->id)->all();
+
+                $categoryProducts = Product::active()
+                    ->whereNotIn('id', $excludeIds)
+                    ->where('product_category_id', $product->product_category_id)
+                    ->with(['featuredMedia', 'category', 'store', 'variants'])
+                    ->ordered()
+                    ->inRandomOrder()
+                    ->limit($remaining)
+                    ->get();
+
+                $relatedProducts = $relatedProducts->concat($categoryProducts);
+            }
 
             return view('products.show', [
                 'product' => $product,

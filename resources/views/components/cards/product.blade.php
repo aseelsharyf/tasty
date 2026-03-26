@@ -87,9 +87,6 @@
         @endif
         @if($showPrice && $price)
             <div class="flex items-center gap-2 flex-wrap justify-center">
-                @if($compareAtPrice)
-                    <span class="text-[16px] lg:text-[18px] text-gray-500 line-through">{{ $compareAtPrice }}</span>
-                @endif
                 <span class="text-[16px] lg:text-[18px] font-semibold text-blue-black">{{ $price }}</span>
             </div>
         @endif
@@ -188,7 +185,7 @@
             if (!id || tracked[id]) return;
             tracked[id] = true;
             try { sessionStorage.setItem('_pv', JSON.stringify(tracked)); } catch(e) {}
-            fetch('/products/view/' + id, {
+            fetch('/store/view/' + id, {
                 method: 'POST',
                 headers: { 'X-XSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
             }).catch(function() {});
