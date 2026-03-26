@@ -17,26 +17,30 @@
                 <div class="flex items-center gap-6 xl:gap-8">
                     @foreach($primaryLinks as $link)
                         @php
-                            $label = $link['label'] ?? '';
+                            $label = trim($link['label'] ?? '');
                             $href  = $link['href'] ?? '#';
                             $extra = $link['class'] ?? '';
                         @endphp
-                        <a href="{{ $href }}" class="font-mono text-base hover:text-yellow-600 transition uppercase tracking-wide {{ $extra }}">
-                            {{ strtoupper($label) }}
-                        </a>
+                        @if($label !== '' && $label !== '|')
+                            <a href="{{ $href }}" class="font-mono text-base hover:text-yellow-600 transition uppercase tracking-wide {{ $extra }}">
+                                {{ strtoupper($label) }}
+                            </a>
+                        @endif
                     @endforeach
                 </div>
 
                 <div class="flex items-center gap-6 xl:gap-8">
                     @foreach($secondaryLinks as $link)
                         @php
-                            $label = $link['label'] ?? '';
+                            $label = trim($link['label'] ?? '');
                             $href  = $link['href'] ?? '#';
                             $extra = $link['class'] ?? '';
                         @endphp
-                        <a href="{{ $href }}" class="font-mono text-base hover:text-yellow-600 transition uppercase tracking-wide {{ $extra }}">
-                            {{ strtoupper($label) }}
-                        </a>
+                        @if($label !== '' && $label !== '|')
+                            <a href="{{ $href }}" class="font-mono text-base hover:text-yellow-600 transition uppercase tracking-wide {{ $extra }}">
+                                {{ strtoupper($label) }}
+                            </a>
+                        @endif
                     @endforeach
                 </div>
             </div>
@@ -47,7 +51,7 @@
 
                 <div class="hidden lg:flex h-full items-center relative" id="cart-icon-desktop"
                     x-data="miniCart()" @click.away="open = false">
-                    <button @click="toggle()" class="h-full px-4 flex items-center justify-center hover:opacity-70 transition relative">
+                    <button @click="toggle()" class="h-full px-3 flex items-center justify-center hover:opacity-70 transition relative">
                         <svg class="w-5 h-5 text-blue-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
                         <span id="cart-badge-desktop" class="absolute top-3.5 right-1 min-w-[18px] h-[18px] px-1 bg-blue-black text-white text-[10px] font-semibold rounded-full items-center justify-center hidden">0</span>
                     </button>
@@ -126,8 +130,8 @@
                     </div>
                 </div>
 
-                <div @click="openSearch()" class="hidden lg:flex h-full px-6 md:px-8 items-center justify-center cursor-pointer hover:opacity-70 transition gap-3">
-                    <span class="font-mono text-base text-blue-black uppercase tracking-wide">Search</span>
+                <div @click="openSearch()" class="hidden lg:flex h-full px-3 items-center justify-center cursor-pointer hover:opacity-70 transition gap-2 group/search">
+                    <span class="font-mono text-base text-blue-black uppercase tracking-wide max-w-0 overflow-hidden opacity-0 group-hover/search:max-w-[100px] group-hover/search:opacity-100 transition-all duration-300 whitespace-nowrap">Search</span>
                     <svg class="w-5 h-5 text-blue-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                     </svg>
