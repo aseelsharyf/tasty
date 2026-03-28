@@ -252,7 +252,7 @@
                                 @endif
                                 <div class="flex justify-between text-sm text-gray-500">
                                     <span>Shipping</span>
-                                    <span class="text-green-600 font-medium">Calculated later</span>
+                                    <span class="text-green-600 font-medium">Free</span>
                                 </div>
                             </div>
 

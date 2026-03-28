@@ -46,9 +46,6 @@
                 {{-- Price --}}
                 @if($product->formatted_price)
                     <div class="flex items-center justify-center gap-2">
-                        @if($product->compare_at_price)
-                            <span class="text-body-sm text-gray-400 line-through">{{ number_format((float) $product->compare_at_price, 2) }} {{ $product->currency }}</span>
-                        @endif
                         <span class="text-body-sm font-semibold text-blue-black">{{ $product->formatted_price }}</span>
                     </div>
                 @endif

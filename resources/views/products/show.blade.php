@@ -75,9 +75,6 @@
                 @if($product->price)
                     <div class="flex items-baseline gap-3 mb-6">
                         <span class="font-display text-[22px] tracking-[-0.02em] text-blue-black">{{ number_format($product->price, 2) }} {{ $product->currency }}</span>
-                        @if($product->hasDiscount())
-                            <span class="text-sm text-gray-400 line-through">{{ number_format($product->compare_at_price, 2) }}</span>
-                        @endif
                     </div>
                 @endif
 

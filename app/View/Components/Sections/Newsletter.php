@@ -2,6 +2,7 @@
 
 namespace App\View\Components\Sections;
 
+use App\Services\Layouts\HomepageConfigurationService;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
@@ -19,21 +20,45 @@ class Newsletter extends Component
     /**
      * Create a new component instance.
      *
-     * @param  string  $title  Section title/heading
-     * @param  string  $placeholder  Input placeholder text
-     * @param  string  $buttonText  Subscribe button text
-     * @param  string  $bgColor  Background color (hex or Tailwind class)
+     * Loads defaults from the homepage configuration so edits in the CMS
+     * are reflected everywhere the newsletter component is used.
+     *
+     * @param  string|null  $title  Section title/heading
+     * @param  string|null  $placeholder  Input placeholder text
+     * @param  string|null  $buttonText  Subscribe button text
+     * @param  string|null  $bgColor  Background color (hex or Tailwind class)
      */
     public function __construct(
-        string $title = 'COME HUNGRY, LEAVE INSPIRED. SIGN UP FOR TASTY UPDATES.',
-        string $placeholder = 'Enter your Email',
-        string $buttonText = 'SUBSCRIBE',
-        string $bgColor = '#F3F4F6',
+        ?string $title = null,
+        ?string $placeholder = null,
+        ?string $buttonText = null,
+        ?string $bgColor = null,
     ) {
-        $this->title = $title;
-        $this->placeholder = $placeholder;
-        $this->buttonText = $buttonText;
-        $this->bgColor = $bgColor;
+        $defaults = $this->getHomepageDefaults();
+
+        $this->title = $title ?? $defaults['title'];
+        $this->placeholder = $placeholder ?? $defaults['placeholder'];
+        $this->buttonText = $buttonText ?? $defaults['buttonText'];
+        $this->bgColor = $bgColor ?? $defaults['bgColor'];
+    }
+
+    /**
+     * @return array{title: string, placeholder: string, buttonText: string, bgColor: string}
+     */
+    protected function getHomepageDefaults(): array
+    {
+        $config = app(HomepageConfigurationService::class)->getConfiguration();
+        $section = collect($config['sections'] ?? [])
+            ->firstWhere('type', 'newsletter');
+
+        $data = $section['data'] ?? [];
+
+        return [
+            'title' => $data['title'] ?? 'COME HUNGRY, LEAVE INSPIRED. SIGN UP FOR TASTY UPDATES.',
+            'placeholder' => $data['placeholder'] ?? 'Enter your Email',
+            'buttonText' => $data['buttonText'] ?? 'SUBSCRIBE',
+            'bgColor' => $data['bgColor'] ?? '#F3F4F6',
+        ];
     }
 
     /**
