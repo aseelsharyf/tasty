@@ -904,7 +904,7 @@
         flex-shrink: 0;
         overflow: hidden;
         width: 100%;
-        min-height: calc(100vh - 80px + 800px);
+        height: calc(100vh - 80px + 800px);
         background: var(--featured-location-image) var(--featured-location-position, center) / cover no-repeat;
     }
 
