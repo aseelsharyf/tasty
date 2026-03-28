@@ -251,7 +251,7 @@
                                     </div>
                                 @endif
                                 <div class="flex justify-between text-sm text-gray-500">
-                                    <span>Shipping</span>
+                                    <span>Delivery</span>
                                     <span class="text-green-600 font-medium">Free</span>
                                 </div>
                             </div>

@@ -904,7 +904,7 @@
         flex-shrink: 0;
         overflow: hidden;
         width: 100%;
-        height: calc(100vh - 80px + 800px);
+        min-height: calc(100vh - 80px + 800px);
         background: var(--featured-location-image) var(--featured-location-position, center) / cover no-repeat;
     }
 
@@ -918,7 +918,7 @@
         margin-top: 0;
         padding-bottom: 0;
         width: 130%;
-        height: calc(100vh + 200px);
+        min-height: calc(100vh + 200px);
         border-radius: 5000px 5000px 0 0;
         flex-shrink: 0;
     }
