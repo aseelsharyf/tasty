@@ -51,7 +51,7 @@ class Newsletter extends Component
         $section = collect($config['sections'] ?? [])
             ->firstWhere('type', 'newsletter');
 
-        $data = $section['data'] ?? [];
+        $data = $section['config'] ?? $section['data'] ?? [];
 
         return [
             'title' => $data['title'] ?? 'COME HUNGRY, LEAVE INSPIRED. SIGN UP FOR TASTY UPDATES.',
