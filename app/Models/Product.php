@@ -266,6 +266,16 @@ class Product extends Model
     }
 
     /**
+     * Get the canonical URL for this product.
+     */
+    public function getUrlAttribute(): string
+    {
+        return $this->isPurchasable()
+            ? route('products.show', ['store' => $this->store?->slug ?? 'store', 'product' => $this->slug])
+            : route('products.redirect', ['product' => $this->slug]);
+    }
+
+    /**
      * Get the redirect URL for tracking.
      */
     public function getRedirectUrlAttribute(): string

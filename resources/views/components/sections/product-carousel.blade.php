@@ -24,7 +24,7 @@
     >
         @foreach($products as $product)
             <a
-                href="{{ route('products.redirect', ['product' => $product->slug]) }}"
+                href="{{ $product->url }}"
                 class="group"
                 style="flex: 0 0 calc((100vw - 56px) / 2.5); max-width: 220px;"
                 @if($product->id) data-product-id="{{ $product->id }}" @endif

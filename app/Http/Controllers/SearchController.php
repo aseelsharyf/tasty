@@ -79,7 +79,7 @@ class SearchController extends Controller
                     'type' => 'product',
                     'title' => $product->title,
                     'subtitle' => $product->formatted_price ?? 'Product',
-                    'url' => route('products.show', ['store' => $product->store?->slug ?? 'store', 'product' => $product->slug]),
+                    'url' => $product->url,
                     'image' => $product->featured_image_url,
                 ];
             }
