@@ -57,7 +57,7 @@ class PostController extends Controller
 
             // Get random active products for the carousel
             $featuredProducts = Product::active()
-                ->with(['featuredMedia', 'store'])
+                ->with(['featuredMedia', 'store', 'variants'])
                 ->inRandomOrder()
                 ->limit(12)
                 ->get();

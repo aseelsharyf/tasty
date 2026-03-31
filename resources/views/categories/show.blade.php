@@ -2,9 +2,9 @@
 
 @section('content')
     <x-sections.latest-updates
-        :introImage="$category->featuredImage?->url ?? asset('images/latest-updates-transparent.png')"
+        :introImage="$category->featuredImage?->url"
         introImageAlt="{{ $category->name }}"
-        titleSmall="Category"
+        titleSmall=""
         :titleLarge="$category->name"
         :description="$category->description ?? 'Explore our latest posts in this category.'"
         buttonText="More Posts"

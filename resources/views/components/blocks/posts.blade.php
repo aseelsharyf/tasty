@@ -40,7 +40,15 @@
             {{-- Grid Layout (default) --}}
             <div class="max-w-[1440px] mx-auto px-4 lg:px-10 grid grid-cols-1 lg:grid-cols-2 gap-6">
                 @foreach($postModels as $postModel)
-                    <x-cards.horizontal :post="$postModel" />
+                    @if($loop->last && $postModels->count() % 2 === 1)
+                        <div class="lg:col-span-2 flex justify-center">
+                            <div class="w-full lg:max-w-[calc(50%-0.75rem)]">
+                                <x-cards.horizontal :post="$postModel" />
+                            </div>
+                        </div>
+                    @else
+                        <x-cards.horizontal :post="$postModel" />
+                    @endif
                 @endforeach
             </div>
         @endif

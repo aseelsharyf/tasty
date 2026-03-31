@@ -2,9 +2,9 @@
 
 @section('content')
     <x-sections.latest-updates
-        introImage="{{ asset('images/latest-updates-transparent.png') }}"
+        :introImage="null"
         introImageAlt="{{ $tag->name }}"
-        titleSmall="Tag"
+        titleSmall=""
         :titleLarge="$tag->name"
         description="Explore our latest posts with this tag."
         buttonText="More Posts"

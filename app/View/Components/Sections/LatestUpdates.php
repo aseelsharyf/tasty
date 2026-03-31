@@ -108,7 +108,7 @@ class LatestUpdates extends Component
         // Initialize post tracker to prevent duplicates across sections
         $this->initPostTracker();
 
-        $this->introImage = $imageStyle === 'author' ? $introImage : ($introImage ?: asset('images/latest-updates.png'));
+        $this->introImage = $imageStyle === 'author' ? $introImage : ($introImage ?: null);
         $this->introImageAlt = $introImageAlt;
         $this->titleSmall = $titleSmall;
         $this->titleLarge = $titleLarge;
