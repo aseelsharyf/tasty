@@ -16,6 +16,7 @@ class OrderService
     public function __construct(
         protected NotificationService $notificationService,
         protected OrderEmailService $orderEmailService,
+        protected TelegramService $telegramService,
     ) {}
 
     /**
@@ -137,6 +138,7 @@ class OrderService
 
         $this->notificationService->orderCreated($order);
         $this->orderEmailService->sendOrderPlacedEmail($order);
+        $this->telegramService->notifyNewOrder($order);
 
         return $order;
     }
