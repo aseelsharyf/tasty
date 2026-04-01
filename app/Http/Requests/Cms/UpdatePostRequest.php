@@ -72,6 +72,8 @@ class UpdatePostRequest extends FormRequest
             'sponsor_id' => ['nullable', 'integer', 'exists:sponsors,id'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['integer', 'exists:tags,id'],
+            'collections' => ['nullable', 'array'],
+            'collections.*' => ['integer', 'exists:collections,id'],
             'featured_image' => ['nullable', 'image', 'max:5120'],
             'featured_media_id' => ['nullable', 'integer', 'exists:media_items,id'],
             'cover_video_id' => ['nullable', 'integer', 'exists:media_items,id'],

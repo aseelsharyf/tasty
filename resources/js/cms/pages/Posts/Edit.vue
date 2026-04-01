@@ -174,6 +174,8 @@ const props = defineProps<{
     templates: TemplateOption[];
     authors?: Author[];
     canAssignAuthor?: boolean;
+    collections?: { id: number; name: string }[];
+    postCollections?: number[];
 }>();
 
 // Edit lock state
@@ -799,6 +801,7 @@ const form = useForm({
     show_author: props.post.show_author ?? true,
     allow_comments: props.post.allow_comments ?? true,
     author_id: props.post.author?.id ?? null,
+    collections: [...(props.postCollections || [])],
 });
 
 // Authors list for selector
@@ -3133,6 +3136,32 @@ function openDiff() {
                                     <p v-else-if="isReadOnly" class="text-sm text-muted">
                                         No tags added.
                                     </p>
+                                </div>
+                            </div>
+
+                            <!-- Collections Section -->
+                            <div v-if="collections && collections.length > 0" class="mt-8">
+                                <label class="block text-sm font-medium text-highlighted mb-2">Collections</label>
+                                <div class="space-y-1.5">
+                                    <label
+                                        v-for="collection in collections"
+                                        :key="collection.id"
+                                        class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-elevated/50 transition-colors cursor-pointer"
+                                    >
+                                        <UCheckbox
+                                            :model-value="form.collections.includes(collection.id)"
+                                            :disabled="isReadOnly"
+                                            @update:model-value="(checked: boolean) => {
+                                                if (checked) {
+                                                    form.collections.push(collection.id);
+                                                } else {
+                                                    form.collections = form.collections.filter(id => id !== collection.id);
+                                                }
+                                            }"
+                                        />
+                                        <UIcon name="i-lucide-library" class="size-3.5 text-muted" />
+                                        <span class="text-sm text-highlighted">{{ collection.name }}</span>
+                                    </label>
                                 </div>
                             </div>
 

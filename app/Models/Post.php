@@ -191,6 +191,13 @@ class Post extends Model implements HasMedia
         return $this->belongsToMany(Tag::class);
     }
 
+    public function collections(): BelongsToMany
+    {
+        return $this->belongsToMany(Collection::class)
+            ->withPivot('order')
+            ->orderByPivot('order');
+    }
+
     public function language(): BelongsTo
     {
         return $this->belongsTo(Language::class, 'language_code', 'code');

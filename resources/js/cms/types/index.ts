@@ -133,6 +133,36 @@ export interface Tag {
     translated_locales?: string[];
 }
 
+export type CollectionSortOrder = 'manual' | 'recent' | 'oldest' | 'most_viewed' | 'title_asc' | 'title_desc';
+
+export interface Collection {
+    id: number;
+    uuid: string;
+    name: string;
+    slug: string;
+    description?: string | null;
+    is_active: boolean;
+    order: number;
+    sort_order?: CollectionSortOrder;
+    posts_count?: number;
+    posts?: CollectionPost[];
+    created_at?: string;
+    translated_locales?: string[];
+    name_translations?: Record<string, string>;
+    description_translations?: Record<string, string>;
+}
+
+export interface CollectionPost {
+    id: number;
+    uuid: string;
+    title: string;
+    slug: string;
+    featured_image_thumb?: string | null;
+    author?: { id: number; name: string } | null;
+    categories?: { id: number; name: string }[];
+    status?: string;
+}
+
 export interface Author {
     id: number;
     name: string;

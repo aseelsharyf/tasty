@@ -7,6 +7,7 @@ use App\Http\Controllers\Cms\AuthController;
 use App\Http\Controllers\Cms\BadgeController;
 use App\Http\Controllers\Cms\CategoryController;
 use App\Http\Controllers\Cms\CmsProductController;
+use App\Http\Controllers\Cms\CollectionController;
 use App\Http\Controllers\Cms\CommentBanController;
 use App\Http\Controllers\Cms\CommentController;
 use App\Http\Controllers\Cms\DashboardController;
@@ -294,6 +295,19 @@ Route::middleware(['auth', 'cms'])->group(function () {
             'destroy' => 'cms.tags.destroy',
         ]);
         Route::delete('tags/bulk', [TagController::class, 'bulkDestroy'])->name('cms.tags.bulk-destroy');
+    });
+
+    // Collections Management
+    Route::middleware('permission:collections.view')->group(function () {
+        Route::resource('collections', CollectionController::class)->except(['show'])->names([
+            'index' => 'cms.collections.index',
+            'create' => 'cms.collections.create',
+            'store' => 'cms.collections.store',
+            'edit' => 'cms.collections.edit',
+            'update' => 'cms.collections.update',
+            'destroy' => 'cms.collections.destroy',
+        ]);
+        Route::delete('collections/bulk', [CollectionController::class, 'bulkDestroy'])->name('cms.collections.bulk-destroy');
     });
 
     // Sponsors Management

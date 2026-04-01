@@ -66,6 +66,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'tags.edit',
             'tags.delete',
 
+            // Collections
+            'collections.view',
+            'collections.create',
+            'collections.edit',
+            'collections.delete',
+
             // Sponsors
             'sponsors.view',
             'sponsors.create',
@@ -186,6 +192,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'tags.create',
             'tags.edit',
             'tags.delete',
+            'collections.view',
+            'collections.create',
+            'collections.edit',
+            'collections.delete',
             'sponsors.view',
             'sponsors.create',
             'sponsors.edit',
@@ -257,6 +267,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'tags.view',
             'tags.create',
             'tags.edit',
+            'collections.view',
+            'collections.create',
+            'collections.edit',
             'sponsors.view',
             'sponsors.create',
             'sponsors.edit',

@@ -7,6 +7,7 @@ use App\Http\Requests\Cms\QuickDraftRequest;
 use App\Http\Requests\Cms\StorePostRequest;
 use App\Http\Requests\Cms\UpdatePostRequest;
 use App\Models\Category;
+use App\Models\Collection;
 use App\Models\Language;
 use App\Models\Post;
 use App\Models\PostEditLock;
@@ -409,7 +410,7 @@ class PostController extends Controller
     public function edit(Request $request, string $language, Post $post): Response
     {
         $language = strtolower($language);
-        $post->load(['categories', 'tags', 'author', 'language', 'featuredMedia', 'coverVideo', 'featuredTag', 'sponsor', 'draftVersion', 'activeVersion', 'versions.createdBy']);
+        $post->load(['categories', 'tags', 'collections', 'author', 'language', 'featuredMedia', 'coverVideo', 'featuredTag', 'sponsor', 'draftVersion', 'activeVersion', 'versions.createdBy']);
 
         // Set locale for translatable models
         app()->setLocale($language);
@@ -614,6 +615,11 @@ class PostController extends Controller
                     ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'avatar_url' => $u->avatar_url])
                 : [],
             'canAssignAuthor' => $user->can('posts.assign-author'),
+            'collections' => Collection::active()->ordered()->get()->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+            ]),
+            'postCollections' => $post->collections->pluck('id'),
         ]);
     }
 
@@ -674,6 +680,11 @@ class PostController extends Controller
             $post->categories()->detach();
         }
         $post->tags()->sync($validated['tags'] ?? []);
+
+        // Sync collections
+        if (isset($validated['collections'])) {
+            $post->collections()->sync($validated['collections']);
+        }
 
         // Handle featured image
         if ($request->hasFile('featured_image')) {

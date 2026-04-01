@@ -225,6 +225,16 @@ const taxonomyNavItems = computed<NavigationMenuItem[]>(() => {
         });
     }
 
+    if (can('collections.view')) {
+        items.push({
+            label: 'Collections',
+            icon: 'i-lucide-library',
+            to: cms('/collections'),
+            active: isActive('/collections'),
+            onSelect: () => { sidebarOpen.value = false; },
+        });
+    }
+
     if (can('sponsors.view')) {
         items.push({
             label: 'Sponsors',
