@@ -10,7 +10,6 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    // Ensure English language exists
     Language::firstOrCreate(['code' => 'en'], [
         'name' => 'English',
         'native_name' => 'English',
@@ -19,7 +18,6 @@ beforeEach(function () {
         'is_default' => true,
     ]);
 
-    // Create permissions
     $permissions = ['workflow.publish', 'workflow.revert'];
     foreach ($permissions as $permName) {
         \Spatie\Permission\Models\Permission::firstOrCreate([
@@ -28,11 +26,9 @@ beforeEach(function () {
         ]);
     }
 
-    // Create roles
     foreach (['Admin', 'Editor', 'Writer'] as $roleName) {
         $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
 
-        // Give Editor and Admin the workflow permissions
         if (in_array($roleName, ['Editor', 'Admin'])) {
             $role->givePermissionTo($permissions);
         }
@@ -40,7 +36,7 @@ beforeEach(function () {
 });
 
 describe('POST /cms/workflow/versions/{version}/transition', function () {
-    it('allows writer to submit draft for review', function () {
+    it('allows writer to submit draft to copydesk', function () {
         $user = User::factory()->create();
         $user->assignRole('Writer');
 
@@ -51,14 +47,14 @@ describe('POST /cms/workflow/versions/{version}/transition', function () {
             ->create(['created_by' => $user->id]);
 
         $response = $this->actingAs($user)->postJson("/cms/workflow/versions/{$version->uuid}/transition", [
-            'to_status' => 'review',
+            'to_status' => 'copydesk',
             'comment' => 'Ready for review',
         ]);
 
         $response->assertSuccessful()
             ->assertJson(['success' => true]);
 
-        expect($version->fresh()->workflow_status)->toBe('review');
+        expect($version->fresh()->workflow_status)->toBe('copydesk');
     });
 
     it('rejects unauthorized transitions', function () {
@@ -71,9 +67,9 @@ describe('POST /cms/workflow/versions/{version}/transition', function () {
             ->draft()
             ->create(['created_by' => $user->id]);
 
-        // Writers cannot directly approve
+        // Writers cannot directly publish
         $response = $this->actingAs($user)->postJson("/cms/workflow/versions/{$version->uuid}/transition", [
-            'to_status' => 'approved',
+            'to_status' => 'published',
         ]);
 
         $response->assertStatus(422);
@@ -87,10 +83,10 @@ describe('POST /cms/workflow/versions/{version}/transition', function () {
         $post = Post::factory()->draft()->create(['author_id' => $editor->id]);
         $version = ContentVersion::factory()
             ->forPost($post)
-            ->inReview()
+            ->draft()
             ->create(['created_by' => $editor->id]);
 
-        // Editor sends to copydesk
+        // Editor sends draft to copydesk
         $response = $this->actingAs($editor)->postJson("/cms/workflow/versions/{$version->uuid}/transition", [
             'to_status' => 'copydesk',
         ]);
@@ -98,13 +94,13 @@ describe('POST /cms/workflow/versions/{version}/transition', function () {
         $response->assertSuccessful();
         expect($version->fresh()->workflow_status)->toBe('copydesk');
 
-        // Editor approves from copydesk
+        // Editor parks from copydesk
         $response = $this->actingAs($editor)->postJson("/cms/workflow/versions/{$version->uuid}/transition", [
-            'to_status' => 'approved',
+            'to_status' => 'parked',
         ]);
 
         $response->assertSuccessful();
-        expect($version->fresh()->workflow_status)->toBe('approved');
+        expect($version->fresh()->workflow_status)->toBe('parked');
     });
 });
 
@@ -163,7 +159,6 @@ describe('POST /cms/workflow/versions/{version}/revert', function () {
 
         $this->actingAs($editor)->postJson("/cms/workflow/versions/{$publishedVersion->uuid}/revert");
 
-        // Published version should still be active
         expect($publishedVersion->fresh()->is_active)->toBeTrue()
             ->and($post->fresh()->active_version_id)->toBe($publishedVersion->id)
             ->and($post->fresh()->status)->toBe('published');
@@ -183,15 +178,16 @@ describe('POST /cms/workflow/versions/{version}/revert', function () {
 });
 
 describe('POST /cms/workflow/versions/{version}/publish', function () {
-    it('publishes an approved version', function () {
+    it('publishes a copydesk version', function () {
         $editor = User::factory()->create();
         $editor->assignRole('Editor');
 
         $post = Post::factory()->draft()->create(['author_id' => $editor->id]);
         $version = ContentVersion::factory()
             ->forPost($post)
-            ->approved()
             ->create([
+                'workflow_status' => 'copydesk',
+                'is_active' => false,
                 'created_by' => $editor->id,
                 'content_snapshot' => [
                     'title' => 'Test Title',
@@ -199,7 +195,6 @@ describe('POST /cms/workflow/versions/{version}/publish', function () {
                 ],
             ]);
 
-        // Add required category and tag
         $category = \App\Models\Category::factory()->create();
         $tag = \App\Models\Tag::factory()->create();
         $post->categories()->attach($category);
@@ -216,7 +211,7 @@ describe('POST /cms/workflow/versions/{version}/publish', function () {
             ->and($post->fresh()->active_version_id)->toBe($version->id);
     });
 
-    it('rejects publishing non-approved version', function () {
+    it('rejects publishing draft version', function () {
         $editor = User::factory()->create();
         $editor->assignRole('Editor');
 
@@ -305,12 +300,12 @@ describe('GET /cms/workflow/versions/{version}/transitions', function () {
                 'transitions',
             ]);
 
-        // Writer should be able to submit for review
+        // Writer should be able to submit to copydesk
         $transitions = collect($response->json('transitions'));
-        expect($transitions->pluck('to'))->toContain('review');
+        expect($transitions->pluck('to'))->toContain('copydesk');
     });
 
-    it('returns different transitions for editor', function () {
+    it('returns different transitions for editor on copydesk status', function () {
         $editor = User::factory()->create();
         $editor->assignRole('Editor');
 
@@ -325,8 +320,9 @@ describe('GET /cms/workflow/versions/{version}/transitions', function () {
         $response->assertSuccessful();
 
         $transitions = collect($response->json('transitions'));
-        expect($transitions->pluck('to'))->toContain('copydesk')
-            ->and($transitions->pluck('to'))->toContain('rejected');
+        // From copydesk, editor can: reject (draft), park, publish, schedule
+        expect($transitions->pluck('to'))->toContain('draft')
+            ->and($transitions->pluck('to'))->toContain('parked');
     });
 });
 
@@ -362,7 +358,6 @@ describe('Editorial Comments', function () {
             ->inReview()
             ->create(['created_by' => $user->id]);
 
-        // Add some comments
         $version->editorialComments()->create([
             'user_id' => $user->id,
             'content' => 'Comment 1',

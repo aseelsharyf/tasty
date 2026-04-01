@@ -105,7 +105,7 @@ test('product analytics summary calculates CTR correctly', function () {
     $response->assertInertia(fn ($page) => $page
         ->where('analytics.summary.views', 20)
         ->where('analytics.summary.clicks', 5)
-        ->where('analytics.summary.ctr', 25.0)
+        ->where('analytics.summary.ctr', 25)
     );
 });
 

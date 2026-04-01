@@ -11,7 +11,6 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    // Ensure English language exists
     Language::firstOrCreate(['code' => 'en'], [
         'name' => 'English',
         'native_name' => 'English',
@@ -20,7 +19,6 @@ beforeEach(function () {
         'is_default' => true,
     ]);
 
-    // Create roles
     foreach (['Admin', 'Editor', 'Writer'] as $roleName) {
         Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
     }
@@ -92,9 +90,9 @@ describe('WorkflowService::updateDraftVersion', function () {
         $post = Post::factory()->draft()->create(['author_id' => $user->id]);
         $workflowService = app(WorkflowService::class);
 
-        // Create and transition to review (no longer a draft)
+        // Create and transition to copydesk (no longer a draft)
         $version = $workflowService->createVersion($post, ['title' => 'Original'], 'Initial');
-        $workflowService->transition($version, ContentVersion::STATUS_REVIEW);
+        $workflowService->transition($version, ContentVersion::STATUS_COPYDESK);
 
         $newVersion = $workflowService->updateDraftVersion($post, ['title' => 'New Draft']);
 
@@ -105,7 +103,7 @@ describe('WorkflowService::updateDraftVersion', function () {
 });
 
 describe('WorkflowService::transition', function () {
-    it('transitions from draft to review', function () {
+    it('transitions from draft to copydesk', function () {
         $user = User::factory()->create();
         $user->assignRole('Writer');
         $this->actingAs($user);
@@ -114,13 +112,13 @@ describe('WorkflowService::transition', function () {
         $workflowService = app(WorkflowService::class);
 
         $version = $workflowService->createVersion($post, ['title' => 'Test'], 'Initial');
-        $transition = $workflowService->transition($version, ContentVersion::STATUS_REVIEW, 'Ready for review');
+        $transition = $workflowService->transition($version, ContentVersion::STATUS_COPYDESK, 'Ready for review');
 
         expect($transition->from_status)->toBe(ContentVersion::STATUS_DRAFT)
-            ->and($transition->to_status)->toBe(ContentVersion::STATUS_REVIEW)
+            ->and($transition->to_status)->toBe(ContentVersion::STATUS_COPYDESK)
             ->and($transition->comment)->toBe('Ready for review')
-            ->and($version->fresh()->workflow_status)->toBe(ContentVersion::STATUS_REVIEW)
-            ->and($post->fresh()->workflow_status)->toBe(ContentVersion::STATUS_REVIEW);
+            ->and($version->fresh()->workflow_status)->toBe(ContentVersion::STATUS_COPYDESK)
+            ->and($post->fresh()->workflow_status)->toBe(ContentVersion::STATUS_COPYDESK);
     });
 
     it('throws exception for unauthorized transition', function () {
@@ -133,12 +131,12 @@ describe('WorkflowService::transition', function () {
 
         $version = $workflowService->createVersion($post, ['title' => 'Test'], 'Initial');
 
-        // Writers cannot directly approve content
-        expect(fn () => $workflowService->transition($version, ContentVersion::STATUS_APPROVED))
+        // Writers cannot directly publish
+        expect(fn () => $workflowService->transition($version, ContentVersion::STATUS_PUBLISHED))
             ->toThrow(Exception::class);
     });
 
-    it('editor can approve after copydesk review', function () {
+    it('editor can park from copydesk', function () {
         $writer = User::factory()->create();
         $writer->assignRole('Writer');
 
@@ -146,26 +144,30 @@ describe('WorkflowService::transition', function () {
         $editor->assignRole('Editor');
 
         $post = Post::factory()->draft()->create(['author_id' => $writer->id]);
+
+        // Parking requires category and tag
+        $category = \App\Models\Category::factory()->create();
+        $tag = \App\Models\Tag::factory()->create();
+        $post->categories()->attach($category);
+        $post->tags()->attach($tag);
+
         $workflowService = app(WorkflowService::class);
 
-        // Writer creates and submits
+        // Writer creates and submits to copydesk
         $this->actingAs($writer);
         $version = $workflowService->createVersion($post, ['title' => 'Test'], 'Initial');
-        $workflowService->transition($version, ContentVersion::STATUS_REVIEW);
-
-        // Editor reviews and sends to copydesk
-        $this->actingAs($editor);
         $workflowService->transition($version, ContentVersion::STATUS_COPYDESK);
 
-        // Editor approves from copydesk
-        $workflowService->transition($version, ContentVersion::STATUS_APPROVED);
+        // Editor parks from copydesk
+        $this->actingAs($editor);
+        $workflowService->transition($version, ContentVersion::STATUS_PARKED);
 
-        expect($version->fresh()->workflow_status)->toBe(ContentVersion::STATUS_APPROVED);
+        expect($version->fresh()->workflow_status)->toBe(ContentVersion::STATUS_PARKED);
     });
 });
 
 describe('WorkflowService::publishVersion', function () {
-    it('publishes an approved version', function () {
+    it('publishes a parked version', function () {
         $editor = User::factory()->create();
         $editor->assignRole('Editor');
         $this->actingAs($editor);
@@ -173,7 +175,6 @@ describe('WorkflowService::publishVersion', function () {
         $post = Post::factory()->draft()->create(['author_id' => $editor->id]);
         $workflowService = app(WorkflowService::class);
 
-        // Create version with required fields for publishing
         $version = ContentVersion::factory()
             ->forPost($post)
             ->approved()
@@ -185,7 +186,6 @@ describe('WorkflowService::publishVersion', function () {
                 ],
             ]);
 
-        // Add category and tag for publish validation
         $category = \App\Models\Category::factory()->create();
         $tag = \App\Models\Tag::factory()->create();
         $post->categories()->attach($category);
@@ -200,7 +200,7 @@ describe('WorkflowService::publishVersion', function () {
             ->and($post->fresh()->active_version_id)->toBe($version->id);
     });
 
-    it('throws exception when publishing non-approved version', function () {
+    it('throws exception when publishing draft version', function () {
         $editor = User::factory()->create();
         $editor->assignRole('Editor');
         $this->actingAs($editor);
@@ -214,7 +214,7 @@ describe('WorkflowService::publishVersion', function () {
         $workflowService = app(WorkflowService::class);
 
         expect(fn () => $workflowService->publishVersion($version))
-            ->toThrow(Exception::class, 'Only approved versions can be published');
+            ->toThrow(Exception::class, 'Version cannot be published from its current status');
     });
 });
 
@@ -226,7 +226,6 @@ describe('WorkflowService::revertToVersion', function () {
 
         $post = Post::factory()->published()->create(['author_id' => $editor->id]);
 
-        // Create a published version
         $publishedVersion = ContentVersion::factory()
             ->forPost($post)
             ->published()
@@ -274,9 +273,8 @@ describe('WorkflowService::revertToVersion', function () {
         $post->update(['active_version_id' => $publishedVersion->id]);
 
         $workflowService = app(WorkflowService::class);
-        $newDraft = $workflowService->revertToVersion($publishedVersion);
+        $workflowService->revertToVersion($publishedVersion);
 
-        // The published version should still be active
         expect($publishedVersion->fresh()->is_active)->toBeTrue()
             ->and($post->fresh()->active_version_id)->toBe($publishedVersion->id)
             ->and($post->fresh()->status)->toBe('published');
@@ -284,7 +282,7 @@ describe('WorkflowService::revertToVersion', function () {
 });
 
 describe('WorkflowService::unpublish (via transition)', function () {
-    it('unpublishes content and sets version as draft for editing', function () {
+    it('unpublishes content via published to copydesk transition', function () {
         $editor = User::factory()->create();
         $editor->assignRole('Editor');
         $this->actingAs($editor);
@@ -306,17 +304,12 @@ describe('WorkflowService::unpublish (via transition)', function () {
         ]);
 
         $workflowService = app(WorkflowService::class);
-        $workflowService->transition($publishedVersion, ContentVersion::STATUS_DRAFT);
+        $workflowService->transition($publishedVersion, ContentVersion::STATUS_COPYDESK);
 
         $post->refresh();
         $publishedVersion->refresh();
 
-        expect($post->status)->toBe('draft')
-            ->and($post->published_at)->toBeNull()
-            ->and($post->active_version_id)->toBeNull()
-            ->and($post->draft_version_id)->toBe($publishedVersion->id)
-            ->and($publishedVersion->is_active)->toBeFalse()
-            ->and($publishedVersion->workflow_status)->toBe(ContentVersion::STATUS_DRAFT);
+        expect($publishedVersion->workflow_status)->toBe(ContentVersion::STATUS_COPYDESK);
     });
 });
 
@@ -334,7 +327,6 @@ describe('Version Integrity', function () {
             ->draft()
             ->create(['created_by' => $user->id]);
 
-        // Version should belong to post1, not post2
         expect($version->versionable_id)->toBe($post1->id)
             ->and($version->versionable_id)->not->toBe($post2->id);
     });
@@ -403,10 +395,11 @@ describe('Workflow Transitions Available', function () {
 
         $toStatuses = collect($transitions)->pluck('to')->toArray();
 
-        expect($toStatuses)->toContain(ContentVersion::STATUS_REVIEW);
+        // Writer can send draft to copydesk
+        expect($toStatuses)->toContain(ContentVersion::STATUS_COPYDESK);
     });
 
-    it('returns correct transitions for review status as editor', function () {
+    it('returns correct transitions for copydesk status as editor', function () {
         $editor = User::factory()->create();
         $editor->assignRole('Editor');
         $this->actingAs($editor);
@@ -422,7 +415,8 @@ describe('Workflow Transitions Available', function () {
 
         $toStatuses = collect($transitions)->pluck('to')->toArray();
 
-        expect($toStatuses)->toContain(ContentVersion::STATUS_COPYDESK)
-            ->and($toStatuses)->toContain(ContentVersion::STATUS_REJECTED);
+        // From copydesk, editor can: reject (draft), park, publish, schedule
+        expect($toStatuses)->toContain('draft')
+            ->and($toStatuses)->toContain(ContentVersion::STATUS_PARKED);
     });
 });

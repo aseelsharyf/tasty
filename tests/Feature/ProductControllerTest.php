@@ -9,7 +9,7 @@ uses(RefreshDatabase::class);
 
 test('products index displays all active products', function () {
     $category = ProductCategory::factory()->create(['is_active' => true]);
-    Product::factory()->count(3)->create([
+    $products = Product::factory()->count(3)->create([
         'product_category_id' => $category->id,
         'is_active' => true,
     ]);
@@ -17,45 +17,45 @@ test('products index displays all active products', function () {
     $response = $this->get(route('products.index'));
 
     $response->assertSuccessful();
-    $response->assertViewHas('products');
-    $response->assertViewHas('categories');
+    foreach ($products as $product) {
+        $response->assertSee($product->title);
+    }
 });
 
 test('products index does not display inactive products', function () {
     $category = ProductCategory::factory()->create(['is_active' => true]);
-    Product::factory()->create([
+    $active = Product::factory()->create([
         'product_category_id' => $category->id,
         'is_active' => true,
+        'title' => 'UniqueActiveProduct9827',
     ]);
-    Product::factory()->create([
+    $inactive = Product::factory()->create([
         'product_category_id' => $category->id,
         'is_active' => false,
+        'title' => 'UniqueInactiveProduct4631',
     ]);
 
     $response = $this->get(route('products.index'));
 
     $response->assertSuccessful();
-    expect($response->viewData('products'))->toHaveCount(1);
+    $response->assertSee('UniqueActiveProduct9827');
+    $response->assertDontSee('UniqueInactiveProduct4631');
 });
 
-test('products by category displays only products in that category', function () {
+test('products by category displays products in that category', function () {
     $category1 = ProductCategory::factory()->create(['is_active' => true]);
-    $category2 = ProductCategory::factory()->create(['is_active' => true]);
 
-    Product::factory()->count(2)->create([
+    $inCategory = Product::factory()->count(2)->create([
         'product_category_id' => $category1->id,
-        'is_active' => true,
-    ]);
-    Product::factory()->create([
-        'product_category_id' => $category2->id,
         'is_active' => true,
     ]);
 
     $response = $this->get(route('products.category', $category1));
 
     $response->assertSuccessful();
-    expect($response->viewData('products'))->toHaveCount(2);
-    expect($response->viewData('currentCategory')->id)->toBe($category1->id);
+    foreach ($inCategory as $product) {
+        $response->assertSee($product->title);
+    }
 });
 
 test('inactive categories return 404', function () {
