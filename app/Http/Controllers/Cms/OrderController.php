@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PaymentReceipt;
+use App\Services\OrderEmailService;
 use App\Services\OrderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -284,6 +285,31 @@ class OrderController extends Controller
             'tax_amount' => $taxAmount,
             'total' => $total,
         ]);
+    }
+
+    public function rejectReceipt(Request $request, Order $order): RedirectResponse
+    {
+        if ($order->status !== OrderStatus::PaymentPendingApproval) {
+            return redirect()->back()->with('error', 'This order does not have a pending receipt to reject.');
+        }
+
+        $fromStatus = $order->status->value;
+
+        $order->update([
+            'payment_status' => PaymentStatus::Failed,
+            'status' => OrderStatus::PaymentPending,
+        ]);
+
+        $order->statusHistory()->create([
+            'from_status' => $fromStatus,
+            'to_status' => OrderStatus::PaymentPending->value,
+            'changed_by' => $request->user()?->id,
+            'notes' => $request->input('notes', 'Bank transfer receipt rejected.'),
+        ]);
+
+        app(OrderEmailService::class)->sendBankTransferRejectedEmail($order);
+
+        return redirect()->back()->with('success', 'Receipt rejected and customer notified.');
     }
 
     public function viewReceipt(PaymentReceipt $receipt): StreamedResponse

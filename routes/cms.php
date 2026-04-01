@@ -360,6 +360,7 @@ Route::middleware(['auth', 'cms'])->group(function () {
         Route::post('orders/{order}/verify-payment', [OrderController::class, 'verifyPayment'])->name('cms.orders.verify-payment');
         Route::put('orders/{order}/items/{orderItem}', [OrderController::class, 'updateItem'])->name('cms.orders.update-item');
         Route::delete('orders/{order}/items/{orderItem}', [OrderController::class, 'removeItem'])->name('cms.orders.remove-item');
+        Route::post('orders/{order}/reject-receipt', [OrderController::class, 'rejectReceipt'])->name('cms.orders.reject-receipt');
         Route::get('receipts/{receipt}', [OrderController::class, 'viewReceipt'])->name('cms.orders.view-receipt');
     });
 

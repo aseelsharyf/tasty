@@ -13,7 +13,10 @@ use App\Models\User;
 
 class OrderService
 {
-    public function __construct(protected NotificationService $notificationService) {}
+    public function __construct(
+        protected NotificationService $notificationService,
+        protected OrderEmailService $orderEmailService,
+    ) {}
 
     /**
      * Create an order from the cart.
@@ -133,6 +136,7 @@ class OrderService
         session()->forget('discount');
 
         $this->notificationService->orderCreated($order);
+        $this->orderEmailService->sendOrderPlacedEmail($order);
 
         return $order;
     }
@@ -152,6 +156,7 @@ class OrderService
         ]);
 
         $this->notificationService->orderStatusChanged($order, $fromStatus, OrderStatus::Accepted);
+        $this->orderEmailService->sendOrderAcceptedEmail($order);
     }
 
     /**
@@ -190,6 +195,10 @@ class OrderService
         }
 
         $this->notificationService->orderStatusChanged($order, $fromStatus, $newStatus, $changedBy);
+
+        if ($newStatus === OrderStatus::Cancelled) {
+            $this->orderEmailService->sendOrderCancelledEmail($order);
+        }
     }
 
     /**
@@ -211,6 +220,7 @@ class OrderService
             ]);
 
         $this->notificationService->orderPaymentVerified($order, $verifiedBy);
+        $this->orderEmailService->sendBankTransferApprovedEmail($order);
     }
 
     /**

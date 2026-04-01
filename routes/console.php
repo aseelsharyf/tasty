@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\SendPaymentReminderEmails;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -10,3 +11,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('posts:process-scheduled-copydesk')->everyMinute();
 Schedule::command('posts:process-scheduled-posts')->everyMinute();
+Schedule::job(new SendPaymentReminderEmails)->everyFiveMinutes();

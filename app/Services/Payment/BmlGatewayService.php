@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
+use App\Services\OrderEmailService;
 use BmlConnect\BmlConnect;
 use BmlConnect\Enums\TransactionState;
 use BmlConnect\Exceptions\BmlConnectException;
@@ -99,6 +100,8 @@ class BmlGatewayService implements PaymentGatewayInterface
                     'notes' => 'Payment confirmed via BML Connect.',
                 ]);
 
+                app(OrderEmailService::class)->sendPaymentCompletedEmail($order);
+
                 Log::info('BML payment confirmed', [
                     'order' => $order->order_number,
                     'transaction' => $event->transactionId,
@@ -115,6 +118,8 @@ class BmlGatewayService implements PaymentGatewayInterface
                 $order->update([
                     'payment_status' => PaymentStatus::Failed,
                 ]);
+
+                app(OrderEmailService::class)->sendPaymentFailedEmail($order);
 
                 Log::info('BML payment failed/cancelled', [
                     'order' => $order->order_number,

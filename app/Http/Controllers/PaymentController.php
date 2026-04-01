@@ -7,6 +7,7 @@ use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Setting;
+use App\Services\OrderEmailService;
 use App\Services\Payment\BmlGatewayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -77,6 +78,8 @@ class PaymentController extends Controller
             'notes' => 'Payment receipt uploaded.',
         ]);
 
+        app(OrderEmailService::class)->sendBankTransferReceiptSubmittedEmail($order);
+
         return redirect()->route('payment.confirmation', $order);
     }
 
@@ -131,6 +134,8 @@ class PaymentController extends Controller
                     'to_status' => OrderStatus::PaymentReceived->value,
                     'notes' => 'Payment confirmed via BML Connect.',
                 ]);
+
+                app(OrderEmailService::class)->sendPaymentCompletedEmail($order);
 
                 return redirect()->route('payment.confirmation', $order);
             }
