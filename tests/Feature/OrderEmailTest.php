@@ -12,6 +12,7 @@ use App\Mail\Orders\BankTransferApprovedMail;
 use App\Mail\Orders\BankTransferReceiptSubmittedMail;
 use App\Mail\Orders\BankTransferRejectedMail;
 use App\Mail\Orders\OrderCancelledMail;
+use App\Mail\Orders\OrderReceivedMail;
 use App\Mail\Orders\PaymentCompleteMail;
 use App\Mail\Orders\PaymentFailedMail;
 use App\Mail\Orders\PaymentReminderMail;
@@ -55,7 +56,7 @@ it('sends affiliate order received email with transfer payment method', function
     });
 });
 
-it('does not send order placed email for non-affiliate orders', function () {
+it('sends order received email for non-affiliate orders', function () {
     $order = Order::factory()->create([
         'email' => 'customer@example.com',
         'has_affiliate_products' => false,
@@ -63,7 +64,9 @@ it('does not send order placed email for non-affiliate orders', function () {
 
     app(OrderEmailService::class)->sendOrderPlacedEmail($order);
 
-    Mail::assertNothingQueued();
+    Mail::assertQueued(OrderReceivedMail::class, function ($mail) use ($order) {
+        return $mail->order->id === $order->id;
+    });
 });
 
 // --- Payment Completed ---

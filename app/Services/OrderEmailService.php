@@ -12,6 +12,7 @@ use App\Mail\Orders\BankTransferApprovedMail;
 use App\Mail\Orders\BankTransferReceiptSubmittedMail;
 use App\Mail\Orders\BankTransferRejectedMail;
 use App\Mail\Orders\OrderCancelledMail;
+use App\Mail\Orders\OrderReceivedMail;
 use App\Mail\Orders\PaymentCompleteMail;
 use App\Mail\Orders\PaymentFailedMail;
 use App\Mail\Orders\PaymentReminderMail;
@@ -34,13 +35,13 @@ class OrderEmailService
             return;
         }
 
-        if (! $order->has_affiliate_products) {
-            return;
+        if ($order->has_affiliate_products) {
+            $mailable = $this->isGatewayPayment($order)
+                ? new AffiliateOrderReceivedGatewayMail($order)
+                : new AffiliateOrderReceivedTransferMail($order);
+        } else {
+            $mailable = new OrderReceivedMail($order);
         }
-
-        $mailable = $this->isGatewayPayment($order)
-            ? new AffiliateOrderReceivedGatewayMail($order)
-            : new AffiliateOrderReceivedTransferMail($order);
 
         $this->send($order, $mailable);
     }
