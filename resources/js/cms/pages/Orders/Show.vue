@@ -66,7 +66,7 @@ interface OrderDetail {
     tax_rate?: number;
     contact_person: string;
     contact_number: string;
-    email?: string;
+    email: string;
     delivery_location?: { id: number; name: string };
     address: string;
     additional_info?: string;

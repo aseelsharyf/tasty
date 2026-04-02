@@ -21,7 +21,7 @@ class CheckoutRequest extends FormRequest
             'address' => ['required', 'string', 'max:1000'],
             'contact_person' => ['required', 'string', 'max:255'],
             'contact_number' => ['required', 'string', 'max:20'],
-            'email' => ['nullable', 'email', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
             'additional_info' => ['nullable', 'string', 'max:1000'],
             'payment_method' => ['nullable', 'string', 'max:50'],
             'terms_accepted' => ['required', 'accepted'],
@@ -39,6 +39,7 @@ class CheckoutRequest extends FormRequest
             'address.required' => 'Please enter your delivery address.',
             'contact_person.required' => 'Please enter the contact person name.',
             'contact_number.required' => 'Please enter a contact number.',
+            'email.required' => 'Please enter your email address.',
             'terms_accepted.required' => 'You must agree to the terms and conditions.',
             'terms_accepted.accepted' => 'You must agree to the terms and conditions.',
         ];

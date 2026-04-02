@@ -56,11 +56,12 @@
                                     placeholder="7xxxxxx">
                             </div>
                             <div class="sm:col-span-2">
-                                <label for="email" class="block text-sm font-medium text-gray-600 mb-1.5">Email <span class="text-gray-400 font-normal">(optional)</span></label>
+                                <label for="email" class="block text-sm font-medium text-gray-600 mb-1.5">Email <span class="text-red-500">*</span></label>
                                 <input type="email" id="email" name="email"
                                     value="{{ old('email') }}"
                                     class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-black/10 focus:border-blue-black transition"
-                                    placeholder="email@example.com">
+                                    placeholder="email@example.com"
+                                    required>
                             </div>
                         </div>
                     </div>
