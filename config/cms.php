@@ -59,6 +59,6 @@ return [
     |
     */
 
-    'website_url' => env('WEBSITE_URL', env('APP_URL', 'https://tasty.mv')),
+    'website_url' => env('WEBSITE_URL', 'https://tasty.mv'),
 
 ];
