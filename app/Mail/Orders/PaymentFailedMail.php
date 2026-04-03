@@ -29,8 +29,8 @@ class PaymentFailedMail extends Mailable implements ShouldQueue
             view: 'emails.orders.payment-failed',
             with: [
                 'order' => $this->order,
-                'paymentUrl' => route('payment.index', $this->order),
-                'trackingUrl' => route('order.track'),
+                'paymentUrl' => config('cms.website_url').'/payment/'.$this->order->uuid,
+                'trackingUrl' => config('cms.website_url').'/order/track',
             ],
         );
     }

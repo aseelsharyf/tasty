@@ -29,7 +29,7 @@ class AffiliateOrderReceivedTransferMail extends Mailable implements ShouldQueue
             view: 'emails.orders.affiliate-order-received-transfer',
             with: [
                 'order' => $this->order,
-                'trackingUrl' => route('order.track'),
+                'trackingUrl' => config('cms.website_url').'/order/track',
             ],
         );
     }

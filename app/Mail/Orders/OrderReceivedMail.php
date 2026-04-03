@@ -29,7 +29,7 @@ class OrderReceivedMail extends Mailable implements ShouldQueue
             view: 'emails.orders.order-received',
             with: [
                 'order' => $this->order,
-                'trackingUrl' => route('order.track'),
+                'trackingUrl' => config('cms.website_url').'/order/track',
             ],
         );
     }

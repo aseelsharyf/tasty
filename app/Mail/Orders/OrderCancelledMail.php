@@ -30,7 +30,7 @@ class OrderCancelledMail extends Mailable implements ShouldQueue
             with: [
                 'order' => $this->order,
                 'wasPaymentMade' => in_array($this->order->payment_status->value, ['paid', 'verified']),
-                'trackingUrl' => route('order.track'),
+                'trackingUrl' => config('cms.website_url').'/order/track',
             ],
         );
     }

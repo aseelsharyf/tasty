@@ -48,4 +48,17 @@ return [
 
     'disable_path_access' => env('CMS_DISABLE_PATH_ACCESS', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Public Website URL
+    |--------------------------------------------------------------------------
+    |
+    | The base URL of the public-facing website. Used to generate links in
+    | emails and other contexts where web routes may not be available
+    | (e.g. queue workers running on a CMS-only domain).
+    |
+    */
+
+    'website_url' => env('WEBSITE_URL', env('APP_URL', 'https://tasty.mv')),
+
 ];

@@ -31,8 +31,8 @@ class TransferReminderMail extends Mailable implements ShouldQueue
             with: [
                 'order' => $this->order,
                 'bankAccounts' => Setting::getBankAccounts(),
-                'paymentUrl' => route('payment.index', $this->order),
-                'trackingUrl' => route('order.track'),
+                'paymentUrl' => config('cms.website_url').'/payment/'.$this->order->uuid,
+                'trackingUrl' => config('cms.website_url').'/order/track',
             ],
         );
     }

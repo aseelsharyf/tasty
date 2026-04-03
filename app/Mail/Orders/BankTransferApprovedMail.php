@@ -29,7 +29,7 @@ class BankTransferApprovedMail extends Mailable implements ShouldQueue
             view: 'emails.orders.bank-transfer-approved',
             with: [
                 'order' => $this->order,
-                'trackingUrl' => route('order.track'),
+                'trackingUrl' => config('cms.website_url').'/order/track',
             ],
         );
     }

@@ -29,7 +29,7 @@ class AffiliateOrderReceivedGatewayMail extends Mailable implements ShouldQueue
             view: 'emails.orders.affiliate-order-received-gateway',
             with: [
                 'order' => $this->order,
-                'trackingUrl' => route('order.track'),
+                'trackingUrl' => config('cms.website_url').'/order/track',
             ],
         );
     }

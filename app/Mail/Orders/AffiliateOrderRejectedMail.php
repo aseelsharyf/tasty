@@ -36,7 +36,7 @@ class AffiliateOrderRejectedMail extends Mailable implements ShouldQueue
             with: [
                 'order' => $this->order,
                 'rejectionType' => $this->rejectionType,
-                'trackingUrl' => route('order.track'),
+                'trackingUrl' => config('cms.website_url').'/order/track',
             ],
         );
     }
