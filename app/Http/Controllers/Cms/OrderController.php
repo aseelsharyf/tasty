@@ -168,8 +168,8 @@ class OrderController extends Controller
                     'verified_at' => $r->verified_at?->toISOString(),
                     'verifier' => $r->verifier ? ['name' => $r->verifier->name] : null,
                     'created_at' => $r->created_at?->toISOString(),
-                    'preview_url' => Storage::disk('public')->url($r->file_path),
-                    'is_image' => str_starts_with(Storage::disk('public')->mimeType($r->file_path) ?? '', 'image/'),
+                    'preview_url' => Storage::disk('do')->url($r->file_path),
+                    'is_image' => (bool) preg_match('/\.(jpe?g|png|gif|webp)$/i', $r->file_path),
                 ])->toArray(),
                 'status_history' => $order->statusHistory->map(fn ($h) => [
                     'from_status' => $h->from_status,
@@ -316,6 +316,6 @@ class OrderController extends Controller
 
     public function viewReceipt(PaymentReceipt $receipt): StreamedResponse
     {
-        return Storage::disk('public')->download($receipt->file_path, $receipt->original_filename);
+        return Storage::disk('do')->download($receipt->file_path, $receipt->original_filename);
     }
 }

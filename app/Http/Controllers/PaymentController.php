@@ -56,7 +56,7 @@ class PaymentController extends Controller
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $path = $request->file('receipt')->store('receipts', 'public');
+        $path = $request->file('receipt')->store('receipts', 'do');
 
         $order->receipts()->create([
             'file_path' => $path,
