@@ -168,6 +168,8 @@ class OrderController extends Controller
                     'verified_at' => $r->verified_at?->toISOString(),
                     'verifier' => $r->verifier ? ['name' => $r->verifier->name] : null,
                     'created_at' => $r->created_at?->toISOString(),
+                    'preview_url' => Storage::disk('public')->url($r->file_path),
+                    'is_image' => str_starts_with(Storage::disk('public')->mimeType($r->file_path) ?? '', 'image/'),
                 ])->toArray(),
                 'status_history' => $order->statusHistory->map(fn ($h) => [
                     'from_status' => $h->from_status,

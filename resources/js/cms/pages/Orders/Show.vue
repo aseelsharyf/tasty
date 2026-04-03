@@ -29,6 +29,8 @@ interface Receipt {
     verified_at?: string;
     verifier?: { name: string };
     created_at: string;
+    preview_url?: string;
+    is_image?: boolean;
 }
 
 interface StatusHistory {
@@ -102,6 +104,7 @@ const editItemQty = ref(1);
 
 const removeItemModalOpen = ref(false);
 const removingItem = ref<OrderItem | null>(null);
+
 
 function goBack() {
     router.visit(cmsPath('/orders'));
@@ -361,14 +364,24 @@ function confirmRemoveItem() {
                         <!-- Receipts -->
                         <div v-if="order.receipts.length > 0" class="mt-4 pt-3 border-t border-default">
                             <p class="text-xs text-muted mb-2">Receipts</p>
-                            <div class="space-y-2">
-                                <div v-for="receipt in order.receipts" :key="receipt.id" class="flex items-center justify-between text-sm py-1">
-                                    <div>
-                                        <span class="font-medium">{{ receipt.original_filename }}</span>
-                                        <span class="text-xs text-muted ml-2">{{ formatDate(receipt.created_at) }}</span>
-                                        <UBadge v-if="receipt.verified_at" color="success" variant="subtle" size="xs" class="ml-2">Verified</UBadge>
+                            <div class="space-y-3">
+                                <div v-for="receipt in order.receipts" :key="receipt.id" class="text-sm py-1">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-medium">{{ receipt.original_filename }}</span>
+                                            <span class="text-xs text-muted">{{ formatDate(receipt.created_at) }}</span>
+                                            <UBadge v-if="receipt.verified_at" color="success" variant="subtle" size="xs">Verified</UBadge>
+                                        </div>
+                                        <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-download" @click="downloadReceipt(receipt)" />
                                     </div>
-                                    <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-download" @click="downloadReceipt(receipt)" />
+                                    <p v-if="receipt.notes" class="text-xs text-muted mb-2">{{ receipt.notes }}</p>
+                                    <div v-if="receipt.is_image && receipt.preview_url" class="rounded-lg border border-default overflow-hidden">
+                                        <img :src="receipt.preview_url" :alt="receipt.original_filename" class="w-full" />
+                                    </div>
+                                    <div v-else-if="receipt.preview_url" class="rounded-lg border border-default bg-elevated p-4 flex items-center gap-2">
+                                        <UIcon name="i-lucide-file-text" class="w-5 h-5 text-muted" />
+                                        <span class="text-muted text-xs">PDF — click download to view</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
