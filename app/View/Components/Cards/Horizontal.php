@@ -35,6 +35,8 @@ class Horizontal extends Component
 
     public string $url;
 
+    public bool $hasVideo;
+
     /**
      * Create a new component instance.
      *
@@ -55,6 +57,7 @@ class Horizontal extends Component
         ?string $authorUrl = null,
         ?string $date = null,
         ?string $url = null,
+        ?bool $hasVideo = null,
     ) {
         if ($post instanceof Post) {
             $categoryModel = $post->categories->first();
@@ -74,6 +77,7 @@ class Horizontal extends Component
             $this->authorUrl = $post->author?->url ?? '#';
             $this->date = $post->published_at?->format('F j, Y') ?? '';
             $this->url = $post->url;
+            $this->hasVideo = (bool) $post->has_video;
         } elseif (is_array($post)) {
             $this->image = $post['image'] ?? '';
             $this->imageAlt = $post['imageAlt'] ?? $post['title'] ?? '';
@@ -88,6 +92,7 @@ class Horizontal extends Component
             $this->authorUrl = $post['authorUrl'] ?? '#';
             $this->date = $post['date'] ?? '';
             $this->url = $post['url'] ?? '#';
+            $this->hasVideo = $post['hasVideo'] ?? false;
         } else {
             $this->image = '';
             $this->imageAlt = '';
@@ -102,6 +107,7 @@ class Horizontal extends Component
             $this->authorUrl = '#';
             $this->date = '';
             $this->url = '#';
+            $this->hasVideo = false;
         }
 
         // Allow individual prop overrides
@@ -143,6 +149,9 @@ class Horizontal extends Component
         }
         if ($url !== null) {
             $this->url = $url;
+        }
+        if ($hasVideo !== null) {
+            $this->hasVideo = $hasVideo;
         }
     }
 

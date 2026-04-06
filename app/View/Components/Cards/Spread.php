@@ -43,6 +43,8 @@ class Spread extends Component
 
     public bool $mobile;
 
+    public bool $hasVideo;
+
     /**
      * Create a new component instance.
      *
@@ -67,6 +69,7 @@ class Spread extends Component
         bool $reversed = false,
         bool $isLast = false,
         bool $mobile = false,
+        ?bool $hasVideo = null,
     ) {
         $this->reversed = $reversed;
         $this->isLast = $isLast;
@@ -91,6 +94,7 @@ class Spread extends Component
             $this->authorUrl = $post->author?->url ?? '#';
             $this->date = $post->published_at?->format('F j, Y') ?? '';
             $this->url = $post->url;
+            $this->hasVideo = (bool) $post->has_video;
         } elseif (is_array($post)) {
             $this->image = $post['image'] ?? '';
             $this->imageAlt = $post['imageAlt'] ?? $post['title'] ?? '';
@@ -106,6 +110,7 @@ class Spread extends Component
             $this->authorUrl = $post['authorUrl'] ?? '#';
             $this->date = $post['date'] ?? '';
             $this->url = $post['url'] ?? '#';
+            $this->hasVideo = $post['hasVideo'] ?? false;
         } else {
             $this->image = '';
             $this->imageAlt = '';
@@ -121,6 +126,7 @@ class Spread extends Component
             $this->authorUrl = '#';
             $this->date = '';
             $this->url = '#';
+            $this->hasVideo = false;
         }
 
         // Allow individual prop overrides
@@ -165,6 +171,9 @@ class Spread extends Component
         }
         if ($url !== null) {
             $this->url = $url;
+        }
+        if ($hasVideo !== null) {
+            $this->hasVideo = $hasVideo;
         }
     }
 

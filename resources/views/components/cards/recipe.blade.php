@@ -43,6 +43,15 @@
             class="absolute inset-0 w-full h-full rounded-t-[4px]"
             img-class="object-cover"
         />
+        @if($hasVideo)
+            <div class="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+                <div class="w-14 h-14 border-2 border-white rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                </div>
+            </div>
+        @endif
         @if(count($tags) > 0)
             <div class="absolute bottom-10 left-1/2 -translate-x-1/2 z-10">
                 <span class="tag">{{ implode(' • ', $tags) }}</span>

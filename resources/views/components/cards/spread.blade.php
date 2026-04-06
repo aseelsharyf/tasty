@@ -12,6 +12,15 @@
                 img-class="object-cover"
             />
         </a>
+        @if($hasVideo)
+            <div class="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+                <div class="w-14 h-14 border-2 border-white rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                </div>
+            </div>
+        @endif
         @if($category || $tag)
             <div class="absolute inset-0 flex items-end justify-center p-6 z-10 pointer-events-none">
                 <x-post.meta-tags

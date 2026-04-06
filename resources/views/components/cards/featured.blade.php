@@ -14,6 +14,16 @@
                 img-class="object-cover"
             />
         </a>
+        {{-- Video play icon --}}
+        @if($hasVideo)
+            <div class="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+                <div class="w-14 h-14 border-2 border-white rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                </div>
+            </div>
+        @endif
         {{-- Tag overlay - only on desktop --}}
         @if($category || $tag)
             <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 max-xl:hidden">

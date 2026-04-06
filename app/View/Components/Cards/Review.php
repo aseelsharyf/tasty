@@ -41,6 +41,8 @@ class Review extends Component
 
     public string $buttonVariant;
 
+    public bool $hasVideo;
+
     /**
      * Create a new component instance.
      *
@@ -64,6 +66,7 @@ class Review extends Component
         string $bgColor = 'yellow',
         string $textColor = 'blue-black',
         string $buttonVariant = 'white',
+        ?bool $hasVideo = null,
     ) {
         $bgResolved = $this->resolveBgColor($bgColor);
         $this->bgColorClass = $bgResolved['class'];
@@ -81,6 +84,7 @@ class Review extends Component
             $this->date = $post->published_at?->format('F j, Y') ?? '';
             $this->buttonText = 'Read More';
             $this->buttonUrl = $post->url;
+            $this->hasVideo = (bool) $post->has_video;
         } elseif (is_array($post)) {
             $this->image = $post['image'] ?? '';
             $this->imageAlt = $post['imageAlt'] ?? $post['title'] ?? '';
@@ -92,6 +96,7 @@ class Review extends Component
             $this->date = $post['date'] ?? '';
             $this->buttonText = $post['buttonText'] ?? 'Read More';
             $this->buttonUrl = $post['buttonUrl'] ?? $post['url'] ?? '#';
+            $this->hasVideo = $post['hasVideo'] ?? false;
         } else {
             $this->image = '';
             $this->imageAlt = '';
@@ -103,6 +108,7 @@ class Review extends Component
             $this->date = '';
             $this->buttonText = 'Read More';
             $this->buttonUrl = '#';
+            $this->hasVideo = false;
         }
 
         // Allow individual prop overrides
@@ -135,6 +141,9 @@ class Review extends Component
         }
         if ($buttonUrl !== null) {
             $this->buttonUrl = $buttonUrl;
+        }
+        if ($hasVideo !== null) {
+            $this->hasVideo = $hasVideo;
         }
     }
 

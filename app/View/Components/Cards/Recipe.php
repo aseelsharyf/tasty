@@ -38,6 +38,8 @@ class Recipe extends Component
 
     public bool $showKicker;
 
+    public bool $hasVideo;
+
     /**
      * Create a new component instance.
      *
@@ -60,6 +62,7 @@ class Recipe extends Component
         string $variant = 'default',
         string $alignment = 'center',
         bool $showKicker = false,
+        ?bool $hasVideo = null,
     ) {
         $this->variant = $variant;
         $this->alignment = $alignment;
@@ -79,6 +82,7 @@ class Recipe extends Component
             $this->author = $post->author?->name ?? 'Unknown';
             $this->date = $post->published_at?->format('F j, Y') ?? '';
             $this->url = $post->url;
+            $this->hasVideo = (bool) $post->has_video;
         } elseif (is_array($post)) {
             $this->image = $post['image'] ?? '';
             $this->imageAlt = $post['imageAlt'] ?? $post['title'] ?? '';
@@ -91,6 +95,7 @@ class Recipe extends Component
             $this->author = $post['author'] ?? 'Unknown';
             $this->date = $post['date'] ?? '';
             $this->url = $post['url'] ?? '#';
+            $this->hasVideo = $post['hasVideo'] ?? false;
         } else {
             $this->image = '';
             $this->imageAlt = '';
@@ -103,6 +108,7 @@ class Recipe extends Component
             $this->author = 'Unknown';
             $this->date = '';
             $this->url = '#';
+            $this->hasVideo = false;
         }
 
         // Allow individual prop overrides
@@ -138,6 +144,9 @@ class Recipe extends Component
         }
         if ($url !== null) {
             $this->url = $url;
+        }
+        if ($hasVideo !== null) {
+            $this->hasVideo = $hasVideo;
         }
     }
 

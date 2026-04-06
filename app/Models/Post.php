@@ -65,6 +65,7 @@ class Post extends Model implements HasMedia
         'allow_comments',
         'show_author',
         'scheduled_copydesk_at',
+        'has_video',
     ];
 
     protected $appends = [
@@ -85,6 +86,7 @@ class Post extends Model implements HasMedia
             'scheduled_copydesk_at' => 'datetime',
             'allow_comments' => 'boolean',
             'show_author' => 'boolean',
+            'has_video' => 'boolean',
         ];
     }
 
@@ -100,6 +102,12 @@ class Post extends Model implements HasMedia
             // Regenerate slug if title changed from "Untitled" pattern
             if ($post->isDirty('title') && $post->hasUntitledSlug()) {
                 $post->slug = $post->generateUniqueSlugForPost();
+            }
+        });
+
+        static::saving(function (Post $post) {
+            if ($post->isDirty(['content', 'cover_video_id'])) {
+                $post->has_video = $post->computeHasVideo();
             }
         });
     }
@@ -375,6 +383,37 @@ class Post extends Model implements HasMedia
         $categorySlug = $this->categories->first()?->slug ?? 'uncategorized';
 
         return route('post.show', ['category' => $categorySlug, 'post' => $this->slug]);
+    }
+
+    /**
+     * Compute whether this post contains any video content.
+     */
+    public function computeHasVideo(): bool
+    {
+        if ($this->cover_video_id) {
+            return true;
+        }
+
+        $blocks = is_array($this->content) ? ($this->content['blocks'] ?? $this->content) : [];
+
+        foreach ($blocks as $block) {
+            $type = $block['type'] ?? null;
+
+            if ($type === 'embed') {
+                return true;
+            }
+
+            if ($type === 'media') {
+                $items = $block['data']['items'] ?? [];
+                foreach ($items as $item) {
+                    if ($item['is_video'] ?? false) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     // Helpers

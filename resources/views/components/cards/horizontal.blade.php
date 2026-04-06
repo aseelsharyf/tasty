@@ -1,6 +1,6 @@
 <article {{ $attributes->merge(['class' => 'bg-white rounded-[12px] overflow-hidden p-10 flex gap-10 items-center w-full max-xl:flex-col max-xl:pt-4 max-xl:px-4 max-xl:pb-8 max-xl:gap-4 max-xl:items-start']) }}>
     {{-- Image --}}
-    <div class="w-[200px] h-[200px] shrink-0 max-xl:w-full max-xl:!h-[206px] max-xl:shrink-0">
+    <div class="relative w-[200px] h-[200px] shrink-0 max-xl:w-full max-xl:!h-[206px] max-xl:shrink-0">
         <a href="{{ $url }}" class="block w-full h-full">
             <x-ui.image
                 :src="$image"
@@ -11,6 +11,15 @@
                 img-class="object-cover"
             />
         </a>
+        @if($hasVideo)
+            <div class="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+                <div class="w-10 h-10 border-2 border-white rounded-full flex items-center justify-center">
+                    <svg class="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                </div>
+            </div>
+        @endif
     </div>
 
     {{-- Content --}}
