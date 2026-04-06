@@ -79,11 +79,10 @@
                 <button
                     type="button"
                     @click="playVideo()"
-                    class="absolute inset-0 flex items-center justify-center group cursor-pointer"
-                    style="bottom: 30%;"
+                    class="absolute inset-x-0 top-0 bottom-[25%] md:bottom-[30%] flex items-end md:items-center justify-center group cursor-pointer"
                 >
-                    <div class="w-24 h-24 md:w-32 md:h-32 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                        <svg class="w-10 h-10 md:w-12 md:h-12 text-tasty-blue-black ml-1 md:ml-2" fill="currentColor" viewBox="0 0 24 24">
+                    <div class="w-20 h-20 md:w-24 md:h-24 border-2 border-white rounded-full flex items-center justify-center group-hover:scale-110 group-hover:bg-white/10 transition-all">
+                        <svg class="w-8 h-8 md:w-10 md:h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
                             <polygon points="5 3 19 12 5 21 5 3"/>
                         </svg>
                     </div>
@@ -114,6 +113,9 @@
                         Your browser does not support the video tag.
                     </video>
                 @endif
+
+                {{-- Yellow gradient fade from bottom --}}
+                <div class="absolute inset-x-0 bottom-0 h-1/3 md:h-16 bg-gradient-to-t from-tasty-yellow to-transparent pointer-events-none z-[5]"></div>
 
                 {{-- Close/Back to Image Button --}}
                 <button
@@ -231,6 +233,10 @@
             playVideo() {
                 this.isPlaying = true;
 
+                if (window._searchNavInstance) {
+                    window._searchNavInstance.navVisible = false;
+                }
+
                 // For local videos, start playback
                 this.$nextTick(() => {
                     const video = this.$refs.videoElement;
@@ -242,6 +248,10 @@
 
             stopVideo() {
                 this.isPlaying = false;
+
+                if (window._searchNavInstance) {
+                    window._searchNavInstance.navVisible = true;
+                }
 
                 // For local videos, pause
                 const video = this.$refs.videoElement;

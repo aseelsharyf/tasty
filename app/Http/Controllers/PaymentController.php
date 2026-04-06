@@ -38,6 +38,9 @@ class PaymentController extends Controller
 
         $paymentMethods = collect(Setting::getPaymentMethods())
             ->where('is_active', true)
+            ->when($order->payment_method, function ($collection) use ($order) {
+                return $collection->where('key', $order->payment_method->value);
+            })
             ->values();
 
         $bankAccounts = Setting::getBankAccounts();
