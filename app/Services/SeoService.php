@@ -71,11 +71,7 @@ class SeoService
     {
         $title = $post->meta_title ?: $post->title;
         $description = $post->meta_description ?: $post->excerpt ?: \Illuminate\Support\Str::limit($this->extractTextFromContent($post->content), 160);
-        try {
-            $url = route('post.show', ['category' => $post->categories->first()?->slug ?? 'uncategorized', 'post' => $post->slug]);
-        } catch (\Symfony\Component\Routing\Exception\RouteNotFoundException) {
-            $url = '#';
-        }
+        $url = $this->safeRoute('post.show', ['category' => $post->categories->first()?->slug ?? 'uncategorized', 'post' => $post->slug]);
 
         // Try to get generated OG image, fallback to featured image
         $ogImage = $this->ogImageService->getUrlForPost($post);
@@ -165,7 +161,7 @@ class SeoService
                 '@type' => 'ListItem',
                 'position' => 2,
                 'name' => $category->name,
-                'item' => route('category.show', $category),
+                'item' => $this->safeRoute('category.show', $category),
             ];
             $breadcrumbItems[] = [
                 '@type' => 'ListItem',
@@ -196,7 +192,7 @@ class SeoService
     {
         $title = $category->name;
         $description = $category->description ?: "Browse all {$category->name} articles and content.";
-        $url = route('category.show', $category);
+        $url = $this->safeRoute('category.show', $category);
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -223,7 +219,7 @@ class SeoService
     {
         $title = $tag->name;
         $description = "Browse all content tagged with {$tag->name}.";
-        $url = route('tag.show', $tag);
+        $url = $this->safeRoute('tag.show', $tag);
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -250,7 +246,7 @@ class SeoService
     {
         $title = $author->name;
         $description = "Articles and content by {$author->name}.";
-        $url = route('author.show', $author->username);
+        $url = $this->safeRoute('author.show', $author->username);
         $image = $author->avatar_url;
 
         SEOMeta::setTitle($title);
@@ -301,7 +297,7 @@ class SeoService
     {
         $title = $page->meta_title ?: $page->title;
         $description = $page->meta_description ?: \Illuminate\Support\Str::limit($this->extractTextFromContent($page->content), 160);
-        $url = route('page.show', $page);
+        $url = $this->safeRoute('page.show', $page);
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -440,7 +436,7 @@ class SeoService
     {
         $title = 'Products';
         $description = 'Discover ingredients, tools, and staples we actually use and recommend.';
-        $url = route('products.index');
+        $url = $this->safeRoute('products.index');
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -467,7 +463,7 @@ class SeoService
     {
         $title = $category->name.' Products';
         $description = $category->description ?: "Browse all {$category->name} products we recommend.";
-        $url = route('products.category', $category);
+        $url = $this->safeRoute('products.category', $category);
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -494,7 +490,7 @@ class SeoService
     {
         $title = $store->name.' Products';
         $description = "Browse all products from {$store->name}.";
-        $url = route('products.store', $store);
+        $url = $this->safeRoute('products.store', $store);
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -577,5 +573,17 @@ class SeoService
         }
 
         return trim($text);
+    }
+
+    /**
+     * Safely generate a route URL, returning '#' if route doesn't exist (CMS_ONLY mode).
+     */
+    protected function safeRoute(string $name, mixed $parameters = []): string
+    {
+        try {
+            return route($name, $parameters);
+        } catch (\Symfony\Component\Routing\Exception\RouteNotFoundException) {
+            return '#';
+        }
     }
 }

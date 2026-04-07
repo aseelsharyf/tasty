@@ -130,6 +130,7 @@
                     :params="$section['data']['params'] ?? []"
                     :tag1="$section['data']['tag1'] ?? 'TASTY FEATURE'"
                     :bgColor="$section['data']['bgColor'] ?? 'yellow'"
+                    :mobileLayout="$section['data']['mobileLayout'] ?? 'scroll'"
                 />
                 @break
 

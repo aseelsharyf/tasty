@@ -27,9 +27,9 @@ abstract class BasePostsAction implements PostsActionContract
                 'imageAlt' => $post->title,
                 'blurhash' => $post->featured_image_blurhash,
                 'category' => $categoryModel?->name,
-                'categoryUrl' => $categoryModel ? route('category.show', $categoryModel->slug) : null,
+                'categoryUrl' => $categoryModel ? $this->safeRoute('category.show', $categoryModel->slug) : null,
                 'tag' => $tagModel?->name,
-                'tagUrl' => $tagModel ? route('tag.show', $tagModel->slug) : null,
+                'tagUrl' => $tagModel ? $this->safeRoute('tag.show', $tagModel->slug) : null,
                 'kicker' => $post->kicker ?? '',
                 'title' => $post->title,
                 'description' => $post->excerpt ?? '',
@@ -40,6 +40,18 @@ abstract class BasePostsAction implements PostsActionContract
                 'rating' => $post->getCustomField('rating'),
             ];
         })->toArray();
+    }
+
+    /**
+     * Safely generate a route URL, returning '#' if route doesn't exist (CMS_ONLY mode).
+     */
+    protected function safeRoute(string $name, mixed $parameters = []): string
+    {
+        try {
+            return route($name, $parameters);
+        } catch (\Symfony\Component\Routing\Exception\RouteNotFoundException) {
+            return '#';
+        }
     }
 
     /**

@@ -61,6 +61,8 @@ class FeaturedLocation extends Component
 
     public string $buttonVariant;
 
+    public string $mobileLayout;
+
     /** @var Collection<int, Post|array<string, mixed>> */
     public Collection $carouselPosts;
 
@@ -114,6 +116,7 @@ class FeaturedLocation extends Component
         string $bgColor = 'yellow',
         string $textColor = 'blue-black',
         string $buttonVariant = 'white',
+        string $mobileLayout = 'scroll',
         ?array $staticContent = null,
         int $totalSlots = 0,
         array $manualPostIds = [],
@@ -129,6 +132,7 @@ class FeaturedLocation extends Component
         $this->bgColorStyle = $bgResolved['style'];
         $this->textColor = $textColor;
         $this->buttonVariant = $buttonVariant;
+        $this->mobileLayout = $mobileLayout;
 
         // Initialize carousel posts
         $this->carouselPosts = collect();

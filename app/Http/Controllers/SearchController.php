@@ -89,7 +89,7 @@ class SearchController extends Controller
                     'type' => 'category',
                     'title' => $category->name,
                     'subtitle' => $category->posts_count.' posts',
-                    'url' => route('category.show', $category->slug),
+                    'url' => $this->safeRoute('category.show', $category->slug),
                     'image' => null,
                 ];
             }
@@ -99,7 +99,7 @@ class SearchController extends Controller
                     'type' => 'tag',
                     'title' => $tag->name,
                     'subtitle' => $tag->posts_count.' posts',
-                    'url' => route('tag.show', $tag->slug),
+                    'url' => $this->safeRoute('tag.show', $tag->slug),
                     'image' => null,
                 ];
             }
@@ -109,7 +109,7 @@ class SearchController extends Controller
                     'type' => 'author',
                     'title' => $author->name,
                     'subtitle' => 'Author',
-                    'url' => route('author.show', $author->username ?? $author->id),
+                    'url' => $this->safeRoute('author.show', $author->username ?? $author->id),
                     'image' => $author->avatar_url ?? null,
                 ];
             }

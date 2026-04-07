@@ -132,6 +132,7 @@
                     :textColor="$section['data']['textColor'] ?? 'blue-black'"
                     :buttonVariant="$section['data']['buttonVariant'] ?? 'white'"
                     :buttonText="$section['data']['buttonText'] ?? 'Read More'"
+                    :mobileLayout="$section['data']['mobileLayout'] ?? 'scroll'"
                     :totalSlots="$section['data']['totalSlots'] ?? 0"
                     :manualPostIds="$section['data']['manualPostIds'] ?? []"
                     :staticSlots="$section['data']['staticSlots'] ?? []"

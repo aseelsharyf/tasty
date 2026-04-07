@@ -410,6 +410,7 @@ class SectionDataResolver
             'textColor' => $config['textColor'] ?? 'blue-black',
             'buttonVariant' => $config['buttonVariant'] ?? 'white',
             'buttonText' => $config['buttonText'] ?? 'Read More',
+            'mobileLayout' => $config['mobileLayout'] ?? 'scroll',
             // Data source for dynamic slots
             'action' => $dataSource['action'] ?? 'recent',
             'params' => $this->buildParams($dataSource),

@@ -75,6 +75,12 @@ class FeaturedLocationSection extends AbstractSectionDefinition
                 'default' => '',
                 'placeholder' => 'Uses category if empty',
             ],
+            'mobileLayout' => [
+                'type' => 'select',
+                'label' => 'Mobile Layout',
+                'default' => 'scroll',
+                'options' => ['scroll', 'grid'],
+            ],
         ];
     }
 

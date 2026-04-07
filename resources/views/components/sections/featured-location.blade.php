@@ -58,18 +58,32 @@
     {{-- Carousel of additional posts --}}
     @if($carouselPosts->isNotEmpty())
         <section class="w-full {{ $bgColorClass }} pb-[50px]" @if($bgColorStyle) style="{{ $bgColorStyle }}" @endif>
-            <div class="scroll-container pb-6">
-                <div class="flex items-start justify-center min-w-max px-5 gap-8">
-                    @foreach($carouselPosts as $carouselPost)
-                        <div class="flex items-start shrink-0 {{ $loop->last ? 'pr-5' : '' }}">
+            @if($mobileLayout === 'grid')
+                <div class="px-5">
+                    <div class="grid grid-cols-2 gap-5">
+                        @foreach($carouselPosts as $carouselPost)
                             <x-cards.spread
                                 :post="$carouselPost"
-                                :reversed="$loop->even"
+                                :reversed="false"
+                                mobile
                             />
-                        </div>
-                    @endforeach
+                        @endforeach
+                    </div>
                 </div>
-            </div>
+            @else
+                <div class="scroll-container pb-6">
+                    <div class="flex items-start justify-center min-w-max px-5 gap-8">
+                        @foreach($carouselPosts as $carouselPost)
+                            <div class="flex items-start shrink-0 {{ $loop->last ? 'pr-5' : '' }}">
+                                <x-cards.spread
+                                    :post="$carouselPost"
+                                    :reversed="$loop->even"
+                                />
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         </section>
     @endif
 </div>
