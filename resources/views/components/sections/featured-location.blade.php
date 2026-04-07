@@ -70,6 +70,34 @@
                         @endforeach
                     </div>
                 </div>
+            @elseif($mobileLayout === 'carousel-plus')
+                {{-- First 2 cards at scroll-card size, one per row --}}
+                <div class="px-5 flex flex-col items-center gap-8">
+                    @foreach($carouselPosts->take(2) as $carouselPost)
+                        <div class="w-[300px]">
+                            <x-cards.spread
+                                :post="$carouselPost"
+                                :reversed="false"
+                                mobile
+                            />
+                        </div>
+                    @endforeach
+                </div>
+                {{-- Remaining cards in horizontal scroll --}}
+                @if($carouselPosts->count() > 2)
+                    <div class="scroll-container pb-6 mt-5">
+                        <div class="flex items-start min-w-max px-5 gap-8">
+                            @foreach($carouselPosts->skip(2) as $carouselPost)
+                                <div class="flex items-start shrink-0 {{ $loop->last ? 'pr-5' : '' }}">
+                                    <x-cards.spread
+                                        :post="$carouselPost"
+                                        :reversed="$loop->even"
+                                    />
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             @else
                 <div class="scroll-container pb-6">
                     <div class="flex items-start justify-center min-w-max px-5 gap-8">

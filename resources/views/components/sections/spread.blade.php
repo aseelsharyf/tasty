@@ -79,6 +79,75 @@
                 @endforeach
             </div>
         </div>
+    @elseif($mobileLayout === 'carousel-plus')
+        {{-- Carousel Plus: Grid first 2, scroll the rest --}}
+        {{-- Desktop: Horizontal Scroll (same as grid mode) --}}
+        <div class="scroll-container pb-8 container-main max-lg:hidden" x-ref="scrollContainer">
+            <div class="flex items-start pl-10 min-w-max">
+                @if($showIntro)
+                    <div class="flex items-start shrink-0 self-center" x-ref="introCard">
+                        <div class="flex flex-col items-center justify-center gap-5 w-[424px] px-10">
+                            @if($introImage)
+                                <div class="w-full max-w-[320px] h-[429.5px]">
+                                    <img src="{{ $introImage }}" alt="{{ $introImageAlt }}" loading="lazy" decoding="async" class="w-full h-full object-contain" style="mix-blend-mode: darken;">
+                                </div>
+                            @endif
+                            <div class="flex flex-col items-center text-center text-blue-black">
+                                <span class="font-display text-[36px] leading-[1.1] tracking-[-0.04em]">{{ $titleSmall }}</span>
+                                <h2 class="font-display text-[80px] leading-[1] tracking-[-0.04em] uppercase">{{ $titleLarge }}</h2>
+                            </div>
+                            @if($description)
+                                <p class="text-body-md text-blue-black text-center max-w-[300px]">{{ $description }}</p>
+                            @endif
+                        </div>
+                        @if($showDividers)
+                            <div class="w-px h-[600px] {{ $dividerColor }} shrink-0"></div>
+                        @endif
+                    </div>
+                @endif
+
+                @foreach($posts as $index => $post)
+                    <div class="flex items-start shrink-0 {{ $loop->last ? 'pr-10' : '' }}">
+                        <x-cards.spread
+                            :post="$post"
+                            :reversed="$loop->even"
+                        />
+                        @if(!$loop->last && $showDividers)
+                            <div class="w-px h-[600px] {{ $dividerColor }} shrink-0"></div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Mobile: First 2 at scroll-card size, rest in scroll --}}
+        <div class="hidden max-lg:block">
+            <div class="px-5 flex flex-col items-center gap-8">
+                @foreach($posts->take(2) as $post)
+                    <div class="w-[300px]">
+                        <x-cards.spread
+                            :post="$post"
+                            :reversed="false"
+                            mobile
+                        />
+                    </div>
+                @endforeach
+            </div>
+            @if($posts->count() > 2)
+                <div class="scroll-container pb-6 mt-5">
+                    <div class="flex items-start min-w-max px-5 gap-8">
+                        @foreach($posts->skip(2) as $post)
+                            <div class="flex items-start shrink-0 {{ $loop->last ? 'pr-5' : '' }}">
+                                <x-cards.spread
+                                    :post="$post"
+                                    :reversed="$loop->even"
+                                />
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+        </div>
     @else
         {{-- Scroll Layout (Default) --}}
         <div class="scroll-container pb-8 max-lg:pb-6 container-main" x-ref="scrollContainer">

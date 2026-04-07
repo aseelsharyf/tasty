@@ -81,7 +81,7 @@ class SpreadSection extends AbstractSectionDefinition
                 'type' => 'select',
                 'label' => 'Mobile Layout',
                 'default' => 'scroll',
-                'options' => ['scroll', 'grid'],
+                'options' => ['scroll', 'grid', 'carousel-plus'],
             ],
             'showDividers' => [
                 'type' => 'toggle',
