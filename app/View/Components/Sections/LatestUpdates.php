@@ -131,7 +131,6 @@ class LatestUpdates extends Component
                 params: ! empty($params) ? $params : $loadParams,
             );
             $this->excludeIds = $this->computeExcludeIds();
-            $this->markSectionPostsUsed();
 
             return;
         }
@@ -165,7 +164,6 @@ class LatestUpdates extends Component
         }
 
         $this->excludeIds = $this->computeExcludeIds();
-        $this->markSectionPostsUsed();
     }
 
     /**

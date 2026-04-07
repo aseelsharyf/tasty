@@ -170,8 +170,7 @@ class Hero extends Component
                 : '50% 50%';
         }
 
-        // Mark post as used so other sections don't show it
-        $this->markPostUsed($this->post);
+        // Hero posts are not marked as used — they can appear in other sections too
     }
 
     /**
