@@ -121,7 +121,7 @@ class MenuItem extends Model
         if ($this->linkable) {
             return match ($this->type) {
                 self::TYPE_CATEGORY => route('category.show', $this->linkable->slug),
-                self::TYPE_POST => route('post.show', $this->linkable->slug),
+                self::TYPE_POST => $this->linkable->url,
                 default => $this->url,
             };
         }

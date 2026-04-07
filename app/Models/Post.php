@@ -382,7 +382,11 @@ class Post extends Model implements HasMedia
     {
         $categorySlug = $this->categories->first()?->slug ?? 'uncategorized';
 
-        return route('post.show', ['category' => $categorySlug, 'post' => $this->slug]);
+        try {
+            return route('post.show', ['category' => $categorySlug, 'post' => $this->slug]);
+        } catch (\Symfony\Component\Routing\Exception\RouteNotFoundException) {
+            return '#';
+        }
     }
 
     /**

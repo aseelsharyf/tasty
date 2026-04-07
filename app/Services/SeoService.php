@@ -71,7 +71,11 @@ class SeoService
     {
         $title = $post->meta_title ?: $post->title;
         $description = $post->meta_description ?: $post->excerpt ?: \Illuminate\Support\Str::limit($this->extractTextFromContent($post->content), 160);
-        $url = route('post.show', ['category' => $post->categories->first()?->slug ?? 'uncategorized', 'post' => $post->slug]);
+        try {
+            $url = route('post.show', ['category' => $post->categories->first()?->slug ?? 'uncategorized', 'post' => $post->slug]);
+        } catch (\Symfony\Component\Routing\Exception\RouteNotFoundException) {
+            $url = '#';
+        }
 
         // Try to get generated OG image, fallback to featured image
         $ogImage = $this->ogImageService->getUrlForPost($post);
