@@ -134,7 +134,7 @@
                 @endforeach
             </div>
             @if($posts->count() > 2)
-                <div class="scroll-container pb-6 mt-5">
+                <div class="scroll-container pb-6 mt-12">
                     <div class="flex items-start min-w-max px-5 gap-8">
                         @foreach($posts->skip(2) as $post)
                             <div class="flex items-start shrink-0 {{ $loop->last ? 'pr-5' : '' }}">
