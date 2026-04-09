@@ -153,6 +153,11 @@
     @endif
 </article>
 
+{{-- Featured Products Carousel (only for public view, not preview) --}}
+@if(!$isPreview && $featuredProducts?->isNotEmpty())
+    <x-sections.product-carousel :products="$featuredProducts" title="Start Shopping" />
+@endif
+
 {{-- Related Posts (only for public view, not preview) --}}
 @if(!$isPreview && $relatedPosts?->isNotEmpty())
     @php
@@ -178,11 +183,6 @@
             @endif
         </div>
     </section>
-@endif
-
-{{-- Featured Products Carousel (only for public view, not preview) --}}
-@if(!$isPreview && $featuredProducts?->isNotEmpty())
-    <x-sections.product-carousel :products="$featuredProducts" title="Start Shopping" />
 @endif
 
 {{-- Newsletter Section (only for public view, not preview) --}}

@@ -33,9 +33,9 @@
                     @endforeach
                 </div>
             @else
-                <div class="text-center py-12">
+               {{--  <div class="text-center py-12">
                     <p class="text-tasty-blue-black/60">No comments yet. Be the first to share your thoughts!</p>
-                </div>
+                </div> --}}
             @endif
         @else
             <div class="text-center py-12 bg-white rounded-xl">
