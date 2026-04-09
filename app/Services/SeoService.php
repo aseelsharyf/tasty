@@ -48,15 +48,17 @@ class SeoService
         OpenGraph::setDescription($seoSetting?->og_description ?? $description);
         OpenGraph::setType($seoSetting?->og_type ?? 'website');
 
-        if ($seoSetting?->og_image) {
-            OpenGraph::addImage($seoSetting->og_image);
+        $ogImage = $seoSetting?->og_image ?? $this->ogImageService->getDefaultUrl();
+        if ($ogImage) {
+            OpenGraph::addImage($ogImage);
         }
 
         TwitterCard::setTitle($seoSetting?->twitter_title ?? $title);
         TwitterCard::setDescription($seoSetting?->twitter_description ?? $description);
 
-        if ($seoSetting?->twitter_image) {
-            TwitterCard::setImage($seoSetting->twitter_image);
+        $twitterImage = $seoSetting?->twitter_image ?? $ogImage;
+        if ($twitterImage) {
+            TwitterCard::setImage($twitterImage);
         }
 
         JsonLd::setTitle($title);
@@ -73,9 +75,9 @@ class SeoService
         $description = $post->meta_description ?: $post->excerpt ?: \Illuminate\Support\Str::limit($this->extractTextFromContent($post->content), 160);
         $url = $this->safeRoute('post.show', ['category' => $post->categories->first()?->slug ?? 'uncategorized', 'post' => $post->slug]);
 
-        // Try to get generated OG image, fallback to featured image
+        // Try to get generated OG image, fallback to featured image, then default
         $ogImage = $this->ogImageService->getUrlForPost($post);
-        $image = $ogImage ?? $post->featured_image_url;
+        $image = $ogImage ?? $post->featured_image_url ?? $this->ogImageService->getDefaultUrl();
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -193,6 +195,7 @@ class SeoService
         $title = $category->name;
         $description = $category->description ?: "Browse all {$category->name} articles and content.";
         $url = $this->safeRoute('category.show', $category);
+        $image = $this->ogImageService->getUrlForCategory($category);
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -203,8 +206,16 @@ class SeoService
         OpenGraph::setType('website');
         OpenGraph::setUrl($url);
 
+        if ($image) {
+            OpenGraph::addImage($image);
+        }
+
         TwitterCard::setTitle($title);
         TwitterCard::setDescription($description);
+
+        if ($image) {
+            TwitterCard::setImage($image);
+        }
 
         JsonLd::setTitle($title);
         JsonLd::setDescription($description);
@@ -220,6 +231,7 @@ class SeoService
         $title = $tag->name;
         $description = "Browse all content tagged with {$tag->name}.";
         $url = $this->safeRoute('tag.show', $tag);
+        $image = $this->ogImageService->getDefaultUrl();
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -230,8 +242,16 @@ class SeoService
         OpenGraph::setType('website');
         OpenGraph::setUrl($url);
 
+        if ($image) {
+            OpenGraph::addImage($image);
+        }
+
         TwitterCard::setTitle($title);
         TwitterCard::setDescription($description);
+
+        if ($image) {
+            TwitterCard::setImage($image);
+        }
 
         JsonLd::setTitle($title);
         JsonLd::setDescription($description);
@@ -247,7 +267,7 @@ class SeoService
         $title = $author->name;
         $description = "Articles and content by {$author->name}.";
         $url = $this->safeRoute('author.show', $author->username);
-        $image = $author->avatar_url;
+        $image = $author->avatar_url ?: $this->ogImageService->getDefaultUrl();
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -298,6 +318,7 @@ class SeoService
         $title = $page->meta_title ?: $page->title;
         $description = $page->meta_description ?: \Illuminate\Support\Str::limit($this->extractTextFromContent($page->content), 160);
         $url = $this->safeRoute('page.show', $page);
+        $image = $this->ogImageService->getDefaultUrl();
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -308,8 +329,16 @@ class SeoService
         OpenGraph::setType('article');
         OpenGraph::setUrl($url);
 
+        if ($image) {
+            OpenGraph::addImage($image);
+        }
+
         TwitterCard::setTitle($title);
         TwitterCard::setDescription($description);
+
+        if ($image) {
+            TwitterCard::setImage($image);
+        }
 
         JsonLd::setTitle($title);
         JsonLd::setDescription($description);
@@ -352,8 +381,9 @@ class SeoService
         OpenGraph::setDescription($seoSetting->og_description ?? $seoSetting->meta_description);
         OpenGraph::setType($seoSetting->og_type ?? 'website');
 
-        if ($seoSetting->og_image) {
-            OpenGraph::addImage($seoSetting->og_image);
+        $ogImage = $seoSetting->og_image ?? $this->ogImageService->getDefaultUrl();
+        if ($ogImage) {
+            OpenGraph::addImage($ogImage);
         }
 
         TwitterCard::setTitle($seoSetting->twitter_title ?? $seoSetting->meta_title);
@@ -363,8 +393,9 @@ class SeoService
             TwitterCard::setType($seoSetting->twitter_card);
         }
 
-        if ($seoSetting->twitter_image) {
-            TwitterCard::setImage($seoSetting->twitter_image);
+        $twitterImage = $seoSetting->twitter_image ?? $ogImage;
+        if ($twitterImage) {
+            TwitterCard::setImage($twitterImage);
         }
 
         JsonLd::setTitle($seoSetting->meta_title);
@@ -437,6 +468,7 @@ class SeoService
         $title = 'Products';
         $description = 'Discover ingredients, tools, and staples we actually use and recommend.';
         $url = $this->safeRoute('products.index');
+        $image = $this->ogImageService->getDefaultUrl();
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -447,8 +479,16 @@ class SeoService
         OpenGraph::setType('website');
         OpenGraph::setUrl($url);
 
+        if ($image) {
+            OpenGraph::addImage($image);
+        }
+
         TwitterCard::setTitle($title);
         TwitterCard::setDescription($description);
+
+        if ($image) {
+            TwitterCard::setImage($image);
+        }
 
         JsonLd::setTitle($title);
         JsonLd::setDescription($description);
@@ -464,6 +504,7 @@ class SeoService
         $title = $category->name.' Products';
         $description = $category->description ?: "Browse all {$category->name} products we recommend.";
         $url = $this->safeRoute('products.category', $category);
+        $image = $this->ogImageService->getDefaultUrl();
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -474,8 +515,16 @@ class SeoService
         OpenGraph::setType('website');
         OpenGraph::setUrl($url);
 
+        if ($image) {
+            OpenGraph::addImage($image);
+        }
+
         TwitterCard::setTitle($title);
         TwitterCard::setDescription($description);
+
+        if ($image) {
+            TwitterCard::setImage($image);
+        }
 
         JsonLd::setTitle($title);
         JsonLd::setDescription($description);
@@ -501,15 +550,16 @@ class SeoService
         OpenGraph::setType('website');
         OpenGraph::setUrl($url);
 
-        if ($store->logo_url) {
-            OpenGraph::addImage($store->logo_url);
+        $image = $store->logo_url ?: $this->ogImageService->getDefaultUrl();
+        if ($image) {
+            OpenGraph::addImage($image);
         }
 
         TwitterCard::setTitle($title);
         TwitterCard::setDescription($description);
 
-        if ($store->logo_url) {
-            TwitterCard::setImage($store->logo_url);
+        if ($image) {
+            TwitterCard::setImage($image);
         }
 
         JsonLd::setTitle($title);

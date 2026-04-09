@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Category;
 use App\Models\Post;
 use App\Services\OgImageService;
 use Illuminate\Console\Command;
@@ -11,10 +12,12 @@ class GenerateOgImages extends Command
     protected $signature = 'og:generate
                             {--post= : Generate for a specific post by slug}
                             {--all : Generate for all published posts}
+                            {--category= : Generate for a specific category by slug}
+                            {--categories : Generate for all categories}
                             {--default : Generate the default site OG image}
                             {--force : Regenerate even if image exists}';
 
-    protected $description = 'Generate OG images for posts and default pages';
+    protected $description = 'Generate OG images for posts, categories, and default pages';
 
     public function handle(OgImageService $ogImageService): int
     {
@@ -45,6 +48,46 @@ class GenerateOgImages extends Command
             }
 
             $this->generateForPost($ogImageService, $post);
+
+            return self::SUCCESS;
+        }
+
+        // Generate for specific category
+        if ($this->option('category')) {
+            $category = Category::where('slug', $this->option('category'))->first();
+
+            if (! $category) {
+                $this->error('Category not found: '.$this->option('category'));
+
+                return self::FAILURE;
+            }
+
+            $this->generateForCategory($ogImageService, $category);
+
+            return self::SUCCESS;
+        }
+
+        // Generate for all categories
+        if ($this->option('categories')) {
+            $categories = Category::all();
+
+            $this->info("Generating OG images for {$categories->count()} categories...");
+
+            $bar = $this->output->createProgressBar($categories->count());
+            $bar->start();
+
+            foreach ($categories as $category) {
+                if ($force) {
+                    $ogImageService->deleteForCategory($category);
+                }
+
+                $ogImageService->generateForCategory($category);
+                $bar->advance();
+            }
+
+            $bar->finish();
+            $this->newLine();
+            $this->info('Done!');
 
             return self::SUCCESS;
         }
@@ -80,6 +123,9 @@ class GenerateOgImages extends Command
         $this->line('  php artisan og:generate --post=my-post-slug');
         $this->line('  php artisan og:generate --all');
         $this->line('  php artisan og:generate --all --force');
+        $this->line('  php artisan og:generate --category=my-category-slug');
+        $this->line('  php artisan og:generate --categories');
+        $this->line('  php artisan og:generate --categories --force');
         $this->line('  php artisan og:generate --default');
         $this->line('  php artisan og:generate --default --force');
 
@@ -100,6 +146,23 @@ class GenerateOgImages extends Command
             $this->info("Generated: {$url}");
         } else {
             $this->warn('Failed to generate OG image (no featured image?)');
+        }
+    }
+
+    protected function generateForCategory(OgImageService $ogImageService, Category $category): void
+    {
+        $this->info("Generating OG image for category: {$category->name}");
+
+        if ($this->option('force')) {
+            $ogImageService->deleteForCategory($category);
+        }
+
+        $url = $ogImageService->generateForCategory($category);
+
+        if ($url) {
+            $this->info("Generated: {$url}");
+        } else {
+            $this->warn('Failed to generate OG image for category');
         }
     }
 }

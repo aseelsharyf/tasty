@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Category;
 use App\Models\Post;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Interfaces\ImageInterface;
@@ -88,10 +89,20 @@ class OgImageService
      */
     protected function generateOgImage(string $imageContents, Post $post): ImageInterface
     {
+        return $this->composeOgImage($imageContents, $post->featured_image_anchor);
+    }
+
+    /**
+     * Compose an OG image from raw image bytes and an optional focal point.
+     *
+     * @param  array{x: float, y: float}|null  $focalPoint
+     */
+    protected function composeOgImage(string $imageContents, ?array $focalPoint): ImageInterface
+    {
         $image = Image::read($imageContents);
 
         // Full-bleed: cover the entire canvas
-        $this->coverWithFocalPoint($image, $post->featured_image_anchor);
+        $this->coverWithFocalPoint($image, $focalPoint);
 
         // Apply diagonal yellow gradient from bottom-right
         $this->addDiagonalGradient($image);
@@ -481,6 +492,72 @@ class OgImageService
     public function deleteForPost(Post $post): void
     {
         $filename = 'og-images/posts/'.$post->slug.'.png';
+        $fullPath = $this->getPath($filename);
+        Storage::disk($this->disk)->delete($fullPath);
+    }
+
+    /**
+     * Generate an OG image for a category, using its featured image if available.
+     */
+    public function generateForCategory(Category $category): ?string
+    {
+        $sourceUrl = $category->featuredImage?->url;
+
+        if (! $sourceUrl) {
+            return $this->getDefaultUrl();
+        }
+
+        $filename = 'og-images/categories/'.$category->slug.'.png';
+        $fullPath = $this->getPath($filename);
+
+        // Reuse cached image if newer than the category
+        if (Storage::disk($this->disk)->exists($fullPath)) {
+            $ogImageTime = Storage::disk($this->disk)->lastModified($fullPath);
+            if ($ogImageTime > $category->updated_at->timestamp) {
+                return Storage::disk($this->disk)->url($fullPath);
+            }
+        }
+
+        try {
+            $imageContents = file_get_contents($sourceUrl);
+            if (! $imageContents) {
+                return $this->getDefaultUrl();
+            }
+
+            $image = $this->composeOgImage($imageContents, null);
+
+            $pngData = $image->toPng()->toString();
+            Storage::disk($this->disk)->put($fullPath, $pngData, 'public');
+
+            return Storage::disk($this->disk)->url($fullPath);
+        } catch (\Exception $e) {
+            report($e);
+
+            return $this->getDefaultUrl();
+        }
+    }
+
+    /**
+     * Get the OG image URL for a category, generating if needed.
+     */
+    public function getUrlForCategory(Category $category): ?string
+    {
+        $filename = 'og-images/categories/'.$category->slug.'.png';
+        $fullPath = $this->getPath($filename);
+
+        if (Storage::disk($this->disk)->exists($fullPath)) {
+            return Storage::disk($this->disk)->url($fullPath);
+        }
+
+        return $this->generateForCategory($category);
+    }
+
+    /**
+     * Delete OG image for a category.
+     */
+    public function deleteForCategory(Category $category): void
+    {
+        $filename = 'og-images/categories/'.$category->slug.'.png';
         $fullPath = $this->getPath($filename);
         Storage::disk($this->disk)->delete($fullPath);
     }
