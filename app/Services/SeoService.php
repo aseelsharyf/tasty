@@ -44,13 +44,14 @@ class SeoService
         }
 
         $ogImagePath = Setting::get('seo.og_image', '') ?: null;
+        $disk = config('media-library.disk_name', 'public');
 
         return $this->siteDefaults = [
             'meta_keywords' => Setting::get('seo.meta_keywords', '') ?: null,
             'meta_description' => Setting::get('seo.meta_description', '') ?: null,
             'og_title' => Setting::get('seo.og_title', '') ?: null,
             'og_description' => Setting::get('seo.og_description', '') ?: null,
-            'og_image' => $ogImagePath ? Storage::disk('public')->url($ogImagePath) : null,
+            'og_image' => $ogImagePath ? Storage::disk($disk)->url($ogImagePath) : null,
         ];
     }
 

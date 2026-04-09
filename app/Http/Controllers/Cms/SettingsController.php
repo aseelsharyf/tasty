@@ -33,12 +33,12 @@ class SettingsController extends Controller
                 // OpenGraph
                 'og_title' => Setting::get('seo.og_title', ''),
                 'og_description' => Setting::get('seo.og_description', ''),
-                'og_image' => Setting::get('seo.og_image', ''),
+                'og_image' => $this->resolveUploadUrl('seo.og_image'),
                 // Favicons
-                'favicon' => Setting::get('site.favicon', ''),
-                'favicon_16' => Setting::get('site.favicon_16', ''),
-                'favicon_32' => Setting::get('site.favicon_32', ''),
-                'apple_touch_icon' => Setting::get('site.apple_touch_icon', ''),
+                'favicon' => $this->resolveUploadUrl('site.favicon'),
+                'favicon_16' => $this->resolveUploadUrl('site.favicon_16'),
+                'favicon_32' => $this->resolveUploadUrl('site.favicon_32'),
+                'apple_touch_icon' => $this->resolveUploadUrl('site.apple_touch_icon'),
                 // Social Links
                 'social_facebook' => Setting::get('social.facebook', ''),
                 'social_twitter' => Setting::get('social.twitter', ''),
@@ -137,9 +137,11 @@ class SettingsController extends Controller
         Setting::set('seo.og_title', $validated['og_title'] ?? '', 'seo');
         Setting::set('seo.og_description', $validated['og_description'] ?? '', 'seo');
 
+        $disk = $this->settingsDisk();
+
         // Handle OG image upload
         if ($request->hasFile('og_image')) {
-            $path = $request->file('og_image')->store('settings', 'public');
+            $path = $request->file('og_image')->store('settings', $disk);
             $this->deleteOldFile('seo.og_image');
             Setting::set('seo.og_image', $path, 'seo');
         } elseif ($request->boolean('remove_og_image')) {
@@ -157,7 +159,7 @@ class SettingsController extends Controller
 
         foreach ($faviconMap as $field => $key) {
             if ($request->hasFile($field)) {
-                $path = $request->file($field)->store('settings/favicons', 'public');
+                $path = $request->file($field)->store('settings/favicons', $disk);
                 $this->deleteOldFile($key);
                 Setting::set($key, $path, 'site');
             } elseif ($request->boolean("remove_{$field}")) {
@@ -183,9 +185,34 @@ class SettingsController extends Controller
     private function deleteOldFile(string $settingKey): void
     {
         $oldPath = Setting::get($settingKey);
-        if ($oldPath && Storage::disk('public')->exists($oldPath)) {
-            Storage::disk('public')->delete($oldPath);
+        $disk = $this->settingsDisk();
+        if ($oldPath && Storage::disk($disk)->exists($oldPath)) {
+            Storage::disk($disk)->delete($oldPath);
         }
+    }
+
+    /**
+     * The disk used for settings uploads (OG image, favicons).
+     *
+     * Matches the media library disk so everything lives in the same bucket in production.
+     */
+    private function settingsDisk(): string
+    {
+        return config('media-library.disk_name', 'public');
+    }
+
+    /**
+     * Resolve a stored upload path to a full URL on the settings disk.
+     */
+    private function resolveUploadUrl(string $settingKey): string
+    {
+        $path = Setting::get($settingKey, '');
+
+        if (! $path) {
+            return '';
+        }
+
+        return Storage::disk($this->settingsDisk())->url($path);
     }
 
     public function languages(): Response

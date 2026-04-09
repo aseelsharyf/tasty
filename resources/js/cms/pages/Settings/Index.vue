@@ -100,11 +100,11 @@ const favicon32Preview = ref<string | null>(null);
 const appleTouchIconPreview = ref<string | null>(null);
 
 // Existing file URLs
-const existingOgImage = computed(() => props.settings.og_image ? `/storage/${props.settings.og_image}` : null);
-const existingFavicon = computed(() => props.settings.favicon ? `/storage/${props.settings.favicon}` : null);
-const existingFavicon16 = computed(() => props.settings.favicon_16 ? `/storage/${props.settings.favicon_16}` : null);
-const existingFavicon32 = computed(() => props.settings.favicon_32 ? `/storage/${props.settings.favicon_32}` : null);
-const existingAppleTouchIcon = computed(() => props.settings.apple_touch_icon ? `/storage/${props.settings.apple_touch_icon}` : null);
+const existingOgImage = computed(() => props.settings.og_image || null);
+const existingFavicon = computed(() => props.settings.favicon || null);
+const existingFavicon16 = computed(() => props.settings.favicon_16 || null);
+const existingFavicon32 = computed(() => props.settings.favicon_32 || null);
+const existingAppleTouchIcon = computed(() => props.settings.apple_touch_icon || null);
 
 function handleFileChange(event: Event, field: 'og_image' | 'favicon' | 'favicon_16' | 'favicon_32' | 'apple_touch_icon') {
     const input = event.target as HTMLInputElement;
