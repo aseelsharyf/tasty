@@ -661,17 +661,18 @@ class OgImageService
     }
 
     /**
-     * Get the default OG image URL, generating if needed.
+     * Get the default OG image URL.
+     *
+     * Returns the static fallback shipped at public/images/defaul-og.png.
      */
     public function getDefaultUrl(): ?string
     {
-        $filename = 'og-images/default.png';
-        $fullPath = $this->getPath($filename);
+        $path = public_path('images/defaul-og.png');
 
-        if (Storage::disk($this->disk)->exists($fullPath)) {
-            return Storage::disk($this->disk)->url($fullPath);
+        if (! file_exists($path)) {
+            return null;
         }
 
-        return $this->generateDefault();
+        return asset('images/defaul-og.png');
     }
 }
