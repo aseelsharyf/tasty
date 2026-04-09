@@ -8,19 +8,50 @@ use App\Models\Post;
 use App\Models\ProductCategory;
 use App\Models\ProductStore;
 use App\Models\SeoSetting;
+use App\Models\Setting;
 use App\Models\Tag;
 use App\Models\User;
 use Artesaos\SEOTools\Facades\JsonLd;
 use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\TwitterCard;
+use Illuminate\Support\Facades\Storage;
 
 class SeoService
 {
+    /**
+     * Cached site-wide SEO defaults from the key-value Setting store.
+     *
+     * @var array{meta_keywords: ?string, meta_description: ?string, og_title: ?string, og_description: ?string, og_image: ?string}|null
+     */
+    protected ?array $siteDefaults = null;
+
     public function __construct(
         protected ?OgImageService $ogImageService = null
     ) {
         $this->ogImageService = $ogImageService ?? app(OgImageService::class);
+    }
+
+    /**
+     * Load site-wide defaults from settings/seo + settings/opengraph tabs.
+     *
+     * @return array{meta_keywords: ?string, meta_description: ?string, og_title: ?string, og_description: ?string, og_image: ?string}
+     */
+    protected function siteDefaults(): array
+    {
+        if ($this->siteDefaults !== null) {
+            return $this->siteDefaults;
+        }
+
+        $ogImagePath = Setting::get('seo.og_image', '') ?: null;
+
+        return $this->siteDefaults = [
+            'meta_keywords' => Setting::get('seo.meta_keywords', '') ?: null,
+            'meta_description' => Setting::get('seo.meta_description', '') ?: null,
+            'og_title' => Setting::get('seo.og_title', '') ?: null,
+            'og_description' => Setting::get('seo.og_description', '') ?: null,
+            'og_image' => $ogImagePath ? Storage::disk('public')->url($ogImagePath) : null,
+        ];
     }
 
     /**
@@ -29,32 +60,45 @@ class SeoService
     public function setHomepage(?string $customTitle = null, ?string $customDescription = null): void
     {
         $seoSetting = SeoSetting::findByRoute('homepage');
+        $defaults = $this->siteDefaults();
 
-        $title = $customTitle ?? $seoSetting?->meta_title ?? config('app.name');
-        $description = $customDescription ?? $seoSetting?->meta_description ?? config('seotools.meta.defaults.description');
+        $title = $customTitle
+            ?? $seoSetting?->meta_title
+            ?? $defaults['og_title']
+            ?? config('app.name');
+
+        $description = $customDescription
+            ?? $seoSetting?->meta_description
+            ?? $defaults['meta_description']
+            ?? $defaults['og_description']
+            ?? config('seotools.meta.defaults.description');
 
         SEOMeta::setTitle($title, false);
         SEOMeta::setDescription($description);
 
-        if ($seoSetting?->meta_keywords) {
-            SEOMeta::setKeywords($seoSetting->meta_keywords);
+        $keywords = $seoSetting?->meta_keywords ?: $defaults['meta_keywords'];
+        if ($keywords) {
+            SEOMeta::setKeywords($keywords);
         }
 
         if ($seoSetting?->robots) {
             SEOMeta::setRobots($seoSetting->robots);
         }
 
-        OpenGraph::setTitle($seoSetting?->og_title ?? $title);
-        OpenGraph::setDescription($seoSetting?->og_description ?? $description);
+        OpenGraph::setTitle($seoSetting?->og_title ?? $defaults['og_title'] ?? $title);
+        OpenGraph::setDescription($seoSetting?->og_description ?? $defaults['og_description'] ?? $description);
         OpenGraph::setType($seoSetting?->og_type ?? 'website');
 
-        $ogImage = $seoSetting?->og_image ?? $this->ogImageService->getDefaultUrl();
+        $ogImage = $seoSetting?->og_image
+            ?? $defaults['og_image']
+            ?? $this->ogImageService->getDefaultUrl();
+
         if ($ogImage) {
             OpenGraph::addImage($ogImage);
         }
 
-        TwitterCard::setTitle($seoSetting?->twitter_title ?? $title);
-        TwitterCard::setDescription($seoSetting?->twitter_description ?? $description);
+        TwitterCard::setTitle($seoSetting?->twitter_title ?? $defaults['og_title'] ?? $title);
+        TwitterCard::setDescription($seoSetting?->twitter_description ?? $defaults['og_description'] ?? $description);
 
         $twitterImage = $seoSetting?->twitter_image ?? $ogImage;
         if ($twitterImage) {
@@ -71,13 +115,23 @@ class SeoService
      */
     public function setPost(Post $post): void
     {
-        $title = $post->meta_title ?: $post->title;
-        $description = $post->meta_description ?: $post->excerpt ?: \Illuminate\Support\Str::limit($this->extractTextFromContent($post->content), 160);
+        $seoSetting = SeoSetting::findByRoute('post.show');
+
+        $title = $post->meta_title ?: ($seoSetting?->meta_title ?: $post->title);
+        $description = $post->meta_description
+            ?: ($seoSetting?->meta_description
+                ?: ($post->excerpt ?: \Illuminate\Support\Str::limit($this->extractTextFromContent($post->content), 160)));
         $url = $this->safeRoute('post.show', ['category' => $post->categories->first()?->slug ?? 'uncategorized', 'post' => $post->slug]);
 
-        // Try to get generated OG image, fallback to featured image, then default
+        // Try to get generated OG image, fallback to featured image, then route setting, then site default, then default
         $ogImage = $this->ogImageService->getUrlForPost($post);
-        $image = $ogImage ?? $post->featured_image_url ?? $this->ogImageService->getDefaultUrl();
+        $image = $ogImage
+            ?? $post->featured_image_url
+            ?? $seoSetting?->og_image
+            ?? $this->siteDefaults()['og_image']
+            ?? $this->ogImageService->getDefaultUrl();
+
+        $this->applySettingExtras($seoSetting);
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -192,10 +246,20 @@ class SeoService
      */
     public function setCategory(Category $category): void
     {
-        $title = $category->name;
-        $description = $category->description ?: "Browse all {$category->name} articles and content.";
+        $seoSetting = SeoSetting::findByRoute('category.show');
+
+        $title = $seoSetting?->meta_title
+            ? str_replace(':name', $category->name, $seoSetting->meta_title)
+            : $category->name;
+        $description = $seoSetting?->meta_description
+            ? str_replace(':name', $category->name, $seoSetting->meta_description)
+            : ($category->description ?: "Browse all {$category->name} articles and content.");
         $url = $this->safeRoute('category.show', $category);
-        $image = $this->ogImageService->getUrlForCategory($category);
+        $image = $this->ogImageService->getUrlForCategory($category)
+            ?: $seoSetting?->og_image
+            ?: $this->siteDefaults()['og_image'];
+
+        $this->applySettingExtras($seoSetting);
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -228,10 +292,20 @@ class SeoService
      */
     public function setTag(Tag $tag): void
     {
-        $title = $tag->name;
-        $description = "Browse all content tagged with {$tag->name}.";
+        $seoSetting = SeoSetting::findByRoute('tag.show');
+
+        $title = $seoSetting?->meta_title
+            ? str_replace(':name', $tag->name, $seoSetting->meta_title)
+            : $tag->name;
+        $description = $seoSetting?->meta_description
+            ? str_replace(':name', $tag->name, $seoSetting->meta_description)
+            : "Browse all content tagged with {$tag->name}.";
         $url = $this->safeRoute('tag.show', $tag);
-        $image = $this->ogImageService->getDefaultUrl();
+        $image = $seoSetting?->og_image
+            ?: $this->siteDefaults()['og_image']
+            ?: $this->ogImageService->getDefaultUrl();
+
+        $this->applySettingExtras($seoSetting);
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -264,10 +338,21 @@ class SeoService
      */
     public function setAuthor(User $author): void
     {
-        $title = $author->name;
-        $description = "Articles and content by {$author->name}.";
+        $seoSetting = SeoSetting::findByRoute('author.show');
+
+        $title = $seoSetting?->meta_title
+            ? str_replace(':name', $author->name, $seoSetting->meta_title)
+            : $author->name;
+        $description = $seoSetting?->meta_description
+            ? str_replace(':name', $author->name, $seoSetting->meta_description)
+            : "Articles and content by {$author->name}.";
         $url = $this->safeRoute('author.show', $author->username);
-        $image = $author->avatar_url ?: $this->ogImageService->getDefaultUrl();
+        $image = $author->avatar_url
+            ?: $seoSetting?->og_image
+            ?: $this->siteDefaults()['og_image']
+            ?: $this->ogImageService->getDefaultUrl();
+
+        $this->applySettingExtras($seoSetting);
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -315,10 +400,18 @@ class SeoService
      */
     public function setPage(Page $page): void
     {
-        $title = $page->meta_title ?: $page->title;
-        $description = $page->meta_description ?: \Illuminate\Support\Str::limit($this->extractTextFromContent($page->content), 160);
+        $seoSetting = SeoSetting::findByRoute('page.show');
+
+        $title = $page->meta_title ?: ($seoSetting?->meta_title ?: $page->title);
+        $description = $page->meta_description
+            ?: ($seoSetting?->meta_description
+                ?: \Illuminate\Support\Str::limit($this->extractTextFromContent($page->content), 160));
         $url = $this->safeRoute('page.show', $page);
-        $image = $this->ogImageService->getDefaultUrl();
+        $image = $seoSetting?->og_image
+            ?: $this->siteDefaults()['og_image']
+            ?: $this->ogImageService->getDefaultUrl();
+
+        $this->applySettingExtras($seoSetting);
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -465,10 +558,16 @@ class SeoService
      */
     public function setProductsIndex(): void
     {
-        $title = 'Products';
-        $description = 'Discover ingredients, tools, and staples we actually use and recommend.';
+        $seoSetting = SeoSetting::findByRoute('products.index');
+
+        $title = $seoSetting?->meta_title ?: 'Products';
+        $description = $seoSetting?->meta_description ?: 'Discover ingredients, tools, and staples we actually use and recommend.';
         $url = $this->safeRoute('products.index');
-        $image = $this->ogImageService->getDefaultUrl();
+        $image = $seoSetting?->og_image
+            ?: $this->siteDefaults()['og_image']
+            ?: $this->ogImageService->getDefaultUrl();
+
+        $this->applySettingExtras($seoSetting);
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -501,10 +600,20 @@ class SeoService
      */
     public function setProductCategory(ProductCategory $category): void
     {
-        $title = $category->name.' Products';
-        $description = $category->description ?: "Browse all {$category->name} products we recommend.";
+        $seoSetting = SeoSetting::findByRoute('products.category');
+
+        $title = $seoSetting?->meta_title
+            ? str_replace(':name', $category->name, $seoSetting->meta_title)
+            : $category->name.' Products';
+        $description = $seoSetting?->meta_description
+            ? str_replace(':name', $category->name, $seoSetting->meta_description)
+            : ($category->description ?: "Browse all {$category->name} products we recommend.");
         $url = $this->safeRoute('products.category', $category);
-        $image = $this->ogImageService->getDefaultUrl();
+        $image = $seoSetting?->og_image
+            ?: $this->siteDefaults()['og_image']
+            ?: $this->ogImageService->getDefaultUrl();
+
+        $this->applySettingExtras($seoSetting);
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -537,9 +646,17 @@ class SeoService
      */
     public function setProductStore(ProductStore $store): void
     {
-        $title = $store->name.' Products';
-        $description = "Browse all products from {$store->name}.";
+        $seoSetting = SeoSetting::findByRoute('products.store');
+
+        $title = $seoSetting?->meta_title
+            ? str_replace(':name', $store->name, $seoSetting->meta_title)
+            : $store->name.' Products';
+        $description = $seoSetting?->meta_description
+            ? str_replace(':name', $store->name, $seoSetting->meta_description)
+            : "Browse all products from {$store->name}.";
         $url = $this->safeRoute('products.store', $store);
+
+        $this->applySettingExtras($seoSetting);
 
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($description);
@@ -550,7 +667,10 @@ class SeoService
         OpenGraph::setType('website');
         OpenGraph::setUrl($url);
 
-        $image = $store->logo_url ?: $this->ogImageService->getDefaultUrl();
+        $image = $store->logo_url
+            ?: $seoSetting?->og_image
+            ?: $this->siteDefaults()['og_image']
+            ?: $this->ogImageService->getDefaultUrl();
         if ($image) {
             OpenGraph::addImage($image);
         }
@@ -623,6 +743,33 @@ class SeoService
         }
 
         return trim($text);
+    }
+
+    /**
+     * Apply non title/description fields from a SeoSetting (keywords, robots, twitter card, json-ld).
+     *
+     * Title, description, url, and og_image are resolved per-method so they can blend
+     * entity data with placeholders. This helper only layers on the fields that don't
+     * need per-entity logic.
+     */
+    protected function applySettingExtras(?SeoSetting $seoSetting): void
+    {
+        $keywords = $seoSetting?->meta_keywords ?: $this->siteDefaults()['meta_keywords'];
+        if ($keywords) {
+            SEOMeta::setKeywords($keywords);
+        }
+
+        if ($seoSetting?->robots) {
+            SEOMeta::setRobots($seoSetting->robots);
+        }
+
+        if ($seoSetting?->twitter_card) {
+            TwitterCard::setType($seoSetting->twitter_card);
+        }
+
+        if ($seoSetting?->json_ld) {
+            JsonLd::addValues($seoSetting->json_ld);
+        }
     }
 
     /**
