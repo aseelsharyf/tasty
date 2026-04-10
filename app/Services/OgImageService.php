@@ -288,9 +288,10 @@ class OgImageService
         $scaledHeight = (int) round($origHeight * $scale);
         $image->resize($scaledWidth, $scaledHeight);
 
-        // Default focal point: center horizontally, top vertically
-        $focalX = $focalPoint['x'] ?? 0.5;
-        $focalY = $focalPoint['y'] ?? 0.0;
+        // Focal point is stored as percentages (0-100) by ImageAnchorPicker.
+        // Normalize to 0.0-1.0. Default: center horizontally, top vertically.
+        $focalX = isset($focalPoint['x']) ? ((float) $focalPoint['x']) / 100 : 0.5;
+        $focalY = isset($focalPoint['y']) ? ((float) $focalPoint['y']) / 100 : 0.0;
 
         // Calculate crop offset based on focal point
         $maxOffsetX = $scaledWidth - $targetWidth;
