@@ -76,6 +76,11 @@ class UpdateHomepageLayoutRequest extends FormRequest
         $duplicatePostIds = [];
 
         foreach ($sections as $sectionIndex => $section) {
+            // Hero posts are allowed to also appear in other sections.
+            if (($section['type'] ?? null) === 'hero') {
+                continue;
+            }
+
             $slots = $section['slots'] ?? [];
 
             foreach ($slots as $slotIndex => $slot) {
