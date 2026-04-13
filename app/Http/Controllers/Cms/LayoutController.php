@@ -171,16 +171,16 @@ class LayoutController extends Controller
             $query->where('post_type', $validated['type']);
         }
 
-        // Apply section category restrictions
-        if (! empty($validated['sectionType'])) {
+        // Apply section category restrictions. The Hero section is exempt when picking
+        // manually so editors can attach any post to the hero slot regardless of mapping.
+        $isManualHero = ! empty($validated['manual']) && ($validated['sectionType'] ?? null) === 'hero';
+
+        if (! empty($validated['sectionType']) && ! $isManualHero) {
             $allowedCategoryIds = $this->mappingService->getAllowedCategoryIds($validated['sectionType']);
 
             if ($allowedCategoryIds !== null) {
-                // Section has specific categories - only show posts from those categories
                 $query->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $allowedCategoryIds));
             } elseif (empty($validated['manual'])) {
-                // For dynamic auto-fill only: exclude posts from categories reserved by other sections.
-                // Manual selection skips this so users can pick any post.
                 $reservedCategoryIds = $this->mappingService->getCategoryIdsReservedByOtherSections($validated['sectionType']);
 
                 if (! empty($reservedCategoryIds)) {
