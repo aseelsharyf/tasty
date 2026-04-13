@@ -61,12 +61,15 @@ const dynamicPreviewPosts = ref<Record<string, PostSearchResult[]>>({});
 // Track all post IDs used across sections (manual + dynamic) in order
 const usedPostIdsPerSection = ref<Record<string, number[]>>({});
 
-// Compute all manually assigned post IDs across all sections (excluding the currently editing slot)
+// Compute all manually assigned post IDs across all sections (excluding the currently editing slot).
+// Hero is exempt — a hero post may also appear in other sections.
 const excludedPostIds = computed(() => {
+    if (editingSectionType.value === 'hero') {
+        return [];
+    }
     const ids: number[] = [];
     for (const section of props.modelValue) {
         for (const slot of section.slots) {
-            // Skip the slot currently being edited
             if (section.id === editingSectionId.value && slot.index === editingSlotIndex.value) {
                 continue;
             }
