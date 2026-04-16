@@ -63,22 +63,24 @@ const usedPostIdsPerSection = ref<Record<string, number[]>>({});
 
 // Compute all manually assigned post IDs across all sections (excluding the currently editing slot).
 // Hero is exempt — a hero post may also appear in other sections.
+// TEMPORARILY DISABLED: Allow any post to be assigned to any section regardless of existing assignments.
 const excludedPostIds = computed(() => {
-    if (editingSectionType.value === 'hero') {
-        return [];
-    }
-    const ids: number[] = [];
-    for (const section of props.modelValue) {
-        for (const slot of section.slots) {
-            if (section.id === editingSectionId.value && slot.index === editingSlotIndex.value) {
-                continue;
-            }
-            if (slot.mode === 'manual' && slot.postId) {
-                ids.push(slot.postId);
-            }
-        }
-    }
-    return ids;
+    return [];
+    // if (editingSectionType.value === 'hero') {
+    //     return [];
+    // }
+    // const ids: number[] = [];
+    // for (const section of props.modelValue) {
+    //     for (const slot of section.slots) {
+    //         if (section.id === editingSectionId.value && slot.index === editingSlotIndex.value) {
+    //             continue;
+    //         }
+    //         if (slot.mode === 'manual' && slot.postId) {
+    //             ids.push(slot.postId);
+    //         }
+    //     }
+    // }
+    // return ids;
 });
 
 // Fetch posts data for all assigned postIds on mount

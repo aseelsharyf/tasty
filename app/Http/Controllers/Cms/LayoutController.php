@@ -171,24 +171,24 @@ class LayoutController extends Controller
             $query->where('post_type', $validated['type']);
         }
 
-        // Apply section category restrictions. Hero and Featured Video sections are exempt
-        // when picking manually so editors can attach any post regardless of mapping.
-        $unrestrictedSections = ['hero', 'featured-video'];
-        $isManualUnrestricted = ! empty($validated['manual']) && in_array($validated['sectionType'] ?? null, $unrestrictedSections);
-
-        if (! empty($validated['sectionType']) && ! $isManualUnrestricted) {
-            $allowedCategoryIds = $this->mappingService->getAllowedCategoryIds($validated['sectionType']);
-
-            if ($allowedCategoryIds !== null) {
-                $query->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $allowedCategoryIds));
-            } elseif (empty($validated['manual'])) {
-                $reservedCategoryIds = $this->mappingService->getCategoryIdsReservedByOtherSections($validated['sectionType']);
-
-                if (! empty($reservedCategoryIds)) {
-                    $query->whereDoesntHave('categories', fn ($q) => $q->whereIn('categories.id', $reservedCategoryIds));
-                }
-            }
-        }
+        // TEMPORARILY DISABLED: Section category restrictions are bypassed so editors
+        // can assign any post to any section regardless of category mapping.
+        // $unrestrictedSections = ['hero', 'featured-video'];
+        // $isManualUnrestricted = ! empty($validated['manual']) && in_array($validated['sectionType'] ?? null, $unrestrictedSections);
+        //
+        // if (! empty($validated['sectionType']) && ! $isManualUnrestricted) {
+        //     $allowedCategoryIds = $this->mappingService->getAllowedCategoryIds($validated['sectionType']);
+        //
+        //     if ($allowedCategoryIds !== null) {
+        //         $query->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $allowedCategoryIds));
+        //     } elseif (empty($validated['manual'])) {
+        //         $reservedCategoryIds = $this->mappingService->getCategoryIdsReservedByOtherSections($validated['sectionType']);
+        //
+        //         if (! empty($reservedCategoryIds)) {
+        //             $query->whereDoesntHave('categories', fn ($q) => $q->whereIn('categories.id', $reservedCategoryIds));
+        //         }
+        //     }
+        // }
 
         $posts = $query->limit($validated['limit'] ?? 20)->get();
 

@@ -15,33 +15,37 @@ trait FiltersBySectionCategories
      */
     protected function applySectionCategoryFilter(Builder $query, ?string $sectionType): Builder
     {
-        if ($sectionType === null) {
-            return $query;
-        }
+        // TEMPORARILY DISABLED: Section category restrictions are bypassed so any post
+        // can appear in any section regardless of category mapping.
+        return $query;
 
-        $mappingService = app(SectionCategoryMappingService::class);
-        $allowedCategoryIds = $mappingService->getAllowedCategoryIds($sectionType);
-
-        if ($allowedCategoryIds !== null) {
-            // Section has specific categories - only show posts from those categories
-            return $query->whereHas(
-                'categories',
-                fn (Builder $q) => $q->whereIn('categories.id', $allowedCategoryIds)
-            );
-        }
-
-        // Section has no restrictions - exclude posts from categories reserved by other sections
-        $reservedCategoryIds = $mappingService->getCategoryIdsReservedByOtherSections($sectionType);
-
-        if (empty($reservedCategoryIds)) {
-            return $query;
-        }
-
-        // Exclude posts that have ANY of the reserved categories
-        // These posts will appear in their designated sections instead
-        return $query->whereDoesntHave(
-            'categories',
-            fn (Builder $q) => $q->whereIn('categories.id', $reservedCategoryIds)
-        );
+        // if ($sectionType === null) {
+        //     return $query;
+        // }
+        //
+        // $mappingService = app(SectionCategoryMappingService::class);
+        // $allowedCategoryIds = $mappingService->getAllowedCategoryIds($sectionType);
+        //
+        // if ($allowedCategoryIds !== null) {
+        //     // Section has specific categories - only show posts from those categories
+        //     return $query->whereHas(
+        //         'categories',
+        //         fn (Builder $q) => $q->whereIn('categories.id', $allowedCategoryIds)
+        //     );
+        // }
+        //
+        // // Section has no restrictions - exclude posts from categories reserved by other sections
+        // $reservedCategoryIds = $mappingService->getCategoryIdsReservedByOtherSections($sectionType);
+        //
+        // if (empty($reservedCategoryIds)) {
+        //     return $query;
+        // }
+        //
+        // // Exclude posts that have ANY of the reserved categories
+        // // These posts will appear in their designated sections instead
+        // return $query->whereDoesntHave(
+        //     'categories',
+        //     fn (Builder $q) => $q->whereIn('categories.id', $reservedCategoryIds)
+        // );
     }
 }
