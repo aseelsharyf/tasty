@@ -171,11 +171,12 @@ class LayoutController extends Controller
             $query->where('post_type', $validated['type']);
         }
 
-        // Apply section category restrictions. The Hero section is exempt when picking
-        // manually so editors can attach any post to the hero slot regardless of mapping.
-        $isManualHero = ! empty($validated['manual']) && ($validated['sectionType'] ?? null) === 'hero';
+        // Apply section category restrictions. Hero and Featured Video sections are exempt
+        // when picking manually so editors can attach any post regardless of mapping.
+        $unrestrictedSections = ['hero', 'featured-video'];
+        $isManualUnrestricted = ! empty($validated['manual']) && in_array($validated['sectionType'] ?? null, $unrestrictedSections);
 
-        if (! empty($validated['sectionType']) && ! $isManualHero) {
+        if (! empty($validated['sectionType']) && ! $isManualUnrestricted) {
             $allowedCategoryIds = $this->mappingService->getAllowedCategoryIds($validated['sectionType']);
 
             if ($allowedCategoryIds !== null) {
