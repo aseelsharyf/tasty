@@ -161,9 +161,9 @@ class LayoutController extends Controller
         if (! empty($validated['query'])) {
             $searchTerm = $validated['query'];
             $query->where(function ($q) use ($searchTerm) {
-                $q->where('title', 'like', "%{$searchTerm}%")
-                    ->orWhere('kicker', 'like', "%{$searchTerm}%")
-                    ->orWhere('excerpt', 'like', "%{$searchTerm}%");
+                $q->where('title', 'ilike', "%{$searchTerm}%")
+                    ->orWhere('kicker', 'ilike', "%{$searchTerm}%")
+                    ->orWhere('excerpt', 'ilike', "%{$searchTerm}%");
             });
         }
 
