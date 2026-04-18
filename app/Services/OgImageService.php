@@ -52,19 +52,18 @@ class OgImageService
             return null;
         }
 
-        $filename = 'og-images/posts/'.$post->slug.'.png';
-        $fullPath = $this->getPath($filename);
-
-        // Check if OG image already exists and is newer than the post
-        if (Storage::disk($this->disk)->exists($fullPath)) {
-            $ogImageTime = Storage::disk($this->disk)->lastModified($fullPath);
-            if ($ogImageTime > $post->updated_at->timestamp) {
-                return Storage::disk($this->disk)->url($fullPath);
+        // Reuse existing versioned image if it's still newer than the post
+        if ($post->og_image_version) {
+            $currentPath = $this->getPath($this->postFilename($post, $post->og_image_version));
+            if (Storage::disk($this->disk)->exists($currentPath)) {
+                $ogImageTime = Storage::disk($this->disk)->lastModified($currentPath);
+                if ($ogImageTime > $post->updated_at->timestamp) {
+                    return Storage::disk($this->disk)->url($currentPath);
+                }
             }
         }
 
         try {
-            // Load the featured image from URL
             $imageContents = file_get_contents($post->featured_image_url);
             if (! $imageContents) {
                 return null;
@@ -72,16 +71,50 @@ class OgImageService
 
             $image = $this->generateOgImage($imageContents, $post);
 
-            // Save to disk (works with both local and cloud storage)
-            $pngData = $image->toPng()->toString();
-            Storage::disk($this->disk)->put($fullPath, $pngData, 'public');
+            $oldVersion = $post->og_image_version;
+            $newVersion = $this->newVersion();
+            $newPath = $this->getPath($this->postFilename($post, $newVersion));
 
-            return Storage::disk($this->disk)->url($fullPath);
+            $pngData = $image->toPng()->toString();
+            Storage::disk($this->disk)->put($newPath, $pngData, 'public');
+
+            if ($oldVersion && $oldVersion !== $newVersion) {
+                Storage::disk($this->disk)->delete($this->getPath($this->postFilename($post, $oldVersion)));
+            }
+
+            $post->og_image_version = $newVersion;
+            $post->saveQuietly();
+
+            return Storage::disk($this->disk)->url($newPath);
         } catch (\Exception $e) {
             report($e);
 
             return null;
         }
+    }
+
+    /**
+     * Build a versioned filename for a post's OG image.
+     */
+    protected function postFilename(Post $post, string $version): string
+    {
+        return 'og-images/posts/'.$post->slug.'-'.$version.'.png';
+    }
+
+    /**
+     * Build a versioned filename for a category's OG image.
+     */
+    protected function categoryFilename(Category $category, string $version): string
+    {
+        return 'og-images/categories/'.$category->slug.'-'.$version.'.png';
+    }
+
+    /**
+     * Generate a new version identifier.
+     */
+    protected function newVersion(): string
+    {
+        return (string) now()->timestamp;
     }
 
     /**
@@ -475,15 +508,13 @@ class OgImageService
      */
     public function getUrlForPost(Post $post): ?string
     {
-        $filename = 'og-images/posts/'.$post->slug.'.png';
-        $fullPath = $this->getPath($filename);
-
-        // Check if already exists
-        if (Storage::disk($this->disk)->exists($fullPath)) {
-            return Storage::disk($this->disk)->url($fullPath);
+        if ($post->og_image_version) {
+            $fullPath = $this->getPath($this->postFilename($post, $post->og_image_version));
+            if (Storage::disk($this->disk)->exists($fullPath)) {
+                return Storage::disk($this->disk)->url($fullPath);
+            }
         }
 
-        // Generate new one
         return $this->generateForPost($post);
     }
 
@@ -492,9 +523,15 @@ class OgImageService
      */
     public function deleteForPost(Post $post): void
     {
-        $filename = 'og-images/posts/'.$post->slug.'.png';
-        $fullPath = $this->getPath($filename);
+        if (! $post->og_image_version) {
+            return;
+        }
+
+        $fullPath = $this->getPath($this->postFilename($post, $post->og_image_version));
         Storage::disk($this->disk)->delete($fullPath);
+
+        $post->og_image_version = null;
+        $post->saveQuietly();
     }
 
     /**
@@ -508,14 +545,13 @@ class OgImageService
             return $this->getDefaultUrl();
         }
 
-        $filename = 'og-images/categories/'.$category->slug.'.png';
-        $fullPath = $this->getPath($filename);
-
-        // Reuse cached image if newer than the category
-        if (Storage::disk($this->disk)->exists($fullPath)) {
-            $ogImageTime = Storage::disk($this->disk)->lastModified($fullPath);
-            if ($ogImageTime > $category->updated_at->timestamp) {
-                return Storage::disk($this->disk)->url($fullPath);
+        if ($category->og_image_version) {
+            $currentPath = $this->getPath($this->categoryFilename($category, $category->og_image_version));
+            if (Storage::disk($this->disk)->exists($currentPath)) {
+                $ogImageTime = Storage::disk($this->disk)->lastModified($currentPath);
+                if ($ogImageTime > $category->updated_at->timestamp) {
+                    return Storage::disk($this->disk)->url($currentPath);
+                }
             }
         }
 
@@ -527,10 +563,21 @@ class OgImageService
 
             $image = $this->composeOgImage($imageContents, null);
 
-            $pngData = $image->toPng()->toString();
-            Storage::disk($this->disk)->put($fullPath, $pngData, 'public');
+            $oldVersion = $category->og_image_version;
+            $newVersion = $this->newVersion();
+            $newPath = $this->getPath($this->categoryFilename($category, $newVersion));
 
-            return Storage::disk($this->disk)->url($fullPath);
+            $pngData = $image->toPng()->toString();
+            Storage::disk($this->disk)->put($newPath, $pngData, 'public');
+
+            if ($oldVersion && $oldVersion !== $newVersion) {
+                Storage::disk($this->disk)->delete($this->getPath($this->categoryFilename($category, $oldVersion)));
+            }
+
+            $category->og_image_version = $newVersion;
+            $category->saveQuietly();
+
+            return Storage::disk($this->disk)->url($newPath);
         } catch (\Exception $e) {
             report($e);
 
@@ -543,11 +590,11 @@ class OgImageService
      */
     public function getUrlForCategory(Category $category): ?string
     {
-        $filename = 'og-images/categories/'.$category->slug.'.png';
-        $fullPath = $this->getPath($filename);
-
-        if (Storage::disk($this->disk)->exists($fullPath)) {
-            return Storage::disk($this->disk)->url($fullPath);
+        if ($category->og_image_version) {
+            $fullPath = $this->getPath($this->categoryFilename($category, $category->og_image_version));
+            if (Storage::disk($this->disk)->exists($fullPath)) {
+                return Storage::disk($this->disk)->url($fullPath);
+            }
         }
 
         return $this->generateForCategory($category);
@@ -558,9 +605,15 @@ class OgImageService
      */
     public function deleteForCategory(Category $category): void
     {
-        $filename = 'og-images/categories/'.$category->slug.'.png';
-        $fullPath = $this->getPath($filename);
+        if (! $category->og_image_version) {
+            return;
+        }
+
+        $fullPath = $this->getPath($this->categoryFilename($category, $category->og_image_version));
         Storage::disk($this->disk)->delete($fullPath);
+
+        $category->og_image_version = null;
+        $category->saveQuietly();
     }
 
     /**

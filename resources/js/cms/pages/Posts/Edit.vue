@@ -156,6 +156,7 @@ const props = defineProps<{
         featured_media_id?: number | null;
         cover_video?: MediaItem | null;
         cover_video_id?: number | null;
+        og_image_url?: string | null;
         featured_image_anchor?: { x: number; y: number } | null;
         workflow_status?: string;
         current_version_uuid?: string | null;
@@ -343,6 +344,29 @@ const isReadOnly = computed(() => {
 
 // Editorial slideover state
 const editorialSlideoverOpen = ref(false);
+
+// OG image preview modal state
+const ogImageModalOpen = ref(false);
+const ogImageUrl = ref<string | null>(props.post.og_image_url ?? null);
+const isRegeneratingOgImage = ref(false);
+
+async function regenerateOgImage() {
+    if (isRegeneratingOgImage.value) return;
+    isRegeneratingOgImage.value = true;
+    try {
+        const { data } = await axios.post(cmsPath(`/posts/${props.post.uuid}/og-image/regenerate`));
+        ogImageUrl.value = data.url;
+        toast.add({ title: 'OG image regenerated', color: 'success' });
+    } catch (err: any) {
+        toast.add({
+            title: 'Failed to regenerate OG image',
+            description: err?.response?.data?.message ?? 'Please try again.',
+            color: 'error',
+        });
+    } finally {
+        isRegeneratingOgImage.value = false;
+    }
+}
 
 // Delete confirmation modal state
 const deleteModalOpen = ref(false);
@@ -1873,6 +1897,17 @@ function openDiff() {
                                 />
                             </UTooltip>
 
+                            <!-- OG Image Preview -->
+                            <UTooltip text="Social preview image">
+                                <UButton
+                                    color="neutral"
+                                    variant="ghost"
+                                    icon="i-lucide-image"
+                                    size="sm"
+                                    @click="ogImageModalOpen = true"
+                                />
+                            </UTooltip>
+
                             <!-- Editorial Slideover Toggle -->
                             <UButton
                                 color="neutral"
@@ -3290,6 +3325,91 @@ function openDiff() {
             @update:custom-fields="form.custom_fields = $event"
             @generate-slug="generateSlug"
         />
+
+        <!-- OG Image Preview Modal -->
+        <UModal v-model:open="ogImageModalOpen" :ui="{ content: 'max-w-2xl' }">
+            <template #content>
+                <UCard>
+                    <template #header>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-semibold">Social Preview Image</h3>
+                                <p class="text-sm text-muted">Shown when shared on Facebook, Twitter, LinkedIn, etc.</p>
+                            </div>
+                            <UButton
+                                color="neutral"
+                                variant="ghost"
+                                icon="i-lucide-x"
+                                size="sm"
+                                @click="ogImageModalOpen = false"
+                            />
+                        </div>
+                    </template>
+
+                    <div class="space-y-4">
+                        <div
+                            v-if="ogImageUrl"
+                            class="rounded-lg overflow-hidden border border-default bg-elevated"
+                        >
+                            <img
+                                :src="ogImageUrl"
+                                alt="OG preview"
+                                class="w-full h-auto block"
+                            />
+                        </div>
+                        <div
+                            v-else
+                            class="rounded-lg border border-dashed border-default bg-elevated p-8 text-center"
+                        >
+                            <UIcon name="i-lucide-image-off" class="size-8 text-muted mx-auto mb-2" />
+                            <p class="text-sm text-muted">No OG image generated yet.</p>
+                            <p class="text-xs text-dimmed mt-1">
+                                Requires a featured image on the post.
+                            </p>
+                        </div>
+
+                        <p class="text-xs text-muted">
+                            Regenerating produces a new versioned URL so social platforms fetch the latest image
+                            instead of using their cache.
+                        </p>
+                    </div>
+
+                    <template #footer>
+                        <div class="flex items-center justify-between gap-2">
+                            <UButton
+                                v-if="ogImageUrl"
+                                color="neutral"
+                                variant="ghost"
+                                icon="i-lucide-external-link"
+                                size="sm"
+                                :to="ogImageUrl"
+                                target="_blank"
+                            >
+                                Open image
+                            </UButton>
+                            <div class="flex items-center gap-2 ml-auto">
+                                <UButton
+                                    color="neutral"
+                                    variant="ghost"
+                                    @click="ogImageModalOpen = false"
+                                >
+                                    Close
+                                </UButton>
+                                <UButton
+                                    color="primary"
+                                    icon="i-lucide-refresh-cw"
+                                    :loading="isRegeneratingOgImage"
+                                    :disabled="!post.featured_image_url"
+                                    @click="regenerateOgImage"
+                                >
+                                    {{ ogImageUrl ? 'Regenerate' : 'Generate' }}
+                                </UButton>
+                            </div>
+                        </div>
+                    </template>
+                </UCard>
+            </template>
+        </UModal>
 
         <!-- Delete Confirmation Modal -->
         <UModal v-model:open="deleteModalOpen">

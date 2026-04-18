@@ -16,6 +16,7 @@ use App\Models\Sponsor;
 use App\Models\Tag;
 use App\Models\User;
 use App\Services\Layouts\LayoutSlotService;
+use App\Services\OgImageService;
 use App\Services\PostTemplateRegistry;
 use App\Services\WorkflowService;
 use Illuminate\Http\JsonResponse;
@@ -535,6 +536,9 @@ class PostController extends Controller
                 'scheduled_at' => $post->scheduled_at,
                 'featured_image_url' => $post->featured_image_url,
                 'featured_image_thumb' => $post->featured_image_thumb,
+                'og_image_url' => $post->og_image_version
+                    ? app(OgImageService::class)->getUrlForPost($post)
+                    : null,
                 'featured_media' => $post->featuredMedia ? [
                     'id' => $post->featuredMedia->id,
                     'uuid' => $post->featuredMedia->uuid,
@@ -816,6 +820,27 @@ class PostController extends Controller
     {
         return response()->json([
             'usages' => $slotService->getSlotUsages($post->id),
+        ]);
+    }
+
+    /**
+     * Regenerate the OG image for a post and return the fresh URL.
+     */
+    public function regenerateOgImage(Post $post, OgImageService $ogImageService): JsonResponse
+    {
+        $ogImageService->deleteForPost($post);
+
+        $url = $ogImageService->generateForPost($post);
+
+        if (! $url) {
+            return response()->json([
+                'message' => 'Could not generate OG image. Make sure the post has a featured image.',
+            ], 422);
+        }
+
+        return response()->json([
+            'url' => $url,
+            'version' => $post->fresh()->og_image_version,
         ]);
     }
 

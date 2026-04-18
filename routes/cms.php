@@ -250,6 +250,10 @@ Route::middleware(['auth', 'cms'])->group(function () {
             ->name('cms.posts.forceDelete')
             ->where('language', '[a-zA-Z]{2,5}');
 
+        // Regenerate OG image for a post
+        Route::post('posts/{post}/og-image/regenerate', [PostController::class, 'regenerateOgImage'])
+            ->name('cms.posts.og-image.regenerate');
+
         // Layout slot usages for unpublish replacement flow
         Route::get('posts/{post}/layout-usages', [PostController::class, 'layoutUsages'])
             ->name('cms.posts.layout-usages');
