@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Services\Layouts\LayoutSlotService;
 use App\Services\OgImageService;
 use App\Services\PostTemplateRegistry;
+use App\Services\PublicCacheService;
 use App\Services\WorkflowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -837,6 +838,8 @@ class PostController extends Controller
                 'message' => 'Could not generate OG image. Make sure the post has a featured image.',
             ], 422);
         }
+
+        PublicCacheService::flushPostDetailCache($post->slug);
 
         return response()->json([
             'url' => $url,
