@@ -143,12 +143,14 @@ class LayoutController extends Controller
             'sectionType' => ['nullable', 'string', 'max:50'],
             'excludeIds' => ['nullable', 'string'], // Comma-separated list of IDs to exclude
             'manual' => ['nullable', 'boolean'], // Skip reserved-category exclusion for manual selection
+            'category' => ['nullable', 'string', 'max:255'], // Filter dynamic preview by category slug
+            'tag' => ['nullable', 'string', 'max:255'], // Filter dynamic preview by tag slug
         ]);
 
         $query = Post::query()
             ->with(['featuredMedia', 'categories'])
             ->published()
-            ->latest('published_at');
+            ->orderByDesc('published_at');
 
         // Exclude specific post IDs (for preview deduplication)
         if (! empty($validated['excludeIds'])) {
@@ -169,6 +171,23 @@ class LayoutController extends Controller
 
         if (! empty($validated['type'])) {
             $query->where('post_type', $validated['type']);
+        }
+
+        // Apply section data-source filters so preview matches the public render.
+        // Posts are sorted by published_at DESC above; these filters narrow the set
+        // to the configured category/tag while preserving recency order.
+        if (! empty($validated['category'])) {
+            $categorySlug = $validated['category'];
+            $category = Category::where('slug', $categorySlug)->first();
+            if ($category) {
+                $categoryIds = collect([$category->id])->merge($category->descendantIds());
+                $query->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $categoryIds));
+            }
+        }
+
+        if (! empty($validated['tag'])) {
+            $tagSlug = $validated['tag'];
+            $query->whereHas('tags', fn ($q) => $q->where('slug', $tagSlug));
         }
 
         // TEMPORARILY DISABLED: Section category restrictions are bypassed so editors

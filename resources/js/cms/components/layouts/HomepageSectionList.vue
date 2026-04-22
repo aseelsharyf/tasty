@@ -125,10 +125,21 @@ async function fetchDynamicPreview(section: HomepageSection, excludePostIds: num
         const params = new URLSearchParams();
         params.set('limit', String(dynamicSlotCount));
 
-        if (section.dataSource.action === 'byCategory' && section.dataSource.params?.slug) {
-            params.set('category', section.dataSource.params.slug as string);
-        } else if (section.dataSource.action === 'byTag' && section.dataSource.params?.slug) {
-            params.set('tag', section.dataSource.params.slug as string);
+        // Support both `slug` (legacy single) and `slugs` (array) formats.
+        // Preview uses the first slug when multiple are configured.
+        const getFirstSlug = (p: Record<string, unknown> | undefined): string | null => {
+            if (!p) return null;
+            if (Array.isArray(p.slugs) && p.slugs.length > 0) return String(p.slugs[0]);
+            if (typeof p.slug === 'string' && p.slug) return p.slug;
+            return null;
+        };
+
+        if (section.dataSource.action === 'byCategory') {
+            const slug = getFirstSlug(section.dataSource.params);
+            if (slug) params.set('category', slug);
+        } else if (section.dataSource.action === 'byTag') {
+            const slug = getFirstSlug(section.dataSource.params);
+            if (slug) params.set('tag', slug);
         }
 
         // Pass section type for category filtering
