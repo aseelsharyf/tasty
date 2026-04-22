@@ -153,14 +153,13 @@
                 @endif
             </figure>
         @elseif($singleImageDisplay === 'contained')
-            {{-- Contained: Slightly wider than body text (1146px), with 1146x683 aspect ratio --}}
+            {{-- Contained: Slightly wider than body text (1146px), natural image aspect ratio (no crop) --}}
             <figure class="max-w-[1146px] w-full mx-auto px-4 lg:px-0">
-                <div class="overflow-hidden border border-tasty-blue-black/10 aspect-[1146/683]">
+                <div class="overflow-hidden border border-tasty-blue-black/10">
                     <img
                         src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
                         alt="{{ $item['alt_text'] ?? '' }}"
-                        class="w-full h-full object-cover"
-                        style="object-position: {{ $objectPosition }};"
+                        class="w-full h-auto block"
                     />
                 </div>
                 @if($item['caption'] ?? null)
@@ -187,14 +186,13 @@
                 @endif
             </figure>
         @else
-            {{-- Full Width (default): Full width, 1440x738 on desktop, 560px height on mobile --}}
+            {{-- Full Width (default): Edge-to-edge, natural image aspect ratio (no crop) --}}
             <figure class="w-full">
-                <div class="h-[560px] lg:h-auto lg:aspect-[1440/738] overflow-hidden">
+                <div class="overflow-hidden">
                     <img
                         src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
                         alt="{{ $item['alt_text'] ?? '' }}"
-                        class="w-full h-full object-cover"
-                        style="object-position: {{ $objectPosition }};"
+                        class="w-full h-auto block"
                     />
                 </div>
                 @if($item['caption'] ?? null)

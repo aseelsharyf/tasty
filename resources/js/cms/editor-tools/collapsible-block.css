@@ -3,7 +3,6 @@
     margin: 0.5rem 0;
     border: 1px solid var(--ui-border);
     border-radius: 0.5rem;
-    overflow: hidden;
     background: var(--ui-bg);
 }
 
@@ -15,6 +14,8 @@
     padding: 0.75rem 1rem;
     background-color: var(--ui-bg-elevated);
     border-bottom: 1px solid var(--ui-border);
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
     position: relative;
 }
 
@@ -127,13 +128,35 @@
     height: 26px;
 }
 
-/* Ensure popover menus are visible */
+/* Ensure popover menus are visible and opaque above sibling blocks */
+.ce-collapsible-block__content .ce-popover,
+.ce-collapsible-block__content .ce-popover--opened,
+.ce-collapsible-block__content .ce-popover__container,
+.ce-collapsible-block__content .ce-popover__items {
+    background-color: var(--ui-bg) !important;
+    background: var(--ui-bg) !important;
+}
+
 .ce-collapsible-block__content .ce-popover {
-    z-index: 100;
+    z-index: 9999 !important;
 }
 
 .ce-collapsible-block__content .ce-inline-toolbar {
-    z-index: 100;
+    z-index: 9999 !important;
+    background-color: var(--ui-bg) !important;
+}
+
+/* Raise the entire collapsible block (and its parent .ce-block) above
+   following siblings while the nested popover is open, so the dropdown
+   isn't covered by later blocks that create their own stacking contexts. */
+.ce-collapsible-block:has(.ce-popover--opened) {
+    z-index: 9999 !important;
+    position: relative;
+}
+
+.ce-block:has(.ce-collapsible-block .ce-popover--opened) {
+    z-index: 9999 !important;
+    position: relative;
 }
 
 /* Settings panel */
