@@ -145,6 +145,10 @@ class LayoutController extends Controller
             'manual' => ['nullable', 'boolean'], // Skip reserved-category exclusion for manual selection
             'category' => ['nullable', 'string', 'max:255'], // Filter dynamic preview by category slug
             'tag' => ['nullable', 'string', 'max:255'], // Filter dynamic preview by tag slug
+            'categories' => ['nullable', 'array'],
+            'categories.*' => ['string', 'max:255'],
+            'tags' => ['nullable', 'array'],
+            'tags.*' => ['string', 'max:255'],
         ]);
 
         $query = Post::query()
@@ -176,18 +180,31 @@ class LayoutController extends Controller
         // Apply section data-source filters so preview matches the public render.
         // Posts are sorted by published_at DESC above; these filters narrow the set
         // to the configured category/tag while preserving recency order.
+        $categorySlugs = $validated['categories'] ?? [];
         if (! empty($validated['category'])) {
-            $categorySlug = $validated['category'];
-            $category = Category::where('slug', $categorySlug)->first();
-            if ($category) {
-                $categoryIds = collect([$category->id])->merge($category->descendantIds());
-                $query->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $categoryIds));
+            $categorySlugs[] = $validated['category'];
+        }
+
+        if (! empty($categorySlugs)) {
+            $categories = Category::whereIn('slug', array_unique($categorySlugs))->get();
+            if ($categories->isNotEmpty()) {
+                $categoryIds = collect();
+                foreach ($categories as $category) {
+                    $categoryIds->push($category->id);
+                    $categoryIds = $categoryIds->merge($category->descendantIds());
+                }
+
+                $query->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $categoryIds->unique()));
             }
         }
 
+        $tagSlugs = $validated['tags'] ?? [];
         if (! empty($validated['tag'])) {
-            $tagSlug = $validated['tag'];
-            $query->whereHas('tags', fn ($q) => $q->where('slug', $tagSlug));
+            $tagSlugs[] = $validated['tag'];
+        }
+
+        if (! empty($tagSlugs)) {
+            $query->whereHas('tags', fn ($q) => $q->whereIn('slug', array_unique($tagSlugs)));
         }
 
         // TEMPORARILY DISABLED: Section category restrictions are bypassed so editors

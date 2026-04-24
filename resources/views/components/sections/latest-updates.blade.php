@@ -250,7 +250,7 @@ document.addEventListener('alpine:init', () => {
                             this.excludeIds.push(post.id);
                         }
                     });
-                    this.page++;
+                    this.page = 1;
 
                     // Initialize blurhash for newly loaded images
                     this.$nextTick(() => {

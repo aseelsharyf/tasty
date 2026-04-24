@@ -211,6 +211,30 @@ describe('Post Search API with Section Type', function () {
             ->assertJsonCount(2, 'posts');
     });
 
+    it('filters preview posts by multiple category slugs', function () {
+        $user = User::factory()->create();
+        $user->assignRole('Admin');
+
+        $category1 = Category::factory()->create(['slug' => 'restaurant-reviews']);
+        $category2 = Category::factory()->create(['slug' => 'cafe-reviews']);
+        $category3 = Category::factory()->create(['slug' => 'features']);
+
+        $post1 = Post::factory()->published()->create(['title' => 'Restaurant Review']);
+        $post1->categories()->attach($category1);
+
+        $post2 = Post::factory()->published()->create(['title' => 'Cafe Review']);
+        $post2->categories()->attach($category2);
+
+        $post3 = Post::factory()->published()->create(['title' => 'Feature Story']);
+        $post3->categories()->attach($category3);
+
+        $response = $this->actingAs($user)->get('/cms/layouts/homepage/search-posts?categories[]=restaurant-reviews&categories[]=cafe-reviews');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(2, 'posts')
+            ->assertJsonMissing(['title' => 'Feature Story']);
+    });
+
     it('filters posts by section type when restrictions exist', function () {
         $user = User::factory()->create();
         $user->assignRole('Admin');

@@ -125,21 +125,21 @@ async function fetchDynamicPreview(section: HomepageSection, excludePostIds: num
         const params = new URLSearchParams();
         params.set('limit', String(dynamicSlotCount));
 
-        // Support both `slug` (legacy single) and `slugs` (array) formats.
-        // Preview uses the first slug when multiple are configured.
-        const getFirstSlug = (p: Record<string, unknown> | undefined): string | null => {
-            if (!p) return null;
-            if (Array.isArray(p.slugs) && p.slugs.length > 0) return String(p.slugs[0]);
-            if (typeof p.slug === 'string' && p.slug) return p.slug;
-            return null;
+        const getSlugs = (p: Record<string, unknown> | undefined): string[] => {
+            if (!p) return [];
+            if (Array.isArray(p.slugs)) return p.slugs.map(String).filter(Boolean);
+            if (typeof p.slug === 'string' && p.slug) return [p.slug];
+            return [];
         };
 
         if (section.dataSource.action === 'byCategory') {
-            const slug = getFirstSlug(section.dataSource.params);
-            if (slug) params.set('category', slug);
+            for (const slug of getSlugs(section.dataSource.params)) {
+                params.append('categories[]', slug);
+            }
         } else if (section.dataSource.action === 'byTag') {
-            const slug = getFirstSlug(section.dataSource.params);
-            if (slug) params.set('tag', slug);
+            for (const slug of getSlugs(section.dataSource.params)) {
+                params.append('tags[]', slug);
+            }
         }
 
         // Pass section type for category filtering
@@ -170,33 +170,33 @@ async function fetchDynamicPreview(section: HomepageSection, excludePostIds: num
     }
 }
 
-// Fetch all dynamic previews sequentially, excluding posts used by previous sections
+// Fetch all dynamic previews sequentially, matching the public renderer's
+// request-scoped used-post tracking.
 async function fetchAllDynamicPreviews() {
     // Reset tracking
     usedPostIdsPerSection.value = {};
 
-    // Collect all manually assigned post IDs first (these are always excluded)
-    const manualPostIds: number[] = [];
+    const cumulativeUsedIds = new Set<number>();
+
     for (const section of props.modelValue) {
-        for (const slot of section.slots) {
-            if (slot.mode === 'manual' && slot.postId) {
-                manualPostIds.push(slot.postId);
+        const manualPostIds = section.slots
+            .filter(s => s.mode === 'manual' && s.postId)
+            .map(s => s.postId!);
+
+        await fetchDynamicPreview(section, Array.from(new Set([
+            ...Array.from(cumulativeUsedIds),
+            ...manualPostIds,
+        ])));
+
+        if (section.type !== 'hero') {
+            for (const postId of manualPostIds) {
+                cumulativeUsedIds.add(postId);
             }
-        }
-    }
 
-    // Process sections in display order (by their position in the array)
-    // Collect cumulative used IDs as we go
-    const cumulativeUsedIds = new Set<number>(manualPostIds);
-
-    for (const section of props.modelValue) {
-        // Fetch dynamic preview for this section, excluding all previously used posts
-        await fetchDynamicPreview(section, Array.from(cumulativeUsedIds));
-
-        // Add this section's dynamic posts to the cumulative set
-        const sectionDynamicPosts = dynamicPreviewPosts.value[section.id] || [];
-        for (const post of sectionDynamicPosts) {
-            cumulativeUsedIds.add(post.id);
+            const sectionDynamicPosts = dynamicPreviewPosts.value[section.id] || [];
+            for (const post of sectionDynamicPosts) {
+                cumulativeUsedIds.add(post.id);
+            }
         }
     }
 }
@@ -319,20 +319,21 @@ function getSectionDescription(section: HomepageSection): string {
 
     const parts: string[] = [];
     const isProduct = type.contentType === 'product';
+    const dataSourceSlugs = formatDataSourceSlugs(section.dataSource.params);
 
     // Show data source action
     if (type.supportedActions.length > 0 && section.dataSource.action) {
         const postLabels: Record<string, string> = {
             recent: 'Recent posts',
             trending: 'Trending posts',
-            byTag: `Tag: ${section.dataSource.params?.slug || 'any'}`,
-            byCategory: `Category: ${section.dataSource.params?.slug || 'any'}`,
+            byTag: `Tag: ${dataSourceSlugs}`,
+            byCategory: `Category: ${dataSourceSlugs}`,
         };
         const productLabels: Record<string, string> = {
             recent: 'Recent products',
             trending: 'Trending products',
-            byTag: `Tag: ${section.dataSource.params?.slug || 'any'}`,
-            byCategory: `Category: ${section.dataSource.params?.slug || 'any'}`,
+            byTag: `Tag: ${dataSourceSlugs}`,
+            byCategory: `Category: ${dataSourceSlugs}`,
         };
         const labels = isProduct ? productLabels : postLabels;
         parts.push(labels[section.dataSource.action] || section.dataSource.action);
@@ -351,6 +352,18 @@ function getSectionDescription(section: HomepageSection): string {
     }
 
     return parts.join(' · ');
+}
+
+function formatDataSourceSlugs(params: Record<string, unknown> | undefined): string {
+    if (!params) return 'any';
+    if (Array.isArray(params.slugs) && params.slugs.length > 0) {
+        return params.slugs.map(String).join(', ');
+    }
+    if (typeof params.slug === 'string' && params.slug) {
+        return params.slug;
+    }
+
+    return 'any';
 }
 
 function getSlotLabel(sectionType: SectionTypeDefinition, index: number): string {

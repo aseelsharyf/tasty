@@ -53,11 +53,13 @@ class PostsController extends Controller
         $action = new $actionClass;
 
         // Support both singular and plural formats for categories/tags
-        $categories = $validated['categories'] ?? ($validated['category'] ? [$validated['category']] : null);
-        $tags = $validated['tags'] ?? ($validated['tag'] ? [$validated['tag']] : null);
+        $category = $validated['category'] ?? null;
+        $tag = $validated['tag'] ?? null;
+        $categories = $validated['categories'] ?? ($category ? [$category] : null);
+        $tags = $validated['tags'] ?? ($tag ? [$tag] : null);
 
         $params = [
-            'page' => $validated['page'] ?? 1,
+            'page' => ! empty($validated['excludeIds'] ?? []) ? 1 : ($validated['page'] ?? 1),
             'perPage' => $validated['perPage'] ?? 4,
             'excludeIds' => $validated['excludeIds'] ?? [],
             'tags' => $tags,
