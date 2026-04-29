@@ -46,20 +46,6 @@ trait HasSectionCategoryRestrictions
      */
     protected function filterAllowedPosts($posts)
     {
-        $allowedCategoryIds = $this->getAllowedCategoryIds();
-
-        if ($allowedCategoryIds === null) {
-            return $posts;
-        }
-
-        return $posts->filter(function ($post) use ($allowedCategoryIds) {
-            if (! $post instanceof Post) {
-                return true;
-            }
-
-            $postCategoryIds = $post->categories->pluck('id')->toArray();
-
-            return ! empty(array_intersect($postCategoryIds, $allowedCategoryIds));
-        });
+        return $posts;
     }
 }

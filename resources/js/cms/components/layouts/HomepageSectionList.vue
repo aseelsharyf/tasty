@@ -399,6 +399,11 @@ function updateSlot(section: HomepageSection, slotIndex: number, updates: Partia
     updateSection(section, { slots: newSlots });
 }
 
+function reorderSlots(section: HomepageSection, newSlots: HomepageSectionSlot[]) {
+    const reindexed = newSlots.map((slot, idx) => ({ ...slot, index: idx }));
+    updateSection(section, { slots: reindexed });
+}
+
 function updateSlotContent(section: HomepageSection, slotIndex: number, key: string, value: string) {
     const slot = section.slots[slotIndex];
     const newContent = { ...(slot.content || {}), [key]: value };
@@ -801,14 +806,24 @@ function handlePreviewSlotClick(section: HomepageSection, slotIndex: number) {
                                             </UButton>
                                         </div>
 
-                                        <div class="space-y-2">
+                                        <draggable
+                                            :model-value="section.slots"
+                                            item-key="index"
+                                            handle=".slot-drag-handle"
+                                            ghost-class="opacity-50"
+                                            animation="150"
+                                            class="space-y-2"
+                                            @update:model-value="(v: HomepageSectionSlot[]) => reorderSlots(section, v)"
+                                        >
+                                            <template #item="{ element: slot, index: slotIndex }">
                                             <div
-                                                v-for="(slot, slotIndex) in section.slots"
-                                                :key="slotIndex"
                                                 class="border border-default rounded-lg overflow-hidden"
                                             >
                                                 <!-- Slot Header -->
                                                 <div class="flex items-center gap-2 p-3 hover:bg-muted/30 transition-colors">
+                                                    <div class="slot-drag-handle cursor-grab active:cursor-grabbing p-1 -m-1 text-muted hover:text-highlighted shrink-0">
+                                                        <UIcon name="i-lucide-grip-vertical" class="size-4" />
+                                                    </div>
                                                     <button
                                                         type="button"
                                                         class="flex-1 flex items-center justify-between"
@@ -1024,7 +1039,8 @@ function handlePreviewSlotClick(section: HomepageSection, slotIndex: number) {
                                                     </div>
                                                 </Transition>
                                             </div>
-                                        </div>
+                                            </template>
+                                        </draggable>
                                     </div>
                                 </template>
 
