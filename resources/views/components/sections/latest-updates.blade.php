@@ -134,14 +134,15 @@
                            :data-blurhash="post.blurhash"
                            :data-blurhash-id="'blurhash-' + post.id">
                             <template x-if="post.blurhash">
-                                <canvas :id="'blurhash-' + post.id" width="32" height="32" class="absolute inset-0 w-full h-full" style="object-fit: cover;"></canvas>
+                                <canvas :id="'blurhash-' + post.id" width="32" height="32" class="absolute inset-0 w-full h-full blurhash-placeholder" style="object-fit: cover;"></canvas>
                             </template>
                             <template x-if="!post.blurhash">
-                                <div class="absolute inset-0 bg-gray-200 animate-pulse"></div>
+                                <div class="absolute inset-0 bg-gray-200 animate-pulse blurhash-placeholder"></div>
                             </template>
                             <img :src="post.image" :alt="post.imageAlt"
                                  class="w-full h-full object-cover object-center transition-opacity duration-300 opacity-0"
-                                 @load="$el.classList.remove('opacity-0'); $el.classList.add('opacity-100'); if($el.previousElementSibling) $el.previousElementSibling.style.display='none';">
+                                 x-init="if ($el.complete && $el.naturalWidth > 0) { $el.classList.remove('opacity-0'); $el.classList.add('opacity-100'); $el.parentElement.querySelectorAll('.blurhash-placeholder').forEach(el => el.style.display = 'none'); }"
+                                 @load="$el.classList.remove('opacity-0'); $el.classList.add('opacity-100'); $el.parentElement.querySelectorAll('.blurhash-placeholder').forEach(el => el.style.display = 'none');">
                         </a>
                     </div>
                     {{-- Content --}}

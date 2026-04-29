@@ -211,15 +211,14 @@ class LatestUpdates extends Component
 
         // Fetch dynamic posts if needed
         $dynamicPosts = collect();
+        $sectionType = in_array($action, ['byCategory', 'byTag']) ? null : $this->sectionType();
+
         if ($neededDynamicCount > 0) {
             $actionClass = $this->actions[$action] ?? GetRecentPosts::class;
             $actionInstance = new $actionClass;
 
             // Exclude manual posts AND posts used by other sections
             $excludeIds = $this->getExcludeIds($validManualIds);
-
-            // Don't apply section category filtering when explicitly fetching by category/tag
-            $sectionType = in_array($action, ['byCategory', 'byTag']) ? null : $this->sectionType();
 
             // Fetch one extra to check if there are more
             $result = $actionInstance->execute([
@@ -234,7 +233,19 @@ class LatestUpdates extends Component
             $this->hasMorePosts = $allDynamicPosts->count() > $neededDynamicCount;
             $dynamicPosts = $allDynamicPosts->take($neededDynamicCount);
         } else {
-            $this->hasMorePosts = false;
+            // All slots are manual/static — probe whether more posts exist for Load More.
+            $actionClass = $this->actions[$action] ?? GetRecentPosts::class;
+            $actionInstance = new $actionClass;
+
+            $result = $actionInstance->execute([
+                'page' => 1,
+                'perPage' => 1,
+                'excludeIds' => $this->getExcludeIds($validManualIds),
+                'sectionType' => $sectionType,
+                ...$params,
+            ]);
+
+            $this->hasMorePosts = collect($result->items())->isNotEmpty();
         }
 
         // Build final slot array
