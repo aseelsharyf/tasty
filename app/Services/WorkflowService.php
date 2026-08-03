@@ -259,7 +259,7 @@ class WorkflowService
         // Validate that content has required fields before publishing
         $content = $version->versionable;
         if ($content) {
-            $this->validatePublishRequirements($content);
+            $this->validatePublishRequirements($content, $version->content_snapshot);
         }
 
         DB::transaction(function () use ($version) {
@@ -579,9 +579,16 @@ class WorkflowService
      *
      * @throws \Exception
      */
-    protected function validatePublishRequirements(Model $content): void
+    protected function validatePublishRequirements(Model $content, ?array $snapshot = null): void
     {
         $errors = [];
+
+        // The version snapshot holds the title being published; the content
+        // model may still carry the previous title at this point.
+        $title = trim((string) ($snapshot['title'] ?? $content->title ?? ''));
+        if ($title === '' || preg_match('/^untitled(\s|$)/i', $title)) {
+            $errors[] = 'A title must be set before publishing';
+        }
 
         // Check for category (if the content has categories)
         if (method_exists($content, 'category')) {

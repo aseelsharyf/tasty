@@ -147,6 +147,22 @@ class PublicCacheService
     }
 
     /**
+     * Flush all cached pages for a category (every paginated page).
+     */
+    public static function flushCategoryPageCache(string $slug): void
+    {
+        static::flushByPrefix("public:category:{$slug}:");
+    }
+
+    /**
+     * Flush all cached pages for a tag (every paginated page).
+     */
+    public static function flushTagPageCache(string $slug): void
+    {
+        static::flushByPrefix("public:tag:{$slug}:");
+    }
+
+    /**
      * Flush all cache entries matching a key prefix.
      */
     protected static function flushByPrefix(string $prefix): void

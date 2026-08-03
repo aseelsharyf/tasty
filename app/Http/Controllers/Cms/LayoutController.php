@@ -13,6 +13,7 @@ use App\Services\Layouts\HomepageConfigurationService;
 use App\Services\Layouts\LayoutSlotService;
 use App\Services\Layouts\SectionCategoryMappingService;
 use App\Services\Layouts\SectionRegistry;
+use App\Services\PublicCacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -501,6 +502,8 @@ class LayoutController extends Controller
             ]
         );
 
+        PublicCacheService::flushCategoryPageCache($category->slug);
+
         return redirect()->route('cms.layouts.category', $category)
             ->with('success', 'Category layout updated successfully.');
     }
@@ -550,6 +553,8 @@ class LayoutController extends Controller
                 'updated_by' => $request->user()->id,
             ]
         );
+
+        PublicCacheService::flushTagPageCache($tag->slug);
 
         return redirect()->route('cms.layouts.tag', $tag)
             ->with('success', 'Tag layout updated successfully.');

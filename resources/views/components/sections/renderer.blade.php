@@ -1,0 +1,216 @@
+@props(['sections'])
+
+@foreach($sections as $section)
+    @switch($section['type'])
+        @case('hero')
+            <x-sections.hero
+                :alignment="$section['data']['alignment'] ?? 'center'"
+                :action="$section['data']['action'] ?? 'recent'"
+                :params="$section['data']['params'] ?? []"
+                :postId="$section['data']['postId'] ?? null"
+                :bgColor="$section['data']['bgColor'] ?? 'yellow'"
+                :buttonText="$section['data']['buttonText'] ?? 'Read More'"
+                :buttonColor="$section['data']['buttonColor'] ?? 'white'"
+            />
+            @break
+
+        @case('latest-updates')
+            <x-sections.latest-updates
+                :introImage="$section['data']['introImage'] ?? ''"
+                :introImageAlt="$section['data']['introImageAlt'] ?? 'Latest Updates'"
+                :titleSmall="$section['data']['titleSmall'] ?? 'Latest'"
+                :titleLarge="$section['data']['titleLarge'] ?? 'Updates'"
+                :description="$section['data']['description'] ?? ''"
+                :buttonText="$section['data']['buttonText'] ?? 'More Updates'"
+                :showLoadMore="$section['data']['showLoadMore'] ?? true"
+                :action="$section['data']['action'] ?? 'recent'"
+                :params="$section['data']['params'] ?? []"
+                :totalSlots="$section['data']['totalSlots'] ?? 0"
+                :manualPostIds="$section['data']['manualPostIds'] ?? []"
+                :staticContent="$section['data']['staticContent'] ?? []"
+                :dynamicCount="$section['data']['dynamicCount'] ?? 0"
+            />
+            @break
+
+        @case('spread')
+            <x-sections.spread
+                :showIntro="$section['data']['showIntro'] ?? false"
+                :introImage="$section['data']['introImage'] ?? ''"
+                :introImageAlt="$section['data']['introImageAlt'] ?? 'The Spread'"
+                :titleSmall="$section['data']['titleSmall'] ?? 'The'"
+                :titleLarge="$section['data']['titleLarge'] ?? 'SPREAD'"
+                :description="$section['data']['description'] ?? ''"
+                :bgColor="$section['data']['bgColor'] ?? 'yellow'"
+                :showDividers="$section['data']['showDividers'] ?? true"
+                :dividerColor="$section['data']['dividerColor'] ?? 'white'"
+                :mobileLayout="$section['data']['mobileLayout'] ?? 'scroll'"
+                :action="$section['data']['action'] ?? 'recent'"
+                :params="$section['data']['params'] ?? []"
+                :totalSlots="$section['data']['totalSlots'] ?? 0"
+                :manualPostIds="$section['data']['manualPostIds'] ?? []"
+                :staticContent="$section['data']['staticContent'] ?? []"
+                :dynamicCount="$section['data']['dynamicCount'] ?? 0"
+            />
+            @break
+
+        @case('review')
+            <x-sections.review
+                :showIntro="$section['data']['showIntro'] ?? true"
+                :introImage="$section['data']['introImage'] ?? ''"
+                :introImageAlt="$section['data']['introImageAlt'] ?? 'On the Menu'"
+                :titleSmall="$section['data']['titleSmall'] ?? 'On the'"
+                :titleLarge="$section['data']['titleLarge'] ?? 'Menu'"
+                :description="$section['data']['description'] ?? ''"
+                :showDividers="$section['data']['showDividers'] ?? true"
+                :dividerColor="$section['data']['dividerColor'] ?? 'white'"
+                :mobileLayout="$section['data']['mobileLayout'] ?? 'scroll'"
+                :buttonText="$section['data']['buttonText'] ?? 'More Reviews'"
+                :showLoadMore="$section['data']['showLoadMore'] ?? true"
+                :action="$section['data']['action'] ?? 'recent'"
+                :params="$section['data']['params'] ?? []"
+                :totalSlots="$section['data']['totalSlots'] ?? 0"
+                :manualPostIds="$section['data']['manualPostIds'] ?? []"
+                :staticContent="$section['data']['staticContent'] ?? []"
+                :dynamicCount="$section['data']['dynamicCount'] ?? 0"
+            />
+            @break
+
+        @case('recipe')
+            <x-sections.recipe
+                :showIntro="$section['data']['showIntro'] ?? true"
+                :introImage="$section['data']['introImage'] ?? ''"
+                :introImageAlt="$section['data']['introImageAlt'] ?? 'Everyday Cooking'"
+                :titleSmall="$section['data']['titleSmall'] ?? 'Everyday'"
+                :titleLarge="$section['data']['titleLarge'] ?? 'COOKING'"
+                :description="$section['data']['description'] ?? ''"
+                :bgColor="$section['data']['bgColor'] ?? 'yellow'"
+                :gradient="$section['data']['gradient'] ?? 'top'"
+                :mobileLayout="$section['data']['mobileLayout'] ?? 'grid'"
+                :showDividers="$section['data']['showDividers'] ?? false"
+                :dividerColor="$section['data']['dividerColor'] ?? 'white'"
+                :action="$section['data']['action'] ?? 'recent'"
+                :params="$section['data']['params'] ?? []"
+                :totalSlots="$section['data']['totalSlots'] ?? 0"
+                :manualPostIds="$section['data']['manualPostIds'] ?? []"
+                :staticContent="$section['data']['staticContent'] ?? []"
+                :dynamicCount="$section['data']['dynamicCount'] ?? 0"
+            />
+            @break
+
+        @case('featured-person')
+            <x-sections.featured-person
+                :postId="$section['data']['postId'] ?? null"
+                :action="$section['data']['action'] ?? 'recent'"
+                :params="$section['data']['params'] ?? []"
+                :tag1="$section['data']['tag1'] ?? 'TASTY FEATURE'"
+                :buttonText="$section['data']['buttonText'] ?? 'Read More'"
+                :bgColor="$section['data']['bgColor'] ?? 'yellow'"
+            />
+            @break
+
+        @case('featured-video')
+            <x-sections.featured-video
+                :postId="$section['data']['postId'] ?? null"
+                :action="$section['data']['action'] ?? 'recent'"
+                :params="$section['data']['params'] ?? []"
+                :buttonText="$section['data']['buttonText'] ?? 'Watch'"
+                :overlayColor="$section['data']['overlayColor'] ?? '#FFE762'"
+            />
+            @break
+
+        @case('featured-location')
+            <x-sections.featured-location
+                :postId="$section['data']['postId'] ?? null"
+                :action="$section['data']['action'] ?? 'recent'"
+                :params="$section['data']['params'] ?? []"
+                :tag1="$section['data']['tag1'] ?? 'TASTY FEATURE'"
+                :tag2="$section['data']['tag2'] ?? ''"
+                :bgColor="$section['data']['bgColor'] ?? 'yellow'"
+                :textColor="$section['data']['textColor'] ?? 'blue-black'"
+                :buttonVariant="$section['data']['buttonVariant'] ?? 'white'"
+                :buttonText="$section['data']['buttonText'] ?? 'Read More'"
+                :mobileLayout="$section['data']['mobileLayout'] ?? 'scroll'"
+                :totalSlots="$section['data']['totalSlots'] ?? 0"
+                :manualPostIds="$section['data']['manualPostIds'] ?? []"
+                :staticSlots="$section['data']['staticSlots'] ?? []"
+                :dynamicCount="$section['data']['dynamicCount'] ?? 0"
+            />
+            @break
+
+        @case('feature-1')
+            <x-sections.feature-1
+                :postId="$section['data']['postId'] ?? null"
+                :staticContent="$section['data']['staticContent'] ?? null"
+                :tag1="$section['data']['tag1'] ?? 'TASTY FEATURE'"
+                :tag2="$section['data']['tag2'] ?? ''"
+                :bgColor="$section['data']['bgColor'] ?? 'yellow'"
+                :textColor="$section['data']['textColor'] ?? 'blue-black'"
+                :buttonVariant="$section['data']['buttonVariant'] ?? 'white'"
+                :buttonText="$section['data']['buttonText'] ?? 'Read More'"
+            />
+            @break
+
+        @case('feature-2')
+            <x-sections.feature-2
+                :postId="$section['data']['postId'] ?? null"
+                :staticContent="$section['data']['staticContent'] ?? null"
+                :tag1="$section['data']['tag1'] ?? 'TASTY FEATURE'"
+                :tag2="$section['data']['tag2'] ?? ''"
+                :bgColor="$section['data']['bgColor'] ?? 'blue-black'"
+                :textColor="$section['data']['textColor'] ?? 'white'"
+                :buttonVariant="$section['data']['buttonVariant'] ?? 'yellow'"
+                :buttonText="$section['data']['buttonText'] ?? 'Read More'"
+            />
+            @break
+
+        @case('carousel')
+            <x-sections.carousel
+                :bgColor="$section['data']['bgColor'] ?? 'yellow'"
+                :showDividers="$section['data']['showDividers'] ?? true"
+                :dividerColor="$section['data']['dividerColor'] ?? 'white'"
+                :paddingTop="$section['data']['paddingTop'] ?? 'medium'"
+                :paddingBottom="$section['data']['paddingBottom'] ?? 'medium'"
+                :action="$section['data']['action'] ?? 'recent'"
+                :params="$section['data']['params'] ?? []"
+                :totalSlots="$section['data']['totalSlots'] ?? 0"
+                :manualPostIds="$section['data']['manualPostIds'] ?? []"
+                :staticContent="$section['data']['staticContent'] ?? []"
+                :dynamicCount="$section['data']['dynamicCount'] ?? 0"
+            />
+            @break
+
+        @case('newsletter')
+            <x-sections.newsletter
+                :title="$section['data']['title'] ?? 'COME HUNGRY, LEAVE INSPIRED. SIGN UP FOR TASTY UPDATES.'"
+                :placeholder="$section['data']['placeholder'] ?? 'Enter your Email'"
+                :buttonText="$section['data']['buttonText'] ?? 'SUBSCRIBE'"
+                :bgColor="$section['data']['bgColor'] ?? '#F3F4F6'"
+            />
+            @break
+
+        @case('add-to-cart')
+            <x-sections.add-to-cart
+                :title="$section['data']['title'] ?? 'ADD TO CART'"
+                :description="$section['data']['description'] ?? 'Ingredients, tools, and staples we actually use.'"
+                :bgColor="$section['data']['bgColor'] ?? 'white'"
+                :products="$section['data']['products'] ?? []"
+            />
+            @break
+
+        @case('ad')
+            <x-sections.ad
+                :adSlot="$section['data']['adSlot'] ?? null"
+                :size="$section['data']['size'] ?? 'auto'"
+                :bgColor="$section['data']['bgColor'] ?? '#F7F7F7'"
+                :paddingTop="$section['data']['paddingTop'] ?? 'medium'"
+                :paddingBottom="$section['data']['paddingBottom'] ?? 'medium'"
+            />
+            @break
+
+        @case('custom-html')
+            <x-sections.custom-html
+                :html="$section['data']['html'] ?? ''"
+            />
+            @break
+    @endswitch
+@endforeach

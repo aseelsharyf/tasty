@@ -103,6 +103,16 @@ class Post extends Model implements HasMedia
             if ($post->isDirty('title') && $post->hasUntitledSlug()) {
                 $post->slug = $post->generateUniqueSlugForPost();
             }
+
+            // Catch placeholder slugs at publish time. The workflow publish path
+            // updates status directly, so the title may already be set (not dirty)
+            // while the slug is still "untitled-article-N".
+            if ($post->isDirty('status')
+                && $post->status === self::STATUS_PUBLISHED
+                && $post->shouldRegenerateSlug()
+                && $post->hasRealTitle()) {
+                $post->slug = $post->generateUniqueSlugForPost();
+            }
         });
 
         static::saving(function (Post $post) {
@@ -467,7 +477,7 @@ class Post extends Model implements HasMedia
         ];
 
         // Regenerate slug from title if it's still a placeholder
-        if ($this->title && $this->shouldRegenerateSlug()) {
+        if ($this->hasRealTitle() && $this->shouldRegenerateSlug()) {
             $updateData['slug'] = static::generateUniqueSlug($this->title);
         }
 
@@ -484,6 +494,11 @@ class Post extends Model implements HasMedia
             return true;
         }
 
+        // Auto-generated slugs like "untitled-article-17" or "untitled-recipe-4"
+        if ($this->hasUntitledSlug()) {
+            return true;
+        }
+
         // Check if slug starts with common placeholder patterns
         $placeholderPatterns = ['post', 'untitled'];
         foreach ($placeholderPatterns as $pattern) {
@@ -493,6 +508,16 @@ class Post extends Model implements HasMedia
         }
 
         return false;
+    }
+
+    /**
+     * Check if the post has a real (non-placeholder) title.
+     */
+    public function hasRealTitle(): bool
+    {
+        $title = trim((string) $this->title);
+
+        return $title !== '' && ! preg_match('/^untitled(\s|$)/i', $title);
     }
 
     public function unpublish(): void
