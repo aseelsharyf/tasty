@@ -18,10 +18,16 @@
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
         <meta name="theme-color" content="#FFE762">
 
-        {!! SEO::generate() !!}
+        {!! SEOMeta::generate() !!}
+        {!! OpenGraph::generate() !!}
+        {!! Twitter::generate() !!}
+        @php
+            $structuredData = ['@context' => 'https://schema.org'] + JsonLd::convertToArray();
+        @endphp
+        <script type="application/ld+json">{!! json_encode($structuredData, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 
         @if(isset($breadcrumbJsonLd))
-            <script type="application/ld+json">{!! json_encode($breadcrumbJsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+            <script type="application/ld+json">{!! json_encode($breadcrumbJsonLd, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
         @endif
 
         <!-- Resource Hints -->

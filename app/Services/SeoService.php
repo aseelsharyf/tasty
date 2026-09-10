@@ -177,15 +177,14 @@ class SeoService
             TwitterCard::setImage($image);
         }
 
-        // JSON-LD Article schema
-        JsonLd::setTitle($title);
-        JsonLd::setDescription($description);
-        JsonLd::setType('Article');
-        JsonLd::setUrl($url);
+        $isRecipe = $post->isRecipe();
+        $schemaImage = $isRecipe ? $post->featured_image_url : $image;
 
-        if ($image) {
-            JsonLd::addImage($image);
-        }
+        JsonLd::setTitle($isRecipe ? $post->title : $title);
+        JsonLd::setDescription($description);
+        JsonLd::setType($isRecipe ? 'Recipe' : 'Article');
+        JsonLd::setUrl($url);
+        JsonLd::setImages($schemaImage ? [$schemaImage] : []);
 
         $jsonLdValues = [
             'headline' => $title,
@@ -198,6 +197,10 @@ class SeoService
                 '@type' => 'Person',
                 'name' => $post->author->name,
             ];
+        }
+
+        if ($isRecipe) {
+            $jsonLdValues = array_merge($jsonLdValues, app(RecipeSchemaService::class)->build($post));
         }
 
         JsonLd::addValues($jsonLdValues);
