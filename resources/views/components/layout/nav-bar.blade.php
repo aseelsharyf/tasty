@@ -51,13 +51,13 @@
 
                 <div class="hidden lg:flex h-full items-center relative" id="cart-icon-desktop"
                     x-data="miniCart()" @click.away="open = false">
-                    <button @click="toggle()" class="h-full px-3 flex items-center justify-center hover:opacity-70 transition relative">
+                    <button type="button" @click="toggle()" aria-label="Shopping cart" aria-expanded="false" :aria-expanded="open" aria-controls="mini-cart-dropdown" class="h-full px-3 flex items-center justify-center hover:opacity-70 transition relative">
                         <svg class="w-5 h-5 text-blue-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
                         <span id="cart-badge-desktop" class="absolute top-3.5 right-1 min-w-[18px] h-[18px] px-1 bg-blue-black text-white text-[10px] font-semibold rounded-full items-center justify-center hidden">0</span>
                     </button>
 
                     {{-- Mini Cart Dropdown --}}
-                    <div x-show="open" x-cloak
+                    <div id="mini-cart-dropdown" x-show="open" x-cloak
                         x-transition:enter="transition ease-out duration-150"
                         x-transition:enter-start="opacity-0 -translate-y-2"
                         x-transition:enter-end="opacity-100 translate-y-0"
@@ -105,7 +105,7 @@
                                             <span class="text-sm font-medium text-blue-black" x-text="parseFloat(item.total).toFixed(2)"></span>
                                         </div>
                                     </div>
-                                    <button @click="removeItem(item.id)" class="self-start text-gray-300 hover:text-red-400 transition shrink-0 mt-0.5">
+                                    <button type="button" @click="removeItem(item.id)" :aria-label="'Remove ' + item.product.title + ' from cart'" class="self-start text-gray-300 hover:text-red-400 transition shrink-0 mt-0.5">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </button>
                                 </div>
