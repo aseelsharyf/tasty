@@ -135,28 +135,22 @@
                 class="h-auto w-4/5 max-w-sm shrink-0"
             >
 
-            <dl class="grid w-full max-w-4xl grid-cols-1 gap-4 border-t border-white/10 pt-8 text-base sm:text-sm md:grid-cols-2 md:gap-x-12">
-                <div>
-                    <dt class="font-medium text-white/80">Business name</dt>
-                    <dd class="text-white/60">Tasty Magazine</dd>
+            <div class="flex w-full flex-col gap-6 border-t border-white/10 pt-6 text-center lg:flex-row lg:items-end lg:justify-between lg:text-left">
+                <div class="flex max-w-[88ch] flex-col gap-1 text-base text-white/50 sm:text-sm">
+                    <p class="text-pretty">
+                        <span class="font-medium text-white/70">Tasty Magazine</span>
+                        <span aria-hidden="true">&middot;</span>
+                        <span class="font-medium text-white/70">Greyscale Creative Pvt Ltd (Reg: C11932022)</span>
+                    </p>
+                    <address class="text-pretty not-italic">
+                        H. Eevaau, 5th Floor, Mialani Goalhi 20069, K. Male', Maldives.
+                    </address>
                 </div>
-                <div>
-                    <dt class="font-medium text-white/80">Company</dt>
-                    <dd class="text-white/60">Greyscale Creative Pvt Ltd (Reg: C11932022)</dd>
-                </div>
-                <div>
-                    <dt class="font-medium text-white/80">Permanent establishment</dt>
-                    <dd class="text-pretty text-white/60">H. Eevaau, 5th Floor, Mialani Goalhi 20069, K. Male', Maldives</dd>
-                </div>
-                <div>
-                    <dt class="font-medium text-white/80">Postal address</dt>
-                    <dd class="text-pretty text-white/60">H. Eevaau, 5th Floor, Mialani Goalhi 20069, K. Male', Maldives</dd>
-                </div>
-            </dl>
 
-            <div class="flex flex-col items-center gap-1 text-xs md:text-sm text-white/60 tracking-wider uppercase">
-                <p>&copy; {{ $year }} {{ $company }}</p>
-                <p>{{ $location }}</p>
+                <div class="flex shrink-0 flex-col gap-1 text-base tracking-wider text-white/50 uppercase sm:text-sm lg:text-right">
+                    <p>&copy; {{ $year }} {{ $company }}</p>
+                    <p>{{ $location }}</p>
+                </div>
             </div>
         </div>
 

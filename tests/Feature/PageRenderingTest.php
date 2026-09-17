@@ -57,9 +57,7 @@ it('shows the merchant identity and complete addresses in the site footer', func
     $response->assertSuccessful()
         ->assertSee('Tasty Magazine')
         ->assertSee('Greyscale Creative Pvt Ltd (Reg: C11932022)')
-        ->assertSee("H. Eevaau, 5th Floor, Mialani Goalhi 20069, K. Male', Maldives", false)
-        ->assertSee('Permanent establishment')
-        ->assertSee('Postal address');
+        ->assertSee("H. Eevaau, 5th Floor, Mialani Goalhi 20069, K. Male', Maldives", false);
 });
 
 it('renders single images using the selected orientation', function (string $orientation, string $aspectClass) {
