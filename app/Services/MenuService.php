@@ -180,7 +180,7 @@ class MenuService
     public function getCompanyName(): string
     {
         return Cache::remember('site.company_name', self::CACHE_TTL, function () {
-            return Setting::get('site.company_name', 'Tasty Publishing Ltd.');
+            return Setting::get('site.company_name', 'Tasty Magazine');
         });
     }
 

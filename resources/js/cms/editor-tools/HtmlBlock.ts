@@ -1,4 +1,4 @@
-import type { BlockTool, BlockToolConstructorOptions, API } from '@editorjs/editorjs';
+import type { BlockAPI, BlockTool, BlockToolConstructorOptions, API } from '@editorjs/editorjs';
 
 /**
  * HTML Embed block data structure
@@ -22,6 +22,7 @@ export default class HtmlBlock implements BlockTool {
     private textarea: HTMLTextAreaElement | null = null;
     private preview: HTMLElement | null = null;
     private readOnly: boolean;
+    private block: BlockAPI;
     private showingPreview: boolean = false;
 
     static get toolbox() {
@@ -35,10 +36,11 @@ export default class HtmlBlock implements BlockTool {
         return true;
     }
 
-    constructor({ data, config, api, readOnly }: BlockToolConstructorOptions<HtmlBlockData, HtmlBlockConfig>) {
+    constructor({ data, config, api, readOnly, block }: BlockToolConstructorOptions<HtmlBlockData, HtmlBlockConfig>) {
         this.api = api;
         this.config = config || {};
         this.readOnly = readOnly || false;
+        this.block = block;
         this.data = {
             html: data?.html || '',
         };
@@ -64,7 +66,7 @@ export default class HtmlBlock implements BlockTool {
         const toggleBtn = document.createElement('button');
         toggleBtn.classList.add('ce-html-block__toggle');
         toggleBtn.type = 'button';
-        toggleBtn.textContent = 'Preview';
+        toggleBtn.textContent = this.data.html ? 'Edit Code' : 'Show Preview';
         toggleBtn.addEventListener('click', () => this.togglePreview());
 
         header.appendChild(label);
@@ -80,6 +82,7 @@ export default class HtmlBlock implements BlockTool {
         this.textarea.addEventListener('input', () => {
             this.autoResize();
             this.data.html = this.textarea!.value;
+            this.block.dispatchChange();
         });
 
         // Preview container (hidden initially)
@@ -91,8 +94,11 @@ export default class HtmlBlock implements BlockTool {
         this.wrapper.appendChild(this.textarea);
         this.wrapper.appendChild(this.preview);
 
-        // Auto-resize after render
-        requestAnimationFrame(() => this.autoResize());
+        if (this.data.html) {
+            this.setPreviewVisible(true);
+        } else {
+            requestAnimationFrame(() => this.autoResize());
+        }
 
         return this.wrapper;
     }
@@ -110,21 +116,43 @@ export default class HtmlBlock implements BlockTool {
     private togglePreview(): void {
         if (!this.textarea || !this.preview) return;
 
-        this.showingPreview = !this.showingPreview;
+        this.setPreviewVisible(!this.showingPreview);
+    }
+
+    private setPreviewVisible(showPreview: boolean): void {
+        if (!this.textarea || !this.preview) return;
+
+        this.showingPreview = showPreview;
 
         const toggleBtn = this.wrapper?.querySelector('.ce-html-block__toggle');
 
         if (this.showingPreview) {
             this.textarea.style.display = 'none';
             this.preview.style.display = 'block';
-            this.preview.innerHTML = this.data.html || '<p style="color: var(--ui-text-dimmed); font-style: italic;">No HTML to preview</p>';
-            if (toggleBtn) toggleBtn.textContent = 'Code';
+            this.renderPreviewHtml();
+            if (toggleBtn) toggleBtn.textContent = 'Edit Code';
         } else {
             this.textarea.style.display = 'block';
             this.preview.style.display = 'none';
-            if (toggleBtn) toggleBtn.textContent = 'Preview';
+            if (toggleBtn) toggleBtn.textContent = 'Show Preview';
             requestAnimationFrame(() => this.autoResize());
         }
+    }
+
+    private renderPreviewHtml(): void {
+        if (!this.preview) return;
+
+        this.preview.innerHTML = this.data.html || '<p class="ce-html-block__empty">No HTML to preview</p>';
+
+        this.preview.querySelectorAll('script').forEach((script) => {
+            const executableScript = document.createElement('script');
+
+            Array.from(script.attributes).forEach((attribute) => {
+                executableScript.setAttribute(attribute.name, attribute.value);
+            });
+            executableScript.textContent = script.textContent;
+            script.replaceWith(executableScript);
+        });
     }
 
     private autoResize(): void {

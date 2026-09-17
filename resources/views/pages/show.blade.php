@@ -6,13 +6,14 @@
 @else
 <div class="w-full px-5 lg:px-10 pt-32 lg:pt-40 pb-20 bg-tasty-off-white min-h-screen">
     <article class="max-w-3xl mx-auto prose-page">
-        @if($page->title)
-            <h1>{{ $page->title }}</h1>
-        @endif
         @php
             $rendered = $page->renderContent();
             $isHtml = $rendered !== strip_tags($rendered);
+            $hasContentHeading = $isHtml && preg_match('/<h1\b[^>]*>/i', $rendered) === 1;
         @endphp
+        @if($page->title && ! $hasContentHeading)
+            <h1>{{ $page->title }}</h1>
+        @endif
         @if($isHtml)
             {!! $rendered !!}
         @else

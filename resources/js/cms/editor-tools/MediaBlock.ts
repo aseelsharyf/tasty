@@ -1,4 +1,4 @@
-import type { BlockTool, BlockToolConstructorOptions, API, BlockToolData } from '@editorjs/editorjs';
+import type { BlockAPI, BlockTool, BlockToolConstructorOptions, API, BlockToolData, MenuConfig } from '@editorjs/editorjs';
 
 /**
  * Gap size options for media grid
@@ -13,7 +13,7 @@ export type DisplayWidth = 'default' | 'fullScreen';
 /**
  * Single image display options
  */
-export type SingleImageDisplay = 'fullWidth' | 'contained' | 'portrait';
+export type SingleImageDisplay = 'fullWidth' | 'contained' | 'landscape' | 'portrait';
 
 /**
  * Media data structure for Editor.js block
@@ -24,7 +24,7 @@ export interface MediaBlockData {
     gridColumns: number; // 1-12
     gap: GapSize;
     displayWidth: DisplayWidth; // default (content width) or fullScreen (edge to edge)
-    singleImageDisplay: SingleImageDisplay; // fullWidth, contained (centered with max-width), or portrait (centered portrait)
+    singleImageDisplay: SingleImageDisplay; // Legacy width modes or a landscape/portrait crop
 }
 
 export interface CropVersion {
@@ -87,6 +87,7 @@ export default class MediaBlock implements BlockTool {
     private config: MediaBlockConfig;
     private wrapper: HTMLElement | null = null;
     private readOnly: boolean;
+    private block: BlockAPI;
 
     static get toolbox() {
         return {
@@ -99,11 +100,16 @@ export default class MediaBlock implements BlockTool {
         return true;
     }
 
-    constructor({ data, config, api, readOnly }: BlockToolConstructorOptions<MediaBlockData, MediaBlockConfig>) {
+    constructor({ data, config, api, readOnly, block }: BlockToolConstructorOptions<MediaBlockData, MediaBlockConfig>) {
         this.api = api;
         this.config = config || {};
         this.readOnly = readOnly || false;
+        this.block = block;
         this.data = this.normalizeData(data);
+    }
+
+    private dispatchChange(): void {
+        this.block.dispatchChange();
     }
 
     private normalizeData(data: BlockToolData): MediaBlockData {
@@ -118,7 +124,15 @@ export default class MediaBlock implements BlockTool {
 
         if (data && typeof data === 'object') {
             if (Array.isArray(data.items)) {
-                normalized.items = data.items;
+                normalized.items = data.items.map((item: MediaBlockItem) => {
+                    const isVideo = Boolean(Number(item.is_video));
+
+                    return {
+                        ...item,
+                        is_video: isVideo,
+                        is_image: item.is_image === undefined ? !isVideo : Boolean(Number(item.is_image)),
+                    };
+                });
             }
             if (data.layout && ['single', 'grid', 'carousel'].includes(data.layout)) {
                 normalized.layout = data.layout;
@@ -141,7 +155,7 @@ export default class MediaBlock implements BlockTool {
                 normalized.displayWidth = data.displayWidth;
             }
             // Single image display
-            if (data.singleImageDisplay && ['fullWidth', 'contained', 'portrait'].includes(data.singleImageDisplay)) {
+            if (data.singleImageDisplay && ['fullWidth', 'contained', 'landscape', 'portrait'].includes(data.singleImageDisplay)) {
                 normalized.singleImageDisplay = data.singleImageDisplay;
             }
         }
@@ -234,6 +248,7 @@ export default class MediaBlock implements BlockTool {
                 e.preventDefault();
                 e.stopPropagation();
                 this.data.layout = 'grid';
+                this.dispatchChange();
                 this.renderMedia();
             });
 
@@ -252,6 +267,7 @@ export default class MediaBlock implements BlockTool {
                 e.preventDefault();
                 e.stopPropagation();
                 this.data.layout = 'carousel';
+                this.dispatchChange();
                 this.renderMedia();
             });
 
@@ -276,6 +292,7 @@ export default class MediaBlock implements BlockTool {
                 colsSelect.addEventListener('change', (e) => {
                     e.stopPropagation();
                     this.data.gridColumns = parseInt((e.target as HTMLSelectElement).value, 10);
+                    this.dispatchChange();
                     this.renderMedia();
                 });
 
@@ -383,8 +400,11 @@ export default class MediaBlock implements BlockTool {
                 </div>
             `;
         } else {
+            const focalPoint = item.focal_point;
+            const objectPosition = focalPoint ? `${focalPoint.x}% ${focalPoint.y}%` : '50% 50%';
+
             mediaContainer.innerHTML = `
-                <img src="${item.url || item.thumbnail_url || ''}" alt="${item.alt_text || ''}" />
+                <img src="${item.url || item.thumbnail_url || ''}" alt="${item.alt_text || ''}" style="object-position: ${objectPosition}" />
             `;
         }
 
@@ -416,6 +436,7 @@ export default class MediaBlock implements BlockTool {
         captionEl.textContent = captionText;
         captionEl.addEventListener('input', () => {
             this.data.items[index].caption = captionEl.textContent || null;
+            this.dispatchChange();
         });
         // Prevent editor from capturing focus events
         captionEl.addEventListener('keydown', (e) => {
@@ -551,6 +572,7 @@ export default class MediaBlock implements BlockTool {
             item.crop_version = null;
         }
 
+        this.dispatchChange();
         this.renderMedia();
     }
 
@@ -598,6 +620,7 @@ export default class MediaBlock implements BlockTool {
 
             if (result) {
                 this.data.items[index].focal_point = result;
+                this.dispatchChange();
                 this.renderMedia();
             }
         } catch (error) {
@@ -611,17 +634,10 @@ export default class MediaBlock implements BlockTool {
 
         const options: Array<{ value: SingleImageDisplay; icon: string; label: string }> = [
             {
-                value: 'fullWidth',
-                label: 'Full Width',
+                value: 'landscape',
+                label: 'Landscape',
                 icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="6" width="20" height="12" rx="2"/>
-                </svg>`,
-            },
-            {
-                value: 'contained',
-                label: 'Contained',
-                icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="5" y="6" width="14" height="12" rx="2"/>
+                    <rect x="2" y="5" width="20" height="14" rx="2"/>
                 </svg>`,
             },
             {
@@ -638,12 +654,14 @@ export default class MediaBlock implements BlockTool {
             btn.type = 'button';
             btn.className = `ce-media-block__single-display-btn ${this.data.singleImageDisplay === value ? 'active' : ''}`;
             btn.title = label;
-            btn.innerHTML = icon;
+            btn.setAttribute('aria-label', label);
+            btn.innerHTML = `${icon}<span>${label}</span>`;
             btn.addEventListener('mousedown', (e) => e.stopPropagation());
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 this.data.singleImageDisplay = value;
+                this.dispatchChange();
                 this.renderMedia();
             });
             selector.appendChild(btn);
@@ -678,6 +696,7 @@ export default class MediaBlock implements BlockTool {
                     this.data.items = selected.slice(0, 1);
                     this.data.layout = 'single';
                 }
+                this.dispatchChange();
                 this.renderMedia();
             }
         } catch (error) {
@@ -687,6 +706,7 @@ export default class MediaBlock implements BlockTool {
 
     private removeItem(index: number): void {
         this.data.items.splice(index, 1);
+        this.dispatchChange();
         if (this.data.items.length === 0) {
             this.renderPlaceholder();
         } else if (this.data.items.length === 1) {
@@ -706,11 +726,20 @@ export default class MediaBlock implements BlockTool {
         return savedData.items && savedData.items.length > 0;
     }
 
-    renderSettings(): HTMLElement {
-        const wrapper = document.createElement('div');
-        wrapper.classList.add('ce-media-block__settings');
+    renderSettings(): MenuConfig {
+        const singleImageOptions: Array<{ value: SingleImageDisplay; icon: string; label: string }> = [
+            {
+                value: 'landscape',
+                label: 'Landscape',
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/></svg>',
+            },
+            {
+                value: 'portrait',
+                label: 'Portrait',
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="3" width="10" height="18" rx="2"/></svg>',
+            },
+        ];
 
-        // Display width settings
         const displayWidthOptions: Array<{ value: DisplayWidth; icon: string; label: string }> = [
             {
                 value: 'default',
@@ -724,24 +753,27 @@ export default class MediaBlock implements BlockTool {
             },
         ];
 
-        displayWidthOptions.forEach(({ value, icon, label }) => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.classList.add('cdx-settings-button');
-            button.classList.toggle('cdx-settings-button--active', this.data.displayWidth === value);
-            button.innerHTML = icon;
-            button.title = label;
-            button.addEventListener('click', () => {
-                this.data.displayWidth = value;
-                // Update active state
-                wrapper.querySelectorAll('.cdx-settings-button').forEach((btn) => {
-                    btn.classList.remove('cdx-settings-button--active');
-                });
-                button.classList.add('cdx-settings-button--active');
-            });
-            wrapper.appendChild(button);
-        });
+        const isSingleImage = this.data.items.length === 1 && this.data.items[0].is_video !== true;
+        const options = isSingleImage ? singleImageOptions : displayWidthOptions;
 
-        return wrapper;
+        return options.map(({ value, icon, label }) => ({
+            icon,
+            title: label,
+            toggle: isSingleImage ? 'single-image-orientation' : 'media-display-width',
+            isActive: () => isSingleImage
+                ? this.data.singleImageDisplay === value
+                : this.data.displayWidth === value,
+            closeOnActivate: true,
+            onActivate: () => {
+                if (isSingleImage) {
+                    this.data.singleImageDisplay = value as SingleImageDisplay;
+                } else {
+                    this.data.displayWidth = value as DisplayWidth;
+                }
+
+                this.dispatchChange();
+                this.renderMedia();
+            },
+        }));
     }
 }

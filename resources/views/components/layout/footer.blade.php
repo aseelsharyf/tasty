@@ -123,10 +123,41 @@
             </div>
         </div>
 
-        {{-- COPYRIGHT --}}
-        <div class="flex flex-col items-center gap-1 text-xs md:text-sm text-white/60 tracking-wider uppercase">
-            <p>&copy; {{ $year }} {{ $company }}</p>
-            <p>{{ $location }}</p>
+        {{-- PAYMENT METHODS & COPYRIGHT --}}
+        <div class="flex flex-col items-center gap-8">
+            <img
+                src="{{ asset('images/Payment_Gateway_logos_1.png') }}"
+                alt="Payments securely processed by BML Payment Gateway. American Express, Visa, Mastercard, and Maestro accepted."
+                width="782"
+                height="80"
+                loading="lazy"
+                decoding="async"
+                class="h-auto w-4/5 max-w-sm shrink-0"
+            >
+
+            <dl class="grid w-full max-w-4xl grid-cols-1 gap-4 border-t border-white/10 pt-8 text-base sm:text-sm md:grid-cols-2 md:gap-x-12">
+                <div>
+                    <dt class="font-medium text-white/80">Business name</dt>
+                    <dd class="text-white/60">Tasty Magazine</dd>
+                </div>
+                <div>
+                    <dt class="font-medium text-white/80">Company</dt>
+                    <dd class="text-white/60">Greyscale Creative Pvt Ltd (Reg: C11932022)</dd>
+                </div>
+                <div>
+                    <dt class="font-medium text-white/80">Permanent establishment</dt>
+                    <dd class="text-pretty text-white/60">H. Eevaau, 5th Floor, Mialani Goalhi 20069, K. Male', Maldives</dd>
+                </div>
+                <div>
+                    <dt class="font-medium text-white/80">Postal address</dt>
+                    <dd class="text-pretty text-white/60">H. Eevaau, 5th Floor, Mialani Goalhi 20069, K. Male', Maldives</dd>
+                </div>
+            </dl>
+
+            <div class="flex flex-col items-center gap-1 text-xs md:text-sm text-white/60 tracking-wider uppercase">
+                <p>&copy; {{ $year }} {{ $company }}</p>
+                <p>{{ $location }}</p>
+            </div>
         </div>
 
     </div>

@@ -151,6 +151,13 @@
                             @endforeach
                         </div>
 
+                        <div class="mt-4 space-y-2 border-t border-gray-950/10 pt-4 text-base text-gray-500 sm:text-sm">
+                            <p><span class="font-medium text-blue-black">Merchant outlet country:</span> Maldives.</p>
+                            <p class="text-pretty">
+                                We recommend that you retain a copy of this transaction record, along with a copy of our Policies and Rules, for your reference.
+                            </p>
+                        </div>
+
                         {{-- Bank Account Details (shown only when bank transfer is selected) --}}
                         @if($bankAccounts && count($bankAccounts) > 0)
                             <div x-show="selectedMethod === 'bank_transfer'" x-cloak

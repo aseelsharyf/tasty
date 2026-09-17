@@ -8,7 +8,7 @@
     'gap' => 'md',
     'isRtl' => false,
     'fullWidth' => false, // For breaking out of content container
-    'singleImageDisplay' => 'fullWidth', // fullWidth, contained, portrait
+    'singleImageDisplay' => 'fullWidth', // fullWidth, contained, landscape, portrait
 ])
 
 @php
@@ -168,10 +168,27 @@
                     </figcaption>
                 @endif
             </figure>
+        @elseif($singleImageDisplay === 'landscape')
+            {{-- Landscape: Centered 4:3 frame; source images are cropped around their focal point --}}
+            <figure class="max-w-[1146px] w-full mx-auto px-4 lg:px-0">
+                <div class="overflow-hidden outline-1 -outline-offset-1 outline-tasty-blue-black/10 aspect-[4/3]">
+                    <img
+                        src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
+                        alt="{{ $item['alt_text'] ?? '' }}"
+                        class="w-full h-full object-cover"
+                        style="object-position: {{ $objectPosition }};"
+                    />
+                </div>
+                @if($item['caption'] ?? null)
+                    <figcaption class="text-caption text-tasty-blue-black/40 mt-4 text-left border-b border-dashed border-tasty-blue-black/20 pb-4">
+                        {{ $item['caption'] }}
+                    </figcaption>
+                @endif
+            </figure>
         @elseif($singleImageDisplay === 'portrait')
             {{-- Portrait: Centered with narrower max-width for portrait images --}}
             <figure class="max-w-[900px] w-full mx-auto px-4 lg:px-0">
-                <div class="overflow-hidden border border-tasty-blue-black/10 aspect-[3/4]">
+                <div class="overflow-hidden outline-1 -outline-offset-1 outline-tasty-blue-black/10 aspect-[3/4]">
                     <img
                         src="{{ $item['url'] ?? $item['thumbnail_url'] ?? '' }}"
                         alt="{{ $item['alt_text'] ?? '' }}"

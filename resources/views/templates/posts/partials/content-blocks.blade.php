@@ -131,12 +131,12 @@
                     $isSingleImage = count($items) === 1 || $layout === 'single';
                     // Check if first item is a video
                     $firstItemIsVideo = isset($items[0]) && ($items[0]['is_video'] ?? false);
-                    // Single images: fullWidth mode uses edge-to-edge, contained/portrait use their own max-width
+                    // Single images: fullWidth mode uses edge-to-edge; framed modes use their own max-width
                     // Videos always use content width, multi-image respects displayWidth setting
                     $isFullScreen = $displayWidth === 'fullScreen' || ($isSingleImage && !$firstItemIsVideo && $singleImageDisplay === 'fullWidth');
                 @endphp
-                @if($isSingleImage && !$firstItemIsVideo && in_array($singleImageDisplay, ['contained', 'portrait']))
-                    {{-- Contained/Portrait: centered with their own max-width, slightly wider than body text --}}
+                @if($isSingleImage && !$firstItemIsVideo && in_array($singleImageDisplay, ['contained', 'landscape', 'portrait']))
+                    {{-- Framed single image: centered with a mode-specific aspect ratio and max-width --}}
                     <div class="w-full py-9">
                         <x-blocks.media
                             :items="$items"

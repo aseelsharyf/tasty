@@ -38,7 +38,6 @@
     border: 1px solid var(--ui-border);
     border-radius: var(--ui-radius);
     cursor: pointer;
-    transition: all 0.15s ease;
 }
 
 .ce-html-block__toggle:hover {
@@ -79,6 +78,11 @@
 
 .ce-html-block__preview--active {
     display: block;
+}
+
+.ce-html-block__empty {
+    color: var(--ui-text-dimmed);
+    font-style: italic;
 }
 
 /* Ensure iframes in preview are responsive */

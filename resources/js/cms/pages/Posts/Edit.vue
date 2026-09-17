@@ -2617,6 +2617,35 @@ function openDiff() {
                                     {{ 70 - form.title.length }}
                                 </span>
                             </div>
+
+                            <!-- URL Slug -->
+                            <div class="mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="shrink-0 text-sm text-muted">URL slug</span>
+                                    <UInput
+                                        v-model="form.slug"
+                                        aria-label="URL slug"
+                                        placeholder="article-url-slug"
+                                        size="sm"
+                                        class="min-w-0 flex-1"
+                                        :readonly="isReadOnly"
+                                        :color="form.errors.slug ? 'error' : 'neutral'"
+                                    />
+                                    <UTooltip text="Generate from title">
+                                        <UButton
+                                            type="button"
+                                            color="neutral"
+                                            variant="ghost"
+                                            icon="i-lucide-refresh-cw"
+                                            size="sm"
+                                            :disabled="isReadOnly || !form.title.trim()"
+                                            aria-label="Generate slug from title"
+                                            @click="generateSlug"
+                                        />
+                                    </UTooltip>
+                                </div>
+                                <p v-if="form.errors.slug" class="mt-1 text-sm text-error">{{ form.errors.slug }}</p>
+                            </div>
                             <div class="border-t border-gray-200 dark:border-gray-700 my-4"></div>
 
                             <!-- Subtitle -->

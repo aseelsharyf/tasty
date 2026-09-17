@@ -631,6 +631,7 @@ class PostController extends Controller
     public function update(UpdatePostRequest $request, string $language, Post $post): RedirectResponse
     {
         $validated = $request->validated();
+        $originalSlug = $post->slug;
 
         // Auto-generate slug if empty (based on title)
         if (empty($validated['slug']) && ! empty($validated['title'])) {
@@ -705,6 +706,10 @@ class PostController extends Controller
         if ($currentVersion) {
             $currentVersion->update(['content_snapshot' => $contentSnapshot]);
         }
+
+        PublicCacheService::flushPostCaches();
+        PublicCacheService::flushPostDetailCache($originalSlug);
+        PublicCacheService::flushPostDetailCache($post->slug);
 
         return redirect()->route('cms.posts.edit', [
             'language' => $language,

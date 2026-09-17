@@ -136,6 +136,7 @@ watch(isOpen, (open) => {
         validationErrors.value = {};
         hasUploadedMedia.value = false;
         loadMedia();
+        loadUploadConfig();
         loadTags(); // Load tags for upload form
         loadCategories(); // Load categories for filter
     }
@@ -228,6 +229,7 @@ const uploadFileKey = ref(0); // Counter to force re-render when file changes
 const isUploading = ref(false);
 const uploadProgress = ref<Record<string, number>>({});
 const uploadErrors = ref<string[]>([]);
+const useSignedUrls = ref(false);
 const validationErrors = ref<Record<number, { title?: string; caption?: string; tags?: string }>>({});
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const hasUploadedMedia = ref(false); // Track if any uploads succeeded during this session
@@ -250,6 +252,24 @@ async function loadTags() {
         console.error('Failed to load tags:', error);
     }
     isLoadingTags.value = false;
+}
+
+async function loadUploadConfig() {
+    try {
+        const response = await fetch(cmsPath('/media/upload-config'), {
+            headers: {
+                'Accept': 'application/json',
+                'X-XSRF-TOKEN': getCsrfToken(),
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            useSignedUrls.value = data.use_signed_urls === true;
+        }
+    } catch {
+        useSignedUrls.value = false;
+    }
 }
 
 // Categories for filter
@@ -569,48 +589,15 @@ async function uploadAll() {
 
     isUploading.value = true;
     uploadErrors.value = [];
-
-    const formData = new FormData();
-    formData.append('file', uploadFile.file);
-    formData.append('title', uploadFile.title.trim());
-    formData.append('caption', uploadFile.caption.trim());
-    // Include category from upload form
-    formData.append('category', uploadCategory.value || props.defaultCategory || 'media');
-    // Send tag_ids as array
-    uploadFile.tag_ids.forEach(tagId => {
-        formData.append('tag_ids[]', String(tagId));
-    });
+    uploadProgress.value[uploadFile.file.name] = 0;
 
     try {
-        const response = await fetch(cmsPath('/media'), {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-XSRF-TOKEN': getCsrfToken(),
-                'Accept': 'application/json',
-            },
-        });
+        await loadUploadConfig();
 
-        if (!response.ok) {
-            // Try to get error message from response
-            let errorMessage = `Failed to upload ${uploadFile.file.name}`;
-            try {
-                const errorData = await response.json();
-                if (errorData.message) {
-                    errorMessage = `${uploadFile.file.name}: ${errorData.message}`;
-                } else if (errorData.errors) {
-                    const firstError = Object.values(errorData.errors)[0];
-                    if (Array.isArray(firstError) && firstError[0]) {
-                        errorMessage = `${uploadFile.file.name}: ${firstError[0]}`;
-                    }
-                }
-            } catch {
-                // Ignore JSON parse errors
-            }
-            throw new Error(errorMessage);
-        }
+        const result = useSignedUrls.value
+            ? await uploadWithSignedUrl(uploadFile)
+            : await uploadDirect(uploadFile);
 
-        const result = await response.json();
         if (result.media) {
             hasUploadedMedia.value = true;
             // Clear upload state
@@ -626,6 +613,120 @@ async function uploadAll() {
     } finally {
         isUploading.value = false;
     }
+}
+
+async function uploadDirect(uploadFile: UploadFile): Promise<{ media?: MediaItem }> {
+    const formData = new FormData();
+    formData.append('file', uploadFile.file);
+    formData.append('title', uploadFile.title.trim());
+    formData.append('caption', uploadFile.caption.trim());
+    formData.append('category', uploadCategory.value || props.defaultCategory || 'media');
+    uploadFile.tag_ids.forEach(tagId => {
+        formData.append('tag_ids[]', String(tagId));
+    });
+
+    const response = await fetch(cmsPath('/media'), {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-XSRF-TOKEN': getCsrfToken(),
+            'Accept': 'application/json',
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(await getUploadError(response, uploadFile.file.name));
+    }
+
+    uploadProgress.value[uploadFile.file.name] = 100;
+
+    return response.json();
+}
+
+async function uploadWithSignedUrl(uploadFile: UploadFile): Promise<{ media?: MediaItem }> {
+    const signedUrlResponse = await fetch(cmsPath('/media/signed-url'), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-XSRF-TOKEN': getCsrfToken(),
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+            filename: uploadFile.file.name,
+            content_type: uploadFile.file.type,
+            size: uploadFile.file.size,
+        }),
+    });
+
+    if (!signedUrlResponse.ok) {
+        throw new Error(await getUploadError(signedUrlResponse, uploadFile.file.name));
+    }
+
+    const { signed_url: signedUrl, path, headers } = await signedUrlResponse.json();
+    uploadProgress.value[uploadFile.file.name] = 10;
+
+    const storageResponse = await fetch(signedUrl, {
+        method: 'PUT',
+        body: uploadFile.file,
+        headers: {
+            'Content-Type': uploadFile.file.type,
+            ...headers,
+        },
+    });
+
+    if (!storageResponse.ok) {
+        throw new Error(`${uploadFile.file.name}: Failed to upload file to storage`);
+    }
+
+    uploadProgress.value[uploadFile.file.name] = 70;
+
+    const confirmResponse = await fetch(cmsPath('/media/confirm-upload'), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-XSRF-TOKEN': getCsrfToken(),
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+            path,
+            filename: uploadFile.file.name,
+            content_type: uploadFile.file.type,
+            size: uploadFile.file.size,
+            category: uploadCategory.value || props.defaultCategory || 'media',
+            title: uploadFile.title.trim() || null,
+            caption: uploadFile.caption.trim() || null,
+            tag_ids: uploadFile.tag_ids,
+        }),
+    });
+
+    if (!confirmResponse.ok) {
+        throw new Error(await getUploadError(confirmResponse, uploadFile.file.name));
+    }
+
+    uploadProgress.value[uploadFile.file.name] = 100;
+
+    return confirmResponse.json();
+}
+
+async function getUploadError(response: Response, filename: string): Promise<string> {
+    try {
+        const errorData = await response.json();
+
+        if (errorData.error || errorData.message) {
+            return `${filename}: ${errorData.error || errorData.message}`;
+        }
+
+        if (errorData.errors) {
+            const firstError = Object.values(errorData.errors)[0];
+            if (Array.isArray(firstError) && firstError[0]) {
+                return `${filename}: ${firstError[0]}`;
+            }
+        }
+    } catch {
+        // The storage provider may return a non-JSON error response.
+    }
+
+    return `Failed to upload ${filename}`;
 }
 
 function formatFileSize(bytes: number): string {

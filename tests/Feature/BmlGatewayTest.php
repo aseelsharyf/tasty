@@ -300,6 +300,22 @@ it('redirects to BML payment page via gateway route', function () {
     $response->assertRedirect('https://pay.merchants.bankofmaldives.com.mv/txn_route_test');
 });
 
+it('shows merchant disclosures when presenting payment options', function () {
+    $response = $this->get(route('payment.index', [
+        'order' => $this->order,
+        'choose' => 1,
+    ]));
+
+    $response->assertSuccessful()
+        ->assertSee('Merchant outlet country:')
+        ->assertSee('Maldives.')
+        ->assertSee('We recommend that you retain a copy of this transaction record')
+        ->assertSee('Policies and Rules')
+        ->assertSee('Terms')
+        ->assertSee('Privacy')
+        ->assertSee('Refunds');
+});
+
 it('handles BML redirect back with confirmed payment', function () {
     $this->order->update([
         'payment_method' => PaymentMethod::BmlGateway,
