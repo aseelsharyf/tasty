@@ -6,6 +6,7 @@
     'content' => [],
     'defaultExpanded' => true,
     'isRtl' => false,
+    'recipeStepCounter' => null,
 ])
 
 <div
@@ -70,6 +71,7 @@
                     'isRtl' => $isRtl,
                     'contentWidth' => 'w-full',
                     'fullWidth' => 'w-full',
+                    'recipeStepCounter' => $recipeStepCounter,
                 ])
             @endif
         </div>

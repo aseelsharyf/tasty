@@ -3,6 +3,7 @@
 use App\Models\Category;
 use App\Models\Language;
 use App\Models\Post;
+use App\Models\Tag;
 use App\Services\OgImageService;
 use App\Services\RecipeSchemaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -45,6 +46,7 @@ it('renders recipe structured data from the published recipe and preserves socia
             'prep_time' => '15',
             'cook_time' => '0',
             'servings' => 4,
+            'difficulty' => 'Easy',
             'ingredients' => [
                 ['section' => 'Main ingredients', 'items' => ['1 tin tuna', '1 cup coconut']],
                 ['section' => 'Seasoning', 'items' => ['Salt & pepper']],
@@ -56,8 +58,11 @@ it('renders recipe structured data from the published recipe and preserves socia
             ['type' => 'list', 'data' => ['style' => 'ordered', 'items' => ['Mix with coconut.', 'Season &amp; serve.']]],
         ]],
     ]);
-    $category = Category::factory()->create();
+    $category = Category::factory()->create(['name' => ['en' => 'Breakfast'], 'slug' => 'breakfast']);
+    $cuisineTag = Tag::factory()->create(['name' => ['en' => 'Maldivian'], 'slug' => 'maldivian']);
+    $keywordTag = Tag::factory()->create(['name' => ['en' => 'Quick Meal'], 'slug' => 'quick-meal']);
     $post->categories()->attach($category);
+    $post->tags()->attach([$cuisineTag->id, $keywordTag->id]);
     $post->addMedia(UploadedFile::fake()->image('mas-huni.jpg', 1200, 800))->toMediaCollection('featured', 'public');
     $url = route('post.show', ['category' => $category->slug, 'post' => $post->slug]);
 
@@ -76,12 +81,15 @@ it('renders recipe structured data from the published recipe and preserves socia
             'cookTime' => 'PT0M',
             'totalTime' => 'PT15M',
             'recipeYield' => '4',
+            'recipeCategory' => 'Breakfast',
+            'recipeCuisine' => 'Maldivian',
+            'keywords' => 'Quick Meal, Easy',
             'inLanguage' => 'en',
             'recipeIngredient' => ['1 tin tuna', '1 cup coconut', 'Salt & pepper'],
             'recipeInstructions' => [
-                ['@type' => 'HowToStep', 'text' => 'Drain the tuna.'],
-                ['@type' => 'HowToStep', 'text' => 'Mix with coconut.'],
-                ['@type' => 'HowToStep', 'text' => 'Season & serve.'],
+                ['@type' => 'HowToStep', 'name' => 'Drain the tuna', 'text' => 'Drain the tuna.', 'url' => $url.'#recipe-step-1'],
+                ['@type' => 'HowToStep', 'name' => 'Mix with coconut', 'text' => 'Mix with coconut.', 'url' => $url.'#recipe-step-2'],
+                ['@type' => 'HowToStep', 'name' => 'Season & serve', 'text' => 'Season & serve.', 'url' => $url.'#recipe-step-3'],
             ],
         ])
         ->and($recipe['image'])->toBe($post->fresh()->featured_image_url)
@@ -91,6 +99,9 @@ it('renders recipe structured data from the published recipe and preserves socia
         ->and($recipe)->not->toHaveKeys(['aggregateRating', 'nutrition']);
 
     $response->assertSee('https://example.com/social-card.png', false);
+    $response->assertSee('id="recipe-step-1"', false)
+        ->assertSee('id="recipe-step-2"', false)
+        ->assertSee('id="recipe-step-3"', false);
 });
 
 it('keeps regular posts as articles', function () {
@@ -123,12 +134,13 @@ it('extracts nested and submitted instructions without headings or media caption
             ['type' => 'media', 'data' => ['caption' => 'Our sponsor']],
         ],
     ]);
+    $url = $post->url;
 
     expect(app(RecipeSchemaService::class)->build($post)['recipeInstructions'])->toBe([
-        ['@type' => 'HowToStep', 'text' => 'މަސް & coconut mix.'],
-        ['@type' => 'HowToStep', 'text' => 'Heat the pan.'],
-        ['@type' => 'HowToStep', 'text' => 'Add oil.'],
-        ['@type' => 'HowToStep', 'text' => 'Serve warm.'],
+        ['@type' => 'HowToStep', 'name' => 'މަސް & coconut mix', 'text' => 'މަސް & coconut mix.', 'url' => $url.'#recipe-step-1'],
+        ['@type' => 'HowToStep', 'name' => 'Heat the pan', 'text' => 'Heat the pan.', 'url' => $url.'#recipe-step-2'],
+        ['@type' => 'HowToStep', 'name' => 'Add oil', 'text' => 'Add oil.', 'url' => $url.'#recipe-step-3'],
+        ['@type' => 'HowToStep', 'name' => 'Serve warm', 'text' => 'Serve warm.', 'url' => $url.'#recipe-step-4'],
     ]);
 });
 

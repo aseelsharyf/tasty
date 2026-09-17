@@ -5,6 +5,7 @@
     'items' => [],
     'style' => 'unordered', // unordered, ordered, checklist
     'isRtl' => false,
+    'recipeStepCounter' => null,
 ])
 
 @php
@@ -42,10 +43,13 @@
 @if($style === 'ordered')
     <ol class="text-body-lg text-tasty-blue-black/90 list-decimal {{ $isRtl ? 'pr-[50px]' : 'pl-[50px]' }} space-y-2 {{ $alignClass }}">
         @foreach($items as $item)
-            <li>
+            @php
+                $recipeStepId = $recipeStepCounter ? 'recipe-step-'.++$recipeStepCounter->value : null;
+            @endphp
+            <li @if($recipeStepId) id="{{ $recipeStepId }}" @endif class="scroll-mt-24">
                 {!! getListItemContent($item) !!}
                 @if(count(getListItemChildren($item)) > 0)
-                    <x-blocks.list :items="getListItemChildren($item)" style="ordered" :isRtl="$isRtl" />
+                    <x-blocks.list :items="getListItemChildren($item)" style="ordered" :isRtl="$isRtl" :recipeStepCounter="$recipeStepCounter" />
                 @endif
             </li>
         @endforeach
@@ -56,8 +60,9 @@
             @php
                 $content = is_array($item) ? ($item['content'] ?? $item['text'] ?? '') : $item;
                 $checked = isItemChecked($item);
+                $recipeStepId = $recipeStepCounter ? 'recipe-step-'.++$recipeStepCounter->value : null;
             @endphp
-            <li class="flex items-start gap-3">
+            <li @if($recipeStepId) id="{{ $recipeStepId }}" @endif class="flex scroll-mt-24 items-start gap-3">
                 <span class="mt-1.5 flex-shrink-0">
                     @if($checked)
                         <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,10 +82,13 @@
     {{-- Unordered list --}}
     <ul class="text-body-lg text-tasty-blue-black/90 list-disc {{ $isRtl ? 'pr-[50px]' : 'pl-[50px]' }} space-y-2 {{ $alignClass }}">
         @foreach($items as $item)
-            <li>
+            @php
+                $recipeStepId = $recipeStepCounter ? 'recipe-step-'.++$recipeStepCounter->value : null;
+            @endphp
+            <li @if($recipeStepId) id="{{ $recipeStepId }}" @endif class="scroll-mt-24">
                 {!! getListItemContent($item) !!}
                 @if(count(getListItemChildren($item)) > 0)
-                    <x-blocks.list :items="getListItemChildren($item)" style="unordered" :isRtl="$isRtl" />
+                    <x-blocks.list :items="getListItemChildren($item)" style="unordered" :isRtl="$isRtl" :recipeStepCounter="$recipeStepCounter" />
                 @endif
             </li>
         @endforeach

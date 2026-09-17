@@ -7,6 +7,7 @@
     'contentWidth' => 'max-w-[894px]', // Content width from Figma (894px)
     'fullWidth' => 'w-full max-w-[1146px]', // Full width for media (1146px)
     'adCodeAfterFirstParagraph' => null, // Ad code to insert after first paragraph
+    'recipeStepCounter' => null,
 ])
 
 @php
@@ -24,7 +25,10 @@
         @switch($type)
             {{-- Paragraph --}}
             @case('paragraph')
-                <div class="{{ $contentWidth }} w-full px-4 lg:px-0">
+                @php
+                    $recipeStepId = $recipeStepCounter ? 'recipe-step-'.++$recipeStepCounter->value : null;
+                @endphp
+                <div @if($recipeStepId) id="{{ $recipeStepId }}" @endif class="{{ $contentWidth }} w-full scroll-mt-24 px-4 lg:px-0">
                     <x-blocks.paragraph
                         :text="$data['text'] ?? ''"
                         :isRtl="$isRtl"
@@ -60,6 +64,7 @@
                         :items="$data['items'] ?? []"
                         :style="$data['style'] ?? 'unordered'"
                         :isRtl="$isRtl"
+                        :recipeStepCounter="$recipeStepCounter"
                     />
                 </div>
                 @break
@@ -71,6 +76,7 @@
                         :items="$data['items'] ?? []"
                         style="checklist"
                         :isRtl="$isRtl"
+                        :recipeStepCounter="$recipeStepCounter"
                     />
                 </div>
                 @break
@@ -117,6 +123,7 @@
                         :content="$data['content'] ?? ['blocks' => []]"
                         :defaultExpanded="$data['defaultExpanded'] ?? true"
                         :isRtl="$isRtl"
+                        :recipeStepCounter="$recipeStepCounter"
                     />
                 </div>
                 @break

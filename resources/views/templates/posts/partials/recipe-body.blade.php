@@ -14,6 +14,7 @@
     $cookTime = $post->custom_fields['cook_time'] ?? null;
     $servings = $post->custom_fields['servings'] ?? null;
     $hasMetadata = $prepTime || $cookTime || $servings;
+    $recipeStepCounter = (object) ['value' => 0];
 @endphp
 
 <div class="w-full bg-off-white">
@@ -89,6 +90,7 @@
                         'isRtl' => $isRtl,
                         'contentWidth' => 'w-full',
                         'fullWidth' => 'w-full',
+                        'recipeStepCounter' => $recipeStepCounter,
                     ])
                 @else
                     <p class="text-body text-tasty-blue-black/60 {{ $isRtl ? 'text-right font-dhivehi' : '' }}">
