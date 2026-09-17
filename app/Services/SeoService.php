@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Category;
 use App\Models\Page;
 use App\Models\Post;
+use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductStore;
 use App\Models\SeoSetting;
@@ -73,9 +74,11 @@ class SeoService
             ?? $defaults['meta_description']
             ?? $defaults['og_description']
             ?? config('seotools.meta.defaults.description');
+        $url = url('/');
 
         SEOMeta::setTitle($title, false);
         SEOMeta::setDescription($description);
+        SEOMeta::setCanonical($url);
 
         $keywords = $seoSetting?->meta_keywords ?: $defaults['meta_keywords'];
         if ($keywords) {
@@ -89,6 +92,7 @@ class SeoService
         OpenGraph::setTitle($seoSetting?->og_title ?? $defaults['og_title'] ?? $title);
         OpenGraph::setDescription($seoSetting?->og_description ?? $defaults['og_description'] ?? $description);
         OpenGraph::setType($seoSetting?->og_type ?? 'website');
+        OpenGraph::setUrl($url);
 
         $ogImage = $seoSetting?->og_image
             ?? $defaults['og_image']
@@ -109,6 +113,7 @@ class SeoService
         JsonLd::setTitle($title);
         JsonLd::setDescription($description);
         JsonLd::setType('WebSite');
+        JsonLd::setUrl($url);
     }
 
     /**
@@ -221,7 +226,7 @@ class SeoService
                 '@type' => 'ListItem',
                 'position' => 2,
                 'name' => $category->name,
-                'item' => $this->safeRoute('category.show', $category),
+                'item' => $this->safeRoute('category.show', ['category' => $category->slug]),
             ];
             $breadcrumbItems[] = [
                 '@type' => 'ListItem',
@@ -258,7 +263,7 @@ class SeoService
         $description = $seoSetting?->meta_description
             ? str_replace(':name', $category->name, $seoSetting->meta_description)
             : ($category->description ?: "Browse all {$category->name} articles and content.");
-        $url = $this->safeRoute('category.show', $category);
+        $url = $this->paginatedCanonical($this->safeRoute('category.show', ['category' => $category->slug]));
         $image = $this->ogImageService->getUrlForCategory($category)
             ?: $seoSetting?->og_image
             ?: $this->siteDefaults()['og_image'];
@@ -304,7 +309,7 @@ class SeoService
         $description = $seoSetting?->meta_description
             ? str_replace(':name', $tag->name, $seoSetting->meta_description)
             : "Browse all content tagged with {$tag->name}.";
-        $url = $this->safeRoute('tag.show', $tag);
+        $url = $this->paginatedCanonical($this->safeRoute('tag.show', ['tag' => $tag->slug]));
         $image = $seoSetting?->og_image
             ?: $this->siteDefaults()['og_image']
             ?: $this->ogImageService->getDefaultUrl();
@@ -350,7 +355,7 @@ class SeoService
         $description = $seoSetting?->meta_description
             ? str_replace(':name', $author->name, $seoSetting->meta_description)
             : "Articles and content by {$author->name}.";
-        $url = $this->safeRoute('author.show', $author->username);
+        $url = $this->paginatedCanonical($this->safeRoute('author.show', ['author' => $author->username]));
         $image = $author->avatar_url
             ?: $seoSetting?->og_image
             ?: $this->siteDefaults()['og_image']
@@ -410,7 +415,7 @@ class SeoService
         $description = $page->meta_description
             ?: ($seoSetting?->meta_description
                 ?: \Illuminate\Support\Str::limit($this->extractTextFromContent($page->content), 160));
-        $url = $this->safeRoute('page.show', $page);
+        $url = $this->safeRoute('page.show', ['slug' => $page->slug]);
         $image = $seoSetting?->og_image
             ?: $this->siteDefaults()['og_image']
             ?: $this->ogImageService->getDefaultUrl();
@@ -542,6 +547,14 @@ class SeoService
     }
 
     /**
+     * Prevent utility and search result pages from being indexed.
+     */
+    public function setNoIndex(bool $followLinks = true): void
+    {
+        SEOMeta::setRobots($followLinks ? 'noindex,follow' : 'noindex,nofollow');
+    }
+
+    /**
      * Add pagination information to SEO.
      */
     public function setPagination(int $currentPage, int $lastPage, string $baseUrl): void
@@ -566,7 +579,7 @@ class SeoService
 
         $title = $seoSetting?->meta_title ?: 'Products';
         $description = $seoSetting?->meta_description ?: 'Discover ingredients, tools, and staples we actually use and recommend.';
-        $url = $this->safeRoute('products.index');
+        $url = $this->paginatedCanonical($this->safeRoute('products.index'));
         $image = $seoSetting?->og_image
             ?: $this->siteDefaults()['og_image']
             ?: $this->ogImageService->getDefaultUrl();
@@ -612,7 +625,7 @@ class SeoService
         $description = $seoSetting?->meta_description
             ? str_replace(':name', $category->name, $seoSetting->meta_description)
             : ($category->description ?: "Browse all {$category->name} products we recommend.");
-        $url = $this->safeRoute('products.category', $category);
+        $url = $this->paginatedCanonical($this->safeRoute('products.category', ['category' => $category->slug]));
         $image = $seoSetting?->og_image
             ?: $this->siteDefaults()['og_image']
             ?: $this->ogImageService->getDefaultUrl();
@@ -658,7 +671,7 @@ class SeoService
         $description = $seoSetting?->meta_description
             ? str_replace(':name', $store->name, $seoSetting->meta_description)
             : "Browse all products from {$store->name}.";
-        $url = $this->safeRoute('products.store', $store);
+        $url = $this->paginatedCanonical($this->safeRoute('products.store', ['store' => $store->slug]));
 
         $this->applySettingExtras($seoSetting);
 
@@ -690,6 +703,67 @@ class SeoService
         JsonLd::setDescription($description);
         JsonLd::setType('CollectionPage');
         JsonLd::setUrl($url);
+    }
+
+    /**
+     * Set SEO for a product detail page.
+     */
+    public function setProduct(Product $product): void
+    {
+        $title = $product->title;
+        $description = $product->short_description
+            ?: $product->description
+            ?: "View {$title} from {$product->store?->name}.";
+        $url = $this->safeRoute('products.show', [
+            'store' => $product->store?->slug,
+            'product' => $product->slug,
+        ]);
+        $image = $product->featured_image_url
+            ?: $this->siteDefaults()['og_image']
+            ?: $this->ogImageService->getDefaultUrl();
+
+        SEOMeta::setTitle($title);
+        SEOMeta::setDescription($description);
+        SEOMeta::setCanonical($url);
+
+        OpenGraph::setTitle($title);
+        OpenGraph::setDescription($description);
+        OpenGraph::setType('product');
+        OpenGraph::setUrl($url);
+
+        if ($image) {
+            OpenGraph::addImage($image);
+        }
+
+        TwitterCard::setTitle($title);
+        TwitterCard::setDescription($description);
+
+        if ($image) {
+            TwitterCard::setImage($image);
+        }
+
+        JsonLd::setTitle($title);
+        JsonLd::setDescription($description);
+        JsonLd::setType('Product');
+        JsonLd::setUrl($url);
+        JsonLd::setImages($image ? [$image] : []);
+
+        JsonLd::addValues(array_filter([
+            'sku' => $product->sku,
+            'brand' => $product->brand ? [
+                '@type' => 'Brand',
+                'name' => $product->brand,
+            ] : null,
+            'offers' => $product->price !== null ? [
+                '@type' => 'Offer',
+                'price' => (string) $product->price,
+                'priceCurrency' => $product->currency,
+                'availability' => $product->isInStock()
+                    ? 'https://schema.org/InStock'
+                    : 'https://schema.org/OutOfStock',
+                'url' => $url,
+            ] : null,
+        ], fn (mixed $value): bool => $value !== null));
     }
 
     /**
@@ -786,5 +860,12 @@ class SeoService
         } catch (\Symfony\Component\Routing\Exception\RouteNotFoundException) {
             return '#';
         }
+    }
+
+    protected function paginatedCanonical(string $url): string
+    {
+        $page = request()->integer('page', 1);
+
+        return $page > 1 ? $url.'?page='.$page : $url;
     }
 }

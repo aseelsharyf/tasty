@@ -35,6 +35,10 @@ class ProcessScheduledPosts extends Command
             }
 
             try {
+                if ($post->hasPlaceholderSlug()) {
+                    throw new \RuntimeException('Replace the placeholder slug before publishing this post.');
+                }
+
                 // Publish the version directly
                 $version->update(['workflow_status' => 'published']);
                 $version->activate();

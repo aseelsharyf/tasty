@@ -7,7 +7,6 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DiscountCodeController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\OrderTrackingController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PaymentController;
@@ -37,9 +36,6 @@ Route::get('/robots.txt', function () {
         'Disallow: /cms/',
         'Disallow: /api/',
         'Disallow: /auth/',
-        'Disallow: /og-preview/',
-        'Disallow: /og-html/',
-        'Disallow: /og-test',
         '',
         "Sitemap: {$sitemap}",
     ]), 200, ['Content-Type' => 'text/plain']);
@@ -139,10 +135,10 @@ if ($showWebsite) {
         ]);
     });
 
-    // OG Image preview (for debugging)
-    Route::get('/og-preview/{post:slug}', [OgImageController::class, 'preview'])->name('og.preview');
-    Route::get('/og-html/{post:slug}', [OgImageController::class, 'renderHtml'])->name('og.html');
-    Route::get('/og-test', [OgImageController::class, 'testPage'])->name('og.test');
+    // OG image debugging routes are intentionally disabled in public environments.
+    // Route::get('/og-preview/{post:slug}', [OgImageController::class, 'preview'])->name('og.preview');
+    // Route::get('/og-html/{post:slug}', [OgImageController::class, 'renderHtml'])->name('og.html');
+    // Route::get('/og-test', [OgImageController::class, 'testPage'])->name('og.test');
 
     // Cart routes
     Route::prefix('cart')->group(function () {

@@ -2,16 +2,22 @@
 
 namespace App\Providers;
 
+use App\Models\Category;
 use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Product;
+use App\Models\ProductCategory;
+use App\Models\ProductStore;
+use App\Models\Tag;
+use App\Models\User;
 use App\Observers\MenuItemObserver;
 use App\Observers\MenuObserver;
 use App\Observers\PageObserver;
 use App\Observers\PostObserver;
 use App\Observers\ProductObserver;
+use App\Observers\SitemapCacheObserver;
 use App\Services\Layouts\UsedPostTracker;
 use App\Services\TelegramService;
 use Illuminate\Support\ServiceProvider;
@@ -43,5 +49,10 @@ class AppServiceProvider extends ServiceProvider
         Page::observe(PageObserver::class);
         Post::observe(PostObserver::class);
         Product::observe(ProductObserver::class);
+        Category::observe(SitemapCacheObserver::class);
+        ProductCategory::observe(SitemapCacheObserver::class);
+        ProductStore::observe(SitemapCacheObserver::class);
+        Tag::observe(SitemapCacheObserver::class);
+        User::observe(SitemapCacheObserver::class);
     }
 }

@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Jobs\RecordViewJob;
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\PostSlugRedirect;
 use App\Models\Product;
 use App\Services\PublicCacheService;
 use App\Services\SeoService;
 use App\Support\BotDetector;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -22,8 +24,21 @@ class PostController extends Controller
     /**
      * Display a single post.
      */
-    public function show(string $categorySlug, string $postSlug): Response
+    public function show(string $categorySlug, string $postSlug): RedirectResponse|Response
     {
+        $slugRedirect = PostSlugRedirect::query()
+            ->where('old_slug', $postSlug)
+            ->whereHas('post', fn ($query) => $query->published())
+            ->with('post.categories:id,slug')
+            ->first();
+
+        if ($slugRedirect) {
+            return redirect()->route('post.show', [
+                'category' => $slugRedirect->post->categories->first()?->slug ?? 'uncategorized',
+                'post' => $slugRedirect->post->slug,
+            ], 301);
+        }
+
         // Track view outside cache (non-blocking, bot-filtered)
         $this->trackView($postSlug);
 

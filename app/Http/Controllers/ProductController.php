@@ -33,6 +33,10 @@ class ProductController extends Controller
         $render = function () use ($search) {
             $this->seo->setProductsIndex();
 
+            if ($search !== '') {
+                $this->seo->setNoIndex();
+            }
+
             $categories = ProductCategory::query()
                 ->active()
                 ->ordered()
@@ -218,16 +222,13 @@ class ProductController extends Controller
     {
         abort_unless($product->is_active, 404);
         abort_unless($store->is_active, 404);
+        abort_unless($product->product_store_id === $store->id, 404);
 
         $cacheKey = "public:products:show:{$product->slug}";
 
         $html = PublicCacheService::remember($cacheKey, PublicCacheService::productTtl(), function () use ($product) {
-            $this->seo->setBasic(
-                $product->title,
-                $product->short_description ?? $product->description
-            );
-
             $product->load(['featuredMedia', 'tags', 'category', 'store', 'images', 'variants' => fn ($q) => $q->active()->ordered()]);
+            $this->seo->setProduct($product);
 
             // First, get products from the same store
             $relatedProducts = collect();

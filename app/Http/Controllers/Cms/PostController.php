@@ -737,6 +737,11 @@ class PostController extends Controller
             abort(403, 'You are not authorized to publish this post.');
         }
 
+        if ($post->hasPlaceholderSlug()) {
+            return redirect()->back()
+                ->withErrors(['slug' => 'Replace the placeholder slug before publishing this post.']);
+        }
+
         $post->publish();
 
         return redirect()->back()
@@ -904,6 +909,12 @@ class PostController extends Controller
         if (! $isEditorOrAdmin) {
             abort(403, 'You are not authorized to publish and assign to a slot.');
         }
+
+        abort_if(
+            $post->hasPlaceholderSlug(),
+            422,
+            'Replace the placeholder slug before publishing this post.'
+        );
 
         $validated = $request->validate([
             'versionUuid' => ['required', 'string'],

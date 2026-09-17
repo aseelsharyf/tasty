@@ -51,6 +51,7 @@ class UpdatePostRequest extends FormRequest
                 'string',
                 'max:255',
                 Rule::unique('posts', 'slug')->ignore($this->route('post')),
+                Rule::unique('post_slug_redirects', 'old_slug'),
             ],
             'excerpt' => ['nullable', 'string', 'max:300'],
             'content' => ['nullable', 'array'],

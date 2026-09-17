@@ -98,23 +98,6 @@ class Post extends Model implements HasMedia
             }
         });
 
-        static::updating(function (Post $post) {
-            // Regenerate slug if title changed from "Untitled" pattern
-            if ($post->isDirty('title') && $post->hasUntitledSlug()) {
-                $post->slug = $post->generateUniqueSlugForPost();
-            }
-
-            // Catch placeholder slugs at publish time. The workflow publish path
-            // updates status directly, so the title may already be set (not dirty)
-            // while the slug is still "untitled-article-N".
-            if ($post->isDirty('status')
-                && $post->status === self::STATUS_PUBLISHED
-                && $post->shouldRegenerateSlug()
-                && $post->hasRealTitle()) {
-                $post->slug = $post->generateUniqueSlugForPost();
-            }
-        });
-
         static::saving(function (Post $post) {
             if ($post->isDirty(['content', 'cover_video_id'])) {
                 $post->has_video = $post->computeHasVideo();
@@ -127,7 +110,21 @@ class Post extends Model implements HasMedia
      */
     public function hasUntitledSlug(): bool
     {
-        return Str::startsWith($this->slug, 'untitled-');
+        return Str::contains(Str::lower((string) $this->slug), 'untitled');
+    }
+
+    public function hasPlaceholderSlug(): bool
+    {
+        if (empty($this->slug) || $this->hasUntitledSlug()) {
+            return true;
+        }
+
+        return $this->slug === 'post' || preg_match('/^post-\d+$/', $this->slug) === 1;
+    }
+
+    public function hasPlaceholderTitle(): bool
+    {
+        return preg_match('/^untitled(\s|$)/i', trim((string) $this->title)) === 1;
     }
 
     /**
@@ -189,7 +186,14 @@ class Post extends Model implements HasMedia
             $query->where('id', '!=', $this->id);
         }
 
-        return ! $query->exists();
+        if ($query->exists()) {
+            return false;
+        }
+
+        return ! PostSlugRedirect::query()
+            ->where('old_slug', $slug)
+            ->when($this->id, fn (Builder $redirectQuery) => $redirectQuery->where('post_id', '!=', $this->id))
+            ->exists();
     }
 
     // Relationships
@@ -224,6 +228,11 @@ class Post extends Model implements HasMedia
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
+    }
+
+    public function slugRedirects(): HasMany
+    {
+        return $this->hasMany(PostSlugRedirect::class);
     }
 
     public function featuredMedia(): BelongsTo
@@ -470,54 +479,17 @@ class Post extends Model implements HasMedia
 
     public function publish(): void
     {
+        if ($this->hasPlaceholderSlug()) {
+            throw new \RuntimeException('Replace the placeholder slug before publishing this post.');
+        }
+
         $updateData = [
             'status' => self::STATUS_PUBLISHED,
             'published_at' => now(),
             'scheduled_at' => null,
         ];
 
-        // Regenerate slug from title if it's still a placeholder
-        if ($this->hasRealTitle() && $this->shouldRegenerateSlug()) {
-            $updateData['slug'] = static::generateUniqueSlug($this->title);
-        }
-
         $this->update($updateData);
-    }
-
-    /**
-     * Check if the slug should be regenerated (is a placeholder).
-     */
-    protected function shouldRegenerateSlug(): bool
-    {
-        // Regenerate if slug is empty or matches placeholder patterns
-        if (empty($this->slug)) {
-            return true;
-        }
-
-        // Auto-generated slugs like "untitled-article-17" or "untitled-recipe-4"
-        if ($this->hasUntitledSlug()) {
-            return true;
-        }
-
-        // Check if slug starts with common placeholder patterns
-        $placeholderPatterns = ['post', 'untitled'];
-        foreach ($placeholderPatterns as $pattern) {
-            if ($this->slug === $pattern || preg_match('/^'.preg_quote($pattern, '/').'-\d+$/', $this->slug)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if the post has a real (non-placeholder) title.
-     */
-    public function hasRealTitle(): bool
-    {
-        $title = trim((string) $this->title);
-
-        return $title !== '' && ! preg_match('/^untitled(\s|$)/i', $title);
     }
 
     public function unpublish(): void

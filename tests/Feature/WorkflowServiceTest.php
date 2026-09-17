@@ -167,6 +167,35 @@ describe('WorkflowService::transition', function () {
 });
 
 describe('WorkflowService::publishVersion', function () {
+    it('rejects a post that still has a placeholder slug', function () {
+        $editor = User::factory()->create();
+        $editor->assignRole('Editor');
+        $this->actingAs($editor);
+
+        $post = Post::factory()->draft()->create([
+            'author_id' => $editor->id,
+            'title' => 'Finished Story',
+            'slug' => 'untitled-article-99',
+        ]);
+        $version = ContentVersion::factory()
+            ->forPost($post)
+            ->approved()
+            ->create([
+                'created_by' => $editor->id,
+                'content_snapshot' => [
+                    'title' => 'Finished Story',
+                    'content' => ['blocks' => []],
+                ],
+            ]);
+        $post->categories()->attach(\App\Models\Category::factory()->create());
+        $post->tags()->attach(\App\Models\Tag::factory()->create());
+
+        expect(fn () => app(WorkflowService::class)->publishVersion($version))
+            ->toThrow(Exception::class, 'Replace the placeholder slug before publishing');
+
+        expect($post->fresh()->status)->toBe(Post::STATUS_DRAFT);
+    });
+
     it('publishes a parked version', function () {
         $editor = User::factory()->create();
         $editor->assignRole('Editor');

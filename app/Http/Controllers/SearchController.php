@@ -8,17 +8,25 @@ use App\Models\Product;
 use App\Models\Tag;
 use App\Models\User;
 use App\Services\PublicCacheService;
+use App\Services\SeoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class SearchController extends Controller
 {
+    public function __construct(
+        protected SeoService $seoService,
+    ) {}
+
     /**
      * Display search results page.
      */
     public function index(Request $request): View
     {
+        $this->seoService->setBasic('Search');
+        $this->seoService->setNoIndex();
+
         $query = $request->input('q', '');
         $type = $request->input('type', 'all');
 

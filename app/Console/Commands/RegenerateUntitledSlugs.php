@@ -3,7 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Models\Post;
+use App\Models\PostSlugRedirect;
+use App\Services\PublicCacheService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class RegenerateUntitledSlugs extends Command
 {
@@ -15,7 +18,7 @@ class RegenerateUntitledSlugs extends Command
     public function handle(): int
     {
         $posts = Post::where(function ($query) {
-            $query->where('slug', 'LIKE', 'untitled%')
+            $query->where('slug', 'LIKE', '%untitled%')
                 ->orWhere('slug', 'LIKE', 'post-%')
                 ->orWhere('slug', 'post');
         })->get();
@@ -34,8 +37,8 @@ class RegenerateUntitledSlugs extends Command
         foreach ($posts as $post) {
             $oldSlug = $post->slug;
 
-            if (empty($post->title) || $post->title === 'Untitled') {
-                $this->warn("  Skipping post #{$post->id} — title is empty or still 'Untitled'");
+            if (empty($post->title) || $post->hasPlaceholderTitle()) {
+                $this->warn("  Skipping post #{$post->id} — title is empty or still a placeholder");
 
                 continue;
             }
@@ -51,8 +54,13 @@ class RegenerateUntitledSlugs extends Command
             if ($isDryRun) {
                 $this->line("  Post #{$post->id}: {$oldSlug} → {$newSlug} (dry run)");
             } else {
-                $post->slug = $newSlug;
-                $post->saveQuietly();
+                DB::transaction(function () use ($post, $oldSlug, $newSlug): void {
+                    $post->slug = $newSlug;
+                    $post->saveQuietly();
+                    PostSlugRedirect::record($post, $oldSlug);
+                });
+
+                PublicCacheService::flushPostDetailCache($oldSlug);
                 $this->line("  Post #{$post->id}: {$oldSlug} → {$newSlug}");
             }
 
@@ -61,6 +69,10 @@ class RegenerateUntitledSlugs extends Command
 
         $action = $isDryRun ? 'would be updated' : 'updated';
         $this->info("{$updated} post(s) {$action}.");
+
+        if (! $isDryRun && $updated > 0) {
+            PublicCacheService::flushPostCaches();
+        }
 
         return self::SUCCESS;
     }

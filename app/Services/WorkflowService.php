@@ -590,6 +590,10 @@ class WorkflowService
             $errors[] = 'A title must be set before publishing';
         }
 
+        if ($content instanceof Post && $content->hasPlaceholderSlug()) {
+            $errors[] = 'Replace the placeholder slug before publishing';
+        }
+
         // Check for category (if the content has categories)
         if (method_exists($content, 'category')) {
             if (empty($content->category_id)) {

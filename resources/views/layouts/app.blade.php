@@ -18,6 +18,11 @@
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
         <meta name="theme-color" content="#FFE762">
 
+        @php
+            if (request()->routeIs('cart.*', 'checkout.*', 'payment.*', 'order.*', 'auth.*')) {
+                SEOMeta::setRobots('noindex,nofollow');
+            }
+        @endphp
         {!! SEOMeta::generate() !!}
         {!! OpenGraph::generate() !!}
         {!! Twitter::generate() !!}
