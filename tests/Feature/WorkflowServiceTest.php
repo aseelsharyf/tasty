@@ -3,6 +3,7 @@
 use App\Models\ContentVersion;
 use App\Models\Language;
 use App\Models\Post;
+use App\Models\Setting;
 use App\Models\User;
 use App\Services\WorkflowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -465,6 +466,29 @@ describe('Workflow Transitions Available', function () {
         $toStatuses = collect($transitions)->pluck('to');
 
         expect($toStatuses)
+            ->toContain(ContentVersion::STATUS_PUBLISHED)
+            ->toContain(ContentVersion::STATUS_SCHEDULED);
+    });
+
+    it('repairs a saved workflow that predates scheduling parked posts', function () {
+        Setting::set('workflow.default', [
+            'name' => 'Legacy Workflow',
+            'states' => [
+                ['key' => 'parked', 'label' => 'Parked', 'color' => 'success', 'icon' => 'i-lucide-archive'],
+                ['key' => 'published', 'label' => 'Published', 'color' => 'success', 'icon' => 'i-lucide-globe'],
+            ],
+            'transitions' => [
+                ['from' => 'parked', 'to' => 'published', 'roles' => ['Editor'], 'label' => 'Publish'],
+            ],
+            'publish_roles' => ['Editor'],
+        ], 'workflow');
+
+        $workflow = Setting::getWorkflow();
+        $stateKeys = collect($workflow['states'])->pluck('key');
+        $parkedTransitions = collect($workflow['transitions'])->where('from', 'parked')->pluck('to');
+
+        expect($stateKeys)->toContain(ContentVersion::STATUS_SCHEDULED)
+            ->and($parkedTransitions)
             ->toContain(ContentVersion::STATUS_PUBLISHED)
             ->toContain(ContentVersion::STATUS_SCHEDULED);
     });

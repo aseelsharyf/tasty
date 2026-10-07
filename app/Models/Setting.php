@@ -289,12 +289,59 @@ class Setting extends Model
         if ($postType) {
             $typeWorkflow = static::get("workflow.post_type.{$postType}");
             if ($typeWorkflow) {
-                return $typeWorkflow;
+                return static::normalizeWorkflow($typeWorkflow);
             }
         }
 
         // Fall back to default workflow
-        return static::get('workflow.default', static::getDefaultWorkflow());
+        return static::normalizeWorkflow(static::get('workflow.default', static::getDefaultWorkflow()));
+    }
+
+    /**
+     * Ensure saved workflows support publishing and scheduling parked posts.
+     *
+     * @param  array<string, mixed>  $workflow
+     * @return array<string, mixed>
+     */
+    public static function normalizeWorkflow(array $workflow): array
+    {
+        $states = collect($workflow['states'] ?? []);
+        $transitions = collect($workflow['transitions'] ?? []);
+        $usesParkedState = $states->contains('key', 'parked')
+            || $transitions->contains(fn (array $transition): bool => $transition['from'] === 'parked' || $transition['to'] === 'parked');
+
+        if (! $usesParkedState) {
+            return $workflow;
+        }
+
+        if (! $states->contains('key', 'scheduled')) {
+            $workflow['states'][] = [
+                'key' => 'scheduled',
+                'label' => 'Scheduled',
+                'color' => 'warning',
+                'icon' => 'i-lucide-calendar-clock',
+            ];
+        }
+
+        $roles = $workflow['publish_roles'] ?? ['Editor', 'Admin', 'Developer'];
+
+        foreach ([
+            ['to' => 'published', 'label' => 'Publish'],
+            ['to' => 'scheduled', 'label' => 'Schedule'],
+        ] as $requiredTransition) {
+            if ($transitions->contains(fn (array $transition): bool => $transition['from'] === 'parked' && $transition['to'] === $requiredTransition['to'])) {
+                continue;
+            }
+
+            $workflow['transitions'][] = [
+                'from' => 'parked',
+                'to' => $requiredTransition['to'],
+                'roles' => $roles,
+                'label' => $requiredTransition['label'],
+            ];
+        }
+
+        return $workflow;
     }
 
     /**
@@ -318,14 +365,14 @@ class Setting extends Model
         $workflows = [];
 
         // Get the default workflow
-        $workflows['default'] = static::get('workflow.default', static::getDefaultWorkflow());
+        $workflows['default'] = static::getWorkflow();
 
         // Get all post-type specific workflows
         $postTypes = static::getPostTypes();
         foreach ($postTypes as $postType) {
             $typeWorkflow = static::get("workflow.post_type.{$postType['slug']}");
             if ($typeWorkflow) {
-                $workflows[$postType['slug']] = $typeWorkflow;
+                $workflows[$postType['slug']] = static::normalizeWorkflow($typeWorkflow);
             }
         }
 

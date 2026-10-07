@@ -62,17 +62,9 @@ trait HasWorkflow
      */
     public function getWorkflowConfig(): array
     {
-        // Check for post-type specific workflow first
-        if (method_exists($this, 'getPostType')) {
-            $postType = $this->getPostType();
-            $typeConfig = Setting::get("workflow.post_type.{$postType}");
-            if ($typeConfig) {
-                return $typeConfig;
-            }
-        }
+        $postType = method_exists($this, 'getPostType') ? $this->getPostType() : null;
 
-        // Fall back to default workflow
-        return Setting::get('workflow.default', $this->getDefaultWorkflowConfig());
+        return Setting::getWorkflow($postType);
     }
 
     /**

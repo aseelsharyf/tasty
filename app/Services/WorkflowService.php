@@ -27,17 +27,9 @@ class WorkflowService
      */
     public function getWorkflowFor(Model $content): array
     {
-        // Check for content-type specific workflow first
-        if (method_exists($content, 'getPostType') && $content->getPostType()) {
-            $postType = $content->getPostType();
-            $typeConfig = Setting::get("workflow.post_type.{$postType}");
-            if ($typeConfig) {
-                return $typeConfig;
-            }
-        }
+        $postType = method_exists($content, 'getPostType') ? $content->getPostType() : null;
 
-        // Fall back to default workflow
-        return Setting::get('workflow.default', $this->getDefaultWorkflowConfig());
+        return Setting::getWorkflow($postType);
     }
 
     /**
