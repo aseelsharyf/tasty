@@ -113,6 +113,63 @@ it('keeps the current slot live until the scheduled post is published', function
         ->toBe($scheduledPost->id);
 });
 
+it('allows a parked post to be scheduled with a slot assignment', function () {
+    $editor = User::factory()->create();
+    $editor->assignRole('Editor');
+
+    $currentPost = Post::factory()->published()->create();
+    $scheduledPost = Post::factory()->draft()->create([
+        'author_id' => $editor->id,
+        'title' => 'Parked Story',
+        'slug' => 'parked-story',
+        'workflow_status' => ContentVersion::STATUS_PARKED,
+    ]);
+    $version = ContentVersion::factory()
+        ->forPost($scheduledPost)
+        ->create([
+            'created_by' => $editor->id,
+            'workflow_status' => ContentVersion::STATUS_PARKED,
+        ]);
+    $scheduledPost->update(['draft_version_id' => $version->id]);
+
+    Setting::set('layouts.homepage', [
+        'version' => 1,
+        'sections' => [[
+            'id' => 'hero-section',
+            'type' => 'hero',
+            'slots' => [[
+                'index' => 0,
+                'mode' => 'manual',
+                'postId' => $currentPost->id,
+                'content' => [],
+            ]],
+        ]],
+    ], 'layouts');
+
+    $scheduledAt = now()->addHour()->startOfMinute();
+
+    $this->actingAs($editor)
+        ->postJson("/cms/posts/{$scheduledPost->uuid}/publish-with-slot", [
+            'versionUuid' => $version->uuid,
+            'sectionId' => 'hero-section',
+            'slotIndex' => 0,
+            'layoutType' => 'homepage',
+            'pageLayoutId' => null,
+            'mode' => 'scheduled',
+            'scheduledAt' => $scheduledAt->toDateTimeString(),
+        ])
+        ->assertSuccessful()
+        ->assertJson([
+            'success' => true,
+            'mode' => 'scheduled',
+        ]);
+
+    expect($scheduledPost->fresh()->status)->toBe(Post::STATUS_SCHEDULED)
+        ->and($version->fresh()->workflow_status)->toBe(ContentVersion::STATUS_SCHEDULED)
+        ->and($scheduledPost->fresh()->scheduledLayoutAssignment->status)
+        ->toBe(ScheduledLayoutAssignment::STATUS_PENDING);
+});
+
 it('requires a future date when scheduling a slot assignment', function () {
     $editor = User::factory()->create();
     $editor->assignRole('Editor');

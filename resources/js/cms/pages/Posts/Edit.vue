@@ -321,7 +321,7 @@ const userRoles = computed(() => {
 });
 
 const isEditorOrAdmin = computed(() => {
-    return userRoles.value.includes('Editor') || userRoles.value.includes('Admin');
+    return userRoles.value.includes('Editor') || userRoles.value.includes('Admin') || userRoles.value.includes('Developer');
 });
 
 // Versions that can be edited: draft/rejected (for writers), all (for editors)

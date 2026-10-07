@@ -260,6 +260,8 @@ class Setting extends Model
                 ['from' => 'copydesk', 'to' => 'scheduled', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Schedule'],
                 // Editor publishes a parked post
                 ['from' => 'parked', 'to' => 'published', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Publish'],
+                // Editor schedules a parked post
+                ['from' => 'parked', 'to' => 'scheduled', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Schedule'],
                 // Editor sends parked post back to copydesk
                 ['from' => 'parked', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Send to Copy Desk'],
                 // ['from' => 'draft', 'to' => 'published', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Publish'],

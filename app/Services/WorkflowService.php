@@ -63,31 +63,33 @@ class WorkflowService
             ],
             'transitions' => [
                 // Writer submits draft for review
-                ['from' => 'draft', 'to' => 'copydesk', 'roles' => ['Writer', 'Editor', 'Admin'], 'label' => 'Send to Copy Desk'],
+                ['from' => 'draft', 'to' => 'copydesk', 'roles' => ['Writer', 'Editor', 'Admin', 'Developer'], 'label' => 'Send to Copy Desk'],
                 // ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Writer'], 'label' => 'Withdraw'],
                 // Editor rejects back to draft (sends notification to writer)
-                ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Editor', 'Admin'], 'label' => 'Reject'],
+                ['from' => 'copydesk', 'to' => 'draft', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Reject'],
                 // Editor parks (approved, banked for later)
-                ['from' => 'copydesk', 'to' => 'parked', 'roles' => ['Editor', 'Admin'], 'label' => 'Park'],
+                ['from' => 'copydesk', 'to' => 'parked', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Park'],
                 // Editor publishes from copydesk directly
-                ['from' => 'copydesk', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
+                ['from' => 'copydesk', 'to' => 'published', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Publish'],
                 // Editor schedules from copydesk
-                ['from' => 'copydesk', 'to' => 'scheduled', 'roles' => ['Editor', 'Admin'], 'label' => 'Schedule'],
+                ['from' => 'copydesk', 'to' => 'scheduled', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Schedule'],
                 // Editor publishes a parked post
-                ['from' => 'parked', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
+                ['from' => 'parked', 'to' => 'published', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Publish'],
+                // Editor schedules a parked post
+                ['from' => 'parked', 'to' => 'scheduled', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Schedule'],
                 // Editor sends parked post back to copydesk
-                ['from' => 'parked', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Send to Copy Desk'],
+                ['from' => 'parked', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Send to Copy Desk'],
                 // ['from' => 'draft', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish'],
                 // Unpublish goes to copydesk (not draft)
-                ['from' => 'published', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Unpublish'],
+                ['from' => 'published', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Unpublish'],
                 // Scheduled post actions
-                ['from' => 'scheduled', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Unschedule'],
-                ['from' => 'scheduled', 'to' => 'published', 'roles' => ['Editor', 'Admin'], 'label' => 'Publish Now'],
+                ['from' => 'scheduled', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Unschedule'],
+                ['from' => 'scheduled', 'to' => 'published', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Publish Now'],
                 // Legacy: handle old 'review' status
-                ['from' => 'review', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin'], 'label' => 'Send to Copy Desk'],
+                ['from' => 'review', 'to' => 'copydesk', 'roles' => ['Editor', 'Admin', 'Developer'], 'label' => 'Send to Copy Desk'],
             ],
-            'publish_roles' => ['Editor', 'Admin'],
-            'edit_published_roles' => ['Editor', 'Admin'],
+            'publish_roles' => ['Editor', 'Admin', 'Developer'],
+            'edit_published_roles' => ['Editor', 'Admin', 'Developer'],
         ];
     }
 

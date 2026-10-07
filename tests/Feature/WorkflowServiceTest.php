@@ -448,4 +448,24 @@ describe('Workflow Transitions Available', function () {
         expect($toStatuses)->toContain('draft')
             ->and($toStatuses)->toContain(ContentVersion::STATUS_PARKED);
     });
+
+    it('allows an editor to publish or schedule a parked post', function () {
+        $editor = User::factory()->create();
+        $editor->assignRole('Editor');
+
+        $post = Post::factory()->draft()->create(['author_id' => $editor->id]);
+        $version = ContentVersion::factory()
+            ->forPost($post)
+            ->create([
+                'created_by' => $editor->id,
+                'workflow_status' => ContentVersion::STATUS_PARKED,
+            ]);
+
+        $transitions = app(WorkflowService::class)->getAvailableTransitions($editor, $version);
+        $toStatuses = collect($transitions)->pluck('to');
+
+        expect($toStatuses)
+            ->toContain(ContentVersion::STATUS_PUBLISHED)
+            ->toContain(ContentVersion::STATUS_SCHEDULED);
+    });
 });
