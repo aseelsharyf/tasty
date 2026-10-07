@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Post;
+use App\Models\ScheduledLayoutAssignment;
 use App\Services\WorkflowService;
 use Illuminate\Console\Command;
 
@@ -17,6 +18,7 @@ class ProcessScheduledPosts extends Command
         $posts = Post::where('status', Post::STATUS_SCHEDULED)
             ->where('scheduled_at', '<=', now())
             ->whereNotNull('scheduled_at')
+            ->with('scheduledLayoutAssignment.contentVersion')
             ->get();
 
         if ($posts->isEmpty()) {
@@ -27,7 +29,10 @@ class ProcessScheduledPosts extends Command
 
         $count = 0;
         foreach ($posts as $post) {
-            $version = $post->draftVersion ?? $post->latestVersion;
+            $assignment = $post->scheduledLayoutAssignment;
+            $version = $assignment?->status === ScheduledLayoutAssignment::STATUS_PENDING
+                ? $assignment->contentVersion
+                : ($post->draftVersion ?? $post->latestVersion);
             if (! $version) {
                 $this->warn("Post '{$post->title}' (#{$post->id}) has no version, skipping.");
 
@@ -35,23 +40,15 @@ class ProcessScheduledPosts extends Command
             }
 
             try {
-                if ($post->hasPlaceholderSlug()) {
-                    throw new \RuntimeException('Replace the placeholder slug before publishing this post.');
-                }
-
-                // Publish the version directly
-                $version->update(['workflow_status' => 'published']);
-                $version->activate();
-
-                $post->update([
-                    'status' => Post::STATUS_PUBLISHED,
-                    'published_at' => now(),
-                    'workflow_status' => 'published',
-                ]);
+                $workflowService->publishVersion($version);
 
                 $count++;
                 $this->info("Published scheduled post '{$post->title}'.");
             } catch (\Exception $e) {
+                $post->scheduledLayoutAssignment()
+                    ->pending()
+                    ->update(['last_error' => $e->getMessage()]);
+
                 $this->error("Failed to publish post '{$post->title}': {$e->getMessage()}");
             }
         }

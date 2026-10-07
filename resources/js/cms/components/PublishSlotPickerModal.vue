@@ -25,11 +25,12 @@ const props = defineProps<{
     postId: number;
     postUuid: string;
     versionUuid: string;
+    canSchedule: boolean;
 }>();
 
 const emit = defineEmits<{
     'update:open': [value: boolean];
-    published: [];
+    published: [mode: 'immediate' | 'scheduled', scheduledAt?: string];
 }>();
 
 const isOpen = computed({
@@ -42,6 +43,36 @@ const isLoading = ref(false);
 const selectedSlot = ref<ManualSlot | null>(null);
 const isSubmitting = ref(false);
 const submitError = ref<string | null>(null);
+const publishMode = ref<'immediate' | 'scheduled'>('immediate');
+const scheduledAt = ref('');
+
+function localDateTimeValue(date: Date): string {
+    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+
+    return localDate.toISOString().slice(0, 16);
+}
+
+function defaultScheduledAt(): string {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(9, 0, 0, 0);
+
+    return localDateTimeValue(tomorrow);
+}
+
+const minimumScheduledAt = computed(() => {
+    const minimum = new Date();
+    minimum.setMinutes(minimum.getMinutes() + 5);
+
+    return localDateTimeValue(minimum);
+});
+
+const submitLabel = computed(() => publishMode.value === 'scheduled' ? 'Schedule & Assign' : 'Publish & Assign');
+const canSubmit = computed(() => {
+    if (!selectedSlot.value) return false;
+
+    return publishMode.value === 'immediate' || scheduledAt.value !== '';
+});
 
 // Group slots by layout
 const groupedSlots = computed(() => {
@@ -109,6 +140,8 @@ watch(() => props.open, async (open) => {
     if (open) {
         selectedSlot.value = null;
         submitError.value = null;
+        publishMode.value = 'immediate';
+        scheduledAt.value = defaultScheduledAt();
         isLoading.value = true;
         try {
             const response = await axios.get(cmsPath('/layouts/manual-slots'));
@@ -134,10 +167,12 @@ async function submit() {
             slotIndex: selectedSlot.value.slotIndex,
             layoutType: selectedSlot.value.layoutType,
             pageLayoutId: selectedSlot.value.pageLayoutId,
+            mode: publishMode.value,
+            scheduledAt: publishMode.value === 'scheduled' ? scheduledAt.value : null,
         });
 
         isOpen.value = false;
-        emit('published');
+        emit('published', publishMode.value, publishMode.value === 'scheduled' ? scheduledAt.value : undefined);
     } catch (error: any) {
         submitError.value = error.response?.data?.message || 'Failed to publish and assign. Please try again.';
     } finally {
@@ -165,8 +200,50 @@ async function submit() {
                     </div>
                 </template>
 
+                <div v-if="canSchedule" class="border-b border-default p-4">
+                    <div class="grid grid-cols-2 gap-1 rounded-lg bg-elevated p-1">
+                        <UButton
+                            type="button"
+                            color="neutral"
+                            :variant="publishMode === 'immediate' ? 'soft' : 'ghost'"
+                            icon="i-lucide-rocket"
+                            class="justify-center"
+                            @click="publishMode = 'immediate'"
+                        >
+                            Publish now
+                        </UButton>
+                        <UButton
+                            type="button"
+                            color="neutral"
+                            :variant="publishMode === 'scheduled' ? 'soft' : 'ghost'"
+                            icon="i-lucide-calendar-clock"
+                            class="justify-center"
+                            @click="publishMode = 'scheduled'"
+                        >
+                            Schedule
+                        </UButton>
+                    </div>
+
+                    <div v-if="publishMode === 'scheduled'" class="flex flex-col gap-1.5 pt-4">
+                        <label for="slot-publish-at" class="text-base font-medium text-highlighted sm:text-sm">
+                            Publish date and time
+                        </label>
+                        <UInput
+                            id="slot-publish-at"
+                            v-model="scheduledAt"
+                            name="scheduled_at"
+                            type="datetime-local"
+                            :min="minimumScheduledAt"
+                            class="w-full"
+                        />
+                        <p class="text-base text-muted sm:text-sm">
+                            The current post stays in this slot until the scheduled time.
+                        </p>
+                    </div>
+                </div>
+
                 <!-- Scrollable slot list -->
-                <div class="max-h-[60vh] overflow-y-auto">
+                <div class="max-h-[50vh] overflow-y-auto">
                     <!-- Loading -->
                     <div v-if="isLoading" class="py-12 text-center">
                         <UIcon name="i-lucide-loader-2" class="size-8 text-muted animate-spin" />
@@ -195,11 +272,12 @@ async function submit() {
 
                             <!-- Slots in group -->
                             <div class="divide-y divide-default">
-                                <div
+                                <button
                                     v-for="slot in group.slots"
                                     :key="`${slot.sectionId}-${slot.slotIndex}`"
+                                    type="button"
                                     :class="[
-                                        'flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors',
+                                        'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors',
                                         isSelected(slot)
                                             ? 'bg-success/5'
                                             : 'hover:bg-muted/50'
@@ -252,7 +330,7 @@ async function submit() {
                                         name="i-lucide-circle"
                                         class="size-5 text-muted/40 shrink-0"
                                     />
-                                </div>
+                                </button>
                             </div>
                         </div>
                     </template>
@@ -266,17 +344,18 @@ async function submit() {
                 <!-- Footer -->
                 <template #footer>
                     <div class="flex justify-end gap-2">
-                        <UButton color="neutral" variant="ghost" @click="isOpen = false">
+                        <UButton type="button" color="neutral" variant="ghost" @click="isOpen = false">
                             Cancel
                         </UButton>
                         <UButton
+                            type="button"
                             color="success"
                             :loading="isSubmitting"
-                            :disabled="!selectedSlot"
+                            :disabled="!canSubmit"
                             @click="submit"
                         >
-                            <UIcon name="i-lucide-rocket" class="size-4 mr-1" />
-                            Publish &amp; Assign
+                            <UIcon :name="publishMode === 'scheduled' ? 'i-lucide-calendar-clock' : 'i-lucide-rocket'" class="size-4 mr-1" />
+                            {{ submitLabel }}
                         </UButton>
                     </div>
                 </template>

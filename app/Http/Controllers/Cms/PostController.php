@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cms;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Cms\PublishPostWithSlotRequest;
 use App\Http\Requests\Cms\QuickDraftRequest;
 use App\Http\Requests\Cms\StorePostRequest;
 use App\Http\Requests\Cms\UpdatePostRequest;
@@ -23,7 +24,9 @@ use App\Services\WorkflowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -897,18 +900,13 @@ class PostController extends Controller
      * Publish a post and assign it to a layout slot in one action.
      */
     public function publishWithSlot(
-        Request $request,
+        PublishPostWithSlotRequest $request,
         Post $post,
         LayoutSlotService $slotService,
         WorkflowService $workflowService
     ): JsonResponse {
         /** @var User $user */
         $user = Auth::user();
-        $isEditorOrAdmin = $user->hasAnyRole(['Admin', 'Editor', 'Developer']);
-
-        if (! $isEditorOrAdmin) {
-            abort(403, 'You are not authorized to publish and assign to a slot.');
-        }
 
         abort_if(
             $post->hasPlaceholderSlug(),
@@ -916,36 +914,70 @@ class PostController extends Controller
             'Replace the placeholder slug before publishing this post.'
         );
 
-        $validated = $request->validate([
-            'versionUuid' => ['required', 'string'],
-            'sectionId' => ['required', 'string'],
-            'slotIndex' => ['required', 'integer'],
-            'layoutType' => ['required', 'string', 'in:homepage,category,tag'],
-            'pageLayoutId' => ['nullable', 'integer'],
-        ]);
+        $validated = $request->validated();
 
         // Find the version
         $version = $post->versions()->where('uuid', $validated['versionUuid'])->firstOrFail();
 
-        // Publish via workflow transition
-        $allowedFromStatuses = ['copydesk', 'parked'];
-        if (in_array($version->workflow_status, $allowedFromStatuses)) {
-            $workflowService->transition($version, 'published', null, $user);
-        } elseif ($version->workflow_status !== 'published') {
-            abort(422, 'Post cannot be published from its current status.');
+        abort_unless(
+            $slotService->manualSlotExists(
+                $validated['layoutType'],
+                $validated['sectionId'],
+                $validated['slotIndex'],
+                $validated['pageLayoutId'] ?? null,
+            ),
+            422,
+            'The selected layout slot no longer exists or is no longer manual.'
+        );
+
+        if ($validated['mode'] === 'scheduled') {
+            $scheduledAt = Carbon::parse($validated['scheduledAt']);
+
+            DB::transaction(function () use ($post, $version, $validated, $scheduledAt, $slotService, $workflowService, $user): void {
+                $post->update(['scheduled_at' => $scheduledAt]);
+
+                $slotService->schedulePostForSlot(
+                    $post,
+                    $version,
+                    $scheduledAt,
+                    $validated['layoutType'],
+                    $validated['sectionId'],
+                    $validated['slotIndex'],
+                    $validated['pageLayoutId'] ?? null,
+                );
+
+                $workflowService->transition($version, 'scheduled', null, $user);
+            });
+
+            return response()->json([
+                'success' => true,
+                'mode' => 'scheduled',
+                'message' => 'Post scheduled and slot assignment saved.',
+            ]);
         }
 
-        // Assign to the chosen slot
-        $slotService->assignPostToSlot(
-            $post->id,
-            $validated['layoutType'],
-            $validated['sectionId'],
-            $validated['slotIndex'],
-            $validated['pageLayoutId'] ?? null
-        );
+        DB::transaction(function () use ($post, $version, $validated, $slotService, $workflowService, $user): void {
+            $slotService->cancelScheduledAssignment($post);
+
+            $allowedFromStatuses = ['copydesk', 'parked', 'scheduled'];
+            if (in_array($version->workflow_status, $allowedFromStatuses)) {
+                $workflowService->transition($version, 'published', null, $user);
+            } elseif ($version->workflow_status !== 'published') {
+                abort(422, 'Post cannot be published from its current status.');
+            }
+
+            $slotService->assignPostToSlot(
+                $post->id,
+                $validated['layoutType'],
+                $validated['sectionId'],
+                $validated['slotIndex'],
+                $validated['pageLayoutId'] ?? null
+            );
+        });
 
         return response()->json([
             'success' => true,
+            'mode' => 'immediate',
             'message' => 'Post published and assigned to layout slot.',
         ]);
     }

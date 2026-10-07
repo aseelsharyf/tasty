@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\WorkflowTransition;
+use App\Services\Layouts\LayoutSlotService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -220,6 +221,8 @@ class WorkflowService
                         'status' => Post::STATUS_DRAFT,
                         'scheduled_at' => null,
                     ]);
+
+                    app(LayoutSlotService::class)->cancelScheduledAssignment($content);
                 }
 
                 // Send workflow notifications
@@ -277,8 +280,11 @@ class WorkflowService
                 $content->update([
                     'status' => 'published',
                     'published_at' => now(),
+                    'scheduled_at' => null,
                     'workflow_status' => ContentVersion::STATUS_PUBLISHED,
                 ]);
+
+                app(LayoutSlotService::class)->applyScheduledAssignment($content);
             }
         });
     }

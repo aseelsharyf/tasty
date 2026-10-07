@@ -24,6 +24,14 @@ class TelegramService
             return false;
         }
 
+        if (app()->isLocal()) {
+            Log::info([
+                'chat_id' => $this->chatId,
+                'text' => $text,
+                'parse_mode' => 'MarkdownV2',
+            ]);
+        }
+
         $response = Http::post("https://api.telegram.org/bot{$this->botToken}/sendMessage", [
             'chat_id' => $this->chatId,
             'text' => $text,

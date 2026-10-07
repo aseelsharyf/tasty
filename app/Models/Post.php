@@ -235,6 +235,11 @@ class Post extends Model implements HasMedia
         return $this->hasMany(PostSlugRedirect::class);
     }
 
+    public function scheduledLayoutAssignment(): HasOne
+    {
+        return $this->hasOne(ScheduledLayoutAssignment::class);
+    }
+
     public function featuredMedia(): BelongsTo
     {
         return $this->belongsTo(MediaItem::class, 'featured_media_id');

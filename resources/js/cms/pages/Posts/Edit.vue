@@ -538,6 +538,7 @@ const currentWorkflowState = computed(() => workflow.getState(workflowStatus.val
 
 // Available workflow transitions from current state (filtered by user roles)
 const availableTransitions = computed(() => workflow.getAvailableTransitions(workflowStatus.value, userRoles.value));
+const canScheduleToSlot = computed(() => availableTransitions.value.some((transition) => transition.to === 'scheduled'));
 
 // Reject modal state
 const rejectModalOpen = ref(false);
@@ -1700,9 +1701,16 @@ async function openUnpublishModal() {
     }
 }
 
-function onSlotPublished() {
-    toast.add({ title: 'Published', description: 'Post has been published and assigned to the layout slot.', color: 'success' });
-    workflowStatus.value = 'published';
+function onSlotPublished(mode: 'immediate' | 'scheduled', scheduledAt?: string) {
+    if (mode === 'scheduled') {
+        const formattedDate = scheduledAt ? new Date(scheduledAt).toLocaleString() : 'the selected time';
+        toast.add({ title: 'Scheduled', description: `Post and slot assignment scheduled for ${formattedDate}.`, color: 'success' });
+        workflowStatus.value = 'scheduled';
+    } else {
+        toast.add({ title: 'Published', description: 'Post has been published and assigned to the layout slot.', color: 'success' });
+        workflowStatus.value = 'published';
+    }
+
     router.visit(window.location.href, { preserveState: false });
 }
 
@@ -3564,6 +3572,7 @@ function openDiff() {
             :post-id="post.id"
             :post-uuid="post.uuid"
             :version-uuid="currentVersionUuid || ''"
+            :can-schedule="canScheduleToSlot"
             @published="onSlotPublished"
         />
 

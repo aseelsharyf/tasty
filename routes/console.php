@@ -10,5 +10,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('posts:process-scheduled-copydesk')->everyMinute();
-Schedule::command('posts:process-scheduled-posts')->everyMinute();
+Schedule::command('posts:process-scheduled-posts')->everyMinute()->withoutOverlapping();
 Schedule::job(new SendPaymentReminderEmails)->everyFiveMinutes();

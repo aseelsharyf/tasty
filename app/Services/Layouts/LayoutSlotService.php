@@ -2,13 +2,103 @@
 
 namespace App\Services\Layouts;
 
+use App\Models\ContentVersion;
 use App\Models\PageLayout;
 use App\Models\Post;
+use App\Models\ScheduledLayoutAssignment;
 use App\Models\Setting;
 use App\Services\PublicCacheService;
+use DateTimeInterface;
+use RuntimeException;
 
 class LayoutSlotService
 {
+    public function schedulePostForSlot(
+        Post $post,
+        ContentVersion $version,
+        DateTimeInterface $scheduledAt,
+        string $layoutType,
+        string $sectionId,
+        int $slotIndex,
+        ?int $pageLayoutId = null,
+    ): ScheduledLayoutAssignment {
+        return $post->scheduledLayoutAssignment()->updateOrCreate([], [
+            'content_version_id' => $version->id,
+            'layout_type' => $layoutType,
+            'page_layout_id' => $pageLayoutId,
+            'section_id' => $sectionId,
+            'slot_index' => $slotIndex,
+            'scheduled_at' => $scheduledAt,
+            'status' => ScheduledLayoutAssignment::STATUS_PENDING,
+            'processed_at' => null,
+            'last_error' => null,
+        ]);
+    }
+
+    public function applyScheduledAssignment(Post $post): bool
+    {
+        $assignment = $post->scheduledLayoutAssignment()->pending()->first();
+
+        if (! $assignment) {
+            return false;
+        }
+
+        if (! $this->manualSlotExists(
+            $assignment->layout_type,
+            $assignment->section_id,
+            $assignment->slot_index,
+            $assignment->page_layout_id,
+        )) {
+            throw new RuntimeException('The selected layout slot no longer exists or is no longer manual.');
+        }
+
+        $this->assignPostToSlot(
+            $post->id,
+            $assignment->layout_type,
+            $assignment->section_id,
+            $assignment->slot_index,
+            $assignment->page_layout_id,
+        );
+
+        $assignment->update([
+            'status' => ScheduledLayoutAssignment::STATUS_COMPLETED,
+            'processed_at' => now(),
+            'last_error' => null,
+        ]);
+
+        return true;
+    }
+
+    public function cancelScheduledAssignment(Post $post): void
+    {
+        $post->scheduledLayoutAssignment()
+            ->pending()
+            ->update([
+                'status' => ScheduledLayoutAssignment::STATUS_CANCELLED,
+                'processed_at' => now(),
+            ]);
+    }
+
+    public function manualSlotExists(
+        string $layoutType,
+        string $sectionId,
+        int $slotIndex,
+        ?int $pageLayoutId = null,
+    ): bool {
+        foreach ($this->getManualSlots() as $slot) {
+            if (
+                $slot['layoutType'] === $layoutType
+                && $slot['sectionId'] === $sectionId
+                && $slot['slotIndex'] === $slotIndex
+                && $slot['pageLayoutId'] === $pageLayoutId
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Find all layout slots that reference a given post ID.
      *
