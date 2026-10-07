@@ -103,6 +103,18 @@ it('advertises the sitemap and keeps private areas out of robots crawling', func
         ->assertDontSee('Disallow: /og-test', false);
 });
 
+it('ships a static robots file for the production web server', function () {
+    $robots = file_get_contents(public_path('robots.txt'));
+
+    expect($robots)
+        ->toContain('Sitemap: https://tasty.mv/sitemap.xml')
+        ->toContain('Disallow: /cms/')
+        ->toContain('Disallow: /api/')
+        ->not->toContain('og-preview')
+        ->not->toContain('og-html')
+        ->not->toContain('og-test');
+});
+
 it('does not expose OG image debugging routes', function () {
     $this->get('/og-preview/example-post')->assertNotFound();
     $this->get('/og-html/example-post')->assertNotFound();

@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /cms
+Disallow: /cms/
+Disallow: /api/
+Disallow: /auth/
+
+Sitemap: https://tasty.mv/sitemap.xml
