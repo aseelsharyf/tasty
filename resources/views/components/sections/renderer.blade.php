@@ -1,4 +1,4 @@
-@props(['sections'])
+@props(['sections', 'primaryHeading' => false])
 
 @foreach($sections as $section)
     @switch($section['type'])
@@ -29,6 +29,7 @@
                 :manualPostIds="$section['data']['manualPostIds'] ?? []"
                 :staticContent="$section['data']['staticContent'] ?? []"
                 :dynamicCount="$section['data']['dynamicCount'] ?? 0"
+                :headingLevel="$primaryHeading && $loop->first ? 1 : 2"
             />
             @break
 

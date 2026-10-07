@@ -3,9 +3,12 @@
 use App\Models\Category;
 use App\Models\Language;
 use App\Models\Page;
+use App\Models\PageLayout;
 use App\Models\Post;
 use App\Models\Product;
 use App\Models\ProductStore;
+use App\Models\Tag;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -49,6 +52,78 @@ it('gives paginated archives their own canonical URL', function () {
     $this->get($url)
         ->assertSuccessful()
         ->assertSee('<link rel="canonical" href="'.$url.'"', false);
+});
+
+it('uses the archive title as the only primary heading', function () {
+    $category = Category::factory()->create([
+        'name' => ['en' => 'Maldivian Recipes'],
+        'slug' => 'recipes',
+    ]);
+
+    $html = $this->get(route('category.show', ['category' => $category->slug]))
+        ->assertSuccessful()
+        ->getContent();
+
+    expect(substr_count($html, '<h1'))->toBe(1)
+        ->and($html)->toContain('<h1')
+        ->toContain('Maldivian Recipes</h1>');
+});
+
+it('promotes the first custom archive section title to the primary heading', function () {
+    $category = Category::factory()->create([
+        'name' => ['en' => 'Maldivian Recipes'],
+        'slug' => 'recipes',
+    ]);
+    PageLayout::query()->create([
+        'layoutable_type' => Category::class,
+        'layoutable_id' => $category->id,
+        'configuration' => [
+            'enabled' => true,
+            'sections' => [[
+                'type' => 'latest-updates',
+                'enabled' => true,
+                'order' => 1,
+                'config' => [
+                    'titleSmall' => '',
+                    'titleLarge' => 'Maldivian Recipes',
+                    'description' => 'Traditional and modern recipes from the Maldives.',
+                ],
+                'dataSource' => ['action' => 'recent', 'params' => []],
+                'slots' => [],
+            ]],
+        ],
+    ]);
+
+    $html = $this->get(route('category.show', ['category' => $category->slug]))
+        ->assertSuccessful()
+        ->getContent();
+
+    expect(substr_count($html, '<h1'))->toBe(1)
+        ->and($html)->toContain('<h1')
+        ->toContain('Maldivian Recipes</h1>');
+});
+
+it('uses one primary heading on tag and author archives', function () {
+    $tag = Tag::factory()->create([
+        'name' => ['en' => 'Maldivian Food'],
+        'slug' => 'maldivian-food',
+    ]);
+    $author = User::factory()->create([
+        'name' => 'Tasty Team',
+        'username' => 'tasty-team',
+    ]);
+
+    $tagHtml = $this->get(route('tag.show', ['tag' => $tag->slug]))
+        ->assertSuccessful()
+        ->getContent();
+    $authorHtml = $this->get(route('author.show', ['author' => $author->username]))
+        ->assertSuccessful()
+        ->getContent();
+
+    expect(substr_count($tagHtml, '<h1'))->toBe(1)
+        ->and($tagHtml)->toContain('Maldivian Food</h1>')
+        ->and(substr_count($authorHtml, '<h1'))->toBe(1)
+        ->and($authorHtml)->toContain('Tasty Team</h1>');
 });
 
 it('marks search results as noindex', function () {

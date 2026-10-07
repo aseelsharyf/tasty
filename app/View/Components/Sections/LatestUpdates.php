@@ -59,6 +59,8 @@ class LatestUpdates extends Component
 
     public string $authorInitials;
 
+    public int $headingLevel;
+
     /** @var array<string, class-string> */
     protected array $actions = [
         'recent' => GetRecentPosts::class,
@@ -104,6 +106,7 @@ class LatestUpdates extends Component
         array $params = [],
         string $imageStyle = 'default',
         string $authorInitials = '',
+        int $headingLevel = 2,
     ) {
         // Initialize post tracker to prevent duplicates across sections
         $this->initPostTracker();
@@ -119,6 +122,7 @@ class LatestUpdates extends Component
         $this->showLoadMore = $showLoadMore;
         $this->imageStyle = $imageStyle;
         $this->authorInitials = $authorInitials;
+        $this->headingLevel = $headingLevel === 1 ? 1 : 2;
 
         // New hybrid slot mode: mix of manual, static, and dynamic slots
         if ($totalSlots > 0 || count($manualPostIds) > 0 || count($staticContent) > 0) {

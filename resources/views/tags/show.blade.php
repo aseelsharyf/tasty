@@ -13,5 +13,6 @@
         :autoFetch="true"
         :featuredCount="1"
         :postsCount="8"
+        :headingLevel="1"
     />
 @endsection

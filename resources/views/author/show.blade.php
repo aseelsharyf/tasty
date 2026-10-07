@@ -15,5 +15,6 @@
         :postsCount="8"
         imageStyle="author"
         :authorInitials="strtoupper(collect(explode(' ', $author->name))->map(fn($n) => substr($n, 0, 1))->take(2)->join(''))"
+        :headingLevel="1"
     />
 @endsection
