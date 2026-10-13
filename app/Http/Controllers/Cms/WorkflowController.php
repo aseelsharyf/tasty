@@ -8,6 +8,7 @@ use App\Models\EditorialComment;
 use App\Models\Post;
 use App\Services\NotificationService;
 use App\Services\WorkflowService;
+use App\Support\CmsDateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +25,12 @@ class WorkflowController extends Controller
      */
     public function transition(Request $request, ContentVersion $version): RedirectResponse|JsonResponse
     {
+        if ($request->filled('scheduled_at')) {
+            $request->merge([
+                'scheduled_at' => CmsDateTime::toUtcString($request->string('scheduled_at')->toString()),
+            ]);
+        }
+
         $validated = $request->validate([
             'to_status' => ['required', 'string'],
             'comment' => ['nullable', 'string', 'max:1000'],

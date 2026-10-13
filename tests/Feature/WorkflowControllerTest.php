@@ -102,6 +102,32 @@ describe('POST /cms/workflow/versions/{version}/transition', function () {
         $response->assertSuccessful();
         expect($version->fresh()->workflow_status)->toBe('parked');
     });
+
+    it('stores a Maldives publication time as the matching UTC instant', function () {
+        $this->travelTo('2026-10-13 00:00:00');
+
+        $editor = User::factory()->create();
+        $editor->assignRole('Editor');
+
+        $post = Post::factory()->draft()->create([
+            'author_id' => $editor->id,
+            'workflow_status' => ContentVersion::STATUS_COPYDESK,
+        ]);
+        $version = ContentVersion::factory()
+            ->forPost($post)
+            ->inReview()
+            ->create(['created_by' => $editor->id]);
+
+        $this->actingAs($editor)
+            ->postJson("/cms/workflow/versions/{$version->uuid}/transition", [
+                'to_status' => ContentVersion::STATUS_SCHEDULED,
+                'scheduled_at' => '2026-10-14T08:30',
+            ])
+            ->assertSuccessful();
+
+        expect($post->fresh()->scheduled_at->toIso8601String())
+            ->toBe('2026-10-14T03:30:00+00:00');
+    });
 });
 
 describe('POST /cms/workflow/versions/{version}/revert', function () {

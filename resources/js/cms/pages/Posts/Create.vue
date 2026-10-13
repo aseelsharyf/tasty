@@ -972,8 +972,9 @@ function goBack() {
                                         />
                                     </div>
                                     <div v-if="showScheduleField">
-                                        <label class="text-xs text-muted mb-1 block">Schedule for</label>
+                                        <label class="text-xs text-muted mb-1 block">Schedule for (MVT)</label>
                                         <UInput v-model="form.scheduled_at" type="datetime-local" size="sm" class="w-full" />
+                                        <p class="mt-1 text-xs text-muted">Maldives Time</p>
                                     </div>
                                     <div>
                                         <label class="text-xs text-muted mb-1 block">Type</label>

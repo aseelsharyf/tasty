@@ -17,6 +17,7 @@ import { useSidebar } from '../../composables/useSidebar';
 import { useDhivehiKeyboard } from '../../composables/useDhivehiKeyboard';
 import { useWorkflow, type WorkflowConfig } from '../../composables/useWorkflow';
 import { useCmsPath } from '../../composables/useCmsPath';
+import { CMS_TIME_ZONE_LABEL, cmsDateTimeInputToUtc, formatCmsDateTime, toCmsDateTimeInput } from '../../utils/cmsDateTime';
 import type { Category, Tag, PostTypeOption, Post } from '../../types';
 
 interface CropVersion {
@@ -607,10 +608,10 @@ async function openScheduleModal(transition: { from: string; to: string; label: 
     }
     pendingScheduleTransition.value = transition;
     // Pre-fill with existing scheduled_at or default to tomorrow
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
-    scheduleDate.value = form.scheduled_at || tomorrow.toISOString().slice(0, 16);
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    scheduleDate.value = form.scheduled_at
+        ? toCmsDateTimeInput(form.scheduled_at)
+        : `${toCmsDateTimeInput(tomorrow).slice(0, 10)}T09:00`;
     scheduleModalOpen.value = true;
 }
 
@@ -623,11 +624,11 @@ async function submitSchedule() {
         // First set scheduled_at on the post, then transition
         await axios.post(cmsPath(`/workflow/versions/${currentVersionUuid.value}/transition`), {
             to_status: 'scheduled',
-            scheduled_at: scheduleDate.value,
+            scheduled_at: cmsDateTimeInputToUtc(scheduleDate.value),
         });
 
-        form.scheduled_at = scheduleDate.value;
-        toast.add({ title: 'Scheduled', description: `Post scheduled for ${new Date(scheduleDate.value).toLocaleString()}`, color: 'success' });
+        form.scheduled_at = cmsDateTimeInputToUtc(scheduleDate.value);
+        toast.add({ title: 'Scheduled', description: `Post scheduled for ${formatCmsDateTime(form.scheduled_at)} ${CMS_TIME_ZONE_LABEL}`, color: 'success' });
         workflowStatus.value = 'scheduled';
         scheduleModalOpen.value = false;
         refreshPage();
@@ -1703,7 +1704,9 @@ async function openUnpublishModal() {
 
 function onSlotPublished(mode: 'immediate' | 'scheduled', scheduledAt?: string) {
     if (mode === 'scheduled') {
-        const formattedDate = scheduledAt ? new Date(scheduledAt).toLocaleString() : 'the selected time';
+        const formattedDate = scheduledAt
+            ? `${formatCmsDateTime(scheduledAt)} ${CMS_TIME_ZONE_LABEL}`
+            : 'the selected time';
         toast.add({ title: 'Scheduled', description: `Post and slot assignment scheduled for ${formattedDate}.`, color: 'success' });
         workflowStatus.value = 'scheduled';
     } else {
@@ -2165,6 +2168,23 @@ function openDiff() {
             </template>
 
             <template #body>
+                <div
+                    v-if="workflowStatus === 'scheduled' && form.scheduled_at"
+                    class="border-b border-info/20 bg-info/5 px-4 py-3 sm:px-6"
+                >
+                    <div class="mx-auto flex max-w-5xl items-start gap-3">
+                        <UIcon name="i-lucide-calendar-clock" class="mt-0.5 size-5 shrink-0 text-info" />
+                        <div>
+                            <p class="text-sm font-medium text-highlighted">
+                                Scheduled to publish {{ formatCmsDateTime(form.scheduled_at) }} {{ CMS_TIME_ZONE_LABEL }}
+                            </p>
+                            <p class="mt-0.5 text-xs text-muted">
+                                Publication times in the CMS use Maldives Time.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Lock Warning Banner -->
                 <div
                     v-if="isLockedByOther"
@@ -3639,12 +3659,13 @@ function openDiff() {
                     </template>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium mb-1.5">Publish date & time</label>
+                            <label class="block text-sm font-medium mb-1.5">Publish date & time ({{ CMS_TIME_ZONE_LABEL }})</label>
                             <UInput
                                 v-model="scheduleDate"
                                 type="datetime-local"
                                 class="w-full"
                             />
+                            <p class="mt-1.5 text-xs text-muted">Times are entered in Maldives Time.</p>
                         </div>
                     </div>
                     <template #footer>

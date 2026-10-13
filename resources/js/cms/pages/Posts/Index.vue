@@ -8,6 +8,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.vue';
 import UnpublishReplacementModal from '../../components/UnpublishReplacementModal.vue';
 import { usePermission } from '../../composables/usePermission';
 import { useCmsPath } from '../../composables/useCmsPath';
+import { CMS_TIME_ZONE_LABEL, formatCmsDateTime } from '../../utils/cmsDateTime';
 import type { Post, PostCounts, PostFilters, Author, Category, PaginatedResponse } from '../../types';
 import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui';
 
@@ -507,6 +508,10 @@ function formatDate(dateStr: string) {
         day: 'numeric',
     });
 }
+
+function formatScheduledDate(dateStr: string): string {
+    return `${formatCmsDateTime(dateStr)} ${CMS_TIME_ZONE_LABEL}`;
+}
 </script>
 
 <template>
@@ -709,6 +714,14 @@ function formatDate(dateStr: string) {
                                             <span v-if="post.categories.length > 2">+{{ post.categories.length - 2 }}</span>
                                         </div>
                                         <span v-else class="italic">Uncategorized</span>
+                                    </div>
+
+                                    <div
+                                        v-if="post.status === 'scheduled' && post.scheduled_at"
+                                        class="mt-2 flex items-center gap-1.5 text-xs font-medium text-info"
+                                    >
+                                        <UIcon name="i-lucide-calendar-clock" class="size-3.5" />
+                                        Publishes {{ formatScheduledDate(post.scheduled_at) }}
                                     </div>
 
                                     <!-- Status & Type Badges -->

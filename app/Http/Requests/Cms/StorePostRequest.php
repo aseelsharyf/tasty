@@ -4,11 +4,21 @@ namespace App\Http\Requests\Cms;
 
 use App\Models\Post;
 use App\Models\Setting;
+use App\Support\CmsDateTime;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StorePostRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->filled('scheduled_at')) {
+            $this->merge([
+                'scheduled_at' => CmsDateTime::toUtcString($this->string('scheduled_at')->toString()),
+            ]);
+        }
+    }
+
     public function authorize(): bool
     {
         return $this->user()->can('posts.create');

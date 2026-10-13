@@ -61,4 +61,16 @@ return [
 
     'website_url' => env('WEBSITE_URL', 'https://tasty.mv'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Editorial Timezone
+    |--------------------------------------------------------------------------
+    |
+    | Editors enter and view publication times in Maldives Time. Scheduled
+    | timestamps are converted to UTC before they are stored.
+    |
+    */
+
+    'timezone' => env('CMS_TIMEZONE', 'Indian/Maldives'),
+
 ];

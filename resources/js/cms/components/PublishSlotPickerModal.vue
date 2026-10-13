@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import axios from 'axios';
 import { useCmsPath } from '../composables/useCmsPath';
+import { CMS_TIME_ZONE_LABEL, cmsDateTimeInputToUtc, toCmsDateTimeInput } from '../utils/cmsDateTime';
 
 interface ManualSlot {
     layoutType: string;
@@ -47,17 +48,13 @@ const publishMode = ref<'immediate' | 'scheduled'>('immediate');
 const scheduledAt = ref('');
 
 function localDateTimeValue(date: Date): string {
-    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-
-    return localDate.toISOString().slice(0, 16);
+    return toCmsDateTimeInput(date);
 }
 
 function defaultScheduledAt(): string {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    return localDateTimeValue(tomorrow);
+    return `${localDateTimeValue(tomorrow).slice(0, 10)}T09:00`;
 }
 
 const minimumScheduledAt = computed(() => {
@@ -161,6 +158,10 @@ async function submit() {
     submitError.value = null;
 
     try {
+        const scheduledAtUtc = publishMode.value === 'scheduled'
+            ? cmsDateTimeInputToUtc(scheduledAt.value)
+            : null;
+
         await axios.post(cmsPath(`/posts/${props.postUuid}/publish-with-slot`), {
             versionUuid: props.versionUuid,
             sectionId: selectedSlot.value.sectionId,
@@ -168,11 +169,11 @@ async function submit() {
             layoutType: selectedSlot.value.layoutType,
             pageLayoutId: selectedSlot.value.pageLayoutId,
             mode: publishMode.value,
-            scheduledAt: publishMode.value === 'scheduled' ? scheduledAt.value : null,
+            scheduledAt: scheduledAtUtc,
         });
 
         isOpen.value = false;
-        emit('published', publishMode.value, publishMode.value === 'scheduled' ? scheduledAt.value : undefined);
+        emit('published', publishMode.value, scheduledAtUtc ?? undefined);
     } catch (error: any) {
         submitError.value = error.response?.data?.message || 'Failed to publish and assign. Please try again.';
     } finally {
@@ -226,7 +227,7 @@ async function submit() {
 
                     <div v-if="publishMode === 'scheduled'" class="flex flex-col gap-1.5 pt-4">
                         <label for="slot-publish-at" class="text-base font-medium text-highlighted sm:text-sm">
-                            Publish date and time
+                            Publish date and time ({{ CMS_TIME_ZONE_LABEL }})
                         </label>
                         <UInput
                             id="slot-publish-at"
@@ -237,7 +238,7 @@ async function submit() {
                             class="w-full"
                         />
                         <p class="text-base text-muted sm:text-sm">
-                            The current post stays in this slot until the scheduled time.
+                            Maldives Time. The current post stays in this slot until the scheduled time.
                         </p>
                     </div>
                 </div>

@@ -21,10 +21,10 @@ use App\Services\OgImageService;
 use App\Services\PostTemplateRegistry;
 use App\Services\PublicCacheService;
 use App\Services\WorkflowService;
+use App\Support\CmsDateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -931,7 +931,7 @@ class PostController extends Controller
         );
 
         if ($validated['mode'] === 'scheduled') {
-            $scheduledAt = Carbon::parse($validated['scheduledAt']);
+            $scheduledAt = CmsDateTime::toUtc($validated['scheduledAt']);
 
             DB::transaction(function () use ($post, $version, $validated, $scheduledAt, $slotService, $workflowService, $user): void {
                 $post->update(['scheduled_at' => $scheduledAt]);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Cms;
 
+use App\Support\CmsDateTime;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -44,8 +45,12 @@ class PublishPostWithSlotRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
-            'mode' => $this->input('mode', 'immediate'),
-        ]);
+        $values = ['mode' => $this->input('mode', 'immediate')];
+
+        if ($this->filled('scheduledAt')) {
+            $values['scheduledAt'] = CmsDateTime::toUtcString($this->string('scheduledAt')->toString());
+        }
+
+        $this->merge($values);
     }
 }

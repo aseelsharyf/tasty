@@ -10,6 +10,7 @@ use App\Models\Tag;
 use App\Models\User;
 use App\Services\WorkflowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -76,6 +77,10 @@ it('keeps the current slot live until the scheduled post is published', function
     ], 'layouts');
 
     $scheduledAt = now()->addHour()->startOfMinute();
+    $scheduledInput = $scheduledAt
+        ->copy()
+        ->setTimezone('Indian/Maldives')
+        ->format('Y-m-d\TH:i');
 
     $this->actingAs($editor)
         ->postJson("/cms/posts/{$scheduledPost->uuid}/publish-with-slot", [
@@ -85,7 +90,7 @@ it('keeps the current slot live until the scheduled post is published', function
             'layoutType' => 'homepage',
             'pageLayoutId' => null,
             'mode' => 'scheduled',
-            'scheduledAt' => $scheduledAt->toDateTimeString(),
+            'scheduledAt' => $scheduledInput,
         ])
         ->assertSuccessful()
         ->assertJson([
@@ -94,6 +99,7 @@ it('keeps the current slot live until the scheduled post is published', function
         ]);
 
     expect($scheduledPost->fresh()->status)->toBe(Post::STATUS_SCHEDULED)
+        ->and($scheduledPost->fresh()->scheduled_at->toIso8601String())->toBe($scheduledAt->toIso8601String())
         ->and($version->fresh()->workflow_status)->toBe(ContentVersion::STATUS_SCHEDULED)
         ->and($scheduledPost->fresh()->scheduledLayoutAssignment)
         ->status->toBe(ScheduledLayoutAssignment::STATUS_PENDING)
@@ -156,7 +162,7 @@ it('allows a parked post to be scheduled with a slot assignment', function () {
             'layoutType' => 'homepage',
             'pageLayoutId' => null,
             'mode' => 'scheduled',
-            'scheduledAt' => $scheduledAt->toDateTimeString(),
+            'scheduledAt' => $scheduledAt->toIso8601String(),
         ])
         ->assertSuccessful()
         ->assertJson([
@@ -183,7 +189,7 @@ it('requires a future date when scheduling a slot assignment', function () {
             'slotIndex' => 0,
             'layoutType' => 'homepage',
             'mode' => 'scheduled',
-            'scheduledAt' => now()->subMinute()->toDateTimeString(),
+            'scheduledAt' => now()->subMinute()->toIso8601String(),
         ])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('scheduledAt');
@@ -220,4 +226,25 @@ it('cancels the reserved slot when a scheduled post returns to copy desk', funct
         ->and($post->fresh()->scheduled_at)->toBeNull()
         ->and($post->fresh()->scheduledLayoutAssignment->status)
         ->toBe(ScheduledLayoutAssignment::STATUS_CANCELLED);
+});
+
+it('can display upcoming scheduled posts without publishing them', function () {
+    $this->travelTo('2026-10-13 00:00:00');
+
+    $post = Post::factory()->draft()->create([
+        'title' => 'Tomorrow Story',
+        'status' => Post::STATUS_SCHEDULED,
+        'workflow_status' => ContentVersion::STATUS_SCHEDULED,
+        'scheduled_at' => '2026-10-14 03:30:00',
+    ]);
+
+    $exitCode = Artisan::call('posts:process-scheduled-posts', ['--upcoming' => true]);
+
+    expect($exitCode)->toBe(0)
+        ->and(Artisan::output())
+        ->toContain('Upcoming scheduled posts (Indian/Maldives):')
+        ->toContain('Tomorrow Story')
+        ->toContain('14 Oct 2026, 08:30');
+
+    expect($post->fresh()->status)->toBe(Post::STATUS_SCHEDULED);
 });
