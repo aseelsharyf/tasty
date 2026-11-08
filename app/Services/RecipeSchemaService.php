@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Post;
+use App\Support\IngredientLinkFormatter;
 use Illuminate\Support\Str;
 
 class RecipeSchemaService
@@ -39,7 +40,9 @@ class RecipeSchemaService
             }
 
             foreach ($section['items'] ?? [] as $item) {
-                $text = $this->plainText($item);
+                $text = $this->plainText(
+                    is_string($item) ? IngredientLinkFormatter::toPlainText($item) : $item
+                );
 
                 if ($text !== '') {
                     $ingredients[] = $text;

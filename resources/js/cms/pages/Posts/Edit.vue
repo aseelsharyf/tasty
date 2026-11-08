@@ -434,8 +434,88 @@ interface GroupedRepeaterSection {
     items: string[];
 }
 
+interface IngredientLinkTarget {
+    fieldName: string;
+    sectionIndex: number;
+    itemIndex: number;
+    start: number;
+    end: number;
+}
+
 const bulkModeFields = ref<Record<string, boolean>>({});
 const bulkTextValues = ref<Record<string, string>>({});
+const ingredientSelections = ref<Record<string, { start: number; end: number }>>({});
+const ingredientLinkModalOpen = ref(false);
+const ingredientLinkTarget = ref<IngredientLinkTarget | null>(null);
+const ingredientLinkText = ref('');
+const ingredientLinkUrl = ref('');
+const ingredientLinkError = ref('');
+
+function ingredientSelectionKey(fieldName: string, sectionIndex: number, itemIndex: number): string {
+    return `${fieldName}:${sectionIndex}:${itemIndex}`;
+}
+
+function rememberIngredientSelection(fieldName: string, sectionIndex: number, itemIndex: number, event: Event) {
+    const input = event.target as HTMLInputElement;
+    ingredientSelections.value[ingredientSelectionKey(fieldName, sectionIndex, itemIndex)] = {
+        start: input.selectionStart ?? 0,
+        end: input.selectionEnd ?? 0,
+    };
+}
+
+function openIngredientLink(fieldName: string, sectionIndex: number, itemIndex: number) {
+    const sections = (form.custom_fields?.[fieldName] as GroupedRepeaterSection[]) ?? [];
+    const item = sections[sectionIndex]?.items?.[itemIndex] ?? '';
+    const selection = ingredientSelections.value[ingredientSelectionKey(fieldName, sectionIndex, itemIndex)];
+    const existingLink = item.match(/\[([^\]\r\n]+)\]\(([^)\s]+)\)/);
+    const hasSelection = selection && selection.end > selection.start;
+
+    let start = hasSelection ? selection.start : 0;
+    let end = hasSelection ? selection.end : item.length;
+    let text = item.slice(start, end);
+    let url = '';
+
+    if (!hasSelection && existingLink?.index !== undefined) {
+        start = existingLink.index;
+        end = start + existingLink[0].length;
+        text = existingLink[1];
+        url = existingLink[2];
+    }
+
+    ingredientLinkTarget.value = { fieldName, sectionIndex, itemIndex, start, end };
+    ingredientLinkText.value = text;
+    ingredientLinkUrl.value = url;
+    ingredientLinkError.value = '';
+    ingredientLinkModalOpen.value = true;
+}
+
+function applyIngredientLink() {
+    const target = ingredientLinkTarget.value;
+    const text = ingredientLinkText.value.trim().replaceAll(']', '');
+    let url = ingredientLinkUrl.value.trim();
+
+    if (!target || !text || !url) {
+        ingredientLinkError.value = 'Enter both the linked text and destination URL.';
+        return;
+    }
+
+    if (!url.startsWith('/') && !/^https?:\/\//i.test(url)) {
+        url = `https://${url}`;
+    }
+
+    if (url.includes(' ') || url.includes(')') || (!url.startsWith('/') && !/^https?:\/\//i.test(url))) {
+        ingredientLinkError.value = 'Enter a valid web address beginning with https:// or /.';
+        return;
+    }
+
+    const sections = [...((form.custom_fields?.[target.fieldName] as GroupedRepeaterSection[]) ?? [])];
+    const items = [...(sections[target.sectionIndex]?.items ?? [])];
+    const item = items[target.itemIndex] ?? '';
+    items[target.itemIndex] = `${item.slice(0, target.start)}[${text}](${url})${item.slice(target.end)}`;
+    sections[target.sectionIndex] = { ...sections[target.sectionIndex], items };
+    form.custom_fields = { ...form.custom_fields, [target.fieldName]: sections };
+    ingredientLinkModalOpen.value = false;
+}
 
 function isBulkMode(fieldName: string): boolean {
     return bulkModeFields.value[fieldName] ?? false;
@@ -2951,13 +3031,16 @@ function openDiff() {
                                                     @update:model-value="setBulkText(field.name, $event as string)"
                                                     @blur="applyBulkText(field.name)"
                                                 />
-                                                <p class="text-xs text-muted">
-                                                    Use <code class="bg-elevated px-1 rounded">## Section</code> for headers and <code class="bg-elevated px-1 rounded">- item</code> for ingredients. Changes apply on blur.
+                                                <p class="text-base text-muted sm:text-sm">
+                                                    Use <code class="rounded bg-elevated px-1">## Section</code> for headers, <code class="rounded bg-elevated px-1">- item</code> for ingredients, and <code class="rounded bg-elevated px-1">[text](https://example.com)</code> for links. Changes apply on blur.
                                                 </p>
                                             </div>
 
                                             <!-- Form Mode -->
                                             <div v-else class="space-y-3">
+                                                <p class="text-pretty text-base text-muted sm:text-sm">
+                                                    Select words in an ingredient, then use the link button beside it. Without a selection, the whole ingredient is linked.
+                                                </p>
                                                 <!-- Sections -->
                                                 <div
                                                     v-for="(section, sectionIndex) in ((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])"
@@ -3001,9 +3084,14 @@ function openDiff() {
                                                         >
                                                             <UInput
                                                                 :model-value="item"
+                                                                :name="`ingredient-${field.name}-${sectionIndex}-${itemIndex}`"
+                                                                :aria-label="`${field.label} item ${itemIndex + 1}`"
                                                                 size="sm"
                                                                 class="flex-1 min-w-0"
                                                                 :disabled="isReadOnly"
+                                                                @select="rememberIngredientSelection(field.name, sectionIndex, itemIndex, $event)"
+                                                                @mouseup="rememberIngredientSelection(field.name, sectionIndex, itemIndex, $event)"
+                                                                @keyup="rememberIngredientSelection(field.name, sectionIndex, itemIndex, $event)"
                                                                 @update:model-value="(val: string) => {
                                                                     const sections = [...((form.custom_fields?.[field.name] as { section: string; items: string[] }[]) ?? [])];
                                                                     const newItems = [...(sections[sectionIndex].items || [])];
@@ -3011,6 +3099,16 @@ function openDiff() {
                                                                     sections[sectionIndex] = { ...sections[sectionIndex], items: newItems };
                                                                     form.custom_fields = { ...form.custom_fields, [field.name]: sections };
                                                                 }"
+                                                            />
+                                                            <UButton
+                                                                size="sm"
+                                                                color="neutral"
+                                                                variant="ghost"
+                                                                icon="i-lucide-link"
+                                                                :disabled="isReadOnly"
+                                                                :aria-label="`Add a link to ${field.label} item ${itemIndex + 1}`"
+                                                                title="Link selected text"
+                                                                @click="openIngredientLink(field.name, sectionIndex, itemIndex)"
                                                             />
                                                             <UButton
                                                                 size="sm"
@@ -3689,6 +3787,63 @@ function openDiff() {
         </UModal>
 
         <!-- Block Editor Settings Modal -->
+        <UModal v-model:open="ingredientLinkModalOpen">
+            <template #content>
+                <UCard>
+                    <template #header>
+                        <div class="flex items-start gap-3">
+                            <UIcon name="i-lucide-link" class="size-4 h-lh shrink-0 text-muted" />
+                            <div class="min-w-0">
+                                <h3 class="font-semibold text-highlighted">Link ingredient text</h3>
+                                <p class="text-pretty text-base text-muted sm:text-sm">
+                                    The selected words will become a link on the published recipe.
+                                </p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div class="flex flex-col gap-4">
+                        <div class="flex flex-col gap-1.5">
+                            <label for="ingredient-link-text" class="text-base font-medium text-highlighted sm:text-sm">Text</label>
+                            <UInput
+                                id="ingredient-link-text"
+                                v-model="ingredientLinkText"
+                                name="ingredient_link_text"
+                                placeholder="Rose petals"
+                                class="w-full"
+                            />
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label for="ingredient-link-url" class="text-base font-medium text-highlighted sm:text-sm">Link</label>
+                            <UInput
+                                id="ingredient-link-url"
+                                v-model="ingredientLinkUrl"
+                                name="ingredient_link_url"
+                                type="url"
+                                placeholder="https://example.com/rose-petals"
+                                class="w-full"
+                                @keyup.enter.prevent="applyIngredientLink"
+                            />
+                        </div>
+                        <p v-if="ingredientLinkError" class="text-base text-error sm:text-sm">
+                            {{ ingredientLinkError }}
+                        </p>
+                    </div>
+
+                    <template #footer>
+                        <div class="flex justify-end gap-2">
+                            <UButton color="neutral" variant="ghost" @click="ingredientLinkModalOpen = false">
+                                Cancel
+                            </UButton>
+                            <UButton icon="i-lucide-link" @click="applyIngredientLink">
+                                Apply link
+                            </UButton>
+                        </div>
+                    </template>
+                </UCard>
+            </template>
+        </UModal>
+
         <BlockEditorSettings
             v-model:open="blockEditorSettingsOpen"
             :current-order="editorBlockOrder"

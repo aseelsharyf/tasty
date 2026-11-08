@@ -22,11 +22,11 @@
                         :defaultExpanded="true"
                         :isRtl="$isRtl"
                     >
-                        <ul class="space-y-2">
+                        <ul class="space-y-2" role="list">
                             @foreach($section['items'] as $item)
                                 <li class="flex items-start gap-3 {{ $isRtl ? 'flex-row-reverse text-right' : '' }}">
                                     <span class="w-1.5 h-1.5 rounded-full bg-tasty-blue-black/40 mt-2 flex-shrink-0"></span>
-                                    <span class="text-body text-tasty-blue-black {{ $isRtl ? 'font-dhivehi' : '' }}">{{ $item }}</span>
+                                    <span class="text-body text-tasty-blue-black {{ $isRtl ? 'font-dhivehi' : '' }}">{!! \App\Support\IngredientLinkFormatter::toHtml((string) $item) !!}</span>
                                 </li>
                             @endforeach
                         </ul>

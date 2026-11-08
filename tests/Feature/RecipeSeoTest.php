@@ -48,7 +48,7 @@ it('renders recipe structured data from the published recipe and preserves socia
             'servings' => 4,
             'difficulty' => 'Easy',
             'ingredients' => [
-                ['section' => 'Main ingredients', 'items' => ['1 tin tuna', '1 cup coconut']],
+                ['section' => 'Main ingredients', 'items' => ['1 tin tuna', '1 cup [coconut](https://example.com/coconut)']],
                 ['section' => 'Seasoning', 'items' => ['Salt & pepper']],
             ],
         ],
@@ -99,6 +99,7 @@ it('renders recipe structured data from the published recipe and preserves socia
         ->and($recipe)->not->toHaveKeys(['aggregateRating', 'nutrition']);
 
     $response->assertSee('https://example.com/social-card.png', false);
+    $response->assertSee('<a class="font-semibold underline decoration-1 underline-offset-3 hover:decoration-2" href="https://example.com/coconut" target="_blank" rel="noopener noreferrer">coconut</a>', false);
     $response->assertSee('id="recipe-step-1"', false)
         ->assertSee('id="recipe-step-2"', false)
         ->assertSee('id="recipe-step-3"', false);
